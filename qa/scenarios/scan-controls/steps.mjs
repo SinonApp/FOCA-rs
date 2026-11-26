@@ -140,6 +140,13 @@ export default async (page, { W, fsc, theme, out }) => {
     "held stage shows a resume button",
     await ev(() => !!document.querySelector('[data-act="scan-ctl:stage|network|resume"]')),
   );
+  ok(
+    "held stage shows the Pause pill, not Running",
+    await ev(() => {
+      const r = document.querySelector('[data-act="scan-ctl:stage|network|resume"]').closest(".scn-step");
+      return !!r && !!r.querySelector(".pill.warn") && !r.querySelector(".pill.info");
+    }),
+  );
   await ev(() => document.querySelector('[data-act="scan-ctl:stage|network|resume"]').click());
   await wait(200);
   await step(1);

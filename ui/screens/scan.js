@@ -1038,8 +1038,9 @@
   };
   function stageHTML(k, st, opts = {}) {
     const scan = F.scan,
-      paused = scan.paused && !opts.static,
-      def = STAGES[k];
+      def = STAGES[k],
+      // the whole scan or this stage alone (its own Pause button) is on hold
+      paused = (scan.paused || isHeld(`stage:${def.id}`)) && !opts.static;
     const mk =
       { run: paused ? ic("pause") : ic("spin", "spin"), done: ic("check"), cut: ic("stop") }[st] ||
       `<b>${k + 1}</b>`;
