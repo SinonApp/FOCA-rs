@@ -6,7 +6,8 @@
 
   // The project list comes from F.projects (project_list, see js/api.js); archiving is the `archived` flag
   // (F.api.project_update).
-  const activeList = () => F.projects.filter(p => !p.archived);
+  // Reference cases (built-in samples) never show up among recent projects: "Open reference case" opens them.
+  const activeList = () => F.projects.filter(p => !p.archived && !p.reference);
   const archivedList = () => F.projects.filter(p => p.archived);
   const byId = id => F.projects.find(p => p.id === id);
 

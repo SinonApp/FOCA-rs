@@ -1,4 +1,5 @@
-// Deleting one scan (history sheet, stopped card, paused scan), demo backend.
+// Deleting one scan (history sheet, stopped card, paused scan) and reference cases kept out of
+// recent projects (demo backend).
 // qa/shoot.sh --routes none --out /tmp/x --steps $PWD/qa/scenarios/scan-delete/steps.mjs [--w 360 --theme light --fs 2]
 export default async (page, { W, fsc, theme, out, prep }) => {
   let fails = 0,
@@ -205,6 +206,43 @@ export default async (page, { W, fsc, theme, out, prep }) => {
   );
   ok("scans of agro back to the start", (await ev(() => FOCA.db.scans.length)) === agro0);
 
+  // ---- reference case stays out of recent projects ----
+  await ev(() => FOCA.api.project_open("contoso"));
+  await go("/projects");
+  await ev(() => FOCA.actions["demo-case"]());
+  await wait(2600);
+  const refId = await ev(() => (FOCA.projects.find(p => p.reference) || {}).id || null);
+  ok("reference case imported and marked", !!refId, refId);
+  await ev(id => FOCA.actions["imp-open"](id), refId);
+  await wait(500);
+  ok("reference case opens", (await ev(() => FOCA.db.project.id)) === refId);
+  const lp = await ev(() => FOCA.api.settings_get().then(s => s.last_project));
+  ok("opening it does not change the last project", lp === "contoso", lp);
+  await go("/projects");
+  ok(
+    "reference case is not among recent projects",
+    !(await ev(id => !!document.querySelector(`.pj-list [data-pj="${id}"]`), refId)),
+  );
+  ok(
+    "recent projects still listed",
+    (await ev(() => document.querySelectorAll(".pj-list .pj-card").length)) > 0,
+  );
+  await shot("projects");
+  // opening it again finds the existing case
+  await ev(() => FOCA.actions["demo-case"]());
+  await wait(400);
+  ok(
+    "Open reference case finds the existing one",
+    await ev(id => !!document.querySelector(`.sheet.show [data-act="imp-open:${id}"]`), refId),
+  );
+  await ev(() => FOCA.closeSheet());
+  // an old last_project pointing to a reference case is not restored on start
+  await ev(id => FOCA.api.settings_set({ last_project: id }), refId);
+  await wait(300);
+  await boot();
+  await wait(300);
+  const cur = await ev(() => FOCA.db.project && FOCA.db.project.id);
+  ok("start does not restore a reference case", cur && cur !== refId, cur);
   ok("no page errors", errors.length === 0, errors);
   console.log(`${oks} OK, ${fails} FAIL`);
 };

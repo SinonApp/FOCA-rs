@@ -170,6 +170,9 @@ pub struct ProjectSummary {
     pub risk: Option<u8>,
     pub scanning: bool,
     pub progress: u8,
+    /// Built-in reference case (`demo_case_import`): kept out of recent projects and never
+    /// restored as the last opened project.
+    pub reference: bool,
 }
 
 /// `Project`.

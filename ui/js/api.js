@@ -533,6 +533,8 @@
     archived: s.archived,
     scans: s.scans,
     lastProfile: s.last_profile,
+    // Built-in reference case: kept out of recent projects and never restored on start.
+    reference: !!s.reference,
   });
   // The project list is re-read after mutations and emits "db" {kind: "projects"}; /projects re-renders its
   // cards.
@@ -1157,6 +1159,13 @@
   );
 
   // ================= first load =================
+  // Project restored on start: the last opened one, else the first; never a reference case (it stays out
+  // of recent projects, and an old last_project may still point to one).
+  function startProject(st) {
+    const own = F.projects.filter(p => !p.reference);
+    const last = st && st.last_project;
+    return own.some(p => p.id === last) ? last : (own[0] || {}).id;
+  }
   function boot() {
     if (!TAURI) {
       // Demo: synchronous, so screens already see data when they are loaded.
@@ -1171,10 +1180,7 @@
           F.i18n.applyBundle(b, { silent: true });
         }
         setProjects(demoBackend.invokeSync("project_list"));
-        const id =
-          st.last_project && F.projects.some(p => p.id === st.last_project)
-            ? st.last_project
-            : (F.projects[0] || {}).id;
+        const id = startProject(st);
         if (id) applySnapshot(demoBackend.invokeSync("project_open", { id }), "init");
       } catch (e) {
         return Promise.reject(e);
@@ -1204,10 +1210,7 @@
       })
       .then(st =>
         refreshList().then(() => {
-          const id =
-            st && st.last_project && F.projects.some(p => p.id === st.last_project)
-              ? st.last_project
-              : (F.projects[0] || {}).id;
+          const id = startProject(st);
           return id ? run("project_open", { id }, snap => applySnapshot(snap, "init")) : null;
         }),
       );

@@ -1140,7 +1140,7 @@
       }
       // The case may have been created in another UI language.
       const names = [DEMO_CASE_NAME, "Еталонний кейс", "Reference case", demoCaseName()];
-      const have = (F.projects || []).find(p => names.includes(p.name) && !p.archived);
+      const have = (F.projects || []).find(p => (p.reference || names.includes(p.name)) && !p.archived);
       if (have) {
         F.sheet({
           title: F.t("forensics.demo_exists", "Эталонный кейс уже есть"),

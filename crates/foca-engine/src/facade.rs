@@ -140,8 +140,11 @@ impl Engine {
             }
             "project_open" => {
                 let id = self.project_arg(&a)?;
-                self.db(&id)?;
-                self.store().settings_set(&json!({ "last_project": id }))?;
+                let db = self.db(&id)?;
+                // a reference case is never restored as the last opened project
+                if !lock(&db).is_reference_case()? {
+                    self.store().settings_set(&json!({ "last_project": id }))?;
+                }
                 self.snapshot_json(&id)
             }
             "project_create" => projects::project_create(self, &a),

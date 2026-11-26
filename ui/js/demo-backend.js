@@ -5108,6 +5108,7 @@
       risk: riskOf(st),
       scanning: !!(RUN && RUN.project === st.project.id),
       progress: RUN && RUN.project === st.project.id ? RUN.progress : 0,
+      reference: !!st.project.reference,
     };
   };
 
@@ -9609,8 +9610,8 @@
     project_list: () => load().order.map(id => summary(P(id))),
     project_snapshot: ({ id }) => snapshot(id),
     project_open: ({ id }) => {
-      P(id);
-      load().settings.last_project = id;
+      // A reference case is never restored as the last opened project (like the core).
+      if (!P(id).project.reference) load().settings.last_project = id;
       save();
       return snapshot(id);
     },
@@ -11548,10 +11549,12 @@
     // Built-in reference case (docs/API.md → demo_case_import): the demo imports twelve of its own documents.
     demo_case_import: ({ name } = {}) => {
       const docs = ((load().projects.contoso || {}).docs || []).slice(0, 12).map(d => d.name);
-      return {
-        ...importOffline({ name: name || demoCaseName(), domain: "example.test", paths: docs }),
-        demo_case: true,
-      };
+      const r = importOffline({ name: name || demoCaseName(), domain: "example.test", paths: docs });
+      if (r.project) {
+        P(r.project).project.reference = true;
+        save();
+      }
+      return { ...r, demo_case: true };
     },
     import_cancel: () => ({ ok: false }),
     platform_pick_folder: () => ({

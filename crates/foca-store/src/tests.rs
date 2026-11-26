@@ -1655,3 +1655,26 @@ fn scan_delete_recomputes_fixed_scan() {
     assert_eq!(db.scans().unwrap().len(), 1);
 }
 
+#[test]
+fn reference_case_is_marked_in_the_summary() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let p = new_project(&s);
+    let db = s.open_project(&p.id).unwrap();
+    assert!(!db.summary().unwrap().reference);
+    // a case imported before the marker existed: its documents come from the reference archive
+    db.add_document(&AddDoc {
+        name: "a.docx".into(),
+        source: format!("zip:{}", crate::project::REFERENCE_CASE_ARCHIVE),
+        status: DocStatus::Downloaded,
+        sha256: Some(format!("{:064x}", 5)),
+        ..Default::default()
+    })
+    .unwrap();
+    assert!(db.summary().unwrap().reference);
+    let p2 = new_project(&s);
+    let db2 = s.open_project(&p2.id).unwrap();
+    db2.set_setting(crate::project::REFERENCE_CASE_KEY, &serde_json::json!(true))
+        .unwrap();
+    assert!(db2.is_reference_case().unwrap());
+}

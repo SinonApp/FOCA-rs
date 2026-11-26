@@ -20,6 +20,12 @@ use crate::{iso, schema, ProjectPatch, Result, StoreError};
 /// Project setting key of the user search rules.
 pub const RULES_KEY: &str = "analysis.rules";
 
+/// Project setting that marks a built-in reference case (`demo_case_import`).
+pub const REFERENCE_CASE_KEY: &str = "reference_case";
+/// Archive the reference case is imported from; its documents carry the source
+/// `zip:<archive>`, which also recognises cases created before [`REFERENCE_CASE_KEY`] existed.
+pub const REFERENCE_CASE_ARCHIVE: &str = "priklad-reference-case.zip";
+
 /// Entity kinds stored as whole JSON values after analysis.
 pub const ENTITY_KINDS: &[&str] = &[
     "docs", "people", "emails", "patterns", "hosts", "pcs", "software", "os", "paths", "printers",
@@ -1890,6 +1896,19 @@ impl ProjectDb {
     }
 
     /// Returns the summary used by `project_list`.
+    /// True for a built-in reference case: marked on import, or (older cases) holding documents
+    /// imported from the reference archive.
+    pub fn is_reference_case(&self) -> Result<bool> {
+        if self.setting(REFERENCE_CASE_KEY)?.and_then(|v| v.as_bool()) == Some(true) {
+            return Ok(true);
+        }
+        Ok(self.conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM documents WHERE source = ?1)",
+            [format!("zip:{REFERENCE_CASE_ARCHIVE}")],
+            |r| r.get(0),
+        )?)
+    }
+
     pub fn summary(&self) -> Result<ProjectSummary> {
         let info = self.info()?;
         let scans = self.scans()?;
@@ -1923,6 +1942,7 @@ impl ProjectDb {
             risk: foca_analysis::findings::risk(&findings, !scans.is_empty() || docs > 0).score,
             scanning: scans.iter().any(|s| s.status == "running"),
             progress: 0,
+            reference: self.is_reference_case()?,
         })
     }
 }

@@ -33,7 +33,7 @@ On first launch, FOCA-rs automatically detects your phone's system language (`Lo
 
 Each project represents one assessment (one organization or client engagement). All project data is stored in an isolated SQLite database (`<id>.foca`, with FTS5 full-text index) inside the app's private data directory (see [ADR-0004](../adr/0004-sqlite-per-project.md)); Android cloud backup is disabled for this directory. Deleting a project removes its database and all downloaded documents.
 
-From the Projects screen (`/projects`), you can create, open, duplicate, delete, or transfer projects using encrypted `.foca.enc` bundles (see [Encrypted `.foca.enc` bundles](data-and-reports.md#encrypted-focaenc-project-bundles)). Each project card shows its overall risk score and counters from the latest scan.
+From the Projects screen (`/projects`), you can create, open, duplicate, delete, or transfer projects using encrypted `.foca.enc` bundles (see [Encrypted `.foca.enc` bundles](data-and-reports.md#encrypted-focaenc-project-bundles)). Each project card shows its overall risk score and counters from the latest scan. The offline reference case is not listed under Recent projects and is never reopened on app start: open it again with Open the reference case.
 
 To delete a single scan, open it in the scan history on the Scan screen (or the card of a stopped or paused scan), tap Delete scan and hold Delete. The scan is erased with everything only it produced: downloaded documents and their files (wiped), findings, hosts and the request log. Anything a later scan also listed stays, with your notes, tags and statuses; a paused scan is stopped first and can no longer be resumed.
 

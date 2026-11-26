@@ -76,6 +76,11 @@
       "t": [
        "number"
       ]
+     },
+     "reference": {
+      "t": [
+       "bool"
+      ]
      }
     }
    }
@@ -7463,6 +7468,11 @@
      "t": [
       "number"
      ]
+    },
+    "reference": {
+     "t": [
+      "bool"
+     ]
     }
    }
   },
@@ -7535,6 +7545,11 @@
      "t": [
       "number"
      ]
+    },
+    "reference": {
+     "t": [
+      "bool"
+     ]
     }
    }
   },
@@ -7606,6 +7621,11 @@
     "progress": {
      "t": [
       "number"
+     ]
+    },
+    "reference": {
+     "t": [
+      "bool"
      ]
     }
    }
@@ -7769,6 +7789,11 @@
       "progress": {
        "t": [
         "number"
+       ]
+      },
+      "reference": {
+       "t": [
+        "bool"
        ]
       }
      }

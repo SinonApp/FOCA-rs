@@ -1,5 +1,5 @@
 //! Deleting one scan (`scan_delete`): a stopped scan, a paused running scan, a scan whose
-//! results a later scan also listed.
+//! results a later scan also listed; reference cases stay out of the restored project.
 
 use crate::common::*;
 use serde_json::{json, Value};
@@ -210,3 +210,27 @@ async fn delete_first_of_two_scans_keeps_shared_results() {
     assert_eq!(rec["docs"], before["scans"][1]["docs"]);
 }
 
+/// A reference case is listed with `reference: true` and opening it does not make it the last
+/// opened project.
+#[tokio::test]
+async fn reference_case_is_not_restored_on_start() {
+    let e = env(0).await;
+    let own = e.project("example.test").await;
+    e.call("project_open", json!({ "id": own })).await;
+    let r = e.call("demo_case_import", json!({})).await;
+    let rid = r["project"].as_str().unwrap().to_string();
+    e.call("project_open", json!({ "id": rid })).await;
+    let st = e.call("settings_get", json!({})).await;
+    assert_eq!(st["last_project"], json!(own));
+    let list = e.call("project_list", json!({})).await;
+    let by = |pid: &str| {
+        list.as_array()
+            .unwrap()
+            .iter()
+            .find(|p| p["id"] == pid)
+            .cloned()
+            .unwrap()
+    };
+    assert_eq!(by(&rid)["reference"], true);
+    assert_eq!(by(&own)["reference"], false);
+}

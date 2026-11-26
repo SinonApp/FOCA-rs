@@ -32,7 +32,7 @@ API keys and alert bot/webhook tokens are never stored in SQLite: only status an
 |---|---|---|
 | `src/lib.rs` | 534 | `Store` (`projects.db` index, project creation/listing/archiving, `import_project_db`, settings), `StoreError`, `iso()` |
 | `src/lock.rs` | 164 | Exclusive lock on the application's data directory (`<dir>/engine.lock`) |
-| `src/project.rs` | 1,961 | Project database `<id>.foca`: documents, entities, findings with triage, infra, scans, request log, tasks, undo log, project settings and user search rules, `export_sqlite_bytes`, `rewrite_identity`, `remap_doc_local_paths` |
+| `src/project.rs` | 1,961 | Project database `<id>.foca`: documents, entities, findings with triage, infra, scans, request log, tasks, undo log, project settings and user search rules, `export_sqlite_bytes`, `rewrite_identity`, `remap_doc_local_paths`, reference-case marker |
 | `src/erase.rs` | 325 | `scan_delete`: erases one scan and what only it produced (documents and files, request log, queue rows, per-scan settings, infra rows, scan-only findings), keeps what a later scan listed and recomputes first/fixed scan |
 | `src/schema.rs` | 250 | Forward-only SQLite schema migrations keyed on `PRAGMA user_version` (currently project schema v10: plain-hyphen empty-value mark) |
 | `src/search.rs` | 488 | Full-text search over document text (`I-5`, FTS5 `doc_fts`) |

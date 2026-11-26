@@ -12,7 +12,7 @@ use crate::CmdResult;
 /// The embedded ZIP (`assets/demo_case.zip`).
 const DEMO_CASE_ZIP: &[u8] = include_bytes!("../../assets/demo_case.zip");
 /// Archive name shown in the import log.
-const DEMO_CASE_FILE: &str = "priklad-reference-case.zip";
+const DEMO_CASE_FILE: &str = foca_store::project::REFERENCE_CASE_ARCHIVE;
 /// Default project name (Russian template of `core.demo_case.name`, shown in the UI language).
 const DEMO_CASE_NAME: &str = "Эталонный кейс";
 /// Scope target of the case.
@@ -35,6 +35,12 @@ pub(crate) async fn demo_case_import(core: &Core, a: &Value) -> CmdResult {
         "files": [{ "name": DEMO_CASE_FILE, "data": foca_core::b64::encode(DEMO_CASE_ZIP) }],
     });
     let mut v = super::offline::import_offline(core, &args).await?;
+    // mark the project so it stays out of recent projects and is never restored on start
+    if let Some(id) = v["project"].as_str() {
+        let db = core.db(id)?;
+        crate::engine::lock(&db)
+            .set_setting(foca_store::project::REFERENCE_CASE_KEY, &json!(true))?;
+    }
     v["demo_case"] = json!(true);
     Ok(v)
 }

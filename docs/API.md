@@ -89,7 +89,7 @@ Headless data invariant verification: `node qa/data-invariants.mjs`.
 |---|---|---|
 | `project_list` | - | `ProjectSummary[]` |
 | `project_snapshot` | `{ id }` | `Snapshot` |
-| `project_open` | `{ id }` | `Snapshot` (also persists `settings.last_project`) |
+| `project_open` | `{ id }` | `Snapshot` (also persists `settings.last_project`, except for a reference case: it is never restored on start) |
 | `project_create` | `{ name, client, targets: (string \| { v, type })[], excludes: string[] }` | `ProjectSummary` (empty project: no scans, all lists empty, `risk: null`). The `/new` wizard passes target objects with UI-detected types (person, e-mail, ASN, IP range) |
 | `project_update` | `{ id, patch: { name?, client?, notes?, archived? } }` | `ProjectSummary`. `notes` stores project notes (F-1, "Project Properties"). Alternative domains are not a separate entity, they are scope targets with `type: "domain"` (managed via `scope_set`) |
 | `project_duplicate` | `{ id }` | `ProjectSummary` (copies targets and scope without scan results) |
@@ -633,7 +633,8 @@ tables or schema migrations required).
 ```ts
 ProjectSummary { id, name, client, created_at, archived, last_scan_at|null, last_profile|null, scans: number,
                  docs: number /* excluding deleted */, findings: number /* active: excluding false positives & fixed */,
-                 risk: number|null /* null when no scans completed */, scanning: bool, progress: number }
+                 risk: number|null /* null when no scans completed */, scanning: bool, progress: number,
+                 reference: bool /* built-in reference case (demo_case_import): kept out of recent projects */ }
 
 Snapshot { project, scope, docs[], people[], emails[], patterns[], hosts[], pcs[], software[], paths[], printers[],
            secrets[], findings[], gps[], events[], scans[], reports[], leaks{}, settings, scan /* ScanStatus */, oos[],
