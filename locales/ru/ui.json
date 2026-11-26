@@ -196,7 +196,7 @@
   "insights.no_paths": "Многошаговых цепочек компрометации пока не выявлено.",
 
   "signatures.title": "Базы сигнатур",
-  "signatures.update": "Проверить и обновить",
+  "signatures.update": "Проверить обновления",
   "signatures.import": "Импортировать пакет",
   "signatures.rollback": "Откатить",
 

@@ -196,7 +196,7 @@
   "insights.no_paths": "No multi-step compromise chains detected yet.",
 
   "signatures.title": "Signature databases",
-  "signatures.update": "Check & update",
+  "signatures.update": "Check for updates",
   "signatures.import": "Import bundle",
   "signatures.rollback": "Rollback",
 

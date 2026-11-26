@@ -812,7 +812,17 @@ for (const id of S.order) {
   const apEmpty = B.invokeSync("attack_paths_get", { project: emptyProj.id });
   B.invokeSync("project_delete", { id: emptyProj.id });
   const sigInit = B.invokeSync("signatures_status", {});
+  // Nothing is published at the feed: the check reports no_update and installs nothing.
   const sigUp = B.invokeSync("signatures_update", {});
+  B.invokeSync("signatures_import", {
+    bundle_json: JSON.stringify({
+      schema: "foca-sig-bundle/v1",
+      version: "2026.11.24",
+      released_at: "2026-11-24",
+      kev_additions: [{ cve: "CVE-2099-0001", product_key: "php" }],
+      signature_ed25519: "11",
+    }),
+  });
   const sigAfterUp = B.invokeSync("signatures_status", {});
   const sigRb = B.invokeSync("signatures_rollback", {});
   ok(
@@ -823,10 +833,14 @@ for (const id of S.order) {
       apEmpty.paths.length === 0 &&
       apEmpty.choke_points.length === 0 &&
       sigInit.schema === "foca-sig-bundle/v1" &&
-      sigUp.source === "bundle" &&
+      sigUp.source === sigInit.source &&
+      sigUp.last_check?.outcome === "no_update" &&
+      sigAfterUp.source === "bundle" &&
+      sigAfterUp.kev.used === sigInit.kev.used + 1 &&
+      sigAfterUp.kev.used <= sigAfterUp.kev.total &&
       sigAfterUp.can_rollback === true &&
       typeof sigRb.version === "string",
-    JSON.stringify({ ap: apDemo.summary, sigSource: sigAfterUp.source, sigRb: sigRb.version }),
+    JSON.stringify({ ap: apDemo.summary, sigUp: sigUp.last_check, sigSource: sigAfterUp.source, sigRb: sigRb.version }),
   );
 }
 

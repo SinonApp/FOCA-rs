@@ -11,10 +11,22 @@ use crate::util::{arg_str, req_str};
 use crate::{CmdError, CmdResult, Engine};
 
 impl Engine {
+    /// Status JSON with `last_check.error_msg` for the UI language.
+    fn sig_json(st: crate::services::sigbundle::SigStatus) -> CmdResult {
+        let mut v = serde_json::to_value(st)?;
+        if v["last_check"].is_object() {
+            crate::i18n::annotate(&mut v["last_check"], &["error"]);
+        }
+        Ok(v)
+    }
+
     /// `signatures_status {}` → current verified signature database metadata.
     pub(crate) fn signatures_status(&self) -> CmdResult {
-        let st = crate::services::sigbundle::status(&self.inner.cfg.data_dir);
-        serde_json::to_value(st).map_err(Into::into)
+        let today = self.now().date();
+        Self::sig_json(crate::services::sigbundle::status(
+            &self.inner.cfg.data_dir,
+            today,
+        ))
     }
 
     /// `signatures_import { bundle_json }` → verifies Ed25519 + SHA-256 and atomically applies the bundle.
@@ -22,26 +34,33 @@ impl Engine {
         let raw = if let Some(s) = arg_str(a, "bundle_json") {
             s.to_string()
         } else if let Some(obj) = a.get("bundle") {
-            serde_json::to_string(obj)
-                .map_err(|e| CmdError::new("bad_args", format!("bundle JSON: {e}")))?
+            serde_json::to_string(obj).map_err(|e| {
+                CmdError::new(
+                    "bad_args",
+                    format!("Некорректный JSON бандла сигнатур: {e}"),
+                )
+            })?
         } else {
             return Err(CmdError::new(
                 "bad_args",
                 "Нужен bundle_json или bundle (foca-sig-bundle/v1)",
             ));
         };
-        let st = crate::services::sigbundle::import_bundle(&self.inner.cfg.data_dir, &raw)?;
-        serde_json::to_value(st).map_err(Into::into)
+        let today = self.now().date();
+        let st = crate::services::sigbundle::import_bundle(&self.inner.cfg.data_dir, &raw, today)?;
+        Self::sig_json(st)
     }
 
-    /// `signatures_update { url? }` → fetches a signed Ed25519 signature bundle from an HTTPS
-    /// feed URL and activates it; when no feed URL is supplied, returns the current verified
-    /// signature database status without offline self-signing.
+    /// `signatures_update { url? }` → checks the update feed (the official one when `url` is
+    /// absent): installs a newer verified bundle, reports `no_update` when nothing is published
+    /// (HTTP 404) and `up_to_date` when the feed holds no newer version. The outcome is stored in
+    /// `last_check`; a failed check is stored too and returned as the error.
     pub(crate) async fn signatures_update(&self, a: &Value) -> CmdResult {
-        let Some(url) = arg_str(a, "url").map(str::trim).filter(|u| !u.is_empty()) else {
-            let st = crate::services::sigbundle::status(&self.inner.cfg.data_dir);
-            return serde_json::to_value(st).map_err(Into::into);
-        };
+        use crate::services::sigbundle;
+        let url = arg_str(a, "url")
+            .map(str::trim)
+            .filter(|u| !u.is_empty())
+            .unwrap_or(sigbundle::DEFAULT_FEED_URL);
         let parsed = url::Url::parse(url).ok().filter(|u| {
             let scheme_ok = match u.scheme() {
                 "https" => true,
@@ -61,19 +80,34 @@ impl Engine {
                 "URL фида сигнатур должен использовать HTTPS и публичный хост",
             ));
         }
-        let net = self.net_client(Scope::default(), Arc::new(foca_net::NullSink))?;
-        let raw = net
-            .get_text(url, "signatures", Access::Passive)
-            .await
-            .map_err(|e| CmdError::new("net", format!("Загрузка бандла сигнатур: {e}")))?;
-        let st = crate::services::sigbundle::import_bundle(&self.inner.cfg.data_dir, &raw)?;
-        serde_json::to_value(st).map_err(Into::into)
+        let fetched = match self.net_client(Scope::default(), Arc::new(foca_net::NullSink)) {
+            Ok(net) => match net.get_text(url, "signatures", Access::Passive).await {
+                Ok(raw) => Ok(raw),
+                Err(foca_net::NetError::Status(s @ (404 | 410))) => {
+                    Err(CmdError::new("not_published", format!("HTTP {s}")))
+                }
+                Err(e) => Err(CmdError::new(
+                    "net",
+                    format!("Загрузка бандла сигнатур: {e}"),
+                )),
+            },
+            Err(e) => Err(e),
+        };
+        let st = sigbundle::apply_feed(
+            &self.inner.cfg.data_dir,
+            url,
+            fetched,
+            &sigbundle::official_pubkey_bytes(),
+            self.now(),
+        )?;
+        Self::sig_json(st)
     }
 
     /// `signatures_rollback {}` → restores the previous verified bundle or the builtin database.
     pub(crate) fn signatures_rollback(&self) -> CmdResult {
-        let st = crate::services::sigbundle::rollback(&self.inner.cfg.data_dir)?;
-        serde_json::to_value(st).map_err(Into::into)
+        let today = self.now().date();
+        let st = crate::services::sigbundle::rollback(&self.inner.cfg.data_dir, today)?;
+        Self::sig_json(st)
     }
 
     // ================= Sandboxed plugin engine =================

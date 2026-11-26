@@ -39,8 +39,9 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
   - Enabled user plugins run in the network stage of real scans (`scan/plugins.rs`, source id `plugins`); a failing plugin is reported on the source and never fails the scan, and plugins held by the passive policy report `skipped`.
   - Commands: `plugins_list`, `plugin_install`, `plugin_toggle`, `plugin_remove`, `plugin_test`.
 - **Signed Signature Bundles (`services/sigbundle.rs`)**:
-  - Updates CISA KEV entries, CPE rules, and secret patterns without rebuilding the APK via `foca-sig-bundle/v1`.
+  - Updates CISA KEV entries and secret patterns without rebuilding the APK via `foca-sig-bundle/v1` (CPE prefixes are stored but not used for matching).
   - Verifies both `SHA-256` and `Ed25519` (`ring::signature::ED25519`) before atomically installing `<data_dir>/signatures/current.json`, retaining `previous.json` for instant rollback (`signatures_status`, `signatures_import`, `signatures_rollback`).
+  - `signatures_update` checks the official feed (rolling GitHub release `signatures`): 404 = `no_update`, not newer = `up_to_date`, newer = installed, failures are recorded and returned as coded errors; every check lands in `last_check.json`. Status counts come from the loaded tables. Details and the maintainer tool (`examples/sig_bundle.rs`, `scripts/build-sig-bundle.sh`): [signature bundles](../signature-bundles.md).
 - **Cloud-Only AI with Live Models & Thinking Controls (`cmds/ai.rs`, `services/ai.rs`)**:
   - **No local/on-device AI**: all local AI code has been removed; AI summarization operates strictly over cloud APIs with explicit user review of redacted prompts (`ai_preview` → `ai_summarize`).
   - Supported providers: `openai`, `anthropic`, `gemini`, `deepseek`, `xai`, `mistral`, `groq`, `together`, `openrouter`, and `custom` (user-supplied HTTPS OpenAI-compatible base URL). Keys live in `KeyVault("ai")` and are never written to `request_log`; requests use `Access::Passive` through `NetClient`.
@@ -86,7 +87,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `cmds/ai.rs` | 766 | AI summary: provider requests, model lists, stored summary |
 | `cmds/config.rs` | 234 | API keys, network checks, UI dictionary |
 | `cmds/security.rs` | 154 | PIN and wipe-all |
-| `cmds/extensions.rs` | 158 | Signature bundles and plugins |
+| `cmds/extensions.rs` | 192 | Signature bundles and plugins |
 | `cmds/bundle.rs` | 666 | Encrypted `.foca.enc` project container |
 | `cmds/offline.rs` | 664 | Offline import of files, folders and ZIP (no network), FTS5 search, search rules |
 | `cmds/hygiene.rs` | 387 | `hygiene_get`, `doc_clean` via `clean_and_verify`, shared-file mode |
@@ -103,7 +104,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `services/i18n.rs` | 470 | Embedded UI/help dictionaries over IPC (`i18n_bundle`), core message codes |
 | `services/logs.rs` | 306 | `tracing` subscriber: ring buffer and rotating `<data>/logs/foca.log` |
 | `services/plugins.rs` | 1,978 | Declarative and WASM plugin runtime |
-| `services/sigbundle.rs` | 586 | Ed25519 + SHA-256 signed signature bundles with rollback |
+| `services/sigbundle.rs` | 1174 | Ed25519 + SHA-256 signed signature bundles with rollback |
 | `services/ai.rs` | 617 | AI provider protocol: request bodies, headers, response parsing, model lists |
 | `services/ocr.rs` | 248 | Optional on-device OCR pipeline (off by default) |
 | `services/resume.rs` | 172 | Auto-resume state (`engine_run.json`) after the OS kills the process |

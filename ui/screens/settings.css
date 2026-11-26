@@ -9,7 +9,7 @@
   flex: none;
 }
 .st-mt {
-  margin-top: 12px;
+  margin-top: var(--form-gap);
 }
 .st-pg .banner + .btn {
   margin-top: -2px;
@@ -85,6 +85,9 @@
 }
 .st-kres .bad {
   color: var(--bad);
+}
+.st-kres + .btn.block {
+  margin-top: var(--form-gap);
 }
 
 /* API keys */
@@ -701,14 +704,37 @@
   gap: 12px;
   margin-bottom: 12px;
 }
-.st-sigtop-b > div:last-child {
+/* The text column shrinks first; the chip never wraps inside. When even a short text column
+   (7em) no longer fits next to the chip (narrow screen, large font), the chip moves to its own line. */
+.st-sigtop-b {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.st-sigtop-t {
   display: flex;
   flex-direction: column;
+  flex: 1 1 7em;
   min-width: 0;
 }
-.st-sigtop-b span {
+.st-sigtop-t span {
   color: var(--text-3);
   font-size: 0.85rem;
+}
+.st-sigpill {
+  flex: none;
+  white-space: nowrap;
+}
+.st-nw {
+  white-space: nowrap;
+}
+.st-sigstale {
+  margin-bottom: 12px;
+}
+.st-sigkv {
+  margin: 8px 0 10px;
+}
+.st-siglist .s .st-sigl {
+  display: block;
 }
 .st-sigpb {
   margin-bottom: 12px;

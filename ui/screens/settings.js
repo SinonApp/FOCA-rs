@@ -2792,6 +2792,33 @@
     const v = String(s || "");
     return v.length > 20 ? `${v.slice(0, 10)}…${v.slice(-8)}` : v || "-";
   };
+  // Dates in the app format (20.11.2026) never break inside: hyphens and spaces stay on one line.
+  const sigDate = iso => `<span class="st-nw">${esc(F.fmt.dmy(String(iso || "")) || "-")}</span>`;
+  // Escapes `text` and keeps hyphenated document codes (800-53, 2.5-004-99) on one line, so a line
+  // break falls between words, never inside a code.
+  const noBreakCodes = text =>
+    String(text)
+      .split(" ")
+      .map(w => (w.includes("-") ? `<span class="st-nw">${esc(w)}</span>` : esc(w)))
+      .join(" ");
+  const sigAge = days =>
+    days === 0
+      ? F.t("settings.sig_today", "сегодня")
+      : F.tp("settings.days_ago", days, { n: days }, "{n} день назад|{n} дня назад|{n} дней назад");
+  // Last update check: local time and outcome in words; "never" before the first check.
+  function sigLastCheck(c) {
+    if (!c || !c.outcome) return esc(F.t("settings.sig_never", "ещё не проверялось"));
+    const at = F.fmt.dmyhm(String(c.at || ""));
+    const what =
+      c.outcome === "installed"
+        ? F.t("settings.sig_out_installed", { v: c.version || "" }, "установлена версия {v}")
+        : c.outcome === "up_to_date"
+          ? F.t("settings.sig_out_up_to_date", "новее нет, база актуальна")
+          : c.outcome === "no_update"
+            ? F.t("settings.sig_out_no_update", "новая база ещё не опубликована")
+            : F.t("settings.sig_out_failed", { e: F.coreMsg(c.error || "", c.error_msg) }, "ошибка: {e}");
+    return `<span class="st-nw">${esc(at)}&nbsp;·</span> ${esc(what)}`;
+  }
   function renderSig() {
     loadAboutMeta();
     const d = sigState.data;
@@ -2802,67 +2829,127 @@
     }
     const ocr = (F.db.settings || {}).ocr || { enabled: false, max_pages: 10, max_mb: 15 };
     const cnt = d.counts || {};
-    const fmtInt = n => Number(n || 0).toLocaleString(numLoc());
+    const kev = d.kev || {};
+    const sw = d.software || {};
+    const sm = d.std_map || {};
+    const fmtInt = n => F.fmtNum(Number(n || 0));
     const isFoss = aboutMeta.flavor === "foss";
+    const bundle = d.source === "bundle";
+    const line = html => `<span class="st-sigl">${html}</span>`;
+    // Labels come from the core mapping; Ukrainian document names use the UI spelling (ND TZI in EN).
+    const fwLabel = f => {
+      const label = String(f.label || "").replace(/НД ТЗІ/g, F.t("findings.std.ndtzi", "НД ТЗІ"));
+      return f.legacy ? F.t("settings.std_legacy", { label }, "{label} (устаревшие, КСЗИ)") : label;
+    };
     const rows = [
       [
         "app",
-        F.t("settings.sig_cpe", "ПО и версии (CPE)"),
-        F.tp("settings.n_sigs", cnt.cpe, { n: fmtInt(cnt.cpe) }, "{n} сигнатура|{n} сигнатуры|{n} сигнатур") +
-          (d.added_cpe ? " " + F.t("settings.plus_bundle", { n: d.added_cpe }, "(+{n} из пакета)") : ""),
+        F.t("settings.sig_sw", "ПО и ОС"),
+        line(
+          esc(
+            F.tp(
+              "settings.n_sigs",
+              cnt.cpe,
+              { n: fmtInt(cnt.cpe) },
+              "{n} сигнатура|{n} сигнатуры|{n} сигнатур",
+            ),
+          ),
+        ) +
+          line(
+            esc(
+              F.t(
+                "settings.sig_sw_split",
+                { sw: fmtInt(sw.software), os: fmtInt(sw.os) },
+                "ПО: {sw}, ОС: {os}",
+              ),
+            ),
+          ),
       ],
       [
         "bug",
-        "CVE (NVD + CISA KEV)",
-        `${F.tp("settings.n_records", cnt.cve, { n: fmtInt(cnt.cve) }, "{n} запись|{n} записи|{n} записей")}${d.added_kev ? ` (+${d.added_kev} KEV)` : ""}`,
+        F.t("settings.sig_kev", "CISA KEV: эксплуатируемые уязвимости"),
+        line(
+          esc(
+            F.t(
+              "settings.sig_kev_used",
+              { used: fmtInt(kev.used), total: fmtInt(kev.total) },
+              "Для сопоставления: {used} из {total} в каталоге",
+            ),
+          ),
+        ) +
+          line(
+            `${F.t("settings.sig_kev_date", { date: sigDate(kev.released) }, "Каталог от {date}")}${
+              kev.age_days == null ? "" : `&nbsp;· <span class="st-nw">${esc(sigAge(kev.age_days))}</span>`
+            }`,
+          ),
       ],
       [
         "key",
         F.t("settings.sig_secrets", "Секреты"),
-        F.tp(
-          "settings.n_rules",
-          cnt.secrets,
-          { n: fmtInt(cnt.secrets) },
-          "{n} правило|{n} правила|{n} правил",
-        ) +
-          (d.added_secrets
-            ? " " + F.t("settings.plus_bundle", { n: d.added_secrets }, "(+{n} из пакета)")
-            : ""),
+        line(
+          esc(
+            F.tp(
+              "settings.n_rules",
+              cnt.secrets,
+              { n: fmtInt(cnt.secrets) },
+              "{n} правило|{n} правила|{n} правил",
+            ) +
+              (d.added_secrets
+                ? " " + F.t("settings.incl_bundle", { n: d.added_secrets }, "(в т. ч. {n} из пакета)")
+                : ""),
+          ),
+        ),
       ],
       [
         "shield",
-        F.t("settings.sig_std", "Стандарты (MITRE/CWE/OWASP/КСЗІ)"),
-        F.tp(
-          "settings.n_maps",
-          cnt.standards,
-          { n: fmtInt(cnt.standards) },
-          "{n} сопоставление|{n} сопоставления|{n} сопоставлений",
-        ),
+        F.t("settings.sig_std", "Стандарты"),
+        line(
+          esc(
+            `${F.tp("settings.n_maps", sm.refs, { n: fmtInt(sm.refs) }, "{n} сопоставление|{n} сопоставления|{n} сопоставлений")} · ${F.tp(
+              "settings.n_finding_rules",
+              sm.rules,
+              { n: fmtInt(sm.rules) },
+              "{n} правило находок|{n} правила находок|{n} правил находок",
+            )}`,
+          ),
+        ) + line(noBreakCodes((sm.frameworks || []).map(fwLabel).join(", "))),
       ],
     ];
+    const title = sigState.busy
+      ? F.t("settings.running", "Выполняется…")
+      : F.t("settings.version_v", { v: d.version || "-" }, "Версия {v}");
     return `
       <div class="card pad st-sigtop">
         <div class="st-sigtop-b">
           ${ui.leadIcon("st-sig", d.signature_valid ? "var(--ok)" : "var(--bad)")}
-          <div>
-            <b>${esc(sigState.busy ? F.t("settings.running", "Выполняется…") : F.t("settings.version_v", { v: d.version || "-" }, "Версия {v}"))}</b>
-            <span>${esc(d.source === "bundle" ? F.t("settings.signed_bundle", "Подписанный пакет") : F.t("settings.builtin_db", "Встроенная база"))} · ${esc(d.updated_at || "-")}</span>
+          <div class="st-sigtop-t">
+            <b>${esc(title)}</b>
+            <span>${esc(bundle ? F.t("settings.signed_bundle", "Подписанный пакет") : F.t("settings.builtin_db", "Встроенная база"))}&nbsp;· ${sigDate(d.updated_at)}</span>
           </div>
-          <span class="pill ${d.signature_valid ? "ok" : "bad"}">${d.signature_valid ? "Ed25519 OK" : F.t("settings.not_verified", "Не проверено")}</span>
+          ${bundle ? `<span class="pill ${d.signature_valid ? "ok" : "bad"} st-sigpill">${d.signature_valid ? "Ed25519 OK" : esc(F.t("settings.not_verified", "Не проверено"))}</span>` : ""}
         </div>
-        <div class="kv" style="margin:8px 0 10px">
+        ${
+          kev.stale
+            ? `<div class="banner warn st-sigstale">${ic("alert")}<div>${F.t(
+                "settings.sig_stale",
+                { date: sigDate(kev.released), age: esc(sigAge(kev.age_days)) },
+                "Каталог CISA KEV от {date} устарел ({age}). Проверьте обновления.",
+              )}</div></div>`
+            : ""
+        }
+        <div class="kv st-sigkv">
+          <div class="kvr"><div class="k">${esc(F.t("settings.sig_last_check", "Последняя проверка"))}</div><div class="v" id="st-siglast">${sigLastCheck(d.last_check)}</div></div>
           <div class="kvr"><div class="k">SHA-256</div><div class="v mono">${esc(shortHex(d.sha256))}</div></div>
           <div class="kvr"><div class="k">${esc(F.t("settings.ed_key", "Ключ Ed25519"))}</div><div class="v mono">${esc(shortHex(d.pubkey_ed25519))}</div></div>
         </div>
         <div class="btnrow">
-          <button class="btn primary" data-act="st-sigupd" ${sigState.busy ? "disabled" : ""}>${ic(sigState.busy ? "spin" : "refresh", sigState.busy ? "spin" : "")}${esc(F.t("signatures.update", "Проверить и обновить"))}</button>
+          <button class="btn primary" data-act="st-sigupd" ${sigState.busy ? "disabled" : ""}>${ic(sigState.busy ? "spin" : "refresh", sigState.busy ? "spin" : "")}${esc(F.t("signatures.update", "Проверить обновления"))}</button>
           <button class="btn tonal" data-act="st-sigimp" ${sigState.busy ? "disabled" : ""}>${ic("download")}${esc(F.t("signatures.import", "Импортировать пакет"))}</button>
           ${d.can_rollback ? `<button class="btn" data-act="st-sigrb" ${sigState.busy ? "disabled" : ""}>${ic("history")}${esc(F.t("signatures.rollback", "Откатить"))}</button>` : ""}
         </div>
       </div>
       ${ui.secH(F.t("settings.db_contents", "Содержимое базы"), rows.length)}
-      <div class="list">${rows.map(([i, t, sub]) => ui.row({ lead: ui.leadIcon(i), title: t, sub: esc(sub) })).join("")}</div>
-      <div class="list st-mt">${tRow("sig.auto", F.t("settings.auto_update", "Обновлять автоматически"), F.t("settings.auto_update_sub", "Раз в сутки, только по Wi-Fi"), ui.leadIcon("st-wifi"))}</div>
+      <div class="list st-siglist">${rows.map(([i, t, sub]) => ui.row({ lead: ui.leadIcon(i), title: t, sub })).join("")}</div>
 
       ${ui.secH(F.t("settings.ocr_h", "Офлайн-OCR сканов (Android ML Kit)"))}
       ${isFoss ? `<div class="banner info">${ic("info")}<div>${rich(F.t("settings.foss_ocr", "Сборка [b]foss[/b] (GPL-3.0 / F-Droid) не содержит проприетарного Google ML Kit: на устройстве OCR возвращает [code]unavailable_in_foss_build[/code]. Для офлайн-OCR используйте флейвор [b]play[/b]."))}</div></div>` : ""}
@@ -2913,7 +3000,7 @@
             "settings.sig_empty_text",
             "Загрузите подписанный пакет сигнатур ПО, CVE и правил поиска секретов.",
           ),
-          action: `<button class="btn primary" data-act="st-sigupd">${ic("refresh")}${esc(F.t("signatures.update", "Проверить и обновить"))}</button>`,
+          action: `<button class="btn primary" data-act="st-sigupd">${ic("refresh")}${esc(F.t("signatures.update", "Проверить обновления"))}</button>`,
         },
       }),
     mount: page => pg(page),
@@ -2926,25 +3013,39 @@
       if (!F.api || !F.api.signatures_update || sigState.busy) return;
       sigState.busy = true;
       F.render(true);
+      const done = () => {
+        sigState.busy = false;
+        if (F.current() === "/settings/signatures") F.render(true);
+      };
       F.api.signatures_update().then(
         d => {
-          sigState.busy = false;
-          if (d && d.status) sigState.data = d.status;
-          else if (d) sigState.data = d;
-          else loadSigStatus(true);
+          sigState.data = d;
+          const c = d.last_check || {},
+            v = d.version || "";
           F.snack(
-            F.t(
-              "settings.sig_updated",
-              { v: (sigState.data && sigState.data.version) || F.t("settings.up_to_date", "актуальна") },
-              "Базы обновлены · версия {v}",
-            ),
+            c.outcome === "installed"
+              ? F.t("settings.sig_snack_installed", { v }, "Установлена база сигнатур {v}")
+              : c.outcome === "up_to_date"
+                ? F.t("settings.sig_snack_up_to_date", { v }, "Обновлений нет: версия {v} актуальна")
+                : F.t(
+                    "settings.sig_snack_no_update",
+                    { v },
+                    "Новая база ещё не опубликована. Используется текущая версия {v}",
+                  ),
           );
-          if (F.current() === "/settings/signatures") F.render(true);
+          done();
         },
         e => {
-          sigState.busy = false;
-          F.snack((e && e.message) || F.t("settings.sig_upd_fail", "Не удалось обновить базы сигнатур"));
-          if (F.current() === "/settings/signatures") F.render(true);
+          // The failed check is recorded by the core: reload the status to show it.
+          loadSigStatus(true);
+          F.snack(
+            F.t(
+              "settings.sig_snack_failed",
+              { e: F.coreMsg((e && e.message) || String(e || ""), e && e.message_msg) },
+              "Проверка не удалась: {e}",
+            ),
+          );
+          done();
         },
       );
     },

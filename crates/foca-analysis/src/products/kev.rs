@@ -160,6 +160,18 @@ impl KevCatalog {
         })
     }
 
+    /// Number of records used for matching (the kept part of the CISA catalog plus additions).
+    pub fn used(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Every record once per product key it maps to (`(record, key)`), for exporting the snapshot.
+    pub fn keyed_entries(&self) -> impl Iterator<Item = (&KevEntry, &str)> + '_ {
+        self.entries
+            .iter()
+            .flat_map(|e| e.keys.iter().map(move |k| (e, k.as_str())))
+    }
+
     /// Records of a product key.
     pub fn for_key<'a>(&'a self, key: &'a str) -> impl Iterator<Item = &'a KevEntry> + 'a {
         self.entries

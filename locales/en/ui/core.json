@@ -269,5 +269,17 @@
   "core.alert.rejected": "the service rejected the message: HTTP {status} {reason}",
   "core.alert.rate_limited": "service rate limit: retry in {s} s",
   "core.demo_case.name": "Reference case",
-  "core.reqlog.scan_running": "The scan is still running: clear its request log after it finishes"
+  "core.reqlog.scan_running": "The scan is still running: clear its request log after it finishes",
+  "core.sig.bad_url": "The signature feed URL must use HTTPS and a public host",
+  "core.sig.download": "Signature bundle download failed: {error}",
+  "core.sig.bad_schema": "Unknown signature bundle schema: {schema}",
+  "core.sig.no_version": "The signature bundle has no version or release date",
+  "core.sig.bad_sha": "The SHA-256 checksum of the signature bundle does not match its contents",
+  "core.sig.bad_sig_hex": "The Ed25519 signature is not valid hex",
+  "core.sig.bad_sig_len": "Wrong Ed25519 signature length (64 bytes expected)",
+  "core.sig.bad_signature": "The Ed25519 signature of the bundle is invalid: it was not signed with the key built into the app",
+  "core.sig.empty_rule": "A secret rule in the bundle has an empty id or pattern",
+  "core.sig.bad_rule": "Secret rule {id} in the bundle does not compile: {error}",
+  "core.sig.bad_json": "The signature bundle is not valid JSON: {error}",
+  "core.sig.need_bundle": "bundle_json or bundle (foca-sig-bundle/v1) is required"
 }

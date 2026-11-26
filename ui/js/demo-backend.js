@@ -10740,126 +10740,60 @@
         status: "verified_hash",
       };
     },
-    signatures_status: () => {
-      const db = load();
-      const cur = db._sigBundle || null;
-      return {
-        schema: "foca-sig-bundle/v1",
-        version: cur ? cur.version : "2026.11.20",
-        updated_at: cur ? cur.released_at : "2026-11-20",
-        source: cur ? "bundle" : "builtin",
-        sha256: cur ? cur.sha256 : demoSha256("builtin-kev-2026.11.20"),
-        pubkey_ed25519: "464f43412d72732d7369672d656432353531392d76312d6b65792d3230323621",
-        signature_valid: true,
-        can_rollback: Boolean(cur || db._sigPrev),
-        counts: cur ? clone(cur.counts) : { cpe: 12480, cve: 241312, secrets: 1180, standards: 640 },
-        added_kev: cur ? (cur.kev_additions || []).length : 0,
-        added_cpe: cur ? (cur.cpe_additions || []).length : 0,
-        added_secrets: cur ? (cur.secret_additions || []).length : 0,
-      };
-    },
+    signatures_status: () => demoSigStatus(),
     signatures_import: ({ bundle_json, bundle }) => {
       let b = bundle;
       if (!b && typeof bundle_json === "string") {
         try {
           b = JSON.parse(bundle_json);
         } catch (e) {
-          throw apiErr("bad_args", "Некорректный JSON бандла сигнатур: " + e.message);
+          throw apiErr("bad_args", "Некорректный JSON бандла сигнатур: " + e.message, {
+            code: "sig.bad_json",
+            params: { error: e.message },
+          });
         }
       }
-      if (!b || b.schema !== "foca-sig-bundle/v1" || !b.version || !b.released_at || !b.signature_ed25519) {
-        throw apiErr("bad_args", "Некорректная схема или отсутствует подпись Ed25519");
+      if (!b || b.schema !== "foca-sig-bundle/v1" || !b.version || !b.released_at) {
+        throw apiErr("bad_args", "Пустая версия или дата выпуска бандла сигнатур", {
+          code: "sig.no_version",
+          params: {},
+        });
+      }
+      if (!b.signature_ed25519) {
+        throw apiErr("bad_signature", "Цифровая подпись Ed25519 бандла сигнатур недействительна", {
+          code: "sig.bad_signature",
+          params: {},
+        });
       }
       const db = load();
       if (db._sigBundle) db._sigPrev = clone(db._sigBundle);
       db._sigBundle = {
-        schema: "foca-sig-bundle/v1",
         version: String(b.version),
         released_at: String(b.released_at),
-        counts: b.counts || { cpe: 12482, cve: 241624, secrets: 1181, standards: 640 },
         kev_additions: Array.isArray(b.kev_additions) ? b.kev_additions : [],
         cpe_additions: Array.isArray(b.cpe_additions) ? b.cpe_additions : [],
         secret_additions: Array.isArray(b.secret_additions) ? b.secret_additions : [],
         sha256: b.sha256 || demoSha256(String(b.version) + ":" + String(b.released_at)),
-        signature_ed25519: String(b.signature_ed25519),
       };
       save();
-      const cur = db._sigBundle;
-      return {
-        schema: "foca-sig-bundle/v1",
-        version: cur.version,
-        updated_at: cur.released_at,
-        source: "bundle",
-        sha256: cur.sha256,
-        pubkey_ed25519: "464f43412d72732d7369672d656432353531392d76312d6b65792d3230323621",
-        signature_valid: true,
-        can_rollback: true,
-        counts: clone(cur.counts),
-        added_kev: cur.kev_additions.length,
-        added_cpe: cur.cpe_additions.length,
-        added_secrets: cur.secret_additions.length,
-      };
+      return demoSigStatus();
     },
-    signatures_update: () => {
+    // No network in the demo and nothing is published at the official feed yet: the check honestly
+    // ends with `no_update` (like the core on HTTP 404) and is recorded as the last check.
+    signatures_update: ({ url } = {}) => {
       const db = load();
-      if (db._sigBundle) db._sigPrev = clone(db._sigBundle);
-      db._sigBundle = {
-        schema: "foca-sig-bundle/v1",
-        version: "2026.11.22",
-        released_at: "2026-11-22",
-        counts: { cpe: 12482, cve: 241624, secrets: 1181, standards: 640 },
-        kev_additions: [
-          {
-            cve: "CVE-2024-38077",
-            product_key: "ms_windows",
-            vendor: "Microsoft",
-            product: "Windows Remote Desktop Licensing Service",
-            date_added: "2026-11-22",
-            ransomware: true,
-            name: "Microsoft Windows Remote Desktop Licensing Service RCE",
-            fixed_in: "10.0.20348.2582",
-          },
-          {
-            cve: "CVE-2024-4577",
-            product_key: "php",
-            vendor: "PHP",
-            product: "PHP CGI",
-            date_added: "2026-11-22",
-            ransomware: true,
-            name: "PHP CGI Argument Injection Vulnerability",
-            fixed_in: "8.3.8",
-          },
-        ],
-        cpe_additions: [
-          { cpe_prefix: "cpe:/a:Fortinet:fortios", label: "FortiOS", latest_ver: "7.4.5" },
-          { cpe_prefix: "cpe:/a:gitlab:gitlab", label: "GitLab", latest_ver: "17.5.2" },
-        ],
-        secret_additions: [
-          {
-            id: "sig_cloudflare_api_token",
-            title: "Cloudflare API Token",
-            pattern: "cf_token_[A-Za-z0-9_-]{32,45}",
-          },
-        ],
-        sha256: demoSha256("2026.11.22:2026-11-22"),
-        signature_ed25519: demoSha256("ed25519-lo") + demoSha256("ed25519-hi"),
+      const d = new Date();
+      const at = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      db._sigCheck = {
+        at,
+        outcome: "no_update",
+        feed_url: url || DEMO_SIG_FEED,
+        version: null,
+        error: null,
+        error_code: null,
       };
       save();
-      const cur = db._sigBundle;
-      return {
-        schema: "foca-sig-bundle/v1",
-        version: cur.version,
-        updated_at: cur.released_at,
-        source: "bundle",
-        sha256: cur.sha256,
-        pubkey_ed25519: "464f43412d72732d7369672d656432353531392d76312d6b65792d3230323621",
-        signature_valid: true,
-        can_rollback: true,
-        counts: clone(cur.counts),
-        added_kev: cur.kev_additions.length,
-        added_cpe: cur.cpe_additions.length,
-        added_secrets: cur.secret_additions.length,
-      };
+      return demoSigStatus();
     },
     signatures_rollback: () => {
       const db = load();
@@ -10870,21 +10804,7 @@
         delete db._sigBundle;
       }
       save();
-      const cur = db._sigBundle || null;
-      return {
-        schema: "foca-sig-bundle/v1",
-        version: cur ? cur.version : "2026.11.20",
-        updated_at: cur ? cur.released_at : "2026-11-20",
-        source: cur ? "bundle" : "builtin",
-        sha256: cur ? cur.sha256 : demoSha256("builtin-kev-2026.11.20"),
-        pubkey_ed25519: "464f43412d72732d7369672d656432353531392d76312d6b65792d3230323621",
-        signature_valid: true,
-        can_rollback: Boolean(cur || db._sigPrev),
-        counts: cur ? clone(cur.counts) : { cpe: 12480, cve: 241312, secrets: 1180, standards: 640 },
-        added_kev: cur ? (cur.kev_additions || []).length : 0,
-        added_cpe: cur ? (cur.cpe_additions || []).length : 0,
-        added_secrets: cur ? (cur.secret_additions || []).length : 0,
-      };
+      return demoSigStatus();
     },
     plugins_list: () => {
       const db = load();
@@ -12084,6 +12004,82 @@
       } else out.push(0xe0 | (c >> 12), 0x80 | ((c >> 6) & 63), 0x80 | (c & 63));
     }
     return out;
+  }
+  // Signature database status, same shape as the core (sigbundle.rs SigStatus). The built-in numbers
+  // match crates/foca-analysis/signatures: kev.tsv.gz header (total 1790, kept 924), 54 KEV product
+  // groups, 54 software + 19 OS signatures, 24 secret rules and the standards.toml mapping.
+  const DEMO_SIG_FEED = "https://github.com/SinonApp/FOCA-rs/releases/download/signatures/signatures.bundle";
+  const DEMO_SIG_BUILTIN = {
+    version: "2026.11.20",
+    released: "2026-11-20",
+    total: 1790,
+    used: 924,
+    products: 54,
+    software: 54,
+    os: 19,
+    secrets: 24,
+    std_rules: 74,
+    std_refs: 438,
+  };
+  const DEMO_SIG_FRAMEWORKS = [
+    ["owasp", "OWASP Top 10:2025"],
+    ["mitre", "MITRE ATT&CK v20"],
+    ["cwe", "CWE (Top 25 2025)"],
+    ["ndtzi36", "НД ТЗІ 3.6-006-24"],
+    ["nist", "NIST SP 800-53 Rev. 5"],
+    ["iso27001", "ISO/IEC 27001:2022"],
+    ["wstg", "OWASP WSTG v4.2"],
+    ["privacy", "GDPR"],
+    ["privacy", "2297-VI"],
+    ["kszi", "НД ТЗІ 2.5-004-99, 3.7-003-05", true],
+  ];
+  function demoSigStatus() {
+    const db = load();
+    const cur = db._sigBundle || null;
+    const B = DEMO_SIG_BUILTIN;
+    // Demo bundles only add CVEs that are not in the built-in snapshot.
+    const newKev = cur ? new Set((cur.kev_additions || []).map(k => k && k.cve).filter(Boolean)).size : 0;
+    const extraSecrets = cur ? (cur.secret_additions || []).length : 0;
+    const released = new Date(B.released + "T00:00:00");
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const age = Math.max(0, Math.round((today - released) / 86400000));
+    return {
+      schema: "foca-sig-bundle/v1",
+      version: cur ? cur.version : B.version,
+      updated_at: cur ? cur.released_at : B.released,
+      source: cur ? "bundle" : "builtin",
+      sha256: cur ? cur.sha256 : demoSha256("builtin-kev-2026.11.20"),
+      pubkey_ed25519: "a3256ddc5bae21f40746663fde1e48a0f4ff8487e95a8bb7469a5602023dc527",
+      signature_valid: true,
+      can_rollback: Boolean(cur || db._sigPrev),
+      counts: {
+        cpe: B.software + B.os,
+        cve: B.used + newKev,
+        secrets: B.secrets + extraSecrets,
+        standards: B.std_refs,
+      },
+      added_kev: cur ? (cur.kev_additions || []).length : 0,
+      added_cpe: cur ? (cur.cpe_additions || []).length : 0,
+      added_secrets: extraSecrets,
+      kev: {
+        catalog: B.version,
+        released: B.released,
+        total: B.total,
+        used: B.used + newKev,
+        products: B.products,
+        age_days: age,
+        stale: age > 30,
+      },
+      software: { software: B.software, os: B.os },
+      std_map: {
+        rules: B.std_rules,
+        refs: B.std_refs,
+        frameworks: DEMO_SIG_FRAMEWORKS.map(([id, label, legacy]) => ({ id, label, legacy: !!legacy })),
+      },
+      feed_url: DEMO_SIG_FEED,
+      last_check: db._sigCheck ? clone(db._sigCheck) : null,
+    };
   }
   function demoSha256(str) {
     const bytes = utf8Bytes(str);

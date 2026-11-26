@@ -56,6 +56,8 @@
   --mono: "Roboto Mono", "Cascadia Mono", ui-monospace, monospace;
   --topbar-h: 56px;
   --nav-h: 64px;
+  /* Form spacing: gap between stacked form controls (a field and the button under it). */
+  --form-gap: 12px;
 }
 html[data-theme="light"] {
   --bg: #f2f3f5;
@@ -1121,6 +1123,14 @@ html[data-theme="light"] .seg button.on {
 }
 .fhint.err {
   color: var(--bad);
+}
+/* A full-width button stacked under a field or a check result never touches it (the result line
+   is hidden while empty, so the button would sit flush against the field). Inline field + button
+   rows (.la-inline) keep their own flex gap. */
+.field + .btn.block,
+.field + :empty + .btn.block,
+textarea.in + .btn.block {
+  margin-top: var(--form-gap);
 }
 /* A leading icon in a hint keeps a gap before the text. */
 .fhint > svg.i:first-child {

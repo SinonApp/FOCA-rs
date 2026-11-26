@@ -15804,6 +15804,152 @@
      "t": [
       "number"
      ]
+    },
+    "kev": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "catalog": {
+       "t": [
+        "string"
+       ]
+      },
+      "released": {
+       "t": [
+        "string"
+       ]
+      },
+      "total": {
+       "t": [
+        "number"
+       ]
+      },
+      "used": {
+       "t": [
+        "number"
+       ]
+      },
+      "products": {
+       "t": [
+        "number"
+       ]
+      },
+      "age_days": {
+       "t": [
+        "number"
+       ]
+      },
+      "stale": {
+       "t": [
+        "bool"
+       ]
+      }
+     }
+    },
+    "software": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "software": {
+       "t": [
+        "number"
+       ]
+      },
+      "os": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "std_map": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "rules": {
+       "t": [
+        "number"
+       ]
+      },
+      "refs": {
+       "t": [
+        "number"
+       ]
+      },
+      "frameworks": {
+       "t": [
+        "array"
+       ],
+       "items": {
+        "t": [
+         "object"
+        ],
+        "keys": {
+         "id": {
+          "t": [
+           "string"
+          ]
+         },
+         "label": {
+          "t": [
+           "string"
+          ]
+         },
+         "legacy": {
+          "t": [
+           "bool"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "feed_url": {
+     "t": [
+      "string"
+     ]
+    },
+    "last_check": {
+     "t": [
+      "null",
+      "object"
+     ],
+     "keys": {
+      "at": {
+       "t": [
+        "string"
+       ]
+      },
+      "outcome": {
+       "t": [
+        "string"
+       ]
+      },
+      "feed_url": {
+       "t": [
+        "string"
+       ]
+      },
+      "version": {
+       "t": [
+        "null"
+       ]
+      },
+      "error": {
+       "t": [
+        "null"
+       ]
+      },
+      "error_code": {
+       "t": [
+        "null"
+       ]
+      }
+     }
     }
    }
   },
@@ -15893,6 +16039,151 @@
      "t": [
       "number"
      ]
+    },
+    "kev": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "catalog": {
+       "t": [
+        "string"
+       ]
+      },
+      "released": {
+       "t": [
+        "string"
+       ]
+      },
+      "total": {
+       "t": [
+        "number"
+       ]
+      },
+      "used": {
+       "t": [
+        "number"
+       ]
+      },
+      "products": {
+       "t": [
+        "number"
+       ]
+      },
+      "age_days": {
+       "t": [
+        "number"
+       ]
+      },
+      "stale": {
+       "t": [
+        "bool"
+       ]
+      }
+     }
+    },
+    "software": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "software": {
+       "t": [
+        "number"
+       ]
+      },
+      "os": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "std_map": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "rules": {
+       "t": [
+        "number"
+       ]
+      },
+      "refs": {
+       "t": [
+        "number"
+       ]
+      },
+      "frameworks": {
+       "t": [
+        "array"
+       ],
+       "items": {
+        "t": [
+         "object"
+        ],
+        "keys": {
+         "id": {
+          "t": [
+           "string"
+          ]
+         },
+         "label": {
+          "t": [
+           "string"
+          ]
+         },
+         "legacy": {
+          "t": [
+           "bool"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "feed_url": {
+     "t": [
+      "string"
+     ]
+    },
+    "last_check": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "at": {
+       "t": [
+        "string"
+       ]
+      },
+      "outcome": {
+       "t": [
+        "string"
+       ]
+      },
+      "feed_url": {
+       "t": [
+        "string"
+       ]
+      },
+      "version": {
+       "t": [
+        "null"
+       ]
+      },
+      "error": {
+       "t": [
+        "null"
+       ]
+      },
+      "error_code": {
+       "t": [
+        "null"
+       ]
+      }
+     }
     }
    }
   },
@@ -15982,6 +16273,151 @@
      "t": [
       "number"
      ]
+    },
+    "kev": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "catalog": {
+       "t": [
+        "string"
+       ]
+      },
+      "released": {
+       "t": [
+        "string"
+       ]
+      },
+      "total": {
+       "t": [
+        "number"
+       ]
+      },
+      "used": {
+       "t": [
+        "number"
+       ]
+      },
+      "products": {
+       "t": [
+        "number"
+       ]
+      },
+      "age_days": {
+       "t": [
+        "number"
+       ]
+      },
+      "stale": {
+       "t": [
+        "bool"
+       ]
+      }
+     }
+    },
+    "software": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "software": {
+       "t": [
+        "number"
+       ]
+      },
+      "os": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "std_map": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "rules": {
+       "t": [
+        "number"
+       ]
+      },
+      "refs": {
+       "t": [
+        "number"
+       ]
+      },
+      "frameworks": {
+       "t": [
+        "array"
+       ],
+       "items": {
+        "t": [
+         "object"
+        ],
+        "keys": {
+         "id": {
+          "t": [
+           "string"
+          ]
+         },
+         "label": {
+          "t": [
+           "string"
+          ]
+         },
+         "legacy": {
+          "t": [
+           "bool"
+          ]
+         }
+        }
+       }
+      }
+     }
+    },
+    "feed_url": {
+     "t": [
+      "string"
+     ]
+    },
+    "last_check": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "at": {
+       "t": [
+        "string"
+       ]
+      },
+      "outcome": {
+       "t": [
+        "string"
+       ]
+      },
+      "feed_url": {
+       "t": [
+        "string"
+       ]
+      },
+      "version": {
+       "t": [
+        "null"
+       ]
+      },
+      "error": {
+       "t": [
+        "null"
+       ]
+      },
+      "error_code": {
+       "t": [
+        "null"
+       ]
+      }
+     }
     }
    }
   },

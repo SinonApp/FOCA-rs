@@ -196,7 +196,7 @@
   "insights.no_paths": "Багатокрокових ланцюжків компрометації поки не виявлено.",
 
   "signatures.title": "Бази сигнатур",
-  "signatures.update": "Перевірити та оновити",
+  "signatures.update": "Перевірити оновлення",
   "signatures.import": "Імпортувати пакет",
   "signatures.rollback": "Відкотити",
 

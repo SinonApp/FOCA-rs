@@ -5,6 +5,12 @@
 //! (`ring::signature::ED25519`) and `SHA-256` before touching disk. Validated bundles are
 //! written atomically to `<data_dir>/signatures/current.json`, keeping the previous bundle in
 //! `<data_dir>/signatures/previous.json` for instant rollback.
+//!
+//! The official update feed is a rolling GitHub release (`DEFAULT_FEED_URL`): a missing asset
+//! (HTTP 404) means no newer database has been published, never a successful update. Every check
+//! is recorded in `<data_dir>/signatures/last_check.json` and shown by `signatures_status`.
+//! The counts in the status come from the rule sets the analysis really loads, not from the
+//! numbers a bundle claims.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -25,6 +31,14 @@ const OFFICIAL_ED25519_PUBKEY: [u8; 32] = [
     0xf4, 0xff, 0x84, 0x87, 0xe9, 0x5a, 0x8b, 0xb7, 0x46, 0x9a, 0x56, 0x02, 0x02, 0x3d, 0xc5, 0x27,
 ];
 
+/// Official update feed: the `signatures.bundle` asset of the rolling `signatures` release.
+/// A rolling tag is used instead of `releases/latest` because GitHub skips pre-releases there.
+pub const DEFAULT_FEED_URL: &str =
+    "https://github.com/SinonApp/FOCA-rs/releases/download/signatures/signatures.bundle";
+
+/// A KEV snapshot older than this many days is flagged as stale in the status.
+pub const KEV_STALE_DAYS: i64 = 30;
+
 /// Returns the 32-byte Ed25519 public key used to verify signature bundles.
 pub fn official_pubkey_bytes() -> [u8; 32] {
     OFFICIAL_ED25519_PUBKEY
@@ -36,12 +50,27 @@ pub fn official_pubkey_hex() -> String {
 }
 
 /// Counts of signature records in the active database.
+///
+/// In `signatures_status` these are the loaded numbers: `cpe` = software and OS signatures,
+/// `cve` = CISA KEV entries used for matching, `secrets` = secret rules, `standards` = rule to
+/// standard references. In a bundle they are informational only.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SigCounts {
     pub cpe: u32,
     pub cve: u32,
     pub secrets: u32,
     pub standards: u32,
+}
+
+/// CISA KEV snapshot a bundle was built from.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SigKevCatalog {
+    /// `catalogVersion` (`2026.11.20`).
+    pub version: String,
+    /// `dateReleased` (`YYYY-MM-DD`).
+    pub released: String,
+    /// Records in the full CISA catalog.
+    pub total: u32,
 }
 
 /// Additional KEV entry shipped in a signature bundle.
@@ -59,7 +88,8 @@ pub struct SigKevItem {
     pub fixed_in: Option<String>,
 }
 
-/// Additional CPE mapping rule shipped in a signature bundle.
+/// Additional CPE mapping rule shipped in a signature bundle. Stored with the bundle but not used
+/// for matching yet (a prefix has no detection pattern), so the status does not count it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SigCpeItem {
     pub cpe_prefix: String,
@@ -83,6 +113,9 @@ pub struct SigBundleV1 {
     pub version: String,
     pub released_at: String,
     pub counts: SigCounts,
+    /// KEV snapshot of `kev_additions`; absent in older bundles.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kev_catalog: Option<SigKevCatalog>,
     #[serde(default)]
     pub kev_additions: Vec<SigKevItem>,
     #[serde(default)]
@@ -109,6 +142,76 @@ pub struct SigStatus {
     pub added_kev: u32,
     pub added_cpe: u32,
     pub added_secrets: u32,
+    /// CISA KEV snapshot in use and its age.
+    pub kev: KevInfo,
+    /// Software and OS detection signatures.
+    pub software: SoftwareInfo,
+    /// Finding rule to standards mapping.
+    pub std_map: StdMapInfo,
+    /// Feed checked by `signatures_update` without a `url`.
+    pub feed_url: String,
+    /// Result of the last `signatures_update`, `None` before the first check.
+    pub last_check: Option<LastCheck>,
+}
+
+/// CISA KEV catalog numbers (`catalog`, `released` and `total` describe the CISA snapshot, `used`
+/// the entries the app matches against: the kept ones plus bundle additions).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct KevInfo {
+    pub catalog: String,
+    pub released: String,
+    pub total: u32,
+    pub used: u32,
+    /// Product groups that link detected software to KEV entries.
+    pub products: u32,
+    /// Days since `released`, `None` when the date is unknown.
+    pub age_days: Option<i64>,
+    /// `age_days` > [`KEV_STALE_DAYS`].
+    pub stale: bool,
+}
+
+/// Software and OS signature counts (`signatures/software.toml`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SoftwareInfo {
+    pub software: u32,
+    pub os: u32,
+}
+
+/// A standard family present in the mapping.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StdFramework {
+    pub id: String,
+    pub label: String,
+    /// Kept for systems certified under the old КСЗІ scheme.
+    pub legacy: bool,
+}
+
+/// Standards mapping numbers (`signatures/standards.toml`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StdMapInfo {
+    /// Finding rules with at least one standard.
+    pub rules: u32,
+    /// Rule to standard references in total.
+    pub refs: u32,
+    pub frameworks: Vec<StdFramework>,
+}
+
+/// Outcome of one update check.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LastCheck {
+    /// Local time of the check (`YYYY-MM-DDTHH:MM:SS`).
+    pub at: String,
+    /// `installed`, `up_to_date`, `no_update` (nothing published at the feed) or `failed`.
+    pub outcome: String,
+    pub feed_url: String,
+    /// Version of the bundle found at the feed.
+    #[serde(default)]
+    pub version: Option<String>,
+    /// Error text for `failed` (a core message, see `error_msg` in the command output).
+    #[serde(default)]
+    pub error: Option<String>,
+    #[serde(default)]
+    pub error_code: Option<String>,
 }
 
 fn hex_encode(bytes: &[u8]) -> String {
@@ -149,6 +252,8 @@ pub fn canonical_payload(b: &SigBundleV1) -> Vec<u8> {
         version: &'a str,
         released_at: &'a str,
         counts: &'a SigCounts,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        kev_catalog: Option<&'a SigKevCatalog>,
         kev_additions: &'a [SigKevItem],
         cpe_additions: &'a [SigCpeItem],
         secret_additions: &'a [SigSecretItem],
@@ -158,6 +263,7 @@ pub fn canonical_payload(b: &SigBundleV1) -> Vec<u8> {
         version: &b.version,
         released_at: &b.released_at,
         counts: &b.counts,
+        kev_catalog: b.kev_catalog.as_ref(),
         kev_additions: &b.kev_additions,
         cpe_additions: &b.cpe_additions,
         secret_additions: &b.secret_additions,
@@ -165,19 +271,68 @@ pub fn canonical_payload(b: &SigBundleV1) -> Vec<u8> {
     .unwrap_or_default()
 }
 
-/// Computes `sha256` and signs `bundle` in place using the given 32-byte Ed25519 seed (tests only).
-#[cfg(test)]
-pub fn sign_bundle_with_seed(bundle: &mut SigBundleV1, seed: &[u8; 32]) {
+/// Computes `sha256` and signs `bundle` in place with a 32-byte Ed25519 seed (the maintainer
+/// tool `examples/sig_bundle.rs` and tests).
+pub fn sign_bundle_with_seed(bundle: &mut SigBundleV1, seed: &[u8; 32]) -> Result<(), CmdError> {
     use ring::signature::Ed25519KeyPair;
     let payload = canonical_payload(bundle);
     bundle.sha256 = sha256_hex(&payload);
-    let kp = Ed25519KeyPair::from_seed_unchecked(seed).expect("valid 32-byte Ed25519 seed");
-    let sig = kp.sign(&payload);
-    bundle.signature_ed25519 = hex_encode(sig.as_ref());
+    let kp = Ed25519KeyPair::from_seed_unchecked(seed)
+        .map_err(|_| CmdError::new("bad_args", "invalid Ed25519 seed"))?;
+    bundle.signature_ed25519 = hex_encode(kp.sign(&payload).as_ref());
+    Ok(())
+}
+
+/// Hex public key of a 32-byte Ed25519 seed.
+pub fn pubkey_hex_of_seed(seed: &[u8; 32]) -> Result<String, CmdError> {
+    use ring::signature::{Ed25519KeyPair, KeyPair};
+    let kp = Ed25519KeyPair::from_seed_unchecked(seed)
+        .map_err(|_| CmdError::new("bad_args", "invalid Ed25519 seed"))?;
+    Ok(hex_encode(kp.public_key().as_ref()))
+}
+
+/// Builds an unsigned bundle from the signature data compiled into this build: every kept CISA KEV
+/// entry (one item per product key) plus the snapshot header. Secret rules are not included: the
+/// built-in ones already ship with the app and a copy would report every secret twice.
+pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
+    let kev = foca_analysis::kev::KevCatalog::builtin();
+    let mut kev_additions = Vec::new();
+    for (e, k) in kev.keyed_entries() {
+        kev_additions.push(SigKevItem {
+            cve: e.cve.clone(),
+            product_key: k.into(),
+            vendor: e.vendor.clone(),
+            product: e.product.clone(),
+            date_added: e.date_added.clone(),
+            ransomware: e.ransomware,
+            name: e.name.clone(),
+            fixed_in: None,
+        });
+    }
+    let db = loaded_db(None, None);
+    SigBundleV1 {
+        schema: BUNDLE_SCHEMA.into(),
+        version: version.into(),
+        released_at: released_at.into(),
+        counts: db.counts,
+        kev_catalog: Some(SigKevCatalog {
+            version: kev.version.clone(),
+            released: kev.released.clone(),
+            total: kev.total as u32,
+        }),
+        kev_additions,
+        cpe_additions: Vec::new(),
+        secret_additions: Vec::new(),
+        sha256: String::new(),
+        signature_ed25519: String::new(),
+    }
 }
 
 /// Verifies `bundle` against `pubkey_bytes` (`Ed25519`) and validates all fields.
+///
+/// Error texts are core messages (`core.sig.*` in `locales/<lang>/ui/core.json`).
 pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<(), CmdError> {
+    let bad_sig = |m: &str| CmdError::new("bad_signature", m);
     if bundle.schema != BUNDLE_SCHEMA {
         return Err(CmdError::new(
             "bad_args",
@@ -193,26 +348,20 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
     let payload = canonical_payload(bundle);
     let actual_sha = sha256_hex(&payload);
     if !actual_sha.eq_ignore_ascii_case(bundle.sha256.trim()) {
-        return Err(CmdError::new(
-            "bad_args",
+        return Err(bad_sig(
             "Контрольная сумма SHA-256 бандла сигнатур не совпадает с содержимым",
         ));
     }
     let sig_bytes = hex_decode(&bundle.signature_ed25519)
-        .ok_or_else(|| CmdError::new("bad_args", "Некорректный hex-формат подписи Ed25519"))?;
+        .ok_or_else(|| bad_sig("Некорректный hex-формат подписи Ed25519"))?;
     if sig_bytes.len() != 64 {
-        return Err(CmdError::new(
-            "bad_args",
+        return Err(bad_sig(
             "Неверная длина подписи Ed25519 (ожидается 64 байта)",
         ));
     }
     let pk = UnparsedPublicKey::new(&ED25519, pubkey_bytes);
-    pk.verify(&payload, &sig_bytes).map_err(|_| {
-        CmdError::new(
-            "bad_args",
-            "Цифровая подпись Ed25519 бандла сигнатур недействительна",
-        )
-    })?;
+    pk.verify(&payload, &sig_bytes)
+        .map_err(|_| bad_sig("Цифровая подпись Ed25519 бандла сигнатур недействительна"))?;
     for s in &bundle.secret_additions {
         if s.id.trim().is_empty() || s.pattern.trim().is_empty() {
             return Err(CmdError::new(
@@ -233,8 +382,12 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
                 mask: true,
             }],
         };
-        foca_analysis::rules::RuleSet::compile(&cfg)
-            .map_err(|e| CmdError::new("bad_args", format!("Правило {}: {e:?}", s.id)))?;
+        foca_analysis::rules::RuleSet::compile(&cfg).map_err(|e| {
+            CmdError::new(
+                "bad_args",
+                format!("Правило секрета {} в бандле не компилируется: {e:?}", s.id),
+            )
+        })?;
     }
     Ok(())
 }
@@ -251,75 +404,235 @@ fn previous_path(data_dir: &Path) -> PathBuf {
     sig_dir(data_dir).join("previous.json")
 }
 
-fn builtin_status_for_key(can_rollback: bool, pubkey_bytes: &[u8; 32]) -> SigStatus {
-    let kev = foca_analysis::kev::KevCatalog::builtin();
-    let standards = foca_analysis::standards::Standards::builtin();
-    let secret_rules = foca_analysis::secrets::BUILTIN_TOML
-        .matches("[[rule]]")
-        .count() as u32;
-    SigStatus {
-        schema: BUNDLE_SCHEMA.into(),
-        version: kev.version.clone(),
-        updated_at: kev.released.clone(),
-        source: "builtin".into(),
-        sha256: sha256_hex(foca_analysis::kev::KEV_GZ),
-        pubkey_ed25519: hex_encode(pubkey_bytes),
-        signature_valid: true,
-        can_rollback,
+fn last_check_path(data_dir: &Path) -> PathBuf {
+    sig_dir(data_dir).join("last_check.json")
+}
+
+/// Numbers of the signature data the analysis really loads (built-in tables plus `bundle`).
+struct LoadedDb {
+    counts: SigCounts,
+    kev: KevInfo,
+    software: SoftwareInfo,
+    std_map: StdMapInfo,
+}
+
+fn parse_ymd(s: &str) -> Option<time::Date> {
+    let mut it = s.trim().splitn(3, '-');
+    let y: i32 = it.next()?.parse().ok()?;
+    let m: u8 = it.next()?.parse().ok()?;
+    let d: u8 = it.next()?.get(..2)?.parse().ok()?;
+    time::Date::from_calendar_date(y, time::Month::try_from(m).ok()?, d).ok()
+}
+
+/// Standard families present in the mapping, in display order, labelled from the data.
+fn frameworks(std: &foca_analysis::standards::Standards) -> Vec<StdFramework> {
+    use foca_analysis::standards as st;
+    let any = |f: &dyn Fn(&st::RuleStandards) -> bool| std.rules.iter().any(f);
+    let fw = |id: &str, label: String, legacy: bool| StdFramework {
+        id: id.into(),
+        label,
+        legacy,
+    };
+    let mut out = Vec::new();
+    if any(&|r| !r.owasp.is_empty()) {
+        out.push(fw("owasp", st::OWASP_TOP10.into(), false));
+    }
+    if any(&|r| !r.mitre.is_empty()) {
+        out.push(fw("mitre", format!("MITRE {}", st::ATTACK_VERSION), false));
+    }
+    if any(&|r| !r.cwe.is_empty()) {
+        let top25 = any(&|r| r.cwe.iter().any(|c| st::is_cwe_top25(c)));
+        let label = if top25 { "CWE (Top 25 2025)" } else { "CWE" };
+        out.push(fw("cwe", label.into(), false));
+    }
+    if any(&|r| !r.nist.is_empty()) {
+        out.push(fw("ndtzi36", st::NDTZI_3_6_006.into(), false));
+        out.push(fw("nist", st::NIST_800_53.into(), false));
+    }
+    if any(&|r| !r.iso27001.is_empty()) {
+        out.push(fw("iso27001", "ISO/IEC 27001:2022".into(), false));
+    }
+    if any(&|r| !r.wstg.is_empty()) {
+        // Same edition as the `wstg` ids in standards.toml.
+        out.push(fw("wstg", "OWASP WSTG v4.2".into(), false));
+    }
+    // Personal data laws: the first word of each article code (`GDPR Art. 32` -> `GDPR`).
+    let mut laws: Vec<&str> = Vec::new();
+    for r in &std.rules {
+        for key in &r.privacy {
+            let law = std
+                .privacy
+                .get(key)
+                .and_then(|p| p.code.split_whitespace().next());
+            if let Some(law) = law.filter(|l| !laws.contains(l)) {
+                laws.push(law);
+            }
+        }
+    }
+    for law in laws {
+        out.push(fw("privacy", law.into(), false));
+    }
+    if any(&|r| !r.ndtzi.is_empty() || !r.kszi.is_empty()) {
+        out.push(fw("kszi", "НД ТЗІ 2.5-004-99, 3.7-003-05".into(), true));
+    }
+    out
+}
+
+fn loaded_db(bundle: Option<&SigBundleV1>, today: Option<time::Date>) -> LoadedDb {
+    let builtin = foca_analysis::kev::KevCatalog::builtin();
+    let extended;
+    let kev = match bundle.and_then(|b| active_kev_from(b.clone())) {
+        Some(c) => {
+            extended = c;
+            &extended
+        }
+        None => builtin,
+    };
+    let snap = bundle.and_then(|b| b.kev_catalog.clone());
+    let (catalog, released, total) = match snap {
+        Some(c) => (c.version, c.released, c.total),
+        None => (
+            builtin.version.clone(),
+            builtin.released.clone(),
+            builtin.total as u32,
+        ),
+    };
+    let age_days = parse_ymd(&released)
+        .zip(today)
+        .map(|(r, t)| (t - r).whole_days().max(0));
+    let std = foca_analysis::standards::Standards::builtin();
+    let refs: usize = std
+        .rules
+        .iter()
+        .map(|r| {
+            r.mitre.len()
+                + r.cwe.len()
+                + r.owasp.len()
+                + r.wstg.len()
+                + r.iso27001.len()
+                + r.nist.len()
+                + r.privacy.len()
+                + r.ndtzi.len()
+                + r.kszi.len()
+        })
+        .sum();
+    let (software, os) = foca_analysis::software::Signatures::builtin().len();
+    let secrets = foca_analysis::secrets::Rules::builtin().len()
+        + bundle.map_or(0, |b| b.secret_additions.len());
+    LoadedDb {
         counts: SigCounts {
-            cpe: kev.product_count() as u32,
-            cve: kev.total as u32,
-            secrets: secret_rules,
-            standards: standards.rules.len() as u32,
+            cpe: (software + os) as u32,
+            cve: kev.used() as u32,
+            secrets: secrets as u32,
+            standards: refs as u32,
         },
-        added_kev: 0,
-        added_cpe: 0,
-        added_secrets: 0,
+        kev: KevInfo {
+            catalog,
+            released,
+            total,
+            used: kev.used() as u32,
+            products: kev.product_count() as u32,
+            age_days,
+            stale: age_days.is_some_and(|d| d > KEV_STALE_DAYS),
+        },
+        software: SoftwareInfo {
+            software: software as u32,
+            os: os as u32,
+        },
+        std_map: StdMapInfo {
+            rules: std.rules.iter().filter(|r| !r.is_empty()).count() as u32,
+            refs: refs as u32,
+            frameworks: frameworks(std),
+        },
     }
 }
 
-fn status_from_bundle(b: &SigBundleV1, can_rollback: bool, pubkey_bytes: &[u8; 32]) -> SigStatus {
+fn read_last_check(data_dir: &Path) -> Option<LastCheck> {
+    let raw = fs::read_to_string(last_check_path(data_dir)).ok()?;
+    serde_json::from_str(&raw).ok()
+}
+
+fn write_last_check(data_dir: &Path, c: &LastCheck) {
+    let _ = fs::create_dir_all(sig_dir(data_dir));
+    if let Ok(raw) = serde_json::to_vec_pretty(c) {
+        let _ = fs::write(last_check_path(data_dir), raw);
+    }
+}
+
+fn make_status(
+    data_dir: &Path,
+    bundle: Option<&SigBundleV1>,
+    can_rollback: bool,
+    pubkey_bytes: &[u8; 32],
+    today: Option<time::Date>,
+) -> SigStatus {
+    let db = loaded_db(bundle, today);
+    let (version, updated_at, source, sha256) = match bundle {
+        Some(b) => (
+            b.version.clone(),
+            b.released_at.clone(),
+            "bundle",
+            b.sha256.clone(),
+        ),
+        None => {
+            let kev = foca_analysis::kev::KevCatalog::builtin();
+            (
+                kev.version.clone(),
+                kev.released.clone(),
+                "builtin",
+                sha256_hex(foca_analysis::kev::KEV_GZ),
+            )
+        }
+    };
     SigStatus {
-        schema: b.schema.clone(),
-        version: b.version.clone(),
-        updated_at: b.released_at.clone(),
-        source: "bundle".into(),
-        sha256: b.sha256.clone(),
+        schema: BUNDLE_SCHEMA.into(),
+        version,
+        updated_at,
+        source: source.into(),
+        sha256,
         pubkey_ed25519: hex_encode(pubkey_bytes),
         signature_valid: true,
         can_rollback,
-        counts: b.counts.clone(),
-        added_kev: b.kev_additions.len() as u32,
-        added_cpe: b.cpe_additions.len() as u32,
-        added_secrets: b.secret_additions.len() as u32,
+        counts: db.counts,
+        added_kev: bundle.map_or(0, |b| b.kev_additions.len() as u32),
+        added_cpe: bundle.map_or(0, |b| b.cpe_additions.len() as u32),
+        added_secrets: bundle.map_or(0, |b| b.secret_additions.len() as u32),
+        kev: db.kev,
+        software: db.software,
+        std_map: db.std_map,
+        feed_url: DEFAULT_FEED_URL.into(),
+        last_check: read_last_check(data_dir),
     }
 }
 
 /// Reads the current signature status from `<data_dir>/signatures/current.json` (falling back to
-/// the embedded builtin catalog if no bundle is installed).
-pub fn status(data_dir: &Path) -> SigStatus {
-    status_with_pubkey(data_dir, &official_pubkey_bytes())
+/// the embedded builtin catalog if no bundle is installed). `today` dates the KEV snapshot age.
+pub fn status(data_dir: &Path, today: time::Date) -> SigStatus {
+    status_with_pubkey(data_dir, &official_pubkey_bytes(), today)
 }
 
-pub(crate) fn status_with_pubkey(data_dir: &Path, pubkey_bytes: &[u8; 32]) -> SigStatus {
-    let cur = current_path(data_dir);
+pub(crate) fn status_with_pubkey(
+    data_dir: &Path,
+    pubkey_bytes: &[u8; 32],
+    today: time::Date,
+) -> SigStatus {
     let prev_exists = previous_path(data_dir).is_file();
-    if let Ok(raw) = fs::read_to_string(&cur) {
-        if let Ok(bundle) = serde_json::from_str::<SigBundleV1>(&raw) {
-            if verify_bundle(&bundle, pubkey_bytes).is_ok() {
-                return status_from_bundle(&bundle, true, pubkey_bytes);
-            }
-        }
+    match verified_bundle_at(&current_path(data_dir), pubkey_bytes) {
+        Some(b) => make_status(data_dir, Some(&b), true, pubkey_bytes, Some(today)),
+        None => make_status(data_dir, None, prev_exists, pubkey_bytes, Some(today)),
     }
-    builtin_status_for_key(prev_exists, pubkey_bytes)
+}
+
+fn verified_bundle_at(path: &Path, pubkey_bytes: &[u8; 32]) -> Option<SigBundleV1> {
+    let raw = fs::read_to_string(path).ok()?;
+    let bundle = serde_json::from_str::<SigBundleV1>(&raw).ok()?;
+    verify_bundle(&bundle, pubkey_bytes).ok()?;
+    Some(bundle)
 }
 
 /// Returns the active verified bundle if one is installed on disk.
 pub fn active_bundle(data_dir: &Path) -> Option<SigBundleV1> {
-    let raw = fs::read_to_string(current_path(data_dir)).ok()?;
-    let bundle = serde_json::from_str::<SigBundleV1>(&raw).ok()?;
-    verify_bundle(&bundle, &official_pubkey_bytes()).ok()?;
-    Some(bundle)
+    verified_bundle_at(&current_path(data_dir), &official_pubkey_bytes())
 }
 
 /// Returns secret rules contributed by an active verified signature bundle (if any).
@@ -354,9 +667,8 @@ pub fn merge_rules_with_bundle(
     cfg
 }
 
-/// Returns a KEV catalog extended with entries from an active verified signature bundle (if any).
-pub fn active_kev_catalog(data_dir: &Path) -> Option<foca_analysis::kev::KevCatalog> {
-    let b = active_bundle(data_dir)?;
+/// The built-in KEV catalog extended with the entries of `b`, `None` when it adds none.
+fn active_kev_from(b: SigBundleV1) -> Option<foca_analysis::kev::KevCatalog> {
     if b.kev_additions.is_empty() {
         return None;
     }
@@ -376,24 +688,49 @@ pub fn active_kev_catalog(data_dir: &Path) -> Option<foca_analysis::kev::KevCata
     Some(foca_analysis::kev::KevCatalog::builtin().with_additions(extra))
 }
 
+/// Returns a KEV catalog extended with entries from an active verified signature bundle (if any).
+pub fn active_kev_catalog(data_dir: &Path) -> Option<foca_analysis::kev::KevCatalog> {
+    active_kev_from(active_bundle(data_dir)?)
+}
+
 /// Verifies `bundle_json` (`Ed25519` + `SHA-256`) and atomically installs it as `current.json`,
 /// rotating any previous `current.json` to `previous.json`.
-pub fn import_bundle(data_dir: &Path, bundle_json: &str) -> Result<SigStatus, CmdError> {
-    import_bundle_with_pubkey(data_dir, bundle_json, &official_pubkey_bytes())
+pub fn import_bundle(
+    data_dir: &Path,
+    bundle_json: &str,
+    today: time::Date,
+) -> Result<SigStatus, CmdError> {
+    import_bundle_with_pubkey(data_dir, bundle_json, &official_pubkey_bytes(), today)
+}
+
+fn parse_bundle(bundle_json: &str) -> Result<SigBundleV1, CmdError> {
+    serde_json::from_str(bundle_json.trim_start_matches('\u{feff}')).map_err(|e| {
+        CmdError::new(
+            "bad_args",
+            format!("Некорректный JSON бандла сигнатур: {e}"),
+        )
+    })
 }
 
 pub(crate) fn import_bundle_with_pubkey(
     data_dir: &Path,
     bundle_json: &str,
     pubkey_bytes: &[u8; 32],
+    today: time::Date,
 ) -> Result<SigStatus, CmdError> {
-    let bundle: SigBundleV1 = serde_json::from_str(bundle_json).map_err(|e| {
-        CmdError::new(
-            "bad_args",
-            format!("Некорректный JSON бандла сигнатур: {e}"),
-        )
-    })?;
+    let bundle = parse_bundle(bundle_json)?;
     verify_bundle(&bundle, pubkey_bytes)?;
+    install(data_dir, &bundle)?;
+    Ok(make_status(
+        data_dir,
+        Some(&bundle),
+        true,
+        pubkey_bytes,
+        Some(today),
+    ))
+}
+
+fn install(data_dir: &Path, bundle: &SigBundleV1) -> Result<(), CmdError> {
     let dir = sig_dir(data_dir);
     fs::create_dir_all(&dir).map_err(|e| CmdError::new("io", e.to_string()))?;
     let cur = current_path(data_dir);
@@ -403,120 +740,183 @@ pub(crate) fn import_bundle_with_pubkey(
     }
     let tmp = dir.join("current.json.tmp");
     let serialized =
-        serde_json::to_vec_pretty(&bundle).map_err(|e| CmdError::new("io", e.to_string()))?;
+        serde_json::to_vec_pretty(bundle).map_err(|e| CmdError::new("io", e.to_string()))?;
     fs::write(&tmp, &serialized).map_err(|e| CmdError::new("io", e.to_string()))?;
     fs::rename(&tmp, &cur).map_err(|e| CmdError::new("io", e.to_string()))?;
-    Ok(status_from_bundle(&bundle, true, pubkey_bytes))
+    Ok(())
+}
+
+/// Numeric parts of a version (`2026.11.20` -> `[2026, 11, 20]`) for ordering.
+fn version_key(v: &str) -> Vec<u64> {
+    v.split(|c: char| !c.is_ascii_digit())
+        .filter(|p| !p.is_empty())
+        .map(|p| p.parse().unwrap_or(0))
+        .collect()
+}
+
+/// Applies the result of fetching the update feed and records the check in `last_check.json`.
+///
+/// * HTTP 404/410: nothing is published at the feed yet, `no_update`;
+/// * a verified bundle not newer than the active database: `up_to_date`, nothing changes;
+/// * a verified newer bundle: installed (`installed`);
+/// * anything else (network error, bad JSON, bad signature): recorded as `failed` and returned as
+///   the error, the active database stays as it was.
+pub fn apply_feed(
+    data_dir: &Path,
+    feed_url: &str,
+    fetched: Result<String, CmdError>,
+    pubkey_bytes: &[u8; 32],
+    now: time::OffsetDateTime,
+) -> Result<SigStatus, CmdError> {
+    let mut check = LastCheck {
+        at: crate::util::iso(now),
+        outcome: String::new(),
+        feed_url: feed_url.into(),
+        version: None,
+        error: None,
+        error_code: None,
+    };
+    let result = (|| {
+        let raw = match fetched {
+            Ok(raw) => raw,
+            Err(e) if e.code == "not_published" => return Ok("no_update"),
+            Err(e) => return Err(e),
+        };
+        let bundle = parse_bundle(&raw)?;
+        verify_bundle(&bundle, pubkey_bytes)?;
+        check.version = Some(bundle.version.clone());
+        let active = status_with_pubkey(data_dir, pubkey_bytes, now.date());
+        if version_key(&bundle.version) <= version_key(&active.version) {
+            return Ok("up_to_date");
+        }
+        install(data_dir, &bundle)?;
+        Ok("installed")
+    })();
+    match result {
+        Ok(outcome) => {
+            check.outcome = outcome.into();
+            write_last_check(data_dir, &check);
+            Ok(status_with_pubkey(data_dir, pubkey_bytes, now.date()))
+        }
+        Err(e) => {
+            check.outcome = "failed".into();
+            check.error = Some(e.message.clone());
+            check.error_code = Some(e.code.clone());
+            write_last_check(data_dir, &check);
+            Err(e)
+        }
+    }
 }
 
 /// Rolls back the signature database to `previous.json` (or to the embedded builtin database if no
 /// `previous.json` exists).
-pub fn rollback(data_dir: &Path) -> Result<SigStatus, CmdError> {
-    rollback_with_pubkey(data_dir, &official_pubkey_bytes())
+pub fn rollback(data_dir: &Path, today: time::Date) -> Result<SigStatus, CmdError> {
+    rollback_with_pubkey(data_dir, &official_pubkey_bytes(), today)
 }
 
 pub(crate) fn rollback_with_pubkey(
     data_dir: &Path,
     pubkey_bytes: &[u8; 32],
+    today: time::Date,
 ) -> Result<SigStatus, CmdError> {
     let cur = current_path(data_dir);
     let prev = previous_path(data_dir);
     if prev.is_file() {
-        if let Ok(raw) = fs::read_to_string(&prev) {
-            if let Ok(bundle) = serde_json::from_str::<SigBundleV1>(&raw) {
-                if verify_bundle(&bundle, pubkey_bytes).is_ok() {
-                    fs::rename(&prev, &cur).map_err(|e| CmdError::new("io", e.to_string()))?;
-                    return Ok(status_from_bundle(&bundle, true, pubkey_bytes));
-                }
-            }
+        if let Some(bundle) = verified_bundle_at(&prev, pubkey_bytes) {
+            fs::rename(&prev, &cur).map_err(|e| CmdError::new("io", e.to_string()))?;
+            return Ok(make_status(
+                data_dir,
+                Some(&bundle),
+                true,
+                pubkey_bytes,
+                Some(today),
+            ));
         }
         let _ = fs::remove_file(&prev);
     }
     if cur.is_file() {
         fs::remove_file(&cur).map_err(|e| CmdError::new("io", e.to_string()))?;
     }
-    Ok(builtin_status_for_key(false, pubkey_bytes))
+    Ok(make_status(
+        data_dir,
+        None,
+        false,
+        pubkey_bytes,
+        Some(today),
+    ))
 }
 
 /// Builds a signed sample bundle (`foca-sig-bundle/v1`) for unit tests.
 #[cfg(test)]
 fn build_signed_test_bundle(version: &str, released_at: &str, seed: &[u8; 32]) -> SigBundleV1 {
-    let kev = foca_analysis::kev::KevCatalog::builtin();
-    let standards = foca_analysis::standards::Standards::builtin();
     let kev_additions = vec![
         SigKevItem {
-            cve: "CVE-2024-38077".into(),
+            cve: "CVE-2099-0001".into(),
             product_key: "ms_windows".into(),
             vendor: "Microsoft".into(),
             product: "Windows Remote Desktop Licensing Service".into(),
             date_added: released_at.into(),
             ransomware: true,
-            name: "Microsoft Windows Remote Desktop Licensing Service RCE".into(),
+            name: "Sample Windows RDL vulnerability".into(),
             fixed_in: Some("10.0.20348.2582".into()),
         },
         SigKevItem {
-            cve: "CVE-2024-4577".into(),
+            cve: "CVE-2099-0002".into(),
             product_key: "php".into(),
             vendor: "PHP".into(),
             product: "PHP CGI".into(),
             date_added: released_at.into(),
-            ransomware: true,
-            name: "PHP CGI Argument Injection Vulnerability".into(),
-            fixed_in: Some("8.3.8".into()),
+            ransomware: false,
+            name: "Sample PHP CGI vulnerability".into(),
+            fixed_in: None,
         },
     ];
-    let cpe_additions = vec![
-        SigCpeItem {
-            cpe_prefix: "cpe:/a:Fortinet:fortios".into(),
-            label: "FortiOS".into(),
-            latest_ver: Some("7.4.5".into()),
-        },
-        SigCpeItem {
-            cpe_prefix: "cpe:/a:gitlab:gitlab".into(),
-            label: "GitLab".into(),
-            latest_ver: Some("17.5.2".into()),
-        },
-    ];
+    let cpe_additions = vec![SigCpeItem {
+        cpe_prefix: "cpe:/a:gitlab:gitlab".into(),
+        label: "GitLab".into(),
+        latest_ver: Some("17.5.2".into()),
+    }];
     let secret_additions = vec![SigSecretItem {
         id: "sig_cloudflare_api_token".into(),
         title: "Cloudflare API Token".into(),
         pattern: r"cf_token_[A-Za-z0-9_-]{32,45}".into(),
     }];
-    let base_secrets = foca_analysis::secrets::BUILTIN_TOML
-        .matches("[[rule]]")
-        .count() as u32;
     let mut bundle = SigBundleV1 {
         schema: BUNDLE_SCHEMA.into(),
         version: version.into(),
         released_at: released_at.into(),
         counts: SigCounts {
-            cpe: kev.product_count() as u32 + cpe_additions.len() as u32,
-            cve: kev.total as u32 + kev_additions.len() as u32,
-            secrets: base_secrets + secret_additions.len() as u32,
-            standards: standards.rules.len() as u32,
+            cpe: 0,
+            cve: 0,
+            secrets: 0,
+            standards: 0,
         },
+        kev_catalog: None,
         kev_additions,
         cpe_additions,
         secret_additions,
         sha256: String::new(),
         signature_ed25519: String::new(),
     };
-    sign_bundle_with_seed(&mut bundle, seed);
+    sign_bundle_with_seed(&mut bundle, seed).unwrap();
     bundle
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ring::signature::{Ed25519KeyPair, KeyPair};
+    use time::macros::{date, datetime};
 
     const TEST_SEED: [u8; 32] = [0x42u8; 32];
+    const TODAY: time::Date = date!(2026 - 11 - 27);
 
     fn test_pubkey() -> [u8; 32] {
-        let kp = Ed25519KeyPair::from_seed_unchecked(&TEST_SEED).unwrap();
-        let mut out = [0u8; 32];
-        out.copy_from_slice(kp.public_key().as_ref());
-        out
+        let hex = pubkey_hex_of_seed(&TEST_SEED).unwrap();
+        hex_decode(&hex).unwrap().try_into().unwrap()
+    }
+
+    fn not_published() -> Result<String, CmdError> {
+        Err(CmdError::new("not_published", "HTTP 404"))
     }
 
     #[test]
@@ -524,37 +924,44 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let pk = test_pubkey();
         assert_ne!(pk, official_pubkey_bytes());
-        let st0 = status_with_pubkey(dir.path(), &pk);
+        let st0 = status_with_pubkey(dir.path(), &pk, TODAY);
         assert_eq!(st0.source, "builtin");
         assert!(!st0.can_rollback);
 
         let b1 = build_signed_test_bundle("2026.11.22", "2026-11-22", &TEST_SEED);
         let json1 = serde_json::to_string(&b1).unwrap();
-        let st1 = import_bundle_with_pubkey(dir.path(), &json1, &pk).unwrap();
+        let st1 = import_bundle_with_pubkey(dir.path(), &json1, &pk, TODAY).unwrap();
         assert_eq!(st1.source, "bundle");
         assert_eq!(st1.version, "2026.11.22");
         assert!(st1.signature_valid);
         assert!(st1.can_rollback);
         assert_eq!(st1.added_kev, 2);
-        assert_eq!(st1.added_cpe, 2);
+        assert_eq!(st1.added_cpe, 1);
         assert_eq!(st1.added_secrets, 1);
+        // Loaded numbers: two new KEV entries and one extra secret rule really count.
+        assert_eq!(st1.counts.cve, st0.counts.cve + 2);
+        assert_eq!(st1.kev.used, st0.kev.used + 2);
+        assert_eq!(st1.counts.secrets, st0.counts.secrets + 1);
+        // CPE prefixes are not used for matching, so the software count stays.
+        assert_eq!(st1.counts.cpe, st0.counts.cpe);
 
         // The release public key must not accept a test-signed bundle.
-        assert!(import_bundle(dir.path(), &json1).is_err());
+        assert!(import_bundle(dir.path(), &json1, TODAY).is_err());
 
         // Second bundle rotates first to previous.json.
         let b2 = build_signed_test_bundle("2026.11.23", "2026-11-23", &TEST_SEED);
-        let st2 = import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b2).unwrap(), &pk)
-            .unwrap();
+        let st2 =
+            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b2).unwrap(), &pk, TODAY)
+                .unwrap();
         assert_eq!(st2.version, "2026.11.23");
 
         // Rollback 1 -> 2026.11.22.
-        let rb1 = rollback_with_pubkey(dir.path(), &pk).unwrap();
+        let rb1 = rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
         assert_eq!(rb1.source, "bundle");
         assert_eq!(rb1.version, "2026.11.22");
 
         // Rollback 2 -> builtin.
-        let rb2 = rollback_with_pubkey(dir.path(), &pk).unwrap();
+        let rb2 = rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
         assert_eq!(rb2.source, "builtin");
         assert!(!rb2.can_rollback);
     }
@@ -567,20 +974,199 @@ mod tests {
         b.counts.cve += 1;
         // Recompute SHA-256 without valid Ed25519 private key -> Ed25519 verify must fail.
         b.sha256 = sha256_hex(&canonical_payload(&b));
-        let err = import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk)
-            .unwrap_err();
-        assert_eq!(err.code, "bad_args");
+        let err =
+            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk, TODAY)
+                .unwrap_err();
+        assert_eq!(err.code, "bad_signature");
         assert!(err.message.contains("Ed25519"));
-        assert_eq!(status_with_pubkey(dir.path(), &pk).source, "builtin");
+        assert_eq!(status_with_pubkey(dir.path(), &pk, TODAY).source, "builtin");
 
         // Signed with a foreign Ed25519 seed -> rejected.
-        let foreign_seed = [0x99u8; 32];
-        let mut foreign = build_signed_test_bundle("2026.11.22", "2026-11-22", &foreign_seed);
-        sign_bundle_with_seed(&mut foreign, &foreign_seed);
-        let err2 =
-            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&foreign).unwrap(), &pk)
-                .unwrap_err();
-        assert_eq!(err2.code, "bad_args");
-        assert_eq!(status_with_pubkey(dir.path(), &pk).source, "builtin");
+        let foreign = build_signed_test_bundle("2026.11.22", "2026-11-22", &[0x99u8; 32]);
+        let err2 = import_bundle_with_pubkey(
+            dir.path(),
+            &serde_json::to_string(&foreign).unwrap(),
+            &pk,
+            TODAY,
+        )
+        .unwrap_err();
+        assert_eq!(err2.code, "bad_signature");
+        assert_eq!(status_with_pubkey(dir.path(), &pk, TODAY).source, "builtin");
+    }
+
+    #[test]
+    fn builtin_status_counts_come_from_the_loaded_tables() {
+        let dir = tempfile::tempdir().unwrap();
+        let st = status(dir.path(), TODAY);
+        let kev = foca_analysis::kev::KevCatalog::builtin();
+        // CISA KEV only: the snapshot total and the kept entries used for matching differ.
+        assert_eq!(st.kev.total, kev.total as u32);
+        assert_eq!(st.kev.used, kev.used() as u32);
+        assert!(st.kev.used < st.kev.total);
+        assert_eq!(st.counts.cve, st.kev.used);
+        assert_eq!(st.kev.catalog, kev.version);
+        assert_eq!(st.kev.products, kev.product_count() as u32);
+        let secrets = foca_analysis::secrets::BUILTIN_TOML
+            .lines()
+            .filter(|l| l.trim() == "[[rule]]")
+            .count();
+        assert_eq!(st.counts.secrets as usize, secrets);
+        let sw = foca_analysis::software::BUILTIN_TOML
+            .lines()
+            .filter(|l| l.trim() == "[[software]]")
+            .count();
+        let os = foca_analysis::software::BUILTIN_TOML
+            .lines()
+            .filter(|l| l.trim() == "[[os]]")
+            .count();
+        assert_eq!(
+            (st.software.software as usize, st.software.os as usize),
+            (sw, os)
+        );
+        assert_eq!(st.counts.cpe as usize, sw + os);
+        // Standards: real references, labelled from the mapping data.
+        assert!(st.std_map.refs > st.std_map.rules);
+        assert_eq!(st.counts.standards, st.std_map.refs);
+        let labels: Vec<&str> = st
+            .std_map
+            .frameworks
+            .iter()
+            .map(|f| f.label.as_str())
+            .collect();
+        for want in [
+            "OWASP Top 10:2025",
+            "MITRE ATT&CK v20",
+            "CWE (Top 25 2025)",
+            "НД ТЗІ 3.6-006-24",
+            "NIST SP 800-53 Rev. 5",
+            "GDPR",
+            "2297-VI",
+        ] {
+            assert!(labels.contains(&want), "{want} in {labels:?}");
+        }
+        assert!(st.std_map.frameworks.iter().any(|f| f.legacy));
+        assert!(st.last_check.is_none());
+        assert_eq!(st.feed_url, DEFAULT_FEED_URL);
+    }
+
+    #[test]
+    fn kev_age_and_staleness() {
+        let dir = tempfile::tempdir().unwrap();
+        let released = parse_ymd(&foca_analysis::kev::KevCatalog::builtin().released).unwrap();
+        let fresh = status(dir.path(), released + time::Duration::days(3));
+        assert_eq!(fresh.kev.age_days, Some(3));
+        assert!(!fresh.kev.stale);
+        let old = status(
+            dir.path(),
+            released + time::Duration::days(KEV_STALE_DAYS + 1),
+        );
+        assert!(old.kev.stale);
+        assert_eq!(parse_ymd("2026-11-20"), Some(date!(2026 - 11 - 20)));
+        assert_eq!(parse_ymd("bad"), None);
+    }
+
+    #[test]
+    fn feed_404_reports_no_update_and_changes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let now = datetime!(2026-11-27 10:15:00 UTC);
+        let st = apply_feed(dir.path(), DEFAULT_FEED_URL, not_published(), &pk, now).unwrap();
+        assert_eq!(st.source, "builtin");
+        let c = st.last_check.unwrap();
+        assert_eq!(c.outcome, "no_update");
+        assert_eq!(c.at, "2026-11-27T10:15:00");
+        assert_eq!(c.feed_url, DEFAULT_FEED_URL);
+        assert!(c.version.is_none() && c.error.is_none());
+        // The record survives and shows in the plain status.
+        let again = status_with_pubkey(dir.path(), &pk, TODAY);
+        assert_eq!(again.last_check.unwrap().outcome, "no_update");
+    }
+
+    #[test]
+    fn feed_with_a_newer_signed_bundle_installs_it_once() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let now = datetime!(2026-11-27 10:15:00 UTC);
+        let body = serde_json::to_string(&build_signed_test_bundle(
+            "2099.1.1",
+            "2099-01-01",
+            &TEST_SEED,
+        ))
+        .unwrap();
+        let st = apply_feed(dir.path(), "u", Ok(body.clone()), &pk, now).unwrap();
+        assert_eq!(st.source, "bundle");
+        assert_eq!(st.version, "2099.1.1");
+        let c = st.last_check.unwrap();
+        assert_eq!(c.outcome, "installed");
+        assert_eq!(c.version.as_deref(), Some("2099.1.1"));
+        // Same bundle again: up to date, no rotation into previous.json.
+        let st2 = apply_feed(dir.path(), "u", Ok(body), &pk, now).unwrap();
+        assert_eq!(st2.last_check.unwrap().outcome, "up_to_date");
+        assert!(!previous_path(dir.path()).exists());
+        // An older bundle than the built-in database is not installed either.
+        let dir2 = tempfile::tempdir().unwrap();
+        let old = serde_json::to_string(&build_signed_test_bundle(
+            "2020.1.1",
+            "2020-01-01",
+            &TEST_SEED,
+        ))
+        .unwrap();
+        let st3 = apply_feed(dir2.path(), "u", Ok(old), &pk, now).unwrap();
+        assert_eq!(st3.source, "builtin");
+        assert_eq!(st3.last_check.unwrap().outcome, "up_to_date");
+    }
+
+    #[test]
+    fn feed_failures_are_recorded_and_returned_as_errors() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let now = datetime!(2026-11-27 10:15:00 UTC);
+        let foreign = serde_json::to_string(&build_signed_test_bundle(
+            "2099.1.1",
+            "2099-01-01",
+            &[7u8; 32],
+        ))
+        .unwrap();
+        let err = apply_feed(dir.path(), "u", Ok(foreign), &pk, now).unwrap_err();
+        assert_eq!(err.code, "bad_signature");
+        let st = status_with_pubkey(dir.path(), &pk, TODAY);
+        assert_eq!(st.source, "builtin");
+        let c = st.last_check.unwrap();
+        assert_eq!(c.outcome, "failed");
+        assert_eq!(c.error_code.as_deref(), Some("bad_signature"));
+        assert!(c.error.unwrap().contains("Ed25519"));
+
+        let net = CmdError::new("net", "Загрузка бандла сигнатур: таймаут");
+        assert!(apply_feed(dir.path(), "u", Err(net), &pk, now).is_err());
+        let c = status_with_pubkey(dir.path(), &pk, TODAY)
+            .last_check
+            .unwrap();
+        assert_eq!(c.error_code.as_deref(), Some("net"));
+        assert!(apply_feed(dir.path(), "u", Ok("<html>".into()), &pk, now).is_err());
+    }
+
+    #[test]
+    fn bundle_built_from_the_repo_data_verifies_and_keeps_the_counts() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let mut b = bundle_from_builtin("2099.1.1", "2099-01-01");
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        let before = status_with_pubkey(dir.path(), &pk, TODAY);
+        let st =
+            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk, TODAY)
+                .unwrap();
+        // Re-adding the built-in entries changes nothing in matching.
+        assert_eq!(st.kev.used, before.kev.used);
+        assert_eq!(st.counts.secrets, before.counts.secrets);
+        assert_eq!(st.kev.catalog, before.kev.catalog);
+        assert_eq!(st.kev.total, before.kev.total);
+        // Old bundles without `kev_catalog` keep verifying: the field is skipped when absent.
+        let mut legacy = b.clone();
+        legacy.kev_catalog = None;
+        sign_bundle_with_seed(&mut legacy, &TEST_SEED).unwrap();
+        assert!(!String::from_utf8(canonical_payload(&legacy))
+            .unwrap()
+            .contains("kev_catalog"));
+        assert!(verify_bundle(&legacy, &pk).is_ok());
     }
 }

@@ -405,7 +405,12 @@ async fn contract_shape_matches_demo_backend_inner() {
     );
     c!("risk_trend_get", "risk_trend_get", json!({ "project": id }));
     c!("signatures_status", "signatures_status", json!({}));
-    c!("signatures_update", "signatures_update", json!({}));
+    // the local server has no bundle: the check ends with `no_update` and fills `last_check`
+    c!(
+        "signatures_update",
+        "signatures_update",
+        json!({ "url": format!("{}/sig-feed/signatures.bundle", e.server.url()) })
+    );
     c!("signatures_rollback", "signatures_rollback", json!({}));
     c!("plugins_list", "plugins_list", json!({}));
     c!(
@@ -765,6 +770,68 @@ fn checker_detects_missing_keys_and_types() {
     );
     assert!(r.errors.is_empty());
     assert!(r.nulls.contains("x.a") && r.empty.contains("x.b"));
+}
+
+/// The demo signature screen shows the same numbers and standard families as the core status
+/// (`DEMO_SIG_BUILTIN`, `DEMO_SIG_FRAMEWORKS` in demo-backend.js).
+#[test]
+fn demo_signature_numbers_match_core_status() {
+    let src = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../ui/js/demo-backend.js"),
+    )
+    .unwrap();
+    let start = src
+        .find("const DEMO_SIG_BUILTIN = {")
+        .expect("DEMO_SIG_BUILTIN");
+    let body = &src[start..start + src[start..].find("};").unwrap()];
+    let field = |k: &str| -> String {
+        let at = body
+            .find(&format!("{k}: "))
+            .unwrap_or_else(|| panic!("{k}"))
+            + k.len()
+            + 2;
+        let rest = &body[at..];
+        rest[..rest.find(',').unwrap()]
+            .trim_matches('"')
+            .to_string()
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let st = foca_engine::sigbundle::status(dir.path(), time::macros::date!(2026 - 11 - 27));
+    assert_eq!(field("version"), st.kev.catalog);
+    assert_eq!(field("released"), st.kev.released);
+    for (k, v) in [
+        ("total", st.kev.total),
+        ("used", st.kev.used),
+        ("products", st.kev.products),
+        ("software", st.software.software),
+        ("os", st.software.os),
+        ("secrets", st.counts.secrets),
+        ("std_rules", st.std_map.rules),
+        ("std_refs", st.std_map.refs),
+    ] {
+        assert_eq!(field(k), v.to_string(), "{k}");
+    }
+    let start = src
+        .find("const DEMO_SIG_FRAMEWORKS = [")
+        .expect("DEMO_SIG_FRAMEWORKS");
+    let fw = &src[start..start + src[start..].find("];").unwrap()];
+    let demo: Vec<String> = fw
+        .lines()
+        .skip(1)
+        .filter_map(|l| l.trim().strip_prefix('['))
+        .map(|l| l.split('"').nth(3).unwrap_or_default().to_string())
+        .collect();
+    let core: Vec<String> = st
+        .std_map
+        .frameworks
+        .iter()
+        .map(|f| f.label.clone())
+        .collect();
+    assert_eq!(demo, core);
+    assert!(
+        src.contains(foca_engine::sigbundle::DEFAULT_FEED_URL),
+        "demo feed URL"
+    );
 }
 
 /// The demo backend keeps a copy of the standards of its finding rules (`DEMO_STANDARDS`); every

@@ -269,5 +269,17 @@
   "core.alert.rejected": "сервис отклонил сообщение: HTTP {status} {reason}",
   "core.alert.rate_limited": "лимит запросов сервиса: повтор через {s} с",
   "core.demo_case.name": "Эталонный кейс",
-  "core.reqlog.scan_running": "Скан ещё идёт: его журнал запросов можно очистить после завершения"
+  "core.reqlog.scan_running": "Скан ещё идёт: его журнал запросов можно очистить после завершения",
+  "core.sig.bad_url": "URL фида сигнатур должен использовать HTTPS и публичный хост",
+  "core.sig.download": "Загрузка бандла сигнатур: {error}",
+  "core.sig.bad_schema": "Неизвестная схема бандла сигнатур: {schema}",
+  "core.sig.no_version": "Пустая версия или дата выпуска бандла сигнатур",
+  "core.sig.bad_sha": "Контрольная сумма SHA-256 бандла сигнатур не совпадает с содержимым",
+  "core.sig.bad_sig_hex": "Некорректный hex-формат подписи Ed25519",
+  "core.sig.bad_sig_len": "Неверная длина подписи Ed25519 (ожидается 64 байта)",
+  "core.sig.bad_signature": "Цифровая подпись Ed25519 бандла сигнатур недействительна",
+  "core.sig.empty_rule": "Пустой идентификатор или шаблон правила секрета в бандле",
+  "core.sig.bad_rule": "Правило секрета {id} в бандле не компилируется: {error}",
+  "core.sig.bad_json": "Некорректный JSON бандла сигнатур: {error}",
+  "core.sig.need_bundle": "Нужен bundle_json или bundle (foca-sig-bundle/v1)"
 }
