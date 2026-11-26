@@ -21,7 +21,7 @@ jobs:
   core:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
         with: { components: "rustfmt, clippy" }
       - uses: Swatinem/rust-cache@v2
@@ -39,8 +39,8 @@ jobs:
   ui:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: for f in ui/js/*.js ui/screens/*.js qa/*.mjs; do node --check "$f"; done
@@ -54,11 +54,11 @@ jobs:
   android-kotlin:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 21, cache: gradle }
       # cmdline-tools 16 no longer ships the legacy "tools" package that the action installs by default.
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         with: { packages: "platform-tools" }
       - run: sdkmanager "ndk;${NDK_VERSION}"
       # The Kotlin compiler runs in the Gradle daemon (in-process) and exhausts the default 384 MiB
@@ -84,11 +84,11 @@ jobs:
     needs: [core, android-kotlin]
     if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-java@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with: { distribution: temurin, java-version: 21, cache: gradle }
       # cmdline-tools 16 no longer ships the legacy "tools" package that the action installs by default.
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
         with: { packages: "platform-tools" }
       - run: sdkmanager "ndk;${NDK_VERSION}"
       # The Kotlin compiler runs in the Gradle daemon (in-process) and exhausts the default 384 MiB
@@ -105,7 +105,7 @@ jobs:
       - run: bash qa/android-build.sh apk
         env: { NDK_HOME: "${{ env.ANDROID_SDK_ROOT }}/ndk/${{ env.NDK_VERSION }}" }
       - run: bash qa/check-jni.sh target/aarch64-linux-android/release/libfoca_rs_lib.so
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: apk-unsigned-arm64
           path: |
