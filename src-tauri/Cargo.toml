@@ -26,7 +26,7 @@ tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 # Direct JNI into Kotlin (scan service without an Activity); tao provides the app context via ndk-context.
 [target.'cfg(target_os = "android")'.dependencies]
-jni = "0.21"
+jni = "0.22"
 ndk-context = "0.1"
 
 [dev-dependencies]
