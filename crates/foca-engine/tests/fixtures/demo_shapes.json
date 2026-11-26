@@ -18016,6 +18016,11 @@
      "t": [
       "bool"
      ]
+    },
+    "stages": {
+     "t": [
+      "null"
+     ]
     }
    }
   },
@@ -18136,6 +18141,17 @@
       "array"
      ],
      "items": null
+    },
+    "only": {
+     "t": [
+      "array"
+     ],
+     "items": null
+    },
+    "stages": {
+     "t": [
+      "null"
+     ]
     }
    }
   },
@@ -19798,6 +19814,11 @@
     "resumed": {
      "t": [
       "bool"
+     ]
+    },
+    "stages": {
+     "t": [
+      "null"
      ]
     }
    }

@@ -353,6 +353,8 @@
     held: [],
     caps: null,
     followup: [],
+    // A narrowed run (follow-up of chosen items): ids of the stages it executes; null for a full scan.
+    stages: null,
   });
   F.scan = Object.assign(blank(), F.scan && F.scan.running ? F.scan : {});
   // The core is already scanning (UI restart under Tauri): restore from scan_status / the snapshot.
@@ -383,6 +385,7 @@
       held: cs.held || [],
       caps: cs.controls || null,
       followup: cs.followup || [],
+      stages: cs.stages || null,
     });
   }
   if (F.db.scan && F.db.scan.running && !F.scan.running) restoreFrom(F.db.scan);
@@ -402,16 +405,21 @@
   const profName = (s = F.scan) =>
     F.i18n.lang() === "ru" || !s.profileId ? s.profile : F.t("launch.profile_" + s.profileId, s.profile);
 
+  // A narrowed run: stage k is outside the chosen items (`list`: stage ids the run executes).
+  const notSelected = (k, list = F.scan.stages) =>
+    Array.isArray(list) && list.length > 0 && !list.includes(STAGES[k].id);
+  // Position of stage k among the stages the run executes, and their count.
+  const stageSlot = (k, list = F.scan.stages) => {
+    if (!Array.isArray(list) || !list.length) return { i: k, n: STAGES.length };
+    return { i: STAGES.slice(0, k).filter(x => list.includes(x.id)).length, n: list.length };
+  };
   function derive() {
     const s = F.scan;
     const i = s.stageIdx;
+    const slot = stageSlot(i, s.stages);
     s.stageLabel =
       s.running && i >= 0
-        ? F.t(
-            "scan.stage_of",
-            { i: i + 1, n: STAGES.length, name: stageName(i, s) },
-            "Этап {i} из {n}: {name}",
-          )
+        ? F.t("scan.stage_of", { i: slot.i + 1, n: slot.n, name: stageName(i, s) }, "Этап {i} из {n}: {name}")
         : F.t("scan.scan", "Скан");
     s.pauseLabel = s.paused ? reasonOf(s.pauseReason).label || F.t("scan.paused_title", "Скан на паузе") : "";
     if (sameProject()) {
@@ -443,6 +451,7 @@
           targets: ev.targets || pend.targets || ((F.db.scope || {}).targets || []).map(t => t.v),
           modules: pend.modules || [],
           resumed: !!(ev.resumed || pend.resume_from),
+          stages: ev.stages || null,
         });
         // Per-item control capabilities come with the core status.
         F.api.scan_status().then(
@@ -737,12 +746,14 @@
   // ---------- stages: numbers come from project data ----------
   const stageStatus = k => {
     const s = F.scan;
+    if (notSelected(k)) return "sel";
     if (!s.running) return s.finished ? "done" : "wait";
     return k < s.stageIdx ? "done" : k === s.stageIdx ? "run" : "wait";
   };
   const stageP = k => {
-    const w = 100 / STAGES.length;
-    return Math.max(0, Math.min(1, (F.scan.progress - k * w) / w));
+    const slot = stageSlot(k);
+    const w = 100 / slot.n;
+    return Math.max(0, Math.min(1, (F.scan.progress - slot.i * w) / w));
   };
   function stageCounters(id) {
     if (!sameProject()) return [];
@@ -750,17 +761,19 @@
       scan = F.scan;
     switch (id) {
       case "search": {
+        // a narrowed run counts only the sources it queries
+        const pool = scan.stages ? scan.sources.filter(x => x.status !== "off") : scan.sources;
         if (F.isDemo) {
-          const live = scan.sources.filter(x => x.status === "ok").length;
-          return [F.t("scan.ctr_sources_demo", { live, n: scan.sources.length }, "источники: {live}/{n}")];
+          const live = pool.filter(x => x.status === "ok").length;
+          return [F.t("scan.ctr_sources_demo", { live, n: pool.length }, "источники: {live}/{n}")];
         }
         // Polled sources (answered, error, timeout, skipped, no key) out of all, and which source is pending
         // now.
         // External sources run in parallel, so several may be pending.
-        const done = scan.sources.filter(x => !["wait", "running"].includes(x.status)).length,
-          runs = scan.sources.filter(x => x.status === "running");
+        const done = pool.filter(x => !["wait", "running"].includes(x.status)).length,
+          runs = pool.filter(x => x.status === "running");
         return [
-          F.t("scan.ctr_polled", { done, n: scan.sources.length }, "опрошено {done} из {n}"),
+          F.t("scan.ctr_polled", { done, n: pool.length }, "опрошено {done} из {n}"),
           runs.length
             ? F.t("scan.ctr_waiting", { name: runs[0].name }, "ждём: {name}") +
               (runs.length > 1 ? " " + F.t("scan.ctr_and_more", { n: runs.length - 1 }, "и ещё {n}") : "")
@@ -851,6 +864,7 @@
         done: `<span class="pill ok">${ic("check")}${esc(F.t("common.done", "Готово"))}</span>`,
         none: `<span class="pill mute">${ic("scn-skip")}${esc(F.t("scan.pill_none", "Не начат"))}</span>`,
         cut: `<span class="pill warn">${ic("stop")}${esc(F.t("scan.pill_cut", "Прерван"))}</span>`,
+        sel: `<span class="pill mute">${ic("scn-skip")}${esc(F.t("scan.pill_sel", "Не выбран"))}</span>`,
       }[st] || ""
     );
   };
@@ -967,16 +981,35 @@
       if (kind === "step") sources.push("subdomains");
     });
     const only = items.every(k => !k.startsWith("stage:"));
-    return { from_stage: STAGES[from].id, sources: only ? [...new Set(sources)] : [] };
+    return { from_stage: STAGES[from].id, sources: only ? [...new Set(sources)] : [], only: items.slice() };
+  }
+  // Stages a narrowed run of `items` executes (mirrors the core): a search source or stage brings
+  // the document pipeline, any other item only its own stage; the report always runs.
+  function followupStages(items) {
+    const idx = id => STAGES.findIndex(x => x.id === id),
+      analysis = idx("analysis"),
+      run = new Set([idx("report")]);
+    items.forEach(key => {
+      const [kind, id] = key.split(":");
+      const k = Math.max(
+        0,
+        idx(kind === "stage" ? id : kind === "step" ? "network" : SRC_STAGE[id] || "search"),
+      );
+      if (k <= analysis) for (let j = k; j <= analysis; j++) run.add(j);
+      else run.add(k);
+    });
+    return STAGES.filter((x, j) => run.has(j));
   }
   F.actions["scan-followup"] = () => {
     const fin = F.scan.finished,
       rec = fin && scanRec(fin.scanId);
     if (!fin || !(fin.followup || []).length) return;
-    const { from_stage, sources } = followupStart(fin.followup);
-    safeStart({ profile: (rec && rec.profile_id) || "passive", from_stage, sources, open: true }).then(r => {
-      if (r) F.snack(F.t("scan.followup_started", "Повторяем отложенное"));
-    });
+    const { from_stage, sources, only } = followupStart(fin.followup);
+    safeStart({ profile: (rec && rec.profile_id) || "passive", from_stage, sources, only, open: true }).then(
+      r => {
+        if (r) F.snack(F.t("scan.followup_started", "Повторяем отложенное"));
+      },
+    );
   };
   // Resolver steps the user can skip alone (scan_skip_source); shown when the resolver is slow.
   const RESOLVER_STEPS = ["brute", "permute"];
@@ -1042,9 +1075,13 @@
       // the whole scan or this stage alone (its own Pause button) is on hold
       paused = (scan.paused || isHeld(`stage:${def.id}`)) && !opts.static;
     const mk =
-      { run: paused ? ic("pause") : ic("spin", "spin"), done: ic("check"), cut: ic("stop") }[st] ||
-      `<b>${k + 1}</b>`;
-    const cnt = (opts.counters || (st === "wait" || st === "none" ? [] : stageCounters(def.id))).filter(
+      {
+        run: paused ? ic("pause") : ic("spin", "spin"),
+        done: ic("check"),
+        cut: ic("stop"),
+        sel: ic("scn-skip"),
+      }[st] || `<b>${k + 1}</b>`;
+    const cnt = (opts.counters || (["wait", "none", "sel"].includes(st) ? [] : stageCounters(def.id))).filter(
       Boolean,
     );
     return `<div class="scn-mk">${mk}</div>
@@ -1074,7 +1111,7 @@
         <div class="scn-h1b"><div class="scn-tgt">${esc(tg[0] || scan.projectName || "")}</div><div class="scn-h1s">${tg.length > 1 ? `+${tg.length - 1} ${pw(tg.length - 1, "scan.pl_target", "цель|цели|целей")} · ` : ""}${esc(F.t("scan.head_profile", { name: profName(scan) }, "профиль «{name}»"))}${scan.resumed ? " · " + esc(F.t("scan.head_resumed", "продолжение")) : ""}</div></div>
         ${scan.paused ? `<span class="pill warn">${ic("pause")}${esc(F.t("scan.pill_pause", "Пауза"))}</span>` : `<span class="pill info">${ic("spin", "spin")}${esc(F.t("scan.pill_running", "Идёт"))}</span>`}
       </div>
-      <div class="scn-big"><b>${scan.progress}<small>%</small></b><span>${i >= 0 ? esc(stageName(i, scan)) : ""}<small>${i >= 0 ? esc(F.t("scan.stage_n_of", { i: i + 1, n: STAGES.length }, "этап {i} из {n}")) : ""}</small></span></div>
+      <div class="scn-big"><b>${scan.progress}<small>%</small></b><span>${i >= 0 ? esc(stageName(i, scan)) : ""}<small>${i >= 0 ? esc(F.t("scan.stage_n_of", { i: stageSlot(i).i + 1, n: stageSlot(i).n }, "этап {i} из {n}")) : ""}</small></span></div>
       <div class="pbar scn-hpb ${scan.paused ? "paused" : ""}"><i style="width:${scan.progress}%"></i></div>
       <div class="scn-meta"><span>${ic("clock")}${esc(F.t("scan.elapsed", { t: fmtT(elapsedS) }, "Прошло {t}"))}</span><span>${esc(scan.paused ? F.t("scan.on_pause", "на паузе") : left != null ? F.t("scan.left", { t: fmtLeft(left) }, "осталось {t}") : F.t("scan.estimating", "оцениваем время…"))}</span>${scan.startedAt ? `<span>${esc(F.t("scan.started_at", { t: clock(scan.startedAt) }, "начат {t}"))}</span>` : ""}</div>`;
   }
@@ -1815,7 +1852,17 @@
       <p class="scn-fnew">${rec.new_findings ? `${ic("bug")}${esc(F.t("scan.new_since", "Новых с прошлого скана:"))} <b>${rec.new_findings}</b>` : `${ic("check")}${esc(F.t("scan.new_since_none", "Новых находок с прошлого скана нет"))}`}</p>
       ${
         (scan.finished.followup || []).length
-          ? `<div class="banner info scn-fup">${ic("refresh")}<div>${esc(F.t("scan.followup_note", { n: scan.finished.followup.length }, "Отложенных перезапусков: {n}. Их этапы уже прошли"))}<div class="btnrow"><button class="btn sm filled"
+          ? `<div class="banner info scn-fup">${ic("refresh")}<div>${esc(F.t("scan.followup_note", { n: scan.finished.followup.length }, "Отложенных перезапусков: {n}. Их этапы уже прошли"))}<div class="scn-fup-st">${esc(
+              F.t(
+                "scan.followup_stages",
+                {
+                  list: followupStages(scan.finished.followup)
+                    .map(x => x.label)
+                    .join(", "),
+                },
+                "Запустятся только этапы: {list}. Остальные будут пропущены",
+              ),
+            )}</div><div class="btnrow"><button class="btn sm filled"
         data-act="scan-followup">${ic("play")}${esc(F.t("scan.followup_btn", "Повторить отложенное"))}</button></div></div></div>`
           : ""
       }
@@ -1978,6 +2025,7 @@
     if (opts.targets) args.targets = opts.targets;
     if (opts.resume_from) args.resume_from = opts.resume_from;
     if (opts.from_stage) args.from_stage = opts.from_stage; // Follow-up run of queued restarts.
+    if (Array.isArray(opts.only) && opts.only.length) args.only = opts.only; // Run only the stages of these items.
     if (opts.fuzz && typeof opts.fuzz === "object") args.fuzz = opts.fuzz; // Site file search: modules and rate for this run.
     if (opts.ports && typeof opts.ports === "object") args.ports = opts.ports; // Port scan: top 100/1000 for this run.
     if (opts.subdomains && typeof opts.subdomains === "object") args.subdomains = opts.subdomains; // Brute force wordlist (off/top-1500/top-5000/custom).
@@ -2296,7 +2344,9 @@
         error: `<button class="btn"
           data-act="copy:${esc(info.code || "")}">${ic("copy")}${esc(F.t("scan.copy_error", "Скопировать ошибку"))}</button>`,
       }[st.reason] || "";
-    const view = STAGES.map((d, j) => (j < st.stageIdx ? "done" : j === st.stageIdx ? "cut" : "none"));
+    const view = STAGES.map((d, j) =>
+      notSelected(j, rec.stages) ? "sel" : j < st.stageIdx ? "done" : j === st.stageIdx ? "cut" : "none",
+    );
     const okS = rec.sources.filter(z => z.status === "ok").length;
     return `
       <div class="card pad scn-why" style="--why:${info.color}">

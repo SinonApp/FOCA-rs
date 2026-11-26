@@ -18,6 +18,7 @@ use tokio_util::sync::CancellationToken;
 use crate::analysis::facts;
 use crate::analysis::rules;
 use crate::engine::{lock, Core, Engine, Run};
+use crate::scan::selection::Selection;
 use crate::scan::{
     self, core_scope_for, default_modules, egress_label, expand_exts, fuzz, incomplete_sources,
     infra, known_hosts, minutes_between, opts_key, ports, profile_id, recon, source_enabled,
@@ -119,6 +120,11 @@ impl Engine {
         };
         db.scan_save(&rec)?;
         let mut extra = json!({ "modules": st.modules, "added": added });
+        // a narrowed run: the chosen items and the stages it executed
+        if let Some(sel) = Selection::parse(&st.only) {
+            extra["only"] = json!(sel.keys());
+            extra["stages"] = json!(sel.stage_ids());
+        }
         // incomplete snapshot: site reconnaissance did not answer, so the technologies come from older
         // data and "What changed" must not count them as gone
         let incomplete: Vec<&str> = st
@@ -306,6 +312,23 @@ impl Engine {
                     .filter(|&ms| ms > 0)
                     .map(Duration::from_millis)
             });
+        // A narrowed run (follow-up of chosen items): from the arguments, or the one saved for
+        // this scan on resume.
+        let saved_opts: Value = match &prev_stop {
+            Some((s, _)) => facts::get(&lock(&db), &opts_key(&s.id)),
+            None => Value::Null,
+        };
+        let only_keys: Vec<String> = a
+            .get("only")
+            .or_else(|| saved_opts.get("only"))
+            .and_then(Value::as_array)
+            .map(|v| {
+                v.iter()
+                    .filter_map(|x| x.as_str().map(String::from))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let sel = Selection::parse(&only_keys);
         let n_scans = lock(&db).scans()?.len();
         let now = self.now();
         let (scan_id, started, progress, stage) = match &prev_stop {
@@ -327,16 +350,26 @@ impl Engine {
                 crate::util::iso(now),
                 0,
                 // a follow-up run of queued restarts starts at the earliest stage they belong to
-                STAGES
-                    .iter()
-                    .position(|x| Some(x.0) == arg_str(a, "from_stage"))
-                    .unwrap_or(0),
+                match &sel {
+                    Some(s) => s.first(),
+                    None => STAGES
+                        .iter()
+                        .position(|x| Some(x.0) == arg_str(a, "from_stage"))
+                        .unwrap_or(0),
+                },
             ),
         };
         let source_ids: Vec<String> = match a.get("sources").and_then(Value::as_array) {
             Some(v) if !v.is_empty() => v
                 .iter()
                 .filter_map(|x| x.as_str().map(String::from))
+                .collect(),
+            // a narrowed run without its own list: the chosen sources
+            _ if sel.as_ref().is_some_and(|s| !s.whole("search")) => SOURCES
+                .iter()
+                .map(|s| s.0)
+                .filter(|id| sel.as_ref().is_some_and(|s| s.source(id)))
+                .map(String::from)
                 .collect(),
             // Without an explicit list, use every source except those disabled in the wizard (`sources_off`):
             // the wizard shows only some sources, and the rest (subdomains, dorks, archives) must not silently
@@ -414,6 +447,11 @@ impl Engine {
                 } else {
                     key
                 };
+                // a narrowed run leaves out every source outside the chosen items
+                let status = match &sel {
+                    Some(x) if !x.source(s.0) => "off".into(),
+                    _ => status,
+                };
                 ScanSource {
                     id: s.0.into(),
                     name: s.1.into(),
@@ -422,10 +460,7 @@ impl Engine {
             })
             .collect();
         // wizard parameters: from the arguments, or the ones saved for this scan on resume
-        let saved: Value = match &prev_stop {
-            Some((s, _)) => facts::get(&lock(&db), &opts_key(&s.id)),
-            None => Value::Null,
-        };
+        let saved = saved_opts;
         let pick = |k: &str| -> Option<Value> {
             a.get(k)
                 .filter(|v| !v.is_null())
@@ -488,12 +523,13 @@ impl Engine {
             headless,
             substep: None,
             followup: vec![],
+            only: sel.as_ref().map(Selection::keys).unwrap_or_default(),
         };
         facts::put(
             &lock(&db),
             &opts_key(&scan_id),
             &json!({ "exts": exts, "crawl_depth": crawl_depth, "max_size_mb": max_size_mb,
-                "ua": ua, "limit": limit_arg }),
+                "ua": ua, "limit": limit_arg, "only": sel.as_ref().map(Selection::keys) }),
         )?;
         // Network: an empty scope for the passive level (nothing may touch the target), a scope without
         // the active stage for standard, and a scope with the active stage for active.
@@ -545,7 +581,9 @@ impl Engine {
         let started_ev = {
             let s = lock(&st);
             json!({ "scan_id": scan_id, "profile": profile_label(prof), "profile_id": prof,
-                "active": active, "egress": s.egress, "targets": s.targets, "resumed": s.resumed, "auto": s.auto })
+                "active": active, "egress": s.egress, "targets": s.targets, "resumed": s.resumed, "auto": s.auto,
+                // a narrowed run: the stages it executes (the others are not selected)
+                "stages": sel.as_ref().map(Selection::stage_ids) })
         };
         let cancel_for_budget = cancel.clone();
         {

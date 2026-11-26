@@ -138,6 +138,7 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
     let mut host_src: std::collections::BTreeMap<String, Vec<String>> = Default::default();
     let mut attempted = 0usize;
     let mut answered = 0usize;
+    let mut limited = 0usize;
     // web dork engines: id to whether the latest outcome was a captcha/block
     let mut web: std::collections::BTreeMap<String, bool> = Default::default();
     // documents already known to the project; sources skip them before applying their limit
@@ -257,7 +258,12 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
                         attempted += 1;
                         answered += 1;
                     }
-                    S::Error | S::Timeout | S::Limit => attempted += 1,
+                    S::Error | S::Timeout => attempted += 1,
+                    // the source answered with a rate limit or a captcha: the network works
+                    S::Limit | S::Blocked => {
+                        attempted += 1;
+                        limited += 1;
+                    }
                     _ => {}
                 }
                 if WEB_ENGINES.contains(&r.id.as_str()) {
@@ -359,12 +365,27 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
         c.sub_note("queue", added, drop.found, &note);
     }
     c.source_event("dns", "ok", Some(ct_hosts.len()));
-    // no network or all sources unavailable: an explicit warning rather than an empty result
+    // No source gave data: an explicit warning rather than an empty result. `no_network` only when
+    // nothing answered at all; a rate limit, a captcha or any HTTP answer means the network works.
     if attempted > 0 && answered == 0 {
-        c.warn(
-            "no_network",
-            "Нет сети или все источники недоступны: результаты скана неполные",
-        );
+        let reached = limited > 0 || got_http_answer(c);
+        if !reached {
+            c.warn(
+                "no_network",
+                "Нет сети или все источники недоступны: результаты скана неполные",
+            );
+        } else if limited > 0 {
+            c.warn(
+                "search_sources_limited",
+                "Источники поиска не дали данных: все ограничили запросы или показали капчу. \
+                 Сеть работает: повторите позже или пройдите проверку",
+            );
+        } else {
+            c.warn(
+                "search_sources_failed",
+                "Источники поиска не дали данных: все ответили ошибкой. Сеть работает: повторите позже",
+            );
+        }
     }
     // per-engine dork totals go to the scan log (requests / results / captchas / handed over)
     for (id, st) in dork_board.stats() {
@@ -404,6 +425,15 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
     }
     facts::put(&db, K_HOST_SRC, &hs)?;
     Ok(())
+}
+
+/// Some request of this scan got an HTTP answer (any status): the network is up.
+fn got_http_answer(c: &Ctx) -> bool {
+    lock(&c.db)
+        .requests(Some(&c.scan_id), false)
+        .unwrap_or_default()
+        .iter()
+        .any(|r| r.status.is_some())
 }
 
 /// Why found documents did not reach the download queue.

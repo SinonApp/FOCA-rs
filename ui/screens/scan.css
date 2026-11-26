@@ -255,9 +255,17 @@ html[data-theme="dark"] .scn-ah > svg.i {
   line-height: 1.35;
   overflow-wrap: break-word;
 }
-.is-wait .scn-st-t {
+.is-wait .scn-st-t,
+.is-sel .scn-st-t {
   color: var(--text-3);
   font-weight: 400;
+}
+.is-sel .scn-mk {
+  border-style: dashed;
+}
+.scn-fup-st {
+  margin-top: 4px;
+  color: var(--text-2);
 }
 .scn-st-h .pill {
   flex: none;

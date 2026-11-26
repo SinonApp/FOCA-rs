@@ -18,7 +18,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 - **`Engine::open`**: opens the `foca-store` data directory under an exclusive `DataDirLock`, wires up `KeyProvider` (Android `KeyVault` or in-memory), `EventSink` (`app.emit("scan://event")`), optional `RenderFetch`, `OcrProvider`, `WebScreenshotter`, and `ReportBuilder`. Any scan left unfinished by a previous process crash/kill is recorded in history as `stopped` / `restart`.
 - **`Engine::invoke`**: dispatches every contract command in [docs/API.md](../../API.md) (`project_*`, `scope_*`, `scan_*`, `finding_*`, `doc_*`, `oos_*`, `settings_*`, `key_*`, `report_*`, `export_build`, `ai_*`, `pin_*`, `wipe_all`, `net_check`, `secret_reveal`, `insights_get`, `chain_get`, `hygiene_get`, `demo_case_import`, `tool_*`, `queue_*`, `i18n_bundle`, `licenses_get`, `plugins_*` / `plugin_*`, `signatures_*`, `project_export_encrypted`, `project_import_encrypted`, `logs_get`, ...) and returns `serde_json::Value` or `CmdError { code, message, targets? }`.
 - **Background Scan Pipeline**: runs on a tokio task across 9 stages (`search → download → meta → analysis → network → ports → recon → fuzz → report`), emits `scan://event` updates, cancels immediately via `CancellationToken`, supports external pause/resume (`Engine::pause` / `Engine::resume`), and resumes from download queues via `resume_from`.
-- **Per-item controls** (`scan/control.rs`, `scan_control`): pause/resume, skip and restart for a stage, a source or a network sub-step while the rest of the scan runs; restarts of finished stages are queued for a follow-up run. Network sub-steps report `done/total` counters and a `slow` flag (`scan/steps.rs`); dangling CNAME checks run with bounded concurrency (`scan/takeover.rs`).
+- **Per-item controls** (`scan/control.rs`, `scan_control`): pause/resume, skip and restart for a stage, a source or a network sub-step while the rest of the scan runs; restarts of finished stages are queued for a follow-up run. A follow-up (`scan_start { only }`, `scan/selection.rs`) runs only the stages that own the chosen items: a search source adds the document pipeline, a resolver step or TLS runs only that part of Network and DNS, a whole `stage:` item runs that stage alone. Network sub-steps report `done/total` counters and a `slow` flag (`scan/steps.rs`); dangling CNAME checks run with bounded concurrency (`scan/takeover.rs`).
 - **Logging**: captures `tracing` events from engine, search, and net into an in-memory ring buffer and rotating `<data>/logs/foca.log`, scrubbing secrets via `analysis/redact.rs` before export (`logs_export`).
 
 ## Key 2.0 Subsystems
@@ -75,6 +75,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `scan/recon.rs` | 742 | Site recon and web audit (`foca-recon`, optional screenshots) |
 | `scan/fuzz.rs` | 1,130 | Site search stage (`foca-fuzz`) |
 | `scan/control.rs` | 383 | Per-item controls (`scan_control`): pause/resume, skip, restart, queued follow-ups |
+| `scan/selection.rs` | 160 | Narrowed follow-up runs (`scan_start { only }`): which stages, sources and resolver steps run |
 | **`src/cmds/`** | | Command handlers by domain |
 | `cmds/projects.rs` | 291 | Projects and scope: create/update/duplicate/delete, scope edits, bulk host add |
 | `cmds/findings.rs` | 202 | Finding status, edits, photos, playbooks |

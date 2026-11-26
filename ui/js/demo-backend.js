@@ -6573,6 +6573,16 @@
                 : sourceStatus(x, settings),
       })),
     };
+    // A narrowed run: only the stages of the chosen items; sources outside them are off.
+    {
+      const only = args.only || (prevStop && prevStop.only) || null;
+      RUN.sel = selStages(only);
+      RUN.only = RUN.sel ? only.slice() : null;
+      if (RUN.sel)
+        RUN.sources.forEach(x => {
+          if (!selCovers(RUN.only, x.id)) x.status = "off";
+        });
+    }
     // Startpage showed a captcha in the embedded browser: "Check required" + "Pass the check".
     {
       const sp = RUN.sources.find(x => x.id === "startpage");
@@ -6599,6 +6609,7 @@
       egress: RUN.egress,
       targets: v.targets,
       resumed: !!prevStop,
+      stages: RUN.sel ? RUN.sel.map(k => STAGES[k].id) : null,
     });
     RUN.sources.forEach(s => emit({ type: "source", scan_id: id, ...s }));
     if (prevStop && prevStop.progress) {
@@ -6612,18 +6623,19 @@
           STAGES.findIndex(x => x.id === prevStop.stage),
         ),
       );
-      for (let i = 0; i < stg; i++) applyStage(i, true);
+      for (let i = 0; i < stg; i++) if (!RUN.sel || RUN.sel.includes(i)) applyStage(i, true);
       RUN.stage = stg;
       emit({ type: "stage", scan_id: id, stage: STAGES[stg].id, label: STAGES[stg].label, index: stg });
       emit({ type: "progress", scan_id: id, progress: RUN.progress, stage: STAGES[stg].id });
       emit({ type: "db", scan_id: id, project: st.project.id, kind: STAGES[stg].id });
     }
-    const fromIdx = STAGES.findIndex(x => x.id === args.from_stage);
+    const fromIdx = RUN.sel ? RUN.sel[0] : STAGES.findIndex(x => x.id === args.from_stage);
     if (!prevStop && fromIdx > 0) {
-      // Follow-up run of queued restarts: starts at the earliest stage they belong to.
-      for (let i = 0; i < fromIdx; i++) applyStage(i, true);
+      // Follow-up run of queued restarts: starts at the earliest stage they belong to; a narrowed run
+      // leaves the stages outside its selection untouched.
+      if (!RUN.sel) for (let i = 0; i < fromIdx; i++) applyStage(i, true);
       RUN.stage = fromIdx;
-      RUN.progress = Math.floor(fromIdx * (100 / STAGES.length));
+      RUN.progress = stagePct(fromIdx);
       emit({
         type: "stage",
         scan_id: id,
@@ -6642,6 +6654,7 @@
       egress: RUN.egress,
       targets: v.targets,
       resumed: !!prevStop,
+      stages: RUN.sel ? RUN.sel.map(k => STAGES[k].id) : null,
     };
   }
   let tickT = null;
@@ -6655,14 +6668,16 @@
     if (cur === "network" && RUN.substep && ["brute", "permute"].includes(RUN.substep.id)) {
       if (held.has(`step:${RUN.substep.id}`) || held.has("source:subdomains")) return true;
     }
-    const per = 100 / STAGES.length;
+    const n = RUN.sel ? RUN.sel.length : STAGES.length,
+      per = 100 / n,
+      slot = RUN.sel ? RUN.sel.indexOf(RUN.stage) : RUN.stage;
     // A skipped stage ends at once (its remaining work is dropped).
     if (RUN.skipStages && RUN.skipStages.has(cur)) {
       RUN.skipStages.delete(cur);
-      RUN.progress = Math.min(100, Math.ceil((RUN.stage + 1) * per));
+      RUN.progress = Math.min(100, Math.ceil((slot + 1) * per));
     }
     RUN.progress = Math.min(100, RUN.progress + 2);
-    const stage = Math.min(STAGES.length - 1, Math.floor(RUN.progress / (100 / STAGES.length)));
+    const stage = stageAt(RUN.progress);
     if (stage !== RUN.stage) {
       applyStage(RUN.stage);
       RUN.stage = stage;
@@ -6752,7 +6767,7 @@
       return note("queued");
     }
     RUN.held.delete(key);
-    if (kind === "stage") RUN.progress = Math.floor(cur * (100 / STAGES.length));
+    if (kind === "stage") RUN.progress = stagePct(cur);
     if (kind === "step" && id === "brute") RUN.skipBrute = false;
     if (kind === "source") {
       const x = RUN.sources.find(s => s.id === id);
@@ -6798,10 +6813,16 @@
     emit({ type: "substep", scan_id: RUN.id, ...x });
   }
   function subTick() {
-    const per = 100 / STAGES.length,
-      i = STAGES.findIndex(x => x.id === "network");
-    const frac = Math.max(0, Math.min(0.999, (RUN.progress - i * per) / per));
-    const ids = RUN.level === "external" ? ["dns", "resolve", "takeover"] : Object.keys(SUB_PLAN);
+    const i = STAGES.findIndex(x => x.id === "network"),
+      per = RUN.sel ? 100 / RUN.sel.length : 100 / STAGES.length,
+      at = RUN.sel ? RUN.sel.indexOf(i) : i;
+    const frac = Math.max(0, Math.min(0.999, (RUN.progress - at * per) / per));
+    let ids = RUN.level === "external" ? ["dns", "resolve", "takeover"] : Object.keys(SUB_PLAN);
+    // a narrowed run of chosen resolver steps runs those steps alone (like the core)
+    const only = RUN.only || [];
+    if (RUN.sel && !only.includes("stage:network") && !only.includes("source:subdomains"))
+      ids = ids.filter(x => only.includes(`step:${x}`));
+    if (!ids.length) return;
     const k = Math.floor(frac * ids.length),
       id = ids[k],
       part = frac * ids.length - k;
@@ -6934,6 +6955,46 @@
     patterns: "p",
     secrets: "id",
   };
+  // A narrowed run (`scan_start { only }`, follow-up of chosen items), like the core's `Selection`: a
+  // search source or stage brings the document pipeline, any other item only its own stage; the
+  // report always runs. Returns the stage indices the run executes, or null for a full scan.
+  function selStages(only) {
+    if (!Array.isArray(only) || !only.length) return null;
+    const at = x => STAGES.findIndex(y => y.id === x),
+      analysis = at("analysis"),
+      run = new Set();
+    only.forEach(key => {
+      const [kind, id] = String(key).split(":");
+      const k = controlOwner(kind, id);
+      if (k == null) return;
+      if (k <= analysis) for (let j = k; j <= analysis; j++) run.add(j);
+      else run.add(k);
+    });
+    if (!run.size) return null;
+    run.add(at("report"));
+    return [...run].sort((a, b) => a - b);
+  }
+  // A source takes part in a narrowed run: its stage was chosen whole, or the source itself (the
+  // subdomain source also through one of its steps).
+  function selCovers(only, src) {
+    const has = k => only.includes(k);
+    if (src === "subdomains" && (has("step:brute") || has("step:permute"))) return true;
+    if (src === "dns") return selStages(only).includes(0);
+    const owner = controlOwner("source", src);
+    if (owner == null) return has("stage:network");
+    return has(`stage:${STAGES[owner].id}`) || has(`source:${src}`);
+  }
+  // Percent at which stage i starts (a narrowed run spreads the scale over its stages).
+  function stagePct(i) {
+    if (!RUN.sel) return Math.floor(i * (100 / STAGES.length));
+    return Math.floor(RUN.sel.filter(k => k < i).length * (100 / RUN.sel.length));
+  }
+  // Stage at a progress value.
+  function stageAt(progress) {
+    if (!RUN.sel) return Math.min(STAGES.length - 1, Math.floor(progress / (100 / STAGES.length)));
+    const n = RUN.sel.length;
+    return RUN.sel[Math.min(n - 1, Math.floor(progress / (100 / n)))];
+  }
   function applyStage(i, quiet) {
     const st = P(RUN.project),
       FN = RUN.final;
@@ -7052,11 +7113,17 @@
       rec.progress = RUN.progress;
       rec.stage = STAGES[RUN.stage].id;
     }
+    // a narrowed run: the chosen items and the stages it executed
+    if (RUN.sel) {
+      rec.only = RUN.only.slice();
+      rec.stages = RUN.sel.map(k => STAGES[k].id);
+    }
     return rec;
   }
   function finishScan() {
     const st = P(RUN.project);
-    STAGES.forEach((_, k) => applyStage(k, true)); // All stages (idempotent): the outcome does not depend on where the scan was resumed.
+    // All stages of the run (idempotent): the outcome does not depend on where the scan was resumed.
+    STAGES.forEach((_, k) => (!RUN.sel || RUN.sel.includes(k)) && applyStage(k, true));
     st.docs.forEach(d => {
       if (!d.first_scan) d.first_scan = RUN.id;
     });
@@ -7144,6 +7211,8 @@
           controls: controlCaps(),
           held: [...(RUN.held || [])].sort(),
           followup: RUN.followup || [],
+          only: RUN.only || [],
+          stages: RUN.sel ? RUN.sel.map(k => STAGES[k].id) : null,
         };
 
   // ================= commands (names = Tauri commands) =================

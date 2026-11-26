@@ -48,7 +48,7 @@ pub(crate) fn stage_mark(skip: &Mutex<HashSet<String>>, id: &str) -> StageMark {
 }
 
 /// Stage that owns a source or a sub-step.
-fn owner_stage(kind: &str, id: &str) -> Option<usize> {
+pub(crate) fn owner_stage(kind: &str, id: &str) -> Option<usize> {
     let pos = |s: &str| STAGES.iter().position(|x| x.0 == s);
     match kind {
         "stage" => pos(id),

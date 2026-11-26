@@ -699,6 +699,9 @@ pub(super) async fn enumerate(
     let hold_keys = [format!("source:{SRC_SUBDOMAINS}")];
     // `only`: a pass that re-runs one resolver step after a restart asked once it was over
     let mut only: Option<&str> = None;
+    // a narrowed run of chosen resolver steps: the other steps, NSEC and PTR stay out
+    let chosen = |c: &Ctx, step: &str| c.sel().is_none_or(|s| s.step(step));
+    let steps_only = c.sel().is_some_and(|s| s.steps_only());
     'passes: loop {
         for d in &domains {
             c.hold(&hold_keys).await?;
@@ -732,7 +735,7 @@ pub(super) async fn enumerate(
                 .cloned()
                 .unwrap_or_else(|| json!({ "domain": d, "wordlist": wl_id, "headless": headless }));
             // 1. brute force (skipped in headless background runs: long and noisy; or turned off in the wizard)
-            if only.is_some_and(|o| o != "brute") {
+            if only.is_some_and(|o| o != "brute") || !chosen(c, "brute") {
                 // a re-run of permutations keeps this domain's brute force record
             } else if headless || brute_off {
                 rec["brute"] = json!({ "skipped": if headless { "headless" } else { "off" } });
@@ -850,7 +853,11 @@ pub(super) async fn enumerate(
             }
             // 2. permutations of known subdomains and document tokens
             c.hold(&hold_keys).await?;
-            if !headless && !c.step_skipped("permute") && only.is_none_or(|o| o == "permute") {
+            if !headless
+                && !c.step_skipped("permute")
+                && only.is_none_or(|o| o == "permute")
+                && chosen(c, "permute")
+            {
                 loop {
                     let known: Vec<String> = f
                         .hosts
@@ -907,7 +914,8 @@ pub(super) async fn enumerate(
                 }
             }
             // 3. NSEC walking: active level only (like AXFR)
-            if c.level == "active" && c.module("nsec") && !headless && only.is_none() {
+            if c.level == "active" && c.module("nsec") && !headless && only.is_none() && !steps_only
+            {
                 c.gate().await?;
                 let ncfg = foca_net::nsec::NsecConfig::default();
                 match foca_net::nsec::nsec_walk(&net, dns.as_ref(), d, &ncfg).await {
@@ -981,7 +989,7 @@ pub(super) async fn enumerate(
         .map(|h| (h.name.clone(), vec![h.ip.clone()]))
         .collect();
     let targets = foca_net::ptr::group_by_ip(&pairs);
-    if !targets.is_empty() {
+    if !targets.is_empty() && !steps_only {
         let pcfg = foca_net::ptr::PtrConfig::default();
         match foca_net::ptr::ptr_lookup(&net, dns.clone(), &targets, &domains, &pcfg).await {
             Ok(r) => {
@@ -1321,7 +1329,9 @@ pub(super) async fn tls_standard(
 /// ports, STARTTLS on mail/DB/RDP ports, no-SNI probes of in-scope addresses and in-scope
 /// origin candidates.
 pub(super) async fn tls_active(c: &mut Ctx) -> Result<(), Stop> {
-    if c.level != "active" || !c.module(SRC_TLS) || lock(&c.skip).contains(SRC_TLS) {
+    // a narrowed run checks TLS only when TLS or the whole Ports stage was chosen
+    let picked = c.sel().is_none_or(|s| s.tls() || s.whole("ports"));
+    if c.level != "active" || !c.module(SRC_TLS) || lock(&c.skip).contains(SRC_TLS) || !picked {
         return Ok(());
     }
     let ss = c.e.store().settings_get().unwrap_or_default()["sources"].clone();

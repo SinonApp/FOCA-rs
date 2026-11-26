@@ -202,6 +202,8 @@ pub(crate) struct Ctx {
     start_stage: usize,
     scope: ScopeDto,
     skip: Arc<Mutex<std::collections::HashSet<String>>>,
+    /// Chosen items of a narrowed run (follow-up of selected items); `None` for a normal scan.
+    sel: Option<selection::Selection>,
 }
 
 impl Ctx {
@@ -216,7 +218,10 @@ impl Ctx {
         start_stage: usize,
         level: &str,
     ) -> Ctx {
-        let scan_id = lock(&run.st).scan_id.clone();
+        let (scan_id, sel) = {
+            let st = lock(&run.st);
+            (st.scan_id.clone(), selection::Selection::parse(&st.only))
+        };
         let host_limit = e.cfg.host_limit.max(64);
         Ctx {
             st: run.st.clone(),
@@ -234,8 +239,14 @@ impl Ctx {
             start_stage,
             scope,
             skip: run.skip.clone(),
+            sel,
             e,
         }
+    }
+
+    /// Chosen items of a narrowed run, if this is one.
+    pub(crate) fn sel(&self) -> Option<&selection::Selection> {
+        self.sel.as_ref()
     }
 
     pub(crate) fn group_net(&self, group: &str) -> Result<NetClient, Stop> {
@@ -300,7 +311,12 @@ impl Ctx {
     /// Reports progress with a stage counter (`done` of `total` files, e.g. "Download 3/29"): the download
     /// queue is not part of the snapshot, so without the counter the UI cannot tell how many files remain.
     fn progress_n(&self, stage: usize, frac: f64, n: Option<(usize, usize)>) {
-        let p = ((stage as f64 + frac.clamp(0.0, 1.0)) * 100.0 / STAGES.len() as f64)
+        // a narrowed run spreads the scale over the stages it executes
+        let (slot, slots) = self
+            .sel
+            .as_ref()
+            .map_or((stage, STAGES.len()), |s| s.slot(stage));
+        let p = ((slot as f64 + frac.clamp(0.0, 1.0)) * 100.0 / slots as f64)
             .floor()
             .min(99.0) as u8;
         let mut st = lock(&self.st);
@@ -406,9 +422,10 @@ impl Ctx {
             }
         }
         tracing::warn!(target: "foca::scan", "{}: {code}, {message}", self.scan_id);
-        self.e.emit(
-            json!({ "type": "warning", "scan_id": self.scan_id, "code": code, "message": message }),
-        );
+        let mut ev =
+            json!({ "type": "warning", "scan_id": self.scan_id, "code": code, "message": message });
+        crate::services::i18n::annotate(&mut ev, &["message"]);
+        self.e.emit(ev);
     }
 
     /// Returns `true` if the module is enabled: the custom profile allows only the selected modules,
@@ -464,6 +481,9 @@ impl Core {
             "controls": control::caps(),
             "held": control::held(&r.skip),
             "followup": st.followup,
+            // a narrowed run: the chosen items and the stages it executes
+            "only": st.only,
+            "stages": selection::Selection::parse(&st.only).map(|s| s.stage_ids()),
         })
     }
 }
@@ -476,6 +496,12 @@ pub(crate) async fn pipeline(mut c: Ctx) -> Result<(), Stop> {
         let stage = &STAGES[i];
         let label = stage.1;
         c.gate_scan().await?;
+        if c.sel.as_ref().is_some_and(|s| !s.runs(i)) {
+            // a narrowed run: the stage owns none of the chosen items
+            tracing::info!(target: "foca::scan", "{}: этап «{}», не выбран для этого запуска", c.scan_id, label);
+            i += 1;
+            continue;
+        }
         if lock(&c.skip).remove(&format!("{}{}", control::SKIP_STAGE, stage.0)) {
             // skipped by the user before it started
             tracing::info!(target: "foca::scan", "{}: этап «{}», пропущен пользователем", c.scan_id, label);
@@ -566,6 +592,7 @@ pub(crate) mod plugins;
 pub(crate) mod ports;
 pub(crate) mod recon;
 pub(crate) mod search;
+pub(crate) mod selection;
 pub(crate) mod sources;
 pub(crate) mod steps;
 mod takeover;

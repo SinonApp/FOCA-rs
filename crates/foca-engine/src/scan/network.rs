@@ -115,6 +115,20 @@ pub(super) async fn stage_network(c: &mut Ctx) -> Result<(), Stop> {
             rep
         }
     };
+    // a narrowed run of chosen subdomain steps or TLS inspection: only those parts
+    if let Some(sel) = c.sel().filter(|s| !s.whole("network")).cloned() {
+        if sel.subdomains() {
+            infra::enumerate(c, &dns, &mut f, &hosts_known, &now, &sid).await?;
+        }
+        if sel.tls() {
+            infra::tls_standard(c, &mut f, &hosts_known, &now, &sid).await?;
+        }
+        infra::roles(c, &mut f, &now, &sid);
+        facts::put(&lock(&c.db), facts::K_NET, &f)?;
+        let new = reanalyze_bg(c).await?;
+        c.findings_events(&new);
+        return Ok(());
+    }
     // 1. DNS summary of target domains: records, SPF/DMARC, dangling CNAME
     let dns_domains: Vec<String> = c
         .domains

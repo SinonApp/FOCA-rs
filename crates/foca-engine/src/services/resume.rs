@@ -51,6 +51,8 @@ pub(crate) struct RunState {
     pub substep: Option<serde_json::Value>,
     /// Restarts queued for a follow-up run (`kind:id`, see `scan_control`).
     pub followup: Vec<String>,
+    /// Chosen items of a narrowed run (`scan_start { only }`); empty for a normal scan.
+    pub only: Vec<String>,
 }
 
 /// File name of the running scan state (`Engine::run_file`).
