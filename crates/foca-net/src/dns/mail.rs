@@ -784,6 +784,18 @@ pub async fn fetch_mta_sts_policy(
         .ok_or_else(|| crate::NetError::Parse("not an MTA-STS policy".into()))
 }
 
+/// Turns the outcome of [`fetch_mta_sts_policy`] into [`PolicyInputs::mta_sts_policy`]. A request
+/// our own scope refused (`mta-sts.<domain>` not in the targets or excluded) means the policy was
+/// not checked: it gives `None`, never an "unreachable policy" issue against the target.
+pub fn policy_input(
+    r: Result<MtaStsPolicy, crate::NetError>,
+) -> Option<Result<MtaStsPolicy, String>> {
+    match r {
+        Err(e) if e.is_scope_denial() => None,
+        r => Some(r.map_err(|e| e.to_string())),
+    }
+}
+
 #[cfg(test)]
 mod policy_tests {
     use std::sync::Arc;
@@ -794,6 +806,29 @@ mod policy_tests {
     use crate::dns::StaticDns;
     use crate::testserver::{TestResponse, TestServer};
     use crate::{MemorySink, NetClient, NetConfig};
+
+    /// A scope block of `mta-sts.<domain>` is "not checked", not an unreachable policy file.
+    #[test]
+    fn scope_blocked_policy_is_not_reported_unreachable() {
+        let blocked = policy_input(Err(crate::NetError::OutOfScope {
+            host: "mta-sts.x.test".into(),
+            reason: "нет в целях или в исключениях".into(),
+        }));
+        assert_eq!(blocked, None);
+        let inp = |p| PolicyInputs {
+            mta_sts_txt: vec!["v=STSv1; id=1".into()],
+            mta_sts_policy: p,
+            mx: vec!["10 mx.x.test".into()],
+            ..Default::default()
+        };
+        let ids = |r: MailPolicyReport| r.issues.into_iter().map(|i| i.id).collect::<Vec<_>>();
+        assert!(!ids(analyze_policies("x.test", &inp(blocked)))
+            .contains(&"mta_sts_policy_unreachable".to_string()));
+        let failed = policy_input(Err(crate::NetError::Status(404)));
+        assert_eq!(failed, Some(Err("HTTP 404".into())));
+        assert!(ids(analyze_policies("x.test", &inp(failed)))
+            .contains(&"mta_sts_policy_unreachable".to_string()));
+    }
 
     #[test]
     fn record_parsers() {

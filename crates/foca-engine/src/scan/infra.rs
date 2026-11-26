@@ -246,9 +246,8 @@ pub(super) async fn passive(
             if has_sts {
                 let base = cfg.endpoints.sources.get("mta_sts").map(String::as_str);
                 match foca_net::mail::fetch_mta_sts_policy(&target_net, d, base).await {
-                    Ok(p) => Some(Ok(p)),
                     Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
-                    Err(e) => Some(Err(e.to_string())),
+                    r => foca_net::mail::policy_input(r),
                 }
             } else {
                 None
