@@ -283,7 +283,7 @@ fn raw_rows(
                     r.bytes.to_string(),
                     b(r.active),
                     b(r.blocked),
-                    opt(&r.error),
+                    crate::ftext::log_error(r.error.as_deref(), o.lang),
                 ]
             })
             .collect(),

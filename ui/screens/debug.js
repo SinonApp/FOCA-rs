@@ -447,6 +447,7 @@
     too_large: F.t("debug.err_too_large", "ответ слишком большой"),
     cancelled: F.t("debug.err_cancelled", "отменён"),
     rate_limited: F.t("debug.err_rate_limited", "лимит запросов"),
+    limit: F.t("debug.err_limit", "лимит 429: запрос не отправлен"),
     refused: F.t("debug.err_refused", "соединение отклонено"),
     http_status: F.t("debug.err_http_status", "ошибка HTTP"),
     redirect: F.t("debug.err_redirect", "ошибка перенаправления"),

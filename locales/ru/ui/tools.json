@@ -547,6 +547,7 @@
   "debug.err_too_large": "ответ слишком большой",
   "debug.err_cancelled": "отменён",
   "debug.err_rate_limited": "лимит запросов",
+  "debug.err_limit": "лимит 429: запрос не отправлен",
   "onboard.later": "Позже",
   "debug.err_refused": "соединение отклонено",
   "debug.err_http_status": "ошибка HTTP",

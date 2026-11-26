@@ -3359,6 +3359,330 @@
       "rules": "recon.js_secret",
       "pattern": "Публичный клиентский ключ стороннего виджета: проверьте, что он ограничен доменом.",
       "text": "Публічний клієнтський ключ стороннього віджета: перевірте, що його обмежено доменом."
+    },
+    {
+      "id": "f561",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "вне скоупа: {} ({})",
+      "text": "поза скоупом: {0} ({1!})"
+    },
+    {
+      "id": "f562",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "активная операция запрещена: {}",
+      "text": "активну операцію заборонено: {0!}"
+    },
+    {
+      "id": "f563",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "активная фаза не входит в профиль скана",
+      "text": "активна фаза не входить у профіль скану"
+    },
+    {
+      "id": "f564",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "«{}» исключён из скоупа",
+      "text": "«{0}» виключено зі скоупу"
+    },
+    {
+      "id": "f565",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "«{}» вне скоупа",
+      "text": "«{0}» поза скоупом"
+    },
+    {
+      "id": "f566",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "отменено",
+      "text": "скасовано"
+    },
+    {
+      "id": "f567",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "таймаут",
+      "text": "тайм-аут"
+    },
+    {
+      "id": "f568",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "превышен лимит размера {n} байт",
+      "text": "перевищено ліміт розміру {0} байт"
+    },
+    {
+      "id": "f569",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "слишком много редиректов",
+      "text": "забагато редиректів"
+    },
+    {
+      "id": "f570",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "неверный URL: {}",
+      "text": "невірний URL: {0!}"
+    },
+    {
+      "id": "f571",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "DNS: {}",
+      "text": "DNS: {0!}"
+    },
+    {
+      "id": "f572",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "сеть: {}",
+      "text": "мережа: {0!}"
+    },
+    {
+      "id": "f573",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "прокси: {}",
+      "text": "проксі: {0!}"
+    },
+    {
+      "id": "f574",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "разбор ответа: {}",
+      "text": "розбір відповіді: {0!}"
+    },
+    {
+      "id": "f575",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "ввод-вывод: {}",
+      "text": "введення-виведення: {0!}"
+    },
+    {
+      "id": "f576",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "нужен ключ API: {}",
+      "text": "потрібен ключ API: {0}"
+    },
+    {
+      "id": "f577",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "сервис уже ответил 429 в этом скане, запрос не отправлен",
+      "text": "сервіс уже відповів 429 у цьому скані, запит не надіслано"
+    },
+    {
+      "id": "f578",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "нет в целях или в исключениях",
+      "text": "немає серед цілей або у винятках"
+    },
+    {
+      "id": "f579",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "нет в целях",
+      "text": "немає серед цілей"
+    },
+    {
+      "id": "f580",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "в исключениях (пассивный запрос)",
+      "text": "у винятках (пасивний запит)"
+    },
+    {
+      "id": "f581",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "в исключениях (это адрес {})",
+      "text": "у винятках (це адреса {0})"
+    },
+    {
+      "id": "f582",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "в исключениях скоупа",
+      "text": "у винятках скоупу"
+    },
+    {
+      "id": "f583",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "в исключениях",
+      "text": "у винятках"
+    },
+    {
+      "id": "f584",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "сеть в исключениях",
+      "text": "мережа у винятках"
+    },
+    {
+      "id": "f585",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "зона не в целях",
+      "text": "зони немає серед цілей"
+    },
+    {
+      "id": "f586",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "зона в исключениях",
+      "text": "зона у винятках"
+    },
+    {
+      "id": "f587",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "NS зоны в исключениях",
+      "text": "NS зони у винятках"
+    },
+    {
+      "id": "f588",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "резолвленный IP в исключениях",
+      "text": "розв'язана IP-адреса у винятках"
+    },
+    {
+      "id": "f589",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "резолвленный IP {} в исключениях",
+      "text": "розв'язана IP-адреса {0} у винятках"
+    },
+    {
+      "id": "f590",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "хост цели: пассивный профиль к цели не обращается",
+      "text": "хост цілі: пасивний профіль не звертається до цілі"
+    },
+    {
+      "id": "f591",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "редирект пассивного запроса на хост не из пассивных источников",
+      "text": "переспрямування пасивного запиту на хост поза пасивними джерелами"
+    },
+    {
+      "id": "f592",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "редирект пассивного запроса на локальный/приватный адрес запрещён",
+      "text": "переспрямування пасивного запиту на локальну/приватну адресу заборонено"
+    },
+    {
+      "id": "f593",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "запрещён редирект HTTPS → HTTP с авторизацией: {}",
+      "text": "переспрямування HTTPS → HTTP з авторизацією заборонено: {0}"
+    },
+    {
+      "id": "f594",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "адреса исключены скоупом: {}",
+      "text": "адреси виключено скоупом: {0}"
+    },
+    {
+      "id": "f595",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "пустой хост",
+      "text": "порожній хост"
+    },
+    {
+      "id": "f596",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "схема {}",
+      "text": "схема {0}"
+    },
+    {
+      "id": "f597",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "трансфер отклонён: {}",
+      "text": "трансфер відхилено: {0!}"
+    },
+    {
+      "id": "f598",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "пустой ответ",
+      "text": "порожня відповідь"
+    },
+    {
+      "id": "f599",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "соединение закрыто: {}",
+      "text": "з'єднання закрито: {0}"
+    },
+    {
+      "id": "f600",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "не SOCKS5",
+      "text": "не SOCKS5"
+    },
+    {
+      "id": "f601",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "SOCKS5: неверный логин/пароль",
+      "text": "SOCKS5: невірний логін/пароль"
+    },
+    {
+      "id": "f602",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "SOCKS5: неверный ответ",
+      "text": "SOCKS5: невірна відповідь"
+    },
+    {
+      "id": "f603",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "SOCKS5: метод аутентификации не принят",
+      "text": "SOCKS5: метод автентифікації не прийнято"
+    },
+    {
+      "id": "f604",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "SOCKS5: длина хоста/логина/пароля превышает 255 байт",
+      "text": "SOCKS5: довжина хоста/логіна/пароля перевищує 255 байт"
+    },
+    {
+      "id": "f605",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "HTTP CONNECT: обрыв",
+      "text": "HTTP CONNECT: обрив"
+    },
+    {
+      "id": "f606",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "HTTP CONNECT: недопустимые символы CR/LF",
+      "text": "HTTP CONNECT: неприпустимі символи CR/LF"
+    },
+    {
+      "id": "f607",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "встроенный браузер: {}",
+      "text": "вбудований браузер: {0}"
+    },
+    {
+      "id": "f608",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "версии браузеров: неожиданный ответ",
+      "text": "версії браузерів: неочікувана відповідь"
+    },
+    {
+      "id": "f609",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "неверный базовый URL HIBP",
+      "text": "невірний базовий URL HIBP"
+    },
+    {
+      "id": "f610",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "нет ответа за отведённое время",
+      "text": "немає відповіді за відведений час"
+    },
+    {
+      "id": "f611",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "{}: нет ответа за отведённое время",
+      "text": "{0}: немає відповіді за відведений час"
+    },
+    {
+      "id": "f612",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "{}: нет адресов",
+      "text": "{0}: немає адрес"
+    },
+    {
+      "id": "f613",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "{}: нет DoH-эндпоинтов",
+      "text": "{0}: немає DoH-ендпоінтів"
+    },
+    {
+      "id": "f614",
+      "rules": "reqlog,mail-mta_sts_policy_unreachable",
+      "pattern": "{} {} через DoH: {}",
+      "text": "{0} {1} через DoH: {2!}"
     }
   ],
   "tech_cats": {

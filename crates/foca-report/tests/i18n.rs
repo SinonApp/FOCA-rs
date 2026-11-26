@@ -272,7 +272,7 @@ fn log_errors_localized_uk_en() {
     ] {
         assert!(!uk.contains(w), "{w}");
     }
-    assert!(uk.contains("network: мережа: Connection refused") && uk.contains("#ns-зони-цілі"));
+    assert!(uk.contains("refused: мережа: Connection refused") && uk.contains("#ns-зони-цілі"));
     let en = section(&text(&build_report_with_log(
         &s,
         &log,
@@ -288,10 +288,136 @@ fn log_errors_localized_uk_en() {
         "{en}"
     );
     assert!(
-        en.contains("network: Connection refused")
+        en.contains("refused: network: Connection refused")
             && en.contains("(banner retry)")
-            && en.contains("size limit exceeded 3145728 bytes")
+            && en.contains("too_large: size limit of 3145728 bytes exceeded")
     );
+}
+
+/// Request log errors stored as Russian text by the network layer (rows of a real phone export).
+const RU_LOG_ERRORS: &[(&str, &str)] = &[
+    ("too_large: превышен лимит размера 256 байт", "too_large"),
+    ("timeout: таймаут", "timeout"),
+    (
+        "limit: сервис уже ответил 429 в этом скане, запрос не отправлен",
+        "limit",
+    ),
+    ("network: сеть: трансфер отклонён: Query Refused", "network"),
+    (
+        "network: сеть: error sending request for url (https://contoso.example/)",
+        "network",
+    ),
+    (
+        "out_of_scope: вне скоупа: mta-sts.sinon.app (нет в целях или в исключениях)",
+        "out_of_scope",
+    ),
+];
+
+/// Russian-only letters and words of the network error texts; none may reach a UK export.
+const RU_MARKERS: &[&str] = &[
+    "ы",
+    "э",
+    "ъ",
+    "ё",
+    "сеть",
+    "таймаут",
+    "превышен",
+    "лимит размера",
+    "сервис",
+    "ответил",
+    "отклонён",
+    "вне скоупа",
+    "нет в целях",
+    "исключениях",
+];
+
+/// The CSV log export writes `error` as `<code>: <detail>` in the export language.
+#[test]
+fn log_export_errors_in_export_language() {
+    let s = fixture().snap.clone();
+    let log: Vec<RequestEntry> = RU_LOG_ERRORS
+        .iter()
+        .map(|(err, _)| RequestEntry {
+            time: "2026-11-26T21:55:00Z".into(),
+            module: "mail".into(),
+            method: "GET".into(),
+            url: "https://contoso.example/".into(),
+            host: "contoso.example".into(),
+            error: Some(err.to_string()),
+            ..Default::default()
+        })
+        .collect();
+    for lang in [Lang::En, Lang::Uk] {
+        let a = export_with_log(
+            &s,
+            &log,
+            ExportKind::Log,
+            ExportFormat::Csv,
+            &ExportOptions {
+                lang,
+                bom: false,
+                ..Default::default()
+            },
+        );
+        let csv = String::from_utf8(a.bytes).unwrap();
+        let mut lines = csv.lines();
+        let header: Vec<&str> = lines.next().unwrap().split(',').collect();
+        let col = header
+            .iter()
+            .position(|h| *h == "error")
+            .expect("error column");
+        // The error is the last column; a cell with a comma is quoted.
+        let errors: Vec<&str> = lines
+            .map(|l| match l.strip_suffix('"') {
+                Some(q) => &q[q.rfind(",\"").unwrap() + 2..],
+                None => l.rsplit(',').next().unwrap(),
+            })
+            .collect();
+        assert_eq!(col, header.len() - 1, "{csv}");
+        assert_eq!(errors.len(), RU_LOG_ERRORS.len(), "{csv}");
+        for (cell, (raw, code)) in errors.iter().zip(RU_LOG_ERRORS) {
+            assert!(
+                *cell == *code || cell.starts_with(&format!("{code}: ")),
+                "{lang:?} {raw} -> {cell}"
+            );
+            if lang == Lang::En {
+                assert!(
+                    !cell
+                        .chars()
+                        .any(|c| matches!(c, 'а'..='я' | 'А'..='Я' | 'ё' | 'і' | 'ї' | 'є')),
+                    "{raw} -> {cell}"
+                );
+            } else {
+                for w in RU_MARKERS {
+                    assert!(!cell.contains(w), "{w}: {raw} -> {cell}");
+                }
+            }
+        }
+        if lang == Lang::En {
+            assert!(
+                csv.contains("too_large: size limit of 256 bytes exceeded"),
+                "{csv}"
+            );
+            assert!(
+                csv.contains("network: transfer refused: Query Refused"),
+                "{csv}"
+            );
+            assert!(
+                csv.contains("out_of_scope: mta-sts.sinon.app (not among the targets or excluded)"),
+                "{csv}"
+            );
+            assert!(
+                csv.contains("limit: the service already answered 429"),
+                "{csv}"
+            );
+        } else {
+            assert!(csv.contains("timeout: тайм-аут"), "{csv}");
+            assert!(
+                csv.contains("network: мережа: трансфер відхилено: Query Refused"),
+                "{csv}"
+            );
+        }
+    }
 }
 
 #[test]

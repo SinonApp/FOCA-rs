@@ -547,6 +547,7 @@
   "debug.err_too_large": "відповідь завелика",
   "debug.err_cancelled": "скасовано",
   "debug.err_rate_limited": "ліміт запитів",
+  "debug.err_limit": "ліміт 429: запит не надіслано",
   "onboard.later": "Пізніше",
   "debug.err_refused": "з’єднання відхилено",
   "debug.err_http_status": "помилка HTTP",

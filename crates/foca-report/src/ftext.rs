@@ -124,11 +124,39 @@ pub fn log_note(code: &str, lang: Lang) -> String {
         .unwrap_or_else(|| code.to_string())
 }
 
+/// Catalog rule of the network error templates (`reqlog` entries of `findings.json`).
+const REQLOG_RULE: &str = "reqlog";
+
+/// Renders a stored request log error as `<kind>: <detail>` with the detail in the report
+/// language (`reqlog` catalog templates, then `log_terms` for leftover fragments). A detail that
+/// only repeats the kind is dropped; empty for no error.
+pub fn log_error(error: Option<&str>, lang: Lang) -> String {
+    let Some(e) = foca_core::reqlog::LogError::parse(error) else {
+        return String::new();
+    };
+    let Some(detail) = e.detail.filter(|d| !d.is_empty()) else {
+        return e.kind.to_string();
+    };
+    let detail = log_text(&translate(&detail, REQLOG_RULE, lang), lang);
+    if e.kind == "other" {
+        return detail;
+    }
+    let word = e.kind.replace('_', " ");
+    if detail.eq_ignore_ascii_case(&word) {
+        return e.kind.to_string();
+    }
+    let rest = detail
+        .get(word.len()..)
+        .filter(|r| detail[..word.len()].eq_ignore_ascii_case(&word) && r.starts_with(": "))
+        .map_or(detail.as_str(), |r| &r[2..]);
+    format!("{}: {rest}", e.kind)
+}
+
 /// Builds the log error cell: the module note (soft-404, …) and the error text in the report
 /// language.
 pub fn log_error_cell(note: Option<&str>, error: Option<&str>, lang: Lang) -> String {
     let n = note.filter(|x| !x.is_empty()).map(|x| log_note(x, lang));
-    let e = error.filter(|x| !x.is_empty()).map(|x| log_text(x, lang));
+    let e = Some(log_error(error, lang)).filter(|x| !x.is_empty());
     match (n, e) {
         (Some(n), Some(e)) => format!("{n} · {e}"),
         (Some(x), None) | (None, Some(x)) => x,

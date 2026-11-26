@@ -11,6 +11,7 @@ pub mod forensics;
 pub mod lang;
 pub mod metadata;
 pub mod model;
+pub mod reqlog;
 pub mod scope;
 pub mod severity;
 pub mod target;

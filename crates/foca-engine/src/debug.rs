@@ -241,9 +241,9 @@ impl Engine {
                         "blocked": foca_core::scope::is_scope_block(r.error.as_deref())
                             || r.error.as_deref().is_some_and(|e| e.contains("скоуп") || e.contains("scope")),
                         "error": r.error, "note": r.note, "ctype": r.ctype });
-                    let (code, detail) = journal_error(r.error.as_deref());
-                    v["error_code"] = json!(code);
-                    v["error_detail"] = json!(detail);
+                    let err = foca_core::reqlog::LogError::parse(r.error.as_deref());
+                    v["error_code"] = json!(err.as_ref().map(|e| e.kind));
+                    v["error_detail"] = json!(err.and_then(|e| e.detail));
                     crate::i18n::annotate(&mut v, &["error_detail"]);
                     v
                 })
@@ -488,70 +488,6 @@ impl Engine {
     }
 }
 
-/// Error codes of `NetError::code` that prefix request journal errors (`code: detail`).
-const NET_ERROR_CODES: &[&str] = &[
-    "out_of_scope",
-    "not_active_phase",
-    "cancelled",
-    "timeout",
-    "http_status",
-    "too_large",
-    "too_many_redirects",
-    "bad_url",
-    "dns",
-    "network",
-    "proxy",
-    "parse",
-    "io",
-    "nokey",
-];
-
-/// Splits a request journal error into a stable kind for the UI and the raw detail. Network
-/// failures are narrowed by their cause: `refused`, `tls`, `dns`, `timeout`, `unreachable`.
-fn journal_error(err: Option<&str>) -> (Option<&'static str>, Option<String>) {
-    let Some(e) = err.map(str::trim).filter(|e| !e.is_empty()) else {
-        return (None, None);
-    };
-    if e == "cancelled" {
-        return (Some("cancelled"), None);
-    }
-    if let Some(st) = e.strip_prefix("retry: ") {
-        return (Some("http_status"), Some(st.to_string()));
-    }
-    if let Some(to) = e.strip_prefix("redirect → ") {
-        return (Some("redirect"), Some(to.to_string()));
-    }
-    let (code, detail) = match e.split_once(": ") {
-        Some((c, d)) => match NET_ERROR_CODES.iter().find(|k| **k == c) {
-            Some(k) => (*k, d.to_string()),
-            None => ("other", e.to_string()),
-        },
-        None => ("other", e.to_string()),
-    };
-    let code = if matches!(code, "network" | "io" | "other") {
-        let low = detail.to_lowercase();
-        if low.contains("connection refused") || low.contains("os error 111") {
-            "refused"
-        } else if ["tls", "ssl", "certificate", "handshake", "close_notify"]
-            .iter()
-            .any(|k| low.contains(k))
-        {
-            "tls"
-        } else if low.contains("dns error") || low.contains("failed to lookup") {
-            "dns"
-        } else if low.contains("timed out") || low.contains("таймаут") {
-            "timeout"
-        } else if low.contains("unreachable") {
-            "unreachable"
-        } else {
-            code
-        }
-    } else {
-        code
-    };
-    (Some(code), Some(detail))
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -565,37 +501,5 @@ mod tests {
         assert_eq!(v[1]["target"], "android/io");
         assert!(v[1]["msg"].as_str().unwrap().contains("C.kt:1"));
         assert_eq!(parse_android(t, 3).len(), 1);
-    }
-}
-
-#[cfg(test)]
-mod journal_error_tests {
-    use super::journal_error;
-
-    #[test]
-    fn journal_errors_get_stable_kinds() {
-        let k = |e: &str| journal_error(Some(e));
-        assert_eq!(k("timeout: таймаут").0, Some("timeout"));
-        assert_eq!(
-            k("out_of_scope: вне скоупа: a.example (в исключениях скоупа)"),
-            (
-                Some("out_of_scope"),
-                Some("вне скоупа: a.example (в исключениях скоупа)".into())
-            )
-        );
-        assert_eq!(k("http_status: HTTP 503").0, Some("http_status"));
-        assert_eq!(k("retry: HTTP 429").0, Some("http_status"));
-        assert_eq!(
-            k("network: сеть: error sending request: tcp connect error: Connection refused (os error 111)").0,
-            Some("refused")
-        );
-        assert_eq!(
-            k("network: сеть: invalid peer certificate: UnknownIssuer").0,
-            Some("tls")
-        );
-        assert_eq!(k("dns: DNS: no record").0, Some("dns"));
-        assert_eq!(k("cancelled").0, Some("cancelled"));
-        assert_eq!(k("something odd").0, Some("other"));
-        assert_eq!(journal_error(None), (None, None));
     }
 }

@@ -547,6 +547,7 @@
   "debug.err_too_large": "response too large",
   "debug.err_cancelled": "cancelled",
   "debug.err_rate_limited": "rate limited",
+  "debug.err_limit": "429 limit: request not sent",
   "onboard.later": "Later",
   "debug.err_refused": "connection refused",
   "debug.err_http_status": "HTTP error",

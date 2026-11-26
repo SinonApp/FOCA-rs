@@ -3361,6 +3361,330 @@
  },
  {
   "lang": "en",
+  "rule": "reqlog",
+  "text": "вне скоупа: X1 (X2)",
+  "out": "out of scope: X1 (X2)"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "активная операция запрещена: X1",
+  "out": "active operation not allowed: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "активная фаза не входит в профиль скана",
+  "out": "the active stage is not part of the scan profile"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "«X1» исключён из скоупа",
+  "out": "“X1” is excluded from the scope"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "«X1» вне скоупа",
+  "out": "“X1” is out of scope"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "отменено",
+  "out": "cancelled"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "таймаут",
+  "out": "timeout"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "превышен лимит размера 2 байт",
+  "out": "size limit of 2 bytes exceeded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "слишком много редиректов",
+  "out": "too many redirects"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "неверный URL: X1",
+  "out": "invalid URL: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "DNS: X1",
+  "out": "DNS: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "сеть: X1",
+  "out": "network: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "прокси: X1",
+  "out": "proxy: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "разбор ответа: X1",
+  "out": "response parsing: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "ввод-вывод: X1",
+  "out": "I/O: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "нужен ключ API: X1",
+  "out": "API key required: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "сервис уже ответил 429 в этом скане, запрос не отправлен",
+  "out": "the service already answered 429 in this scan, request not sent"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "нет в целях или в исключениях",
+  "out": "not among the targets or excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "нет в целях",
+  "out": "not among the targets"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "в исключениях (пассивный запрос)",
+  "out": "excluded (passive request)"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "в исключениях (это адрес X1)",
+  "out": "excluded (this is the address X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "в исключениях скоупа",
+  "out": "excluded from the scope"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "в исключениях",
+  "out": "excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "сеть в исключениях",
+  "out": "network excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "зона не в целях",
+  "out": "zone not among the targets"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "зона в исключениях",
+  "out": "zone excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "NS зоны в исключениях",
+  "out": "zone NS excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "резолвленный IP в исключениях",
+  "out": "resolved IP is excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "резолвленный IP X1 в исключениях",
+  "out": "resolved IP X1 is excluded"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "хост цели: пассивный профиль к цели не обращается",
+  "out": "target host: the passive profile does not contact the target"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "редирект пассивного запроса на хост не из пассивных источников",
+  "out": "passive request redirected to a host outside passive sources"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "редирект пассивного запроса на локальный/приватный адрес запрещён",
+  "out": "redirecting a passive request to a local/private address is not allowed"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "запрещён редирект HTTPS → HTTP с авторизацией: X1",
+  "out": "HTTPS → HTTP redirect with credentials is not allowed: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "адреса исключены скоупом: X1",
+  "out": "addresses excluded by scope: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "пустой хост",
+  "out": "empty host"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "схема X1",
+  "out": "scheme X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "трансфер отклонён: X1",
+  "out": "transfer refused: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "пустой ответ",
+  "out": "empty response"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "соединение закрыто: X1",
+  "out": "connection closed: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "не SOCKS5",
+  "out": "not SOCKS5"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "SOCKS5: неверный логин/пароль",
+  "out": "SOCKS5: wrong login/password"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "SOCKS5: неверный ответ",
+  "out": "SOCKS5: invalid reply"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "SOCKS5: метод аутентификации не принят",
+  "out": "SOCKS5: authentication method not accepted"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "SOCKS5: длина хоста/логина/пароля превышает 255 байт",
+  "out": "SOCKS5: host/login/password longer than 255 bytes"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "HTTP CONNECT: обрыв",
+  "out": "HTTP CONNECT: connection dropped"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "HTTP CONNECT: недопустимые символы CR/LF",
+  "out": "HTTP CONNECT: invalid CR/LF characters"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "встроенный браузер: X1",
+  "out": "built-in browser: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "версии браузеров: неожиданный ответ",
+  "out": "browser versions: unexpected response"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "неверный базовый URL HIBP",
+  "out": "invalid HIBP base URL"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "нет ответа за отведённое время",
+  "out": "no response in time"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "X1: нет ответа за отведённое время",
+  "out": "X1: no response in time"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "X1: нет адресов",
+  "out": "X1: no addresses"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "X1: нет DoH-эндпоинтов",
+  "out": "X1: no DoH endpoints"
+ },
+ {
+  "lang": "en",
+  "rule": "reqlog",
+  "text": "X1 X2 через DoH: X3",
+  "out": "X1 X2 via DoH: X3"
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -6730,6 +7054,330 @@
   "rule": "recon.js_secret",
   "text": "Публичный клиентский ключ стороннего виджета: проверьте, что он ограничен доменом.",
   "out": "Публічний клієнтський ключ стороннього віджета: перевірте, що його обмежено доменом."
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "вне скоупа: X1 (X2)",
+  "out": "поза скоупом: X1 (X2)"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "активная операция запрещена: X1",
+  "out": "активну операцію заборонено: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "активная фаза не входит в профиль скана",
+  "out": "активна фаза не входить у профіль скану"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "«X1» исключён из скоупа",
+  "out": "«X1» виключено зі скоупу"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "«X1» вне скоупа",
+  "out": "«X1» поза скоупом"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "отменено",
+  "out": "скасовано"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "таймаут",
+  "out": "тайм-аут"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "превышен лимит размера 2 байт",
+  "out": "перевищено ліміт розміру 2 байт"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "слишком много редиректов",
+  "out": "забагато редиректів"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "неверный URL: X1",
+  "out": "невірний URL: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "DNS: X1",
+  "out": "DNS: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "сеть: X1",
+  "out": "мережа: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "прокси: X1",
+  "out": "проксі: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "разбор ответа: X1",
+  "out": "розбір відповіді: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "ввод-вывод: X1",
+  "out": "введення-виведення: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "нужен ключ API: X1",
+  "out": "потрібен ключ API: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "сервис уже ответил 429 в этом скане, запрос не отправлен",
+  "out": "сервіс уже відповів 429 у цьому скані, запит не надіслано"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "нет в целях или в исключениях",
+  "out": "немає серед цілей або у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "нет в целях",
+  "out": "немає серед цілей"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "в исключениях (пассивный запрос)",
+  "out": "у винятках (пасивний запит)"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "в исключениях (это адрес X1)",
+  "out": "у винятках (це адреса X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "в исключениях скоупа",
+  "out": "у винятках скоупу"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "в исключениях",
+  "out": "у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "сеть в исключениях",
+  "out": "мережа у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "зона не в целях",
+  "out": "зони немає серед цілей"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "зона в исключениях",
+  "out": "зона у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "NS зоны в исключениях",
+  "out": "NS зони у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "резолвленный IP в исключениях",
+  "out": "розв'язана IP-адреса у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "резолвленный IP X1 в исключениях",
+  "out": "розв'язана IP-адреса X1 у винятках"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "хост цели: пассивный профиль к цели не обращается",
+  "out": "хост цілі: пасивний профіль не звертається до цілі"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "редирект пассивного запроса на хост не из пассивных источников",
+  "out": "переспрямування пасивного запиту на хост поза пасивними джерелами"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "редирект пассивного запроса на локальный/приватный адрес запрещён",
+  "out": "переспрямування пасивного запиту на локальну/приватну адресу заборонено"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "запрещён редирект HTTPS → HTTP с авторизацией: X1",
+  "out": "переспрямування HTTPS → HTTP з авторизацією заборонено: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "адреса исключены скоупом: X1",
+  "out": "адреси виключено скоупом: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "пустой хост",
+  "out": "порожній хост"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "схема X1",
+  "out": "схема X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "трансфер отклонён: X1",
+  "out": "трансфер відхилено: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "пустой ответ",
+  "out": "порожня відповідь"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "соединение закрыто: X1",
+  "out": "з'єднання закрито: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "не SOCKS5",
+  "out": "не SOCKS5"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "SOCKS5: неверный логин/пароль",
+  "out": "SOCKS5: невірний логін/пароль"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "SOCKS5: неверный ответ",
+  "out": "SOCKS5: невірна відповідь"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "SOCKS5: метод аутентификации не принят",
+  "out": "SOCKS5: метод автентифікації не прийнято"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "SOCKS5: длина хоста/логина/пароля превышает 255 байт",
+  "out": "SOCKS5: довжина хоста/логіна/пароля перевищує 255 байт"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "HTTP CONNECT: обрыв",
+  "out": "HTTP CONNECT: обрив"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "HTTP CONNECT: недопустимые символы CR/LF",
+  "out": "HTTP CONNECT: неприпустимі символи CR/LF"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "встроенный браузер: X1",
+  "out": "вбудований браузер: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "версии браузеров: неожиданный ответ",
+  "out": "версії браузерів: неочікувана відповідь"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "неверный базовый URL HIBP",
+  "out": "невірний базовий URL HIBP"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "нет ответа за отведённое время",
+  "out": "немає відповіді за відведений час"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "X1: нет ответа за отведённое время",
+  "out": "X1: немає відповіді за відведений час"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "X1: нет адресов",
+  "out": "X1: немає адрес"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "X1: нет DoH-эндпоинтов",
+  "out": "X1: немає DoH-ендпоінтів"
+ },
+ {
+  "lang": "uk",
+  "rule": "reqlog",
+  "text": "X1 X2 через DoH: X3",
+  "out": "X1 X2 через DoH: X3"
  },
  {
   "lang": "uk",
