@@ -43,3 +43,5 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 # TLS stand of the infrastructure tests (same rustls + ring as foca-net)
 tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
 tempfile.workspace = true
+# upgrade test: rewrites the project index the way an older version left it
+rusqlite.workspace = true

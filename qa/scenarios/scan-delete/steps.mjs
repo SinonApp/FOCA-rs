@@ -221,11 +221,15 @@ export default async (page, { W, fsc, theme, out, prep }) => {
   await go("/projects");
   ok(
     "reference case is not among recent projects",
-    !(await ev(id => !!document.querySelector(`.pj-list [data-pj="${id}"]`), refId)),
+    !(await ev(id => !!document.querySelector(`.pj-list:not(.pj-ref) [data-pj="${id}"]`), refId)),
+  );
+  ok(
+    "reference case still reachable in its own section",
+    await ev(id => !!document.querySelector(`.pj-ref [data-pj="${id}"]`), refId),
   );
   ok(
     "recent projects still listed",
-    (await ev(() => document.querySelectorAll(".pj-list .pj-card").length)) > 0,
+    (await ev(() => document.querySelectorAll(".pj-list:not(.pj-ref) .pj-card").length)) > 0,
   );
   await shot("projects");
   // opening it again finds the existing case

@@ -300,14 +300,35 @@ impl Store {
     }
 
     /// Implements `project_list`, newest first.
+    ///
+    /// The cached summary may come from another app version; a row that does not parse still
+    /// lists the project from the index columns, so a project never drops out of the list.
     pub fn list_projects(&self) -> Result<Vec<ProjectSummary>> {
-        let mut st = self
-            .index
-            .prepare("SELECT summary_json FROM projects ORDER BY position, created_at DESC")?;
-        let rows = st.query_map([], |r| r.get::<_, String>(0))?;
+        let mut st = self.index.prepare(
+            "SELECT id, name, client, created_at, archived, summary_json FROM projects \
+             ORDER BY position, created_at DESC",
+        )?;
+        let rows = st.query_map([], |r| {
+            Ok((
+                ProjectSummary {
+                    id: r.get(0)?,
+                    name: r.get(1)?,
+                    client: r.get(2)?,
+                    created_at: r.get(3)?,
+                    archived: r.get::<_, i64>(4)? != 0,
+                    ..ProjectSummary::default()
+                },
+                r.get::<_, String>(5)?,
+            ))
+        })?;
         let mut out = Vec::new();
         for r in rows {
-            out.push(serde_json::from_str(&r?)?);
+            let (base, json) = r?;
+            let s = match serde_json::from_str::<ProjectSummary>(&json) {
+                Ok(s) if s.id == base.id => s,
+                _ => base,
+            };
+            out.push(s);
         }
         Ok(out)
     }

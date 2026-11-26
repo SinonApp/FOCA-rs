@@ -34,6 +34,7 @@
   "projects.run_projects_one_after_another": "Пакетний послідовний запуск проєктів",
   "projects.decrypt_portable_encrypted": "Розшифрувати переносний криптоконтейнер проєкту",
   "projects.recent_projects": "Останні проєкти",
+  "projects.reference_cases": "Еталонні кейси",
   "projects.long_press_card_open_its_actions": "Утримуйте картку, щоб відкрити дії.",
   "projects.archive": "Архів",
   "projects.project": "проєкт",

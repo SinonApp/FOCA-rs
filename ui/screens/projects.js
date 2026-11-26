@@ -9,6 +9,8 @@
   // Reference cases (built-in samples) never show up among recent projects: "Open reference case" opens them.
   const activeList = () => F.projects.filter(p => !p.archived && !p.reference);
   const archivedList = () => F.projects.filter(p => p.archived);
+  // Reference cases get their own section, so a case the user worked in (or imported twice) never vanishes.
+  const referenceList = () => F.projects.filter(p => !p.archived && p.reference);
   const byId = id => F.projects.find(p => p.id === id);
 
   const plural = (n, one, few, many) => F.plural(n, one, few, many);
@@ -90,6 +92,13 @@
       tail: `<button class="ib" data-act="pj-draft-del" aria-label="${esc(F.t("projects.delete_draft", "Удалить черновик"))}">${ic("x")}</button>`,
     })}</div>`;
   }
+  function referenceSection() {
+    const refs = referenceList();
+    return refs.length
+      ? `${ui.secH(F.t("projects.reference_cases", "Эталонные кейсы"), refs.length)}
+        <div class="pj-list pj-ref">${refs.map(card).join("")}</div>`
+      : "";
+  }
   function render() {
     const list = activeList();
     return `
@@ -146,8 +155,10 @@
         ${ui.secH(F.t("projects.recent_projects", "Последние проекты"), list.length)}
         <div class="pj-list">${list.map(card).join("")}</div>
         <p class="pj-tip">${ic("info")}${esc(F.t("projects.long_press_card_open_its_actions", "Удерживайте карточку, чтобы открыть действия."))}</p>
-        ${archivedList().length ? `<div class="list pj-arch">${ui.row({ lead: ui.leadIcon("save"), title: F.t("projects.archive", "Архив"), sub: plural(archivedList().length, F.t("projects.project", "проект"), F.t("projects.projects", "проекта"), F.t("projects.project_many", "проектов")), act: "pj-archive-list" })}</div>` : ""}`
+        ${archivedList().length ? `<div class="list pj-arch">${ui.row({ lead: ui.leadIcon("save"), title: F.t("projects.archive", "Архив"), sub: plural(archivedList().length, F.t("projects.project", "проект"), F.t("projects.projects", "проекта"), F.t("projects.project_many", "проектов")), act: "pj-archive-list" })}</div>` : ""}
+        ${referenceSection()}`
             : emptyState() +
+              referenceSection() +
               (archivedList().length
                 ? `<div class="list pj-arch">${ui.row({ lead: ui.leadIcon("save"), title: F.t("projects.archive", "Архив"), sub: plural(archivedList().length, F.t("projects.project", "проект"), F.t("projects.projects", "проекта"), F.t("projects.project_many", "проектов")), act: "pj-archive-list" })}</div>`
                 : ""),

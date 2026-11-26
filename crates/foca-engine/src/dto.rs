@@ -367,9 +367,16 @@ impl Engine {
         let list = self.store().list_projects()?;
         let mut out = Vec::new();
         for p in list {
-            let Ok(db) = self.db(&p.id) else { continue };
-            let s = self.summary_of(&lock(&db))?;
-            out.push(s);
+            // A project whose database does not open or summarise (newer schema, damaged file)
+            // stays listed with its cached summary: opening it then reports the error instead of
+            // the project silently vanishing from the list.
+            match self.db(&p.id).and_then(|db| self.summary_of(&lock(&db))) {
+                Ok(s) => out.push(s),
+                Err(e) => {
+                    tracing::warn!(target: "foca::store", "project_list {}: {} {}", p.id, e.code, e.message);
+                    out.push(p);
+                }
+            }
         }
         Ok(serde_json::to_value(out)?)
     }

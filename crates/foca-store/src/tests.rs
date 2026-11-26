@@ -1678,3 +1678,46 @@ fn reference_case_is_marked_in_the_summary() {
         .unwrap();
     assert!(db2.is_reference_case().unwrap());
 }
+
+/// Index rows written by 2.0.0-beta.2 lack later summary fields (`reference`); a row that does
+/// not parse at all still lists the project from the index columns.
+#[test]
+fn list_projects_reads_summaries_cached_by_older_versions() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let a = new_project(&s);
+    let b = new_project(&s);
+    s.update_project(
+        &b.id,
+        &ProjectPatch {
+            archived: Some(true),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    // Exact JSON written by beta.2 (e490fee) for a project.
+    let beta2 = format!(
+        r#"{{"id":"{}","name":"contoso.example","client":"ACME","created_at":"2026-11-20T12:00:00","archived":false,"last_scan_at":null,"last_profile":null,"scans":2,"docs":5,"findings":7,"risk":40,"scanning":false,"progress":0}}"#,
+        a.id
+    );
+    s.index
+        .execute(
+            "UPDATE projects SET summary_json = ?2 WHERE id = ?1",
+            params![a.id, beta2],
+        )
+        .unwrap();
+    s.index
+        .execute(
+            "UPDATE projects SET summary_json = '{\"id\":' WHERE id = ?1",
+            [&b.id],
+        )
+        .unwrap();
+    let list = s.list_projects().unwrap();
+    assert_eq!(list.len(), 2, "{list:?}");
+    let la = list.iter().find(|p| p.id == a.id).unwrap();
+    assert_eq!((la.docs, la.findings, la.scans), (5, 7, 2));
+    assert!(!la.reference);
+    let lb = list.iter().find(|p| p.id == b.id).unwrap();
+    assert_eq!(lb.name, "contoso.example");
+    assert!(lb.archived);
+}

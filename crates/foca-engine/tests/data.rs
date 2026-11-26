@@ -11,4 +11,5 @@ mod data {
     mod scan_delete;
     mod scope_bulk;
     mod toolbox;
+    mod upgrade;
 }

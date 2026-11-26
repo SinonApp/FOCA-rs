@@ -155,7 +155,11 @@ impl fmt::Display for SecretValue {
 }
 
 /// `ProjectSummary`: an item of `project_list`.
+///
+/// The store caches it as JSON in the project index, so rows written by an older version lack
+/// newer fields: `#[serde(default)]` keeps them readable after an upgrade.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct ProjectSummary {
     pub id: String,
     pub name: String,

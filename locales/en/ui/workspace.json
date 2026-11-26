@@ -34,6 +34,7 @@
   "projects.run_projects_one_after_another": "Run projects one after another in a batch",
   "projects.decrypt_portable_encrypted": "Decrypt a portable encrypted project container",
   "projects.recent_projects": "Recent projects",
+  "projects.reference_cases": "Reference cases",
   "projects.long_press_card_open_its_actions": "Long-press a card to open its actions.",
   "projects.archive": "Archive",
   "projects.project": "project",
