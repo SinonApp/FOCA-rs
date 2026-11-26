@@ -85,14 +85,14 @@ rust {
 
 dependencies {
     implementation("androidx.webkit:webkit:1.14.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("androidx.appcompat:appcompat:1.8.0")
     implementation("androidx.activity:activity-ktx:1.10.1")
-    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.google.android.material:material:1.14.0")
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.biometric:biometric:1.1.0")
     // Scheduled monitoring rescans (PeriodicWorkRequest).
-    implementation("androidx.work:work-runtime:2.10.5")
+    implementation("androidx.work:work-runtime:2.12.0")
     // On-device offline OCR for scanned PDFs and document images (opt-in via settings.ocr.enabled).
     // Isolated to the `play` flavor so the `foss` flavor stays 100% GPL-3.0 / F-Droid clean.
     "playImplementation"("com.google.mlkit:text-recognition:16.0.1")
