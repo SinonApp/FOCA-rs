@@ -234,6 +234,13 @@ pub async fn server(delay_ms: u64) -> TestServer {
             });
             return TestResponse::ok(serde_json::to_vec(&body).unwrap());
         }
+        // slow OpenAI-compatible endpoint (custom provider): in-flight and cancel tests
+        if p == "/ai/slow/chat/completions" {
+            return TestResponse::ok(
+                br###"{"model":"slow-model","choices":[{"message":{"content":"## Key risks\n1. [CLIENT] leaks passwords on www.[CLIENT-DOMAIN]."}}],"usage":{"prompt_tokens":10,"completion_tokens":5}}"###.to_vec(),
+            )
+            .delay(Duration::from_millis(700));
+        }
         if p == "/ai/chat/completions" || p.ends_with("/chat/completions") && p.starts_with("/ai/")
         {
             return TestResponse::ok(

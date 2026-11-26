@@ -160,7 +160,13 @@ put("licenses_get", call("licenses_get", {}));
 put("ai_models_list", call("ai_models_list", { provider: "openai" }));
 const ap = call("ai_preview", { project: "contoso", opts: {} });
 put("ai_preview", ap);
-put("ai_summarize", call("ai_summarize", { project: "contoso", preview_id: ap.id, opts: {} }));
+B._aiDelay(0);
+const sm = call("ai_summarize", { project: "contoso", preview_id: ap.id, opts: {} });
+put("ai_summarize", sm);
+put("ai_summaries_list", call("ai_summaries_list", { project: "contoso" }));
+put("ai_summary_use", call("ai_summary_use", { project: "contoso", summary: sm.id }));
+put("ai_cancel", call("ai_cancel", { project: "contoso" }));
+put("ai_summary_delete", call("ai_summary_delete", { project: "contoso", summary: sm.id }));
 // scan: responses and events
 put("scan_status_idle", call("scan_status"));
 const evs = [];

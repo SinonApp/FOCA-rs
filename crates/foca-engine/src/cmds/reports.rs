@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 use crate::analysis::facts::{self};
 use crate::engine::{lock, safe_report_leaf};
 use crate::services::ai::{AI_SUMMARY_DATA_KEY, AI_SUMMARY_KEY};
+use crate::services::ai_text::{client_and_domain, unredact_client};
 use crate::util::{self, arg_str};
 use crate::{CmdError, CmdResult, Engine};
 
@@ -184,7 +185,12 @@ impl Engine {
         }
         if let Some(o) = opts.as_object_mut() {
             if !o.contains_key(AI_SUMMARY_DATA_KEY) {
-                if let Some(sum) = lock(&db).setting(AI_SUMMARY_KEY)? {
+                if let Some(mut sum) = lock(&db).setting(AI_SUMMARY_KEY)?.filter(|v| !v.is_null()) {
+                    // The provider saw [CLIENT]/[CLIENT-DOMAIN]; the report names the client.
+                    let (client, dom) = client_and_domain(&snap);
+                    if let Some(t) = sum["text"].as_str() {
+                        sum["text"] = json!(unredact_client(t, &client, &dom));
+                    }
                     o.insert(AI_SUMMARY_DATA_KEY.into(), sum);
                 }
             }

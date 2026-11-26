@@ -15,9 +15,27 @@ use crate::services::ai::{
     attach_ai_headers, build_ai_request, format_ai_http_error, parse_ai_models, AiGenOpts,
     AI_SUMMARY_KEY,
 };
+use crate::services::ai_text::{
+    client_and_domain, finding_title, history_push, history_with_legacy, new_summary_id,
+    prompt_text, AI_HISTORY_KEY, MARK_KEYS, TAG_CLIENT, TAG_CLIENT_DOMAIN, TAG_EMAIL,
+    TAG_INTERNAL_IP, TAG_NAME, TAG_SECRET,
+};
 use crate::util::is_loopback_host;
 use crate::util::{self, arg_str};
 use crate::{CmdError, CmdResult, Engine};
+use tokio_util::sync::CancellationToken;
+
+// Command errors stay Russian like every core message; `core.ai.*` in core.json renders them
+// in the UI language.
+const AI_NO_KEY: &str = "Нет ключа ИИ-провайдера";
+const AI_BUSY: &str = "ИИ-сводка по этому проекту уже формируется";
+const AI_CANCELLED: &str = "Запрос к ИИ отменён";
+const AI_NOT_FOUND: &str = "ИИ-сводка не найдена";
+const AI_STALE_PREVIEW: &str = "Данные проекта изменились: обновите предпросмотр";
+const AI_PICK_MODEL: &str =
+    "Выберите модель в «Настройки → ИИ-сводка» (обновите список моделей от провайдера)";
+const AI_KEY_REJECTED: &str = "Ключ ИИ отклонён: HTTP {status}";
+const AI_MODELS_NEED_KEY: &str = "Укажите ключ API, чтобы загрузить список моделей от провайдера";
 
 struct ParsedAiSummary {
     md: String,
@@ -160,6 +178,10 @@ impl Engine {
         let st = serde_json::to_value(&snap)?;
         let settings = self.public_settings()?;
         let ai = &settings["ai"];
+        let lang = arg_str(o, "lang")
+            .and_then(foca_core::Lang::parse)
+            .unwrap_or_else(|| self.ui_lang());
+        let pt = prompt_text(lang);
         let mut red = json!({ "secrets": true, "pii": true, "client": true, "evid": false });
         if ai["redact"].is_object() {
             foca_store::settings::merge(&mut red, &ai["redact"]);
@@ -168,25 +190,18 @@ impl Engine {
             foca_store::settings::merge(&mut red, &o["redact"]);
         }
         let rb = |k: &str| red[k].as_bool().unwrap_or(false);
-        let dom = if snap.project.domain.is_empty() {
-            snap.project.name.clone()
-        } else {
-            snap.project.domain.clone()
-        };
-        let client = if snap.scope.client.is_empty() {
-            snap.project.client.clone()
-        } else {
-            snap.scope.client.clone()
-        };
-        let mut marks: BTreeMap<&str, u32> = ["СЕКРЕТ", "EMAIL", "ФИО", "КЛИЕНТ", "IP-ВНУТР"]
-            .iter()
-            .map(|k| (*k, 0))
-            .collect();
+        let (client, dom) = client_and_domain(&snap);
+        let mut marks: BTreeMap<&str, u32> = MARK_KEYS.iter().map(|k| (*k, 0)).collect();
         let m = |v: &str, tag: &'static str, on: bool, marks: &mut BTreeMap<&str, u32>| -> String {
             if !on {
                 return v.to_string();
             }
-            *marks.entry(tag.trim_end_matches("-ДОМЕН")).or_insert(0) += 1;
+            let k = if tag == TAG_CLIENT_DOMAIN {
+                TAG_CLIENT
+            } else {
+                tag
+            };
+            *marks.entry(k).or_insert(0) += 1;
             format!("[{tag}]")
         };
         let repl = |s: &str, needle: &str, tag: &str, marks: &mut BTreeMap<&str, u32>| -> String {
@@ -201,12 +216,7 @@ impl Engine {
             };
             let n = re.find_iter(s).count() as u32;
             if n > 0 {
-                let k = if tag.starts_with("КЛИЕНТ") {
-                    "КЛИЕНТ"
-                } else {
-                    "СЕКРЕТ"
-                };
-                *marks.entry(k).or_insert(0) += n;
+                *marks.entry(TAG_CLIENT).or_insert(0) += n;
             }
             re.replace_all(s, format!("[{tag}]")).into_owned()
         };
@@ -214,10 +224,18 @@ impl Engine {
         let txt = |s: &str, marks: &mut BTreeMap<&str, u32>| -> String {
             let mut out = s.to_string();
             if client_on {
-                out = repl(&out, &dom, "КЛИЕНТ-ДОМЕН", marks);
-                out = repl(&out, &client, "КЛИЕНТ", marks);
+                out = repl(&out, &dom, TAG_CLIENT_DOMAIN, marks);
+                out = repl(&out, &client, TAG_CLIENT, marks);
             }
             out
+        };
+        let title_of = |f: &Value, marks: &mut BTreeMap<&str, u32>| -> String {
+            let t = finding_title(
+                f["title"].as_str().unwrap_or(""),
+                f["provenance"]["rule"].as_str().unwrap_or(""),
+                lang,
+            );
+            txt(&t, marks)
         };
         let mut live: Vec<&Value> = st["findings"]
             .as_array()
@@ -247,36 +265,36 @@ impl Engine {
         let c = if client.is_empty() {
             "-".to_string()
         } else {
-            m(&client, "КЛИЕНТ", client_on, &mut marks)
+            m(&client, TAG_CLIENT, client_on, &mut marks)
         };
         let d = if dom.is_empty() {
             String::new()
         } else {
-            format!(", домен {}", m(&dom, "КЛИЕНТ-ДОМЕН", client_on, &mut marks))
+            format!(
+                ", {} {}",
+                pt.domain,
+                m(&dom, TAG_CLIENT_DOMAIN, client_on, &mut marks)
+            )
         };
-        lines.push(format!("Проект: {c}{d}"));
+        lines.push(format!("{}: {c}{d}", pt.project));
         let live_docs = snap.docs.iter().filter(|d| !d.deleted).count();
         lines.push(match snap.scans.last() {
-            Some(l) => format!(
-                "Скан {}, профиль «{}»{}. Документов: {live_docs}, хостов: {}, людей: {}.",
-                l.finished_at.as_deref().unwrap_or(&l.started_at),
-                l.profile,
-                if l.active { " (активный)" } else { "" },
-                snap.hosts.len(),
-                snap.people.len()
-            ),
-            None => "Сканов ещё не было.".into(),
+            Some(l) => pt
+                .scan
+                .replace("{date}", l.finished_at.as_deref().unwrap_or(&l.started_at))
+                .replace("{profile}", &l.profile)
+                .replace("{active}", if l.active { pt.active } else { "" })
+                .replace("{docs}", &live_docs.to_string())
+                .replace("{hosts}", &snap.hosts.len().to_string())
+                .replace("{people}", &snap.people.len().to_string()),
+            None => pt.no_scans.into(),
         });
         lines.push(String::new());
-        lines.push(if top.is_empty() {
-            "Критичных и высоких находок нет.".into()
-        } else {
-            "Находки (критичные и высокие):".into()
-        });
+        lines.push(if top.is_empty() { pt.no_top } else { pt.top }.into());
         for (i, f) in top.iter().enumerate() {
             let h = f["host"].as_str().unwrap_or("");
             let host = if h.is_empty() || h == "-" {
-                "несколько хостов".to_string()
+                pt.many_hosts.to_string()
             } else if client_on
                 && !dom.is_empty()
                 && h.len().checked_sub(dom.len()).is_some_and(|prefix_len| {
@@ -289,26 +307,23 @@ impl Engine {
                 format!(
                     "{}{}",
                     &h[..prefix_len],
-                    m(&dom, "КЛИЕНТ-ДОМЕН", true, &mut marks)
+                    m(&dom, TAG_CLIENT_DOMAIN, true, &mut marks)
                 )
             } else {
                 h.to_string()
             };
             let secs = evidence_secrets(f["evidence"].as_str().unwrap_or(""));
             let sec = match secs.first() {
-                Some(s) => format!(": {}", m(s, "СЕКРЕТ", rb("secrets"), &mut marks)),
+                Some(s) => format!(": {}", m(s, TAG_SECRET, rb("secrets"), &mut marks)),
                 None => String::new(),
             };
-            let t = txt(f["title"].as_str().unwrap_or(""), &mut marks);
+            let t = title_of(f, &mut marks);
             lines.push(format!("{}. {t}, {host}{sec}", i + 1));
         }
         if !mid.is_empty() {
             lines.push(String::new());
-            let ts: Vec<String> = mid
-                .iter()
-                .map(|f| txt(f["title"].as_str().unwrap_or(""), &mut marks))
-                .collect();
-            lines.push(format!("Средние: {}.", ts.join("; ")));
+            let ts: Vec<String> = mid.iter().map(|f| title_of(f, &mut marks)).collect();
+            lines.push(format!("{}: {}.", pt.medium, ts.join("; ")));
         }
         let ppl: Vec<&foca_core::api::Email> = snap
             .emails
@@ -325,15 +340,15 @@ impl Engine {
                         "{} ({})",
                         m(
                             e.name.as_deref().unwrap_or(""),
-                            "ФИО",
+                            TAG_NAME,
                             rb("pii"),
                             &mut marks
                         ),
-                        m(&e.addr, "EMAIL", rb("pii"), &mut marks)
+                        m(&e.addr, TAG_EMAIL, rb("pii"), &mut marks)
                     )
                 })
                 .collect();
-            lines.push(format!("Люди: {}.", ps.join(", ")));
+            lines.push(format!("{}: {}.", pt.people, ps.join(", ")));
         }
         let srv: Vec<&foca_core::api::Pc> = snap
             .pcs
@@ -349,13 +364,13 @@ impl Engine {
                         format!(
                             "{} ({})",
                             p.name,
-                            m(ip, "IP-ВНУТР", rb("secrets"), &mut marks)
+                            m(ip, TAG_INTERNAL_IP, rb("secrets"), &mut marks)
                         )
                     }
                     _ => p.name.clone(),
                 })
                 .collect();
-            lines.push(format!("Внутренние имена: {}.", ss.join(", ")));
+            lines.push(format!("{}: {}.", pt.internal, ss.join(", ")));
         }
         if rb("evid") {
             if let Some(f) = top.first() {
@@ -367,23 +382,20 @@ impl Engine {
                         .map(|s| {
                             let mut t = txt(s, &mut marks);
                             for v in evidence_secrets(&t) {
-                                let r = m(&v, "СЕКРЕТ", rb("secrets"), &mut marks);
+                                let r = m(&v, TAG_SECRET, rb("secrets"), &mut marks);
                                 t = t.replace(&format!("{{{{s:{v}}}}}"), &r);
                             }
                             t
                         })
                         .collect();
-                    let tt = txt(f["title"].as_str().unwrap_or(""), &mut marks);
+                    let tt = title_of(f, &mut marks);
                     lines.push(String::new());
-                    lines.push(format!("Доказательство ({tt}): {}", parts.join("; ")));
+                    lines.push(format!("{} ({tt}): {}", pt.evidence, parts.join("; ")));
                 }
             }
         }
         lines.push(String::new());
-        lines.push(
-            "Задача: кратко опиши ключевые риски и дай приоритетные рекомендации на русском языке."
-                .into(),
-        );
+        lines.push(pt.task.into());
         let text = lines.join("\n");
         let prov_raw = o["provider"]
             .as_str()
@@ -404,8 +416,9 @@ impl Engine {
         Ok(json!({
             "id": format!("aip-{}", util::base36(util::fnv(&format!("{text}{red}")) as u64)),
             "text": text,
+            "lang": lang.code(),
             "tokens": ((chars / 3.2 / 10.0).round() as u64) * 10 + 180,
-            "redacted": marks["СЕКРЕТ"],
+            "redacted": marks[TAG_SECRET],
             "marks": marks,
             "redact": red,
             "provider": provider,
@@ -478,7 +491,18 @@ impl Engine {
         Ok((provider, base.trim_end_matches('/').to_string(), host))
     }
 
+    /// `ai_models_list`: the provider's models; `error_msg` lets the UI show `error` in its
+    /// language.
     pub(crate) async fn ai_models_list(&self, a: &Value) -> CmdResult {
+        let mut v = self.ai_models_fetch(a).await?;
+        let msg = v["error"]
+            .as_str()
+            .and_then(crate::services::i18n::classify);
+        v["error_msg"] = msg.unwrap_or(Value::Null);
+        Ok(v)
+    }
+
+    async fn ai_models_fetch(&self, a: &Value) -> CmdResult {
         let settings = self.public_settings()?;
         let prov_raw = arg_str(a, "provider")
             .or_else(|| settings["ai"]["provider"].as_str())
@@ -506,7 +530,7 @@ impl Engine {
                 "host": host,
                 "models": [],
                 "source": "no_key",
-                "error": "Укажите ключ API, чтобы загрузить список моделей от провайдера",
+                "error": AI_MODELS_NEED_KEY,
             }));
         };
         let cache_key = format!(
@@ -573,7 +597,7 @@ impl Engine {
                 "host": host,
                 "models": [],
                 "source": "no_key",
-                "error": format!("Ключ ИИ отклонён: HTTP {st}"),
+                "error": AI_KEY_REJECTED.replace("{status}", &st.to_string()),
             }));
         }
         if !(200..300).contains(&st) {
@@ -617,8 +641,20 @@ impl Engine {
     }
 
     pub(crate) async fn ai_summarize(&self, a: &Value) -> CmdResult {
-        const SYSTEM_PROMPT: &str = "Ты аналитик информационной безопасности. Отвечай в Markdown: «## Ключевые риски» и «## Рекомендации».";
         let id = self.project_arg(a)?;
+        // One request per project: a second tap or a duplicated event never pays twice.
+        let token = CancellationToken::new();
+        {
+            let mut jobs = lock(&self.inner.ai_jobs);
+            if jobs.contains_key(&id) {
+                return Err(CmdError::new("busy", AI_BUSY));
+            }
+            jobs.insert(id.clone(), token.clone());
+        }
+        let _job = AiJob {
+            jobs: &self.inner.ai_jobs,
+            id: id.clone(),
+        };
         let settings = self.public_settings()?;
         let empty_opts = json!({});
         let opts = a.get("opts").unwrap_or(&empty_opts);
@@ -626,16 +662,14 @@ impl Engine {
             .current_keys()
             .get("ai")
             .filter(|k| !k.is_empty())
-            .ok_or_else(|| CmdError::new("no_key", "Нет ключа ИИ-провайдера"))?;
+            .ok_or_else(|| CmdError::new("no_key", AI_NO_KEY))?;
         let p = self.ai_preview_for(&id, opts)?;
         if let Some(pid) = arg_str(a, "preview_id") {
             if pid != p["id"] {
-                return Err(CmdError::new(
-                    "stale_preview",
-                    "Данные проекта изменились: обновите предпросмотр",
-                ));
+                return Err(CmdError::new("stale_preview", AI_STALE_PREVIEW));
             }
         }
+        let lang = foca_core::Lang::from_code(p["lang"].as_str().unwrap_or("en"));
         let (provider, base, _host) = self.resolve_ai_endpoint(
             opts["provider"]
                 .as_str()
@@ -664,10 +698,7 @@ impl Engine {
             }
         }
         if model.is_empty() {
-            return Err(CmdError::new(
-                "bad_input",
-                "Выберите модель в «Настройки → ИИ-сводка» (обновите список моделей от провайдера)",
-            ));
+            return Err(CmdError::new("bad_input", AI_PICK_MODEL));
         }
         let ai_cfg = &settings["ai"];
         let gen_opts = AiGenOpts::from_values(opts, ai_cfg);
@@ -686,41 +717,42 @@ impl Engine {
             &provider,
             &base,
             &model,
-            SYSTEM_PROMPT,
+            prompt_text(lang).system,
             p["text"].as_str().unwrap_or(""),
             &gen_opts,
             model_meta.as_ref(),
         )?;
         let secrets = self.known_secrets();
+        let net_err = |e: &dyn std::fmt::Display| {
+            CmdError::new(
+                "net",
+                crate::analysis::redact::redact(&e.to_string(), &secrets),
+            )
+        };
         let net = self.net_client(Scope::default(), Arc::new(foca_net::NullSink))?;
-        let req =
-            NetRequest::new(foca_net::Method::POST, &url, "ai", Access::Passive).map_err(|e| {
-                CmdError::new(
-                    "net",
-                    crate::analysis::redact::redact(&e.to_string(), &secrets),
-                )
-            })?;
+        let req = NetRequest::new(foca_net::Method::POST, &url, "ai", Access::Passive)
+            .map_err(|e| net_err(&e))?;
         let req = attach_ai_headers(req, &provider, &key)
             .header("Content-Type", "application/json")
             .body(serde_json::to_vec(&body)?)
             .timeout(Duration::from_secs(180));
-        let r = net.send(req).await.map_err(|e| {
-            CmdError::new(
-                "net",
-                crate::analysis::redact::redact(&e.to_string(), &secrets),
-            )
-        })?;
-        let st = r.status();
-        let text = r.text_limited(4 * 1024 * 1024).await.map_err(|e| {
-            CmdError::new(
-                "net",
-                crate::analysis::redact::redact(&e.to_string(), &secrets),
-            )
-        })?;
+        let fetch = async {
+            let r = net.send(req).await.map_err(|e| net_err(&e))?;
+            let st = r.status();
+            let text = r
+                .text_limited(4 * 1024 * 1024)
+                .await
+                .map_err(|e| net_err(&e))?;
+            Ok::<_, CmdError>((st, text))
+        };
+        let (st, text) = tokio::select! {
+            res = fetch => res?,
+            _ = token.cancelled() => return Err(CmdError::new("cancelled", AI_CANCELLED)),
+        };
         if st == 401 || st == 403 {
             return Err(CmdError::new(
                 "no_key",
-                format!("Ключ ИИ отклонён: HTTP {st}"),
+                AI_KEY_REJECTED.replace("{status}", &st.to_string()),
             ));
         }
         if !(200..300).contains(&st) {
@@ -729,38 +761,139 @@ impl Engine {
                 crate::analysis::redact::redact(&format_ai_http_error(st, &text), &secrets),
             ));
         }
-        let v: Value = serde_json::from_str(&text).map_err(|e| {
-            CmdError::new(
-                "net",
-                crate::analysis::redact::redact(&e.to_string(), &secrets),
-            )
-        })?;
+        let v: Value = serde_json::from_str(&text).map_err(|e| net_err(&e))?;
         let fallback_in = p["tokens"].as_u64().unwrap_or(0);
         let parsed = parse_ai_summary_response(&provider, &model, fallback_in, &v);
-        // The latest summary goes into reports as the optional "Executive summary
-        // (AI-assisted)" section (report option `ai_summary`, default on).
+        let thoughts = if gen_opts.show_thoughts() {
+            parsed.thoughts
+        } else {
+            String::new()
+        };
+        let created = util::iso(self.now());
+        let mut entry = json!({
+            "id": "",
+            "text": parsed.md,
+            "thoughts": thoughts,
+            "provider": provider,
+            "model": parsed.model,
+            "lang": lang.code(),
+            "created": created,
+            "tokens_in": parsed.tokens_in,
+            "tokens_out": parsed.tokens_out,
+            "tokens_thoughts": parsed.tokens_thoughts,
+        });
+        // Every summary goes into the project history; the newest one is also the report's
+        // optional "Executive summary (AI-assisted)" section (report option `ai_summary`).
         if !parsed.md.trim().is_empty() {
             let db = self.db(&id)?;
-            lock(&db).set_setting(
-                AI_SUMMARY_KEY,
-                &json!({
-                    "text": parsed.md,
-                    "provider": provider,
-                    "model": parsed.model,
-                    "created": util::iso(self.now()),
-                }),
-            )?;
+            let g = lock(&db);
+            let mut items = history_with_legacy(
+                g.setting(AI_HISTORY_KEY)?,
+                g.setting(AI_SUMMARY_KEY)?.as_ref(),
+            );
+            entry["id"] = json!(new_summary_id(&items, &created, &parsed.md));
+            history_push(&mut items, entry.clone());
+            g.set_setting(AI_HISTORY_KEY, &Value::Array(items))?;
+            g.set_setting(AI_SUMMARY_KEY, &entry)?;
         }
         Ok(json!({
-            "md": parsed.md,
-            "thoughts": if gen_opts.show_thoughts() { parsed.thoughts } else { String::new() },
-            "model": parsed.model,
-            "provider": provider,
+            "id": entry["id"],
+            "md": entry["text"],
+            "thoughts": entry["thoughts"],
+            "model": entry["model"],
+            "provider": entry["provider"],
+            "lang": entry["lang"],
+            "created": entry["created"],
             "tokens_in": parsed.tokens_in,
             "tokens_out": parsed.tokens_out,
             "tokens_thoughts": parsed.tokens_thoughts,
             "preview_id": p["id"],
             "source_badge": "Cloud API",
         }))
+    }
+
+    /// `ai_cancel { project }`: stops the running summary request of the project.
+    pub(crate) fn ai_cancel(&self, a: &Value) -> CmdResult {
+        let id = self.project_arg(a)?;
+        let token = lock(&self.inner.ai_jobs).get(&id).cloned();
+        if let Some(t) = &token {
+            t.cancel();
+        }
+        Ok(json!({ "cancelled": token.is_some() }))
+    }
+
+    /// History of the project's summaries, newest first, with the one the report uses.
+    fn ai_history(&self, id: &str) -> Result<(Vec<Value>, Value), CmdError> {
+        let db = self.db(id)?;
+        let g = lock(&db);
+        let current = g.setting(AI_SUMMARY_KEY)?;
+        let items = history_with_legacy(g.setting(AI_HISTORY_KEY)?, current.as_ref());
+        let report_id = match &current {
+            Some(c) if c["text"].as_str().is_some_and(|t| !t.trim().is_empty()) => c["id"]
+                .as_str()
+                .map_or_else(|| json!("ai-legacy"), |s| json!(s)),
+            _ => Value::Null,
+        };
+        Ok((items, report_id))
+    }
+
+    fn ai_history_json(&self, id: &str) -> CmdResult {
+        let (items, report_id) = self.ai_history(id)?;
+        let running = lock(&self.inner.ai_jobs).contains_key(id);
+        Ok(json!({ "items": items, "report_id": report_id, "running": running }))
+    }
+
+    /// `ai_summaries_list { project }`: `{ items, report_id, running }`.
+    pub(crate) fn ai_summaries_list(&self, a: &Value) -> CmdResult {
+        let id = self.project_arg(a)?;
+        self.ai_history_json(&id)
+    }
+
+    /// `ai_summary_use { project, summary }`: the chosen summary becomes the report section.
+    pub(crate) fn ai_summary_use(&self, a: &Value) -> CmdResult {
+        let pid = self.project_arg(a)?;
+        let sid = arg_str(a, "summary").unwrap_or("");
+        let (items, _) = self.ai_history(&pid)?;
+        let entry = items
+            .into_iter()
+            .find(|e| e["id"].as_str() == Some(sid))
+            .ok_or_else(|| CmdError::not_found(AI_NOT_FOUND))?;
+        let db = self.db(&pid)?;
+        lock(&db).set_setting(AI_SUMMARY_KEY, &entry)?;
+        self.ai_history_json(&pid)
+    }
+
+    /// `ai_summary_delete { project, summary }`: drops one summary; the report section goes
+    /// with it when it was that one.
+    pub(crate) fn ai_summary_delete(&self, a: &Value) -> CmdResult {
+        let pid = self.project_arg(a)?;
+        let sid = arg_str(a, "summary").unwrap_or("");
+        let (mut items, report_id) = self.ai_history(&pid)?;
+        let before = items.len();
+        items.retain(|e| e["id"].as_str() != Some(sid));
+        if items.len() == before {
+            return Err(CmdError::not_found(AI_NOT_FOUND));
+        }
+        let db = self.db(&pid)?;
+        {
+            let g = lock(&db);
+            g.set_setting(AI_HISTORY_KEY, &Value::Array(items))?;
+            if report_id.as_str() == Some(sid) {
+                g.set_setting(AI_SUMMARY_KEY, &Value::Null)?;
+            }
+        }
+        self.ai_history_json(&pid)
+    }
+}
+
+/// Clears the project's running-request mark when `ai_summarize` ends in any way.
+struct AiJob<'a> {
+    jobs: &'a std::sync::Mutex<std::collections::HashMap<String, CancellationToken>>,
+    id: String,
+}
+
+impl Drop for AiJob<'_> {
+    fn drop(&mut self) {
+        lock(self.jobs).remove(&self.id);
     }
 }

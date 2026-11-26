@@ -76,6 +76,7 @@ impl Engine {
                 queue_halt: std::sync::atomic::AtomicBool::new(false),
                 queue_progress: Mutex::new(None),
                 ai_models_cache: Mutex::new(HashMap::new()),
+                ai_jobs: Mutex::new(HashMap::new()),
             }),
         };
         if let Ok(s) = e.store().settings_get() {
@@ -224,6 +225,10 @@ impl Engine {
             "ai_models_list" => self.ai_models_list(&a).await,
             "ai_preview" => self.ai_preview(&a),
             "ai_summarize" => self.ai_summarize(&a).await,
+            "ai_cancel" => self.ai_cancel(&a),
+            "ai_summaries_list" => self.ai_summaries_list(&a),
+            "ai_summary_use" => self.ai_summary_use(&a),
+            "ai_summary_delete" => self.ai_summary_delete(&a),
             "pin_set" => self.pin_set(&a),
             "pin_check" => self.pin_check(&a).await,
             "wipe_all" => self.wipe_all(&a).await,

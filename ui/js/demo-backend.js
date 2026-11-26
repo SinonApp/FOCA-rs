@@ -8725,7 +8725,97 @@
 
   // ---- AI summary: the core assembles the prompt and strips data according to filters; the UI shows it as
   // is ----
-  const AI_TAGS = ["СЕКРЕТ", "EMAIL", "ФИО", "КЛИЕНТ", "IP-ВНУТР"];
+  // Language-neutral placeholders (services/ai_text.rs): a model keeps ASCII tokens intact.
+  const AI_TAGS = ["SECRET", "EMAIL", "NAME", "CLIENT", "INTERNAL-IP"];
+  // Fixed prompt wording per language, the same as PromptText in services/ai_text.rs.
+  const AI_PROMPT = {
+    ru: {
+      project: "Проект",
+      domain: "домен",
+      scan: "Скан {date}, профиль «{profile}»{active}. Документов: {docs}, хостов: {hosts}, людей: {people}.",
+      active: " (активный)",
+      no_scans: "Сканов ещё не было.",
+      top: "Находки (критичные и высокие):",
+      no_top: "Критичных и высоких находок нет.",
+      many_hosts: "несколько хостов",
+      medium: "Средние",
+      people: "Люди",
+      internal: "Внутренние имена",
+      evidence: "Доказательство",
+      task: "Задача: кратко опиши ключевые риски и дай приоритетные рекомендации. Пиши на русском языке.",
+      risks: "Ключевые риски",
+      recs: "Рекомендации",
+      none: "Актуальных находок нет",
+      none_scans: ": сканов ещё не было",
+      first_scan: "Проведите пассивный скан и проверьте документы перед публикацией.",
+      day: "В течение 24 часов",
+      week: "В течение недели",
+      process: "Процесс",
+      process_docs: "очищать метаданные перед публикацией документов, ",
+      rescan: "провести повторный скан для проверки исправлений.",
+      thoughts: "Оцениваю {n} актуальных находок, группирую критичные утечки по приоритету (режим: {mode}).",
+    },
+    uk: {
+      project: "Проєкт",
+      domain: "домен",
+      scan: "Скан {date}, профіль «{profile}»{active}. Документів: {docs}, хостів: {hosts}, людей: {people}.",
+      active: " (активний)",
+      no_scans: "Сканувань ще не було.",
+      top: "Знахідки (критичні та високі):",
+      no_top: "Критичних і високих знахідок немає.",
+      many_hosts: "кілька хостів",
+      medium: "Середні",
+      people: "Люди",
+      internal: "Внутрішні імена",
+      evidence: "Доказ",
+      task: "Завдання: стисло опиши ключові ризики й дай пріоритетні рекомендації. Пиши українською мовою.",
+      risks: "Ключові ризики",
+      recs: "Рекомендації",
+      none: "Актуальних знахідок немає",
+      none_scans: ": сканувань ще не було",
+      first_scan: "Проведіть пасивний скан і перевірте документи перед публікацією.",
+      day: "Протягом 24 годин",
+      week: "Протягом тижня",
+      process: "Процес",
+      process_docs: "очищати метадані перед публікацією документів, ",
+      rescan: "провести повторний скан для перевірки виправлень.",
+      thoughts: "Оцінюю {n} актуальних знахідок, групую критичні витоки за пріоритетом (режим: {mode}).",
+    },
+    en: {
+      project: "Project",
+      domain: "domain",
+      scan: 'Scan {date}, profile "{profile}"{active}. Documents: {docs}, hosts: {hosts}, people: {people}.',
+      active: " (active)",
+      no_scans: "No scans yet.",
+      top: "Findings (critical and high):",
+      no_top: "No critical or high findings.",
+      many_hosts: "several hosts",
+      medium: "Medium",
+      people: "People",
+      internal: "Internal names",
+      evidence: "Evidence",
+      task: "Task: briefly describe the key risks and give prioritized recommendations. Write in English.",
+      risks: "Key risks",
+      recs: "Recommendations",
+      none: "No current findings",
+      none_scans: ": no scans yet",
+      first_scan: "Run a passive scan and check documents before publishing them.",
+      day: "Within 24 hours",
+      week: "Within a week",
+      process: "Process",
+      process_docs: "clean metadata before publishing documents, ",
+      rescan: "run a repeat scan to verify the fixes.",
+      thoughts: "Weighing {n} current findings, grouping critical leaks by priority (mode: {mode}).",
+    },
+  };
+  const aiLang = o =>
+    ["ru", "uk", "en"].includes(o && o.lang)
+      ? o.lang
+      : demoResolveLang(load().settings?.lang ?? "auto", demoDeviceLocale).lang;
+  // Running ai_summarize per project (single flight, like Core.ai_jobs) and its cancel hook.
+  const aiJobs = new Map();
+  // Simulated provider latency; 0 resolves at once (contract dumps, invariants).
+  let aiDelayMs = 1200;
   const AI_HOSTS = {
     openai: "api.openai.com",
     anthropic: "api.anthropic.com",
@@ -8927,31 +9017,33 @@
     };
     const dom = st.project.domain || st.project.name || "",
       client = st.scope.client || st.project.client || "";
+    const lang = aiLang(o),
+      T = AI_PROMPT[lang];
     const marks = Object.fromEntries(AI_TAGS.map(k => [k, 0]));
     const M = (v, tag, on) => {
       if (!on) return v;
-      marks[tag.replace("-ДОМЕН", "")]++;
+      marks[tag.replace("-DOMAIN", "")]++;
       return `[${tag}]`;
     };
     const repl = (s, needle, tag) => {
       if (!needle) return s;
       const parts = String(s).split(needle);
-      if (parts.length > 1) marks[tag.replace("-ДОМЕН", "")] += parts.length - 1;
+      if (parts.length > 1) marks[tag.replace("-DOMAIN", "")] += parts.length - 1;
       return parts.join(`[${tag}]`);
     };
     const txt = s => {
       let out = String(s || "");
       if (red.client) {
-        out = repl(out, dom, "КЛИЕНТ-ДОМЕН");
-        out = repl(out, client, "КЛИЕНТ");
+        out = repl(out, dom, "CLIENT-DOMAIN");
+        out = repl(out, client, "CLIENT");
       }
       return out;
     };
     const host = h =>
       !h || h === "-"
-        ? "несколько хостов"
+        ? T.many_hosts
         : red.client && dom && (h === dom || h.endsWith("." + dom))
-          ? h.slice(0, h.length - dom.length) + M(dom, "КЛИЕНТ-ДОМЕН", true)
+          ? h.slice(0, h.length - dom.length) + M(dom, "CLIENT-DOMAIN", true)
           : h;
     const secOf = f => [...String(f.evidence || "").matchAll(SECRET_RX)].map(m => m[1]);
     const live = st.findings
@@ -8966,48 +9058,55 @@
       live_docs = st.docs.filter(d => !d.deleted);
     const fmtD = s => (s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}, ${s.slice(11, 16)}` : "");
     const lines = [
-      `Проект: ${client ? M(client, "КЛИЕНТ", red.client) : "-"}${dom ? `, домен ${M(dom, "КЛИЕНТ-ДОМЕН", red.client)}` : ""}`,
+      `${T.project}: ${client ? M(client, "CLIENT", red.client) : "-"}${dom ? `, ${T.domain} ${M(dom, "CLIENT-DOMAIN", red.client)}` : ""}`,
       l
-        ? `Скан ${fmtD(l.finished_at)}, профиль «${l.profile}»${l.active ? " (активный)" : ""}. Документов: ${live_docs.length}, хостов: ${st.hosts.length}, людей: ${st.people.length}.`
-        : "Сканов ещё не было.",
+        ? T.scan
+            .replace("{date}", fmtD(l.finished_at))
+            .replace("{profile}", l.profile)
+            .replace("{active}", l.active ? T.active : "")
+            .replace("{docs}", live_docs.length)
+            .replace("{hosts}", st.hosts.length)
+            .replace("{people}", st.people.length)
+        : T.no_scans,
       ``,
-      top.length ? `Находки (критичные и высокие):` : `Критичных и высоких находок нет.`,
+      top.length ? T.top : T.no_top,
       ...top.map(
         (f, i) =>
-          `${i + 1}. ${txt(f.title)}, ${host(f.host)}${secOf(f).length ? `: ${M(secOf(f)[0], "СЕКРЕТ", red.secrets)}` : ""}`,
+          `${i + 1}. ${txt(f.title)}, ${host(f.host)}${secOf(f).length ? `: ${M(secOf(f)[0], "SECRET", red.secrets)}` : ""}`,
       ),
-      ...(mid.length ? [``, `Средние: ${mid.map(f => txt(f.title)).join("; ")}.`] : []),
+      ...(mid.length ? [``, `${T.medium}: ${mid.map(f => txt(f.title)).join("; ")}.`] : []),
       ...(ppl.length
         ? [
             ``,
-            `Люди: ${ppl.map(e => `${M(e.name, "ФИО", red.pii)} (${M(e.addr, "EMAIL", red.pii)})`).join(", ")}.`,
+            `${T.people}: ${ppl.map(e => `${M(e.name, "NAME", red.pii)} (${M(e.addr, "EMAIL", red.pii)})`).join(", ")}.`,
           ]
         : []),
       ...(srv.length
         ? [
-            `Внутренние имена: ${srv.map(p => p.name + (p.ip && /^\d+\.\d+\.\d+\.\d+$/.test(p.ip) ? ` (${M(p.ip, "IP-ВНУТР", red.secrets)})` : "")).join(", ")}.`,
+            `${T.internal}: ${srv.map(p => p.name + (p.ip && /^\d+\.\d+\.\d+\.\d+$/.test(p.ip) ? ` (${M(p.ip, "INTERNAL-IP", red.secrets)})` : "")).join(", ")}.`,
           ]
         : []),
       ...(red.evid && top[0] && top[0].evidence
         ? [
             ``,
-            `Доказательство (${txt(top[0].title)}): ${top[0].evidence
+            `${T.evidence} (${txt(top[0].title)}): ${top[0].evidence
               .split("\n")
               .slice(0, 3)
-              .map(s => txt(s).replace(SECRET_RX, (_, v) => M(v, "СЕКРЕТ", red.secrets)))
+              .map(s => txt(s).replace(SECRET_RX, (_, v) => M(v, "SECRET", red.secrets)))
               .join("; ")}`,
           ]
         : []),
       ``,
-      `Задача: кратко опиши ключевые риски и дай приоритетные рекомендации на русском языке.`,
+      T.task,
     ];
     const text = lines.join("\n");
     const ep = aiEndpointDemo(o.provider || ai.provider, o.base_url);
     return {
       id: `aip-${hash(text + JSON.stringify(red)).toString(36)}`,
       text,
+      lang,
       tokens: Math.round(text.length / 3.2 / 10) * 10 + 180,
-      redacted: marks.СЕКРЕТ,
+      redacted: marks.SECRET,
       marks,
       redact: red,
       provider: ep.provider,
@@ -9025,6 +9124,7 @@
     const chosenModel =
       String(opts.model || p.model || "").trim() ||
       (DEMO_AI_MODELS[ep.provider] || DEMO_AI_MODELS.deepseek)[0].id;
+    const T = AI_PROMPT[p.lang];
     const R = RULES(),
       first = s =>
         String(s || "")
@@ -9034,22 +9134,22 @@
       .filter(R.isLive)
       .slice()
       .sort((a, b) => R.SEV_RANK[b.sev] - R.SEV_RANK[a.sev] || a.id - b.id);
-    const clean = s => String(s || "").replace(SECRET_RX, "[СЕКРЕТ]");
+    const clean = s => String(s || "").replace(SECRET_RX, "[SECRET]");
     let md;
     if (!live.length)
-      md = `## Ключевые риски\nАктуальных находок нет${st.scans.length ? "" : ": сканов ещё не было"}.\n\n## Рекомендации\n1. Проведите пассивный скан и проверьте документы перед публикацией.`;
+      md = `## ${T.risks}\n${T.none}${st.scans.length ? "" : T.none_scans}.\n\n## ${T.recs}\n1. ${T.first_scan}`;
     else {
       const crit = live.filter(f => f.sev === "crit"),
         soon = live.filter(f => f.sev === "high" || f.sev === "warn"),
         docsF = live.some(f => f.category === "docs");
       md = [
-        `## Ключевые риски`,
+        `## ${T.risks}`,
         ...live.slice(0, 5).map((f, i) => `${i + 1}. **${clean(f.title)}.** ${clean(first(f.description))}.`),
         ``,
-        `## Рекомендации`,
+        `## ${T.recs}`,
         ...(crit.length
           ? [
-              `- **В течение 24 часов:** ${crit
+              `- **${T.day}:** ${crit
                 .slice(0, 4)
                 .map(f => first(f.recommendation).toLowerCase())
                 .join("; ")}.`,
@@ -9057,13 +9157,13 @@
           : []),
         ...(soon.length
           ? [
-              `- **В течение недели:** ${soon
+              `- **${T.week}:** ${soon
                 .slice(0, 4)
                 .map(f => first(f.recommendation).toLowerCase())
                 .join("; ")}.`,
             ]
           : []),
-        `- **Процесс:** ${docsF ? "очищать метаданные перед публикацией документов, " : ""}провести повторный скан для проверки исправлений.`,
+        `- **${T.process}:** ${docsF ? T.process_docs : ""}${T.rescan}`,
       ].join("\n");
     }
     const aiCfg = load().settings.ai || {};
@@ -9071,20 +9171,61 @@
     const thinking = String(opts.thinking || aiCfg.thinking || "auto");
     const thoughts =
       showThoughts && thinking !== "off"
-        ? `Оцениваю ${live.length} актуальных находок, группирую критичные утечки по приоритету (режим: ${thinking}).`
+        ? T.thoughts.replace("{n}", live.length).replace("{mode}", thinking)
         : "";
-    return {
-      md,
+    const created = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+    const entry = {
+      id: `ai-${hash(created + md + Math.random()).toString(36)}`,
+      text: md,
       thoughts,
-      model: chosenModel,
       provider: ep.provider,
+      model: chosenModel,
+      lang: p.lang,
+      created,
       tokens_in: p.tokens,
       tokens_out: Math.round(md.length / 3.6),
       tokens_thoughts: thoughts ? Math.round(thoughts.length / 3.6) : 0,
-      preview_id: p.id,
-      source_badge: "Cloud API",
     };
+    return { entry, preview_id: p.id };
   }
+  // Summary history per project (the core keeps it in the project DB: ai_summaries + ai_summary).
+  const aiHist = pid => {
+    const s = load();
+    s.aiHist = s.aiHist || {};
+    return (s.aiHist[pid] = s.aiHist[pid] || { items: [], report_id: null });
+  };
+  const aiHistOut = pid => {
+    const h = aiHist(pid);
+    return { items: h.items.map(e => ({ ...e })), report_id: h.report_id, running: aiJobs.has(pid) };
+  };
+  function aiSummarizeRun(pid, o) {
+    const k = (load().settings.keys || {}).ai;
+    if (!k || k.status !== "ok") throw apiErr("no_key", "Нет ключа ИИ-провайдера");
+    if (aiJobs.has(pid)) throw apiErr("busy", "ИИ-сводка по этому проекту уже формируется");
+    const { entry, preview_id } = aiSummarize(P(pid), o);
+    const finish = () => {
+      const h = aiHist(pid);
+      h.items.unshift(entry);
+      h.items = h.items.slice(0, 50);
+      h.report_id = entry.id;
+      save();
+      const { text, ...rest } = entry;
+      return { ...rest, md: text, preview_id, source_badge: "Cloud API" };
+    };
+    if (!aiDelayMs) return finish();
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => {
+        aiJobs.delete(pid);
+        resolve(finish());
+      }, aiDelayMs);
+      aiJobs.set(pid, () => {
+        clearTimeout(t);
+        aiJobs.delete(pid);
+        reject(apiErr("cancelled", "Запрос к ИИ отменён"));
+      });
+    });
+  }
+
   // ---- metadata cleaning of a document copy ----
   // Document hygiene (hygiene_get, docs/API.md → "Гигиена документов"): the same scoring as foca-meta
   // grade_document: penalties crit 40 / high 20 / warn 10 / low 4, any critical issue caps the grade at E.
@@ -11320,7 +11461,8 @@
           host: "",
           models: [],
           source: "bad_url",
-          error: "Укажите корректный Base URL (https://…)",
+          error: "Укажите корректный URL OpenAI-совместимого API (https://… или http://localhost…)",
+          error_msg: { code: "ai.bad_url", params: {} },
         };
       }
       const k = (load().settings.keys || {}).ai;
@@ -11331,6 +11473,7 @@
           models: [],
           source: "no_key",
           error: "Укажите ключ API, чтобы загрузить список моделей от провайдера",
+          error_msg: { code: "ai.models_need_key", params: {} },
         };
       }
       return {
@@ -11339,13 +11482,32 @@
         models: (DEMO_AI_MODELS[ep.provider] || []).map(x => ({ ...x })),
         source: "api",
         error: "",
+        error_msg: null,
       };
     },
     ai_preview: ({ project, opts }) => aiPreview(P(project), opts || {}),
-    ai_summarize: ({ project, preview_id, opts }) => {
-      const k = (load().settings.keys || {}).ai;
-      if (!k || k.status !== "ok") throw apiErr("no_key", "Нет ключа ИИ-провайдера");
-      return aiSummarize(P(project), { preview_id, opts });
+    ai_summarize: ({ project, preview_id, opts }) => aiSummarizeRun(project, { preview_id, opts }),
+    ai_cancel: ({ project }) => {
+      const stop = aiJobs.get(project);
+      if (stop) stop();
+      return { cancelled: !!stop };
+    },
+    ai_summaries_list: ({ project }) => aiHistOut(project),
+    ai_summary_use: ({ project, summary }) => {
+      const h = aiHist(project);
+      if (!h.items.some(e => e.id === summary)) throw apiErr("not_found", "ИИ-сводка не найдена");
+      h.report_id = summary;
+      save();
+      return aiHistOut(project);
+    },
+    ai_summary_delete: ({ project, summary }) => {
+      const h = aiHist(project);
+      const n = h.items.length;
+      h.items = h.items.filter(e => e.id !== summary);
+      if (h.items.length === n) throw apiErr("not_found", "ИИ-сводка не найдена");
+      if (h.report_id === summary) h.report_id = null;
+      save();
+      return aiHistOut(project);
     },
     pin_set: ({ pin, panic }) => {
       if (!/^\d{4,8}$/.test(String(pin || ""))) throw apiErr("bad_pin", "PIN: 4-8 цифр");
@@ -11868,6 +12030,12 @@
     listen(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);
+    },
+    // For QA: simulated AI provider latency in ms (0 answers at once); returns the previous value.
+    _aiDelay(ms) {
+      const was = aiDelayMs;
+      aiDelayMs = Math.max(0, Number(ms) || 0);
+      return was;
     },
     // For qa/data-invariants.mjs.
     // For QA: instantly run n steps of the running scan (like the timer, without waiting).

@@ -67,6 +67,8 @@ pub struct Core {
     /// In-memory session cache of cloud AI models fetched via `ai_models_list`, keyed by
     /// `"{provider}|{base_url}"`.
     pub(crate) ai_models_cache: Mutex<HashMap<String, Vec<Value>>>,
+    /// Running `ai_summarize` requests by project id (one per project; `ai_cancel` fires the token).
+    pub(crate) ai_jobs: Mutex<HashMap<String, CancellationToken>>,
 }
 
 /// The FOCA-rs engine. Cheap to clone (`Arc` inside); one per application.

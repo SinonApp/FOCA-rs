@@ -178,7 +178,7 @@ export default async (page, { out, W, prep }) => {
   ok("SQLi not blocked by contract, toggle available", !/договор/.test(await txt()) && await ev(() => !document.querySelector(".v2p-hon .toggle").disabled));
   await go("/p/ai"); await click('[data-act="v2ai-step:1"]');
   const pre = await ev(() => document.querySelector(".v2ai-pre").innerText);
-  ok("v2: AI preview from data, client/secrets replaced", /\[КЛИЕНТ\]/.test(pre) && /\[СЕКРЕТ\]/.test(pre) && !/Контосо/.test(pre), pre.slice(0, 200));
+  ok("v2: AI preview from data, client/secrets replaced", /\[CLIENT\]/.test(pre) && /\[SECRET\]/.test(pre) && !/Контосо/.test(pre), pre.slice(0, 200));
   await go("/p/preflight"); await click('[data-act="v2pf-pick"]'); await click("#v2pf-ok");
   ok("I-19: pre-publication check shows what leaks", /Что утечёт/.test(await txt()) && await ev(() => document.querySelectorAll(".v2pf-file").length > 0));
   await click('[data-act="v2pf-clean:all"]');

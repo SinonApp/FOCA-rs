@@ -2,6 +2,7 @@
 //! bundles, licenses, the AI provider protocol, auto-resume policy and the report builder.
 
 pub(crate) mod ai;
+pub(crate) mod ai_text;
 pub mod i18n;
 pub mod licenses;
 pub mod logs;

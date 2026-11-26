@@ -459,10 +459,26 @@ async fn contract_shape_matches_demo_backend_inner() {
         "ai_preview",
         json!({ "project": id, "opts": {} })
     );
-    c!(
+    let sm = c!(
         "ai_summarize",
         "ai_summarize",
         json!({ "project": id, "preview_id": ap["id"], "opts": {} })
+    );
+    c!(
+        "ai_summaries_list",
+        "ai_summaries_list",
+        json!({ "project": id })
+    );
+    c!(
+        "ai_summary_use",
+        "ai_summary_use",
+        json!({ "project": id, "summary": sm["id"] })
+    );
+    c!("ai_cancel", "ai_cancel", json!({ "project": id }));
+    c!(
+        "ai_summary_delete",
+        "ai_summary_delete",
+        json!({ "project": id, "summary": sm["id"] })
     );
     c!("project_snapshot", "project_snapshot", json!({ "id": id }));
     c!("project_open", "project_open", json!({ "id": id }));

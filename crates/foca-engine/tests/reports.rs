@@ -3,6 +3,8 @@
 mod common;
 
 mod reports {
+    #[cfg(feature = "report")]
+    mod ai_summary;
     // Builds reports with foca_report directly.
     #[cfg(feature = "report")]
     mod all_rules_lang;

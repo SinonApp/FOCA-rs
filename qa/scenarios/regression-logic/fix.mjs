@@ -160,7 +160,7 @@ export default async (page, { out, prep }) => {
       // AI summary: preview from the core, secrets stripped.
       await ev(() => FOCA.go("/p/ai")); await wait(200); await ev(() => FOCA.actions["v2ai-step"](1)); await wait(400);
       const ai = await ev(() => ({ t: FOCA.page().innerText, marks: FOCA.page().querySelectorAll("mark.v2ai-r").length }));
-      ok("C9/C10: AI preview (ai_preview): secrets replaced with [СЕКРЕТ], no plain values", ai.marks > 0 && /\[СЕКРЕТ\]/.test(ai.t) && !/Kont0so|wJx9Fq2/.test(ai.t), ai.marks);
+      ok("C9/C10: AI preview (ai_preview): secrets replaced with [SECRET], no plain values", ai.marks > 0 && /\[SECRET\]/.test(ai.t) && !/Kont0so|wJx9Fq2/.test(ai.t), ai.marks);
       await shot("D5_ai_preview");
       // Secrets are masked in the snapshot; revealing goes through secret_reveal after confirmation.
       const sec = await ev(() => ({ raw: JSON.stringify(FOCA.db.raw.secrets), v: FOCA.db.secrets[0].value }));

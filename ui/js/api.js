@@ -851,6 +851,10 @@
       run("ai_models_list", { provider, base_url, refresh, show_all }),
     ai_preview: opts => run("ai_preview", { project: cur(), opts }),
     ai_summarize: (preview_id, opts) => run("ai_summarize", { project: cur(), preview_id, opts }),
+    ai_cancel: () => run("ai_cancel", { project: cur() }),
+    ai_summaries_list: () => run("ai_summaries_list", { project: cur() }),
+    ai_summary_use: summary => run("ai_summary_use", { project: cur(), summary }),
+    ai_summary_delete: summary => run("ai_summary_delete", { project: cur(), summary }),
     pin_set: (pin, panic) => run("pin_set", { pin, panic }),
     pin_check: pin => run("pin_check", { pin }),
     wipe_all: () =>

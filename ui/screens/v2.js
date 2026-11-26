@@ -3409,7 +3409,7 @@
           mask: keyMask,
           models: r.models || [],
           source: r.source || "",
-          error: r.error || "",
+          error: r.error ? F.coreMsg(r.error, r.error_msg) : "",
           host: r.host || "",
         };
         if (r.models && r.models.length && (!a.model || (refresh && !r.models.some(m => m.id === a.model)))) {
@@ -3418,7 +3418,7 @@
           return;
         }
         if (!quiet) {
-          if (r.error) F.snack(r.error);
+          if (r.error) F.snack(F.coreMsg(r.error, r.error_msg));
           else F.snack(`${esc(F.t("ai.models_loaded", "Загружено моделей:"))} ${(r.models || []).length}`);
         }
         F.render(true);
@@ -3545,9 +3545,9 @@
         <div class="fhint">${esc(F.t("ai.auto_mode_only_basic_fields_sent", "В режиме «Авто» передаются только базовые поля. Модель использует свои настройки рассуждения и температуры без риска HTTP 400."))}</div>
         ${ui.secH(F.t("ai.what_strip_before_sending", "Что вырезать перед отправкой"))}
         <div class="list">
-          ${tg("secrets", F.t("app.secrets", "Секреты"), F.t("ai.passwords_keys_tokens_connection", "Пароли, ключи, токены, строки подключения → [СЕКРЕТ]"))}
-          ${tg("pii", F.t("ai.personal_data", "Персональные данные"), F.t("ai.full_names_e_mails_phones_email", "ФИО, e-mail, телефоны → [ФИО], [EMAIL]"))}
-          ${tg("client", F.t("ai.client_name", "Название заказчика"), F.t("ai.organization_domain", "Организация и домен → [КЛИЕНТ]"))}
+          ${tg("secrets", F.t("app.secrets", "Секреты"), F.t("ai.passwords_keys_tokens_connection", "Пароли, ключи, токены, строки подключения → [SECRET]"))}
+          ${tg("pii", F.t("ai.personal_data", "Персональные данные"), F.t("ai.full_names_e_mails_phones_email", "ФИО, e-mail, телефоны → [NAME], [EMAIL]"))}
+          ${tg("client", F.t("ai.client_name", "Название заказчика"), F.t("ai.organization_domain", "Организация и домен → [CLIENT]"))}
           ${tg("evid", F.t("ai.send_evidence", "Отправлять доказательства"), F.t("ai.excerpts_server_responses", "Фрагменты ответов серверов и документов"))}
         </div>
         ${!ai.secrets || !ai.pii ? `<div class="banner crit v2ai-gap">${ic("alert")}<div>${esc(F.t("ai.without_secrets_personal_data", "Без фильтра секретов и персональных данных они могут попасть к внешнему провайдеру. Убедитесь, что владелец данных согласен на их передачу."))}</div></div>` : ""}
@@ -3603,14 +3603,61 @@
   F.actions["v2ai-models"] = () => fetchAiModels(true, false);
 
   // The prompt text is assembled by the core (ai_preview); the UI shows it as is and highlights the
-  // [CLIENT]/[SECRET]/… substitutions.
+  // [CLIENT]/[SECRET]/... substitutions (and the Russian ones in summaries stored up to 2.0.0-beta.2).
+  const AI_TAG_RX =
+    /\[(CLIENT-DOMAIN|CLIENT|NAME|EMAIL|SECRET|INTERNAL-IP|КЛИЕНТ-ДОМЕН|КЛИЕНТ|ФИО|СЕКРЕТ|IP-ВНУТР)\]/g;
   const PREVIEW = () =>
-    esc((AIS().prev || {}).text || "").replace(
-      /\[(КЛИЕНТ-ДОМЕН|КЛИЕНТ|ФИО|EMAIL|СЕКРЕТ|IP-ВНУТР)\]/g,
-      m => `<mark class="v2ai-r">${m}</mark>`,
-    );
+    esc((AIS().prev || {}).text || "").replace(AI_TAG_RX, m => `<mark class="v2ai-r">${m}</mark>`);
   const SUMMARY = () => AIS().sum || "";
-  const AIS = () => (state.ais = state.ais || { step: 0, ok: false, out: "", done: false });
+  const AIS = () => (state.ais = state.ais || { step: 0, ok: false, out: "", done: false, busy: false });
+  const aiPid = () => (F.db.project || {}).id || "";
+  // Summary history of the open project ({ items, report_id, running }), loaded from the core.
+  const aiHist = () => {
+    const h = AIS().hist;
+    return h && h.pid === aiPid() ? h : null;
+  };
+  const aiSetHist = r => {
+    AIS().hist = { pid: aiPid(), items: r.items || [], report_id: r.report_id || null, running: !!r.running };
+  };
+  const aiLoadHist = () =>
+    F.api.ai_summaries_list().then(
+      r => {
+        const was = JSON.stringify(AIS().hist || null);
+        aiSetHist(r);
+        if (JSON.stringify(AIS().hist) !== was && F.current() === "/p/ai") F.render(true);
+      },
+      () => {},
+    );
+  const aiLangCode = l => ({ ru: "RU", uk: "UA", en: "EN" })[l] || String(l || "").toUpperCase();
+  const aiWhen = iso => {
+    const d = new Date(iso || "");
+    if (Number.isNaN(d.getTime())) return iso || "";
+    const l = F.i18n.lang();
+    return d.toLocaleString(l === "en" ? "en-GB" : l === "uk" ? "uk-UA" : "ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+  const aiMeta = e => [e.provider, e.model, aiLangCode(e.lang)].filter(Boolean).map(esc).join(" · ");
+  const aiFind = id => ((aiHist() || {}).items || []).find(e => e.id === id);
+  const aiInReport = id => !!id && (aiHist() || {}).report_id === id;
+  const aiThoughts = (text, th) =>
+    text
+      ? `<details class="v2ai-th"><summary>${esc(F.t("ai.reasoning_thinking", "Ход рассуждений (Thinking)"))}${th ? ` ${F.t("ai.th_tok", { th: fmt(th) }, "· {th} ток.")}` : ""}</summary><pre>${esc(text)}</pre></details>`
+      : "";
+  const aiDisclaimer = () =>
+    `<p class="fhint v2ai-fh">${ic("info")} ${esc(F.t("ai.summary_ai_generated_check_facts", "Сводка сгенерирована ИИ: проверьте факты перед отправкой заказчику. Замены вида [CLIENT] возвращаются на место только в отчёте."))}</p>`;
+  const aiRepBtn = id =>
+    aiInReport(id)
+      ? `<button class="btn tonal" data-act="v2ai-rep:${esc(id)}">${ic("check")}${esc(F.t("ai.in_report", "В отчёте"))}</button>`
+      : `<button class="btn primary" data-act="v2ai-rep:${esc(id)}">${ic("report")}${esc(F.t("ai.report", "В отчёт"))}</button>`;
+  // In-flight state: the send button stays disabled with a spinner until the core answers.
+  const aiBusyBanner = () =>
+    `<div class="card pad v2ai-busy" aria-live="polite">${ic("spin", "spin")}<span>${esc(F.t("ai.request_running", "Запрос к ИИ выполняется. Повторно отправлять не нужно."))}</span><button class="btn text sm"
+      data-act="v2ai-cancel">${ic("stop")}${esc(F.t("ai.cancel_request", "Отменить запрос"))}</button></div>`;
   F.route("/p/ai", {
     title: () => F.t("menu.ai", "ИИ-сводка"),
     tab: "reports",
@@ -3622,10 +3669,40 @@
           const aiState = AIS(),
             dest = aiDest(),
             ai = AI();
-          if (aiState.step === 0)
+          const H = aiHist();
+          const busy = aiState.busy || !!(H && H.running);
+          if (aiState.step === 0) {
+            const items = (H && H.items) || [];
+            const latest = items[0];
+            const latestHtml = latest
+              ? `${ui.secH(F.t("ai.latest_summary", "Последняя сводка"), esc(aiWhen(latest.created)))}
+        <div class="card pad v2ai-out done"><div class="v2ai-oh">${ic("spark")}<span>${aiMeta(latest)}</span></div>${aiThoughts(latest.thoughts, latest.tokens_thoughts)}<div
+          class="v2ai-md">${md(latest.text)}</div></div>
+        ${aiDisclaimer()}
+        <div class="btnrow v2ai-btns"><button class="btn"
+          data-act="v2ai-copy:${esc(latest.id)}">${ic("copy")}${esc(F.t("data.copy", "Копировать"))}</button>${aiRepBtn(latest.id)}</div>
+        ${
+          items.length > 1
+            ? `${ui.secH(F.t("ai.history", "История сводок"), String(items.length))}<div class="list v2ai-hist">${items
+                .map(e =>
+                  ui.row({
+                    lead: ui.leadIcon("spark"),
+                    title: esc(aiWhen(e.created)),
+                    sub: aiMeta(e),
+                    tail: aiInReport(e.id)
+                      ? `<span class="pill ok">${esc(F.t("ai.in_report", "В отчёте"))}</span>`
+                      : "",
+                    act: `v2ai-open:${e.id}`,
+                  }),
+                )
+                .join("")}</div>`
+            : ""
+        }
+        ${ui.secH(F.t("ai.new_summary", "Новая сводка"))}`
+              : `<div class="card pad v2ai-hero"><div class="v2ai-hic">${ic("spark")}</div><b>${esc(F.t("ai.client_summary_minute", "Сводка для заказчика за минуту"))}</b><span>${esc(F.t("ai.key_risks_priority", "Ключевые риски и приоритетные рекомендации по результатам скана. Можно вставить в отчёт."))}</span></div>
+        ${ui.secH(F.t("ai.what_included", "Что войдёт"))}`;
             return `
-        <div class="card pad v2ai-hero"><div class="v2ai-hic">${ic("spark")}</div><b>${esc(F.t("ai.client_summary_minute", "Сводка для заказчика за минуту"))}</b><span>${esc(F.t("ai.key_risks_priority", "Ключевые риски и приоритетные рекомендации по результатам скана. Можно вставить в отчёт."))}</span></div>
-        ${ui.secH(F.t("ai.what_included", "Что войдёт"))}
+        ${latestHtml}
         <div class="list">${[
           [
             "bug",
@@ -3658,8 +3735,10 @@
         <div class="card pad v2ai-dst">${ic("globe")}<div><b>${esc(dest.name)} · ${esc(dest.model)}</b><span>${F.t("ai.sending_host_thinking_secrets", { host: esc(dest.host), thinking: ai.thinking !== "auto" ? ` · thinking: ${esc(ai.thinking)}` : "" }, "Отправка на {host}{thinking} · секреты")} ${ai.secrets ? F.t("ai.stripped_2", "вырезаются") : F.t("ai.not_stripped", "НЕ вырезаются")}</span></div><button class="btn text sm"
           data-act="go:/settings/ai">${esc(F.t("app.edit", "Изменить"))}</button></div>
         ${dest.ready ? "" : `<p class="fhint err">${esc(F.t("ai.pick_model_first", "Модель не выбрана: выберите её в настройках ИИ, иначе провайдер отклонит запрос."))}</p>`}
+        ${busy ? aiBusyBanner() : ""}
         <button class="btn primary block v2ai-go"
-          data-act="v2ai-step:1">${ic("spark")}${esc(F.t("ai.generate", "Сформировать сводку"))}</button>`;
+          data-act="v2ai-step:1" ${busy ? "disabled" : ""}>${ic("spark")}${esc(F.t("ai.generate", "Сформировать сводку"))}</button>`;
+          }
           if (aiState.step === 1) {
             const txt = PREVIEW();
             const marks = (txt.match(/<mark/g) || []).length;
@@ -3674,11 +3753,11 @@
             <div class="card stat"><div class="k">${esc(F.t("ai.cost", "Стоимость"))}</div><div class="v">&lt;1</div><div class="d">${esc(F.t("ai.cent", "цента"))}</div></div>
           </div>
           <div class="chips wrap v2ai-rc">${[
-            ["СЕКРЕТ", F.t("ai.secrets", "секреты")],
+            ["SECRET", F.t("ai.secrets", "секреты")],
             ["EMAIL", "e-mail"],
-            ["ФИО", F.t("ai.full_names", "ФИО")],
-            ["КЛИЕНТ", F.t("ai.client", "заказчик")],
-            ["IP-ВНУТР", F.t("ai.internal_ip", "внутр. IP")],
+            ["NAME", F.t("ai.full_names", "ФИО")],
+            ["CLIENT", F.t("ai.client", "заказчик")],
+            ["INTERNAL-IP", F.t("ai.internal_ip", "внутр. IP")],
           ]
             .map(([k, l]) =>
               cnt(k)
@@ -3690,24 +3769,25 @@
           <pre class="card v2ai-pre">${txt}</pre>
           ${!ai.secrets || !ai.pii ? `<div class="banner crit">${ic("alert")}<div>${F.t("ai.secrets_filter_off_check_text", { secrets: !ai.secrets ? F.t("ai.secrets_2", "секретов") : F.t("ai.personal_data_2", "персональных данных") }, "Фильтр {secrets} выключен: проверьте текст выше.")}</div></div>` : ""}
           <div class="card v2ai-cons">${ui.check(aiState.ok, `${esc(F.t("ai.i_have_checked_text_agree_send", "Я проверил текст и согласен отправить его в"))} ${esc(dest.name)}`, "v2ai-ok", F.t("ai.provider_may_keep_requests_up_30", "Провайдер может хранить запросы до 30 дней"))}</div>
-          <div class="btnrow v2ai-btns"><button class="btn"
-            data-act="v2ai-step:0">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn primary" data-act="v2ai-send"
-            ${aiState.ok ? "" : "disabled"}>${ic("v2-send")}${esc(F.t("ai.send", "Отправить"))}</button></div>`;
+          ${busy ? aiBusyBanner() : ""}
+          <div class="btnrow v2ai-btns">${
+            busy
+              ? ""
+              : `<button class="btn"
+            data-act="v2ai-step:0">${esc(F.t("common.cancel", "Отмена"))}</button>`
+          }<button class="btn primary" data-act="v2ai-send"
+            ${aiState.ok && !busy ? "" : "disabled"} aria-busy="${busy}">${busy ? `${ic("spin", "spin")}${esc(F.t("ai.sending", "Отправка…"))}` : `${ic("v2-send")}${esc(F.t("ai.send", "Отправить"))}`}</button></div>`;
           }
-          const thBlock = aiState.thoughts
-            ? `<details class="v2ai-th"><summary>${esc(F.t("ai.reasoning_thinking", "Ход рассуждений (Thinking)"))}${aiState.tokens && aiState.tokens.th ? ` ${F.t("ai.th_tok", { th: fmt(aiState.tokens.th) }, "· {th} ток.")}` : ""}</summary><pre>${esc(aiState.thoughts)}</pre></details>`
-            : "";
           return `
         <div class="v2ai-steps"><span class="done">${ic("check")}${esc(F.t("look.preview", "Предпросмотр"))}</span><span class="on">${esc(F.t("ai.2_summary", "2 · Сводка"))}</span></div>
         <div class="card pad v2ai-out ${aiState.done ? "done" : ""}"
-          aria-live="polite"><div class="v2ai-oh">${ic(aiState.done ? "spark" : "spin", aiState.done ? "" : "spin")}<span>${aiState.done ? `${esc(F.t("ai.done", "Готово ·"))} ${esc(aiState.sourceBadge || dest.name)}${aiState.modelUsed ? ` · ${esc(aiState.modelUsed)}` : ""}` : `${esc(dest.name)} ${esc(F.t("ai.writing_summary", "пишет сводку…"))}`}</span></div>${thBlock}<div class="v2ai-md"
+          aria-live="polite"><div class="v2ai-oh">${ic(aiState.done ? "spark" : "spin", aiState.done ? "" : "spin")}<span>${aiState.done ? `${esc(F.t("ai.done", "Готово ·"))} ${esc(aiState.sourceBadge || dest.name)}${aiState.modelUsed ? ` · ${esc(aiState.modelUsed)}` : ""}` : `${esc(dest.name)} ${esc(F.t("ai.writing_summary", "пишет сводку…"))}`}</span></div>${aiThoughts(aiState.thoughts, aiState.tokens && aiState.tokens.th)}<div class="v2ai-md"
           id="v2ai-md">${md(aiState.out)}${aiState.done ? "" : '<span class="v2ai-cur"></span>'}</div></div>
-        <p class="fhint v2ai-fh">${ic("info")} ${esc(F.t("ai.summary_ai_generated_check_facts", "Сводка сгенерирована ИИ: проверьте факты перед отправкой заказчику. Замены вида [КЛИЕНТ] возвращаются на место только в отчёте."))}</p>
+        ${aiDisclaimer()}
         <div class="btnrow v2ai-btns">${
           aiState.done
             ? `<button class="btn"
-          data-act="v2ai-copy">${ic("copy")}${esc(F.t("data.copy", "Копировать"))}</button><button class="btn primary"
-          data-act="v2ai-rep">${ic("report")}${esc(F.t("ai.report", "В отчёт"))}</button><button class="btn text"
+          data-act="v2ai-copy">${ic("copy")}${esc(F.t("data.copy", "Копировать"))}</button>${aiRepBtn(aiState.lastId || "")}<button class="btn text"
           data-act="v2ai-step:0">${ic("refresh")}${esc(F.t("ai.again", "Заново"))}</button>`
             : `<button class="btn"
           data-act="v2ai-stop">${ic("stop")}${esc(F.t("ai.stop", "Остановить"))}</button>`
@@ -3727,6 +3807,14 @@
       ),
     mount: () => {
       const aiState = AIS();
+      if (!aiHist() && aiPid()) aiLoadHist();
+      // A request started before an app reload: watch it until the core finishes.
+      const H = aiHist();
+      clearTimeout(aiPollT);
+      if (H && H.running && !aiState.busy)
+        aiPollT = setTimeout(() => {
+          if (F.current() === "/p/ai") aiLoadHist();
+        }, 2500);
       if (aiState.step === 1 && !aiState.prev) F.actions["v2ai-step"](1);
       if (aiState.step === 2 && !aiState.sum) {
         aiState.step = 0;
@@ -3737,7 +3825,7 @@
         aiState.step > 0
           ? () => {
               stopStream();
-              aiState.step = aiState.step === 2 ? 0 : 0;
+              aiState.step = 0;
               aiState.ok = false;
               F.render(true);
               F.onBack(null);
@@ -3746,8 +3834,12 @@
           : null,
       );
     },
-    unmount: () => stopStream(),
+    unmount: () => {
+      stopStream();
+      clearTimeout(aiPollT);
+    },
   });
+  let aiPollT = null;
   function md(t) {
     const lines = esc(t).split("\n");
     let out = "",
@@ -3809,6 +3901,10 @@
       el.innerHTML = md(aiState.out) + '<span class="v2ai-cur"></span>';
     }, 28);
   }
+  const aiPlain = t =>
+    String(t || "")
+      .replace(/\*\*/g, "")
+      .replace(/## /g, "");
   Object.assign(F.actions, {
     "v2ai-step": n => {
       const aiState = AIS();
@@ -3817,7 +3913,7 @@
       aiState.out = "";
       aiState.done = false;
       if (+n === 1)
-        return F.api.ai_preview({ redact: AI() }).then(
+        return F.api.ai_preview({ redact: AI(), lang: F.i18n.lang() }).then(
           r => {
             aiState.prev = r;
             aiState.step = 1;
@@ -3836,14 +3932,28 @@
       el.classList.toggle("on", s.ok);
       el.setAttribute("aria-checked", s.ok);
       const b = F.page().querySelector('[data-act="v2ai-send"]');
-      if (b) b.disabled = !s.ok;
+      if (b) b.disabled = !s.ok || s.busy;
     },
-    "v2ai-send": () => {
+    "v2ai-send": (_, el) => {
       const aiState = AIS();
+      // Single flight: a second tap while the request runs does nothing (the core rejects it too).
+      if (aiState.busy) return;
+      const pid = aiPid();
+      aiState.busy = true;
+      if (el) {
+        el.disabled = true;
+        el.setAttribute("aria-busy", "true");
+      }
+      F.render(true);
       const opts = AI();
+      const done = () => {
+        aiState.busy = false;
+        aiState.hist = null; // reload: the core saved the summary
+      };
       F.api
         .ai_summarize((aiState.prev || {}).id, {
           redact: opts,
+          lang: F.i18n.lang(),
           thinking: opts.thinking,
           thinking_budget: opts.thinking_budget,
           max_tokens: opts.max_tokens,
@@ -3852,7 +3962,10 @@
         })
         .then(
           r => {
+            done();
+            if (aiPid() !== pid) return; // another project was opened meanwhile
             aiState.sum = r.md;
+            aiState.lastId = r.id || "";
             aiState.thoughts = r.thoughts || "";
             aiState.modelUsed = r.model || "";
             aiState.tokens = { in: r.tokens_in || 0, out: r.tokens_out || 0, th: r.tokens_thoughts || 0 };
@@ -3860,11 +3973,16 @@
             aiState.step = 2;
             aiState.out = "";
             aiState.done = false;
+            aiLoadHist();
+            if (F.current() !== "/p/ai") return;
             F.render(true);
             F.page().scrollTop = 0;
           },
           e => {
-            if (e.code === "no_key")
+            done();
+            if (F.current() === "/p/ai") F.render(true);
+            if (e.code === "cancelled") F.snack(F.t("ai.request_cancelled", "Запрос отменён"));
+            else if (e.code === "no_key")
               F.snack(F.t("ai.ai_provider_key_required", "Нужен ключ ИИ-провайдера"), {
                 label: F.t("plugins.set", "Указать"),
                 action: () => F.actions["v2ai-key"](),
@@ -3878,6 +3996,16 @@
           },
         );
     },
+    "v2ai-cancel": () =>
+      F.api.ai_cancel().then(
+        r => {
+          if (!r.cancelled) {
+            AIS().hist = null;
+            aiLoadHist();
+          }
+        },
+        e => F.snack(F.t("ai.failed", "Не удалось: ") + e.message),
+      ),
     "v2ai-stop": () => {
       const s = AIS();
       stopStream();
@@ -3885,12 +4013,44 @@
       F.render(true);
       F.snack(F.t("ai.generation_stopped", "Генерация остановлена"));
     },
-    "v2ai-copy": () => F.actions.copy(SUMMARY().replace(/\*\*/g, "").replace(/## /g, "")),
-    "v2ai-rep": () =>
-      F.snack(F.t("ai.summary_added_report_as_summary", "Сводка добавлена в отчёт как раздел «Резюме»"), {
-        label: F.t("common.open", "Открыть"),
-        action: () => F.go("/p/reports"),
-      }),
+    "v2ai-copy": id => F.actions.copy(aiPlain(id ? (aiFind(id) || {}).text : SUMMARY())),
+    "v2ai-rep": id => {
+      const sid = id || AIS().lastId;
+      if (!sid) return;
+      F.api.ai_summary_use(sid).then(
+        r => {
+          aiSetHist(r);
+          F.closeSheet();
+          F.render(true);
+          F.snack(F.t("ai.summary_added_report_as_summary", "Сводка добавлена в отчёт как раздел «Резюме»"), {
+            label: F.t("common.open", "Открыть"),
+            action: () => F.go("/p/reports"),
+          });
+        },
+        e => F.snack(F.t("ai.failed", "Не удалось: ") + e.message),
+      );
+    },
+    "v2ai-open": id => {
+      const e = aiFind(id);
+      if (!e) return;
+      F.sheet({
+        title: aiWhen(e.created),
+        html: `<p class="fhint">${aiMeta(e)}${aiInReport(e.id) ? ` · ${esc(F.t("ai.in_report", "В отчёте"))}` : ""}</p>${aiThoughts(e.thoughts, e.tokens_thoughts)}<div class="v2ai-md">${md(e.text)}</div>`,
+        footer: `<button class="btn danger hold" data-hold="v2ai-del:${esc(e.id)}"
+          aria-label="${esc(F.t("ai.delete_hold", "Удалить: удерживайте"))}"><span class="hold-fill"></span>${ic("trash")}${esc(F.t("ai.delete", "Удалить"))}</button><button class="btn"
+          data-act="v2ai-copy:${esc(e.id)}">${ic("copy")}${esc(F.t("data.copy", "Копировать"))}</button>${aiRepBtn(e.id)}`,
+      });
+    },
+    "v2ai-del": id =>
+      F.api.ai_summary_delete(id).then(
+        r => {
+          aiSetHist(r);
+          F.closeSheet();
+          F.render(true);
+          F.snack(F.t("ai.summary_deleted", "Сводка удалена"));
+        },
+        e => F.snack(F.t("ai.failed", "Не удалось: ") + e.message),
+      ),
   });
 
   // ================= WELCOME =================

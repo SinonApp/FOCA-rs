@@ -40,6 +40,8 @@ use time::OffsetDateTime;
 
 pub use data::{Counts, LogSummary, Overview, RequestEntry, ResultSnapshot};
 pub use export::{export, export_with_log, Artifact};
+/// Finding text in a language (`text`, `provenance.rule`, `lang`), as reports show it.
+pub use ftext::translate as translate_finding_text;
 pub use opts::{
     AiSummary, DictKind, ExportFormat, ExportKind, ExportOptions, Lang, Logo, MdLayout,
     ReportFormat, ReportOptions, SecretMode, Sections, Template, AI_SUMMARY_DATA_KEY,

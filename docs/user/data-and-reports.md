@@ -77,7 +77,7 @@ Open Reports (`/p/reports`) → New report (`/p/report-new`) → Preview (`/p/re
 | Language | English (`EN`) · Ukrainian (`UA`) · Russian (`RU`): defaults to active app language |
 | Secrets policy | Hide (default) · Masked · Full |
 | Filtering | Minimum severity, Confirmed only, toggled sections (for Full) |
-| Executive summary (AI-assisted) | Adds the project's latest [AI summary](settings-network.md#cloud-ai-10-providers-live-models--thinking) as a separate section labelled with its source; skipped when no summary exists. Placeholders such as `[CLIENT]` are restored only in the report |
+| Executive summary (AI-assisted) | Adds the project's report [AI summary](settings-network.md#cloud-ai-10-providers-live-models--thinking) (the latest one, or the one picked with "To report" in the history) as a separate section labelled with its source; skipped when no summary exists. `[CLIENT]` and `[CLIENT-DOMAIN]` become the client name and domain only in the report |
 | Chain of Custody & Digital Signature | Optional `custody: true` block embedding SHA-256 input digests, creating a `.sha256` sidecar and an `ECDSA P-256` signature (`.sig.json`) backed by Android Keystore (`ReportSigner.kt`). Verify any saved report from the history menu (Verify signature / SHA-256, `report_verify`). |
 
 Risk scores and counters inside a report are always calculated strictly from the findings included in that report. Every generated report is saved in history with an immutable data snapshot and can be exported via Android's Share sheet.

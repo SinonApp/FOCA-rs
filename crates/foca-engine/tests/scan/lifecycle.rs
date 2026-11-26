@@ -613,12 +613,12 @@ async fn beta_commands() {
         .await;
     let text = ap["text"].as_str().unwrap();
     assert!(
-        text.contains("[КЛИЕНТ]") || text.contains("[КЛИЕНТ-ДОМЕН]"),
+        text.contains("[CLIENT]") || text.contains("[CLIENT-DOMAIN]"),
         "{text}"
     );
     assert!(!text.contains("example.test"), "{text}");
     assert!(!text.contains("Tender2024"), "{text}");
-    for k in ["СЕКРЕТ", "EMAIL", "ФИО", "КЛИЕНТ", "IP-ВНУТР"] {
+    for k in ["SECRET", "EMAIL", "NAME", "CLIENT", "INTERNAL-IP"] {
         assert!(ap["marks"][k].is_number());
     }
     assert_eq!(

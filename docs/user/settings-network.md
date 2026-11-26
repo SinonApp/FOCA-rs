@@ -105,7 +105,10 @@ FOCA-rs 2.0 provides an optional Cloud AI Summary (`/settings/ai` and `/p/ai`) b
   - Reasoning level: `auto` (provider default: omits extra fields to avoid HTTP 400 errors on non-reasoning models), `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`.
   - Optional `thinking_budget`, `max_tokens`, `temperature`, and Show reasoning trace (Thinking) (renders a collapsible reasoning section in `/p/ai`).
   - Automatically mapped to native provider schemas: Anthropic adaptive `thinking` + `output_config.effort` (or manual `budget_tokens` without `temperature`), Google Gemini `thinkingLevel` / `thinkingBudget` + `includeThoughts`, OpenAI/xAI/Mistral/Groq/Together `reasoning_effort`, DeepSeek `thinking.type`, and OpenRouter `reasoning.effort`.
-- **Privacy & redaction preview:** Before anything leaves the phone, secrets, PII, e-mail addresses, and the client name are automatically replaced with `[SECRET]`, `[NAME]`, `[EMAIL]`, and `[CLIENT]`, and you can inspect and edit the entire prompt manually in the preview dialog. Your AI API key lives exclusively in Android KeyVault.
+- **Privacy & redaction preview:** Before anything leaves the phone, secrets, PII, e-mail addresses, and the client name are automatically replaced with `[SECRET]`, `[NAME]`, `[EMAIL]`, `[CLIENT]` and `[CLIENT-DOMAIN]` (the same in every language), and you can inspect the entire prompt in the preview. Your AI API key lives exclusively in Android KeyVault.
+- **Language:** the request and the answer use the interface language (with "System", the device language).
+- **One request at a time:** "Send" stays locked until the answer arrives and the core rejects a second request for the same project; a running request can be cancelled.
+- **History:** every summary is saved with the project; `/p/ai` shows the latest one and the history (date, model, language), and any of them can be copied, deleted or picked for the report. The report puts the client name and domain back in place of `[CLIENT]` and `[CLIENT-DOMAIN]`.
 
 ## Sandboxed Plugins
 

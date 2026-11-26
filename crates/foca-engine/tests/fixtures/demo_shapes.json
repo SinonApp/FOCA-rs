@@ -17829,6 +17829,11 @@
      "t": [
       "string"
      ]
+    },
+    "error_msg": {
+     "t": [
+      "null"
+     ]
     }
    }
   },
@@ -17843,6 +17848,11 @@
      ]
     },
     "text": {
+     "t": [
+      "string"
+     ]
+    },
+    "lang": {
      "t": [
       "string"
      ]
@@ -17862,7 +17872,7 @@
       "object"
      ],
      "keys": {
-      "СЕКРЕТ": {
+      "SECRET": {
        "t": [
         "number"
        ]
@@ -17872,17 +17882,17 @@
         "number"
        ]
       },
-      "ФИО": {
+      "NAME": {
        "t": [
         "number"
        ]
       },
-      "КЛИЕНТ": {
+      "CLIENT": {
        "t": [
         "number"
        ]
       },
-      "IP-ВНУТР": {
+      "INTERNAL-IP": {
        "t": [
         "number"
        ]
@@ -17938,7 +17948,7 @@
     "object"
    ],
    "keys": {
-    "md": {
+    "id": {
      "t": [
       "string"
      ]
@@ -17948,12 +17958,22 @@
       "string"
      ]
     },
+    "provider": {
+     "t": [
+      "string"
+     ]
+    },
     "model": {
      "t": [
       "string"
      ]
     },
-    "provider": {
+    "lang": {
+     "t": [
+      "string"
+     ]
+    },
+    "created": {
      "t": [
       "string"
      ]
@@ -17973,6 +17993,11 @@
       "number"
      ]
     },
+    "md": {
+     "t": [
+      "string"
+     ]
+    },
     "preview_id": {
      "t": [
       "string"
@@ -17981,6 +18006,199 @@
     "source_badge": {
      "t": [
       "string"
+     ]
+    }
+   }
+  },
+  "ai_summaries_list": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "items": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "text": {
+        "t": [
+         "string"
+        ]
+       },
+       "thoughts": {
+        "t": [
+         "string"
+        ]
+       },
+       "provider": {
+        "t": [
+         "string"
+        ]
+       },
+       "model": {
+        "t": [
+         "string"
+        ]
+       },
+       "lang": {
+        "t": [
+         "string"
+        ]
+       },
+       "created": {
+        "t": [
+         "string"
+        ]
+       },
+       "tokens_in": {
+        "t": [
+         "number"
+        ]
+       },
+       "tokens_out": {
+        "t": [
+         "number"
+        ]
+       },
+       "tokens_thoughts": {
+        "t": [
+         "number"
+        ]
+       }
+      }
+     }
+    },
+    "report_id": {
+     "t": [
+      "string"
+     ]
+    },
+    "running": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
+  "ai_summary_use": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "items": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "text": {
+        "t": [
+         "string"
+        ]
+       },
+       "thoughts": {
+        "t": [
+         "string"
+        ]
+       },
+       "provider": {
+        "t": [
+         "string"
+        ]
+       },
+       "model": {
+        "t": [
+         "string"
+        ]
+       },
+       "lang": {
+        "t": [
+         "string"
+        ]
+       },
+       "created": {
+        "t": [
+         "string"
+        ]
+       },
+       "tokens_in": {
+        "t": [
+         "number"
+        ]
+       },
+       "tokens_out": {
+        "t": [
+         "number"
+        ]
+       },
+       "tokens_thoughts": {
+        "t": [
+         "number"
+        ]
+       }
+      }
+     }
+    },
+    "report_id": {
+     "t": [
+      "string"
+     ]
+    },
+    "running": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
+  "ai_cancel": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "cancelled": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
+  "ai_summary_delete": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "items": {
+     "t": [
+      "array"
+     ],
+     "items": null
+    },
+    "report_id": {
+     "t": [
+      "null"
+     ]
+    },
+    "running": {
+     "t": [
+      "bool"
      ]
     }
    }
