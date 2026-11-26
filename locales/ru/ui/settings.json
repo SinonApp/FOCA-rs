@@ -808,5 +808,7 @@
   "settings.grp_search_l": "Поиск",
   "settings.grp_recon_l": "Разведка",
   "settings.grp_target_l": "Запросы к цели",
-  "reports.preview_btn": "Просмотр"
+  "reports.preview_btn": "Просмотр",
+  "settings.prep_cancelled": "Подготовка прервана. Подготовлено поисковиков: {n}",
+  "settings.prep_partial": "Подготовлено поисковиков: {n} из {total}. Не прошли проверку: {names}"
 }

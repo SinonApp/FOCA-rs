@@ -23,6 +23,14 @@
     <string name="monitor_error_fallback">open project to start</string>
     <string name="verify_hint">Complete the check, then tap Done</string>
     <string name="verify_done">Done</string>
+    <string name="verify_cancel">Cancel</string>
+    <string name="verify_retry">Retry</string>
+    <string name="verify_checking">Checking…</string>
+    <string name="verify_title_default">Search engine check</string>
+    <string name="verify_err_timeout">The page is taking too long to load. Check the connection or proxy and tap Retry.</string>
+    <string name="verify_err_load">The page did not load: %1$s</string>
+    <string name="verify_bad_url">The check address is not one of the supported search engines</string>
+    <string name="verify_open_failed">Could not open the browser: %1$s</string>
     <string name="monitor_reminder_title">Time to rescan project «%1$s»</string>
     <string name="scan_interrupted_body">The system unloaded FOCA-rs during a scan. Everything downloaded so far is saved. Tap to open the app and continue the scan from where it stopped.</string>
     <string name="scan_tip_recents_lock">To prevent this, pin FOCA-rs in Recents (long-press the card → lock); otherwise swiping it away stops the scan.</string>

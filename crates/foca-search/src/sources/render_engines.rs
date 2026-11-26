@@ -80,6 +80,17 @@ pub fn verify_url(id: &str, error: &str) -> Option<&'static str> {
 /// Challenge page text used by Startpage (Anubis) and Brave.
 const VERIFY_TEXT: &str = "Verifying your request";
 
+/// Lowercase markers of a still unsolved challenge for the manual check dialog (visible text plus
+/// URL): the early-exit captcha phrases plus the Startpage/Brave challenge text. After the user taps
+/// Done, a page that still contains one of them is reported as not solved.
+pub fn verify_markers() -> Vec<String> {
+    CAPTCHA_ABORT
+        .iter()
+        .map(|s| s.to_string())
+        .chain(std::iter::once(low(VERIFY_TEXT)))
+        .collect()
+}
+
 fn low(s: &str) -> String {
     s.to_ascii_lowercase()
 }
@@ -915,6 +926,15 @@ impl DocumentSource for RenderDork {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn verify_markers_are_lowercase_and_cover_challenges() {
+        let m = verify_markers();
+        assert!(m.iter().all(|s| *s == s.to_lowercase()));
+        assert!(m.contains(&"verifying your request".to_string()));
+        assert!(m.contains(&"altcha".to_string()));
+        assert_eq!(m.len(), CAPTCHA_ABORT.len() + 1);
+    }
 
     #[test]
     fn attrs_parse_quotes_and_entities() {

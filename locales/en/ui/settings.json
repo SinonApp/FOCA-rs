@@ -808,5 +808,7 @@
   "settings.grp_search_l": "Search",
   "settings.grp_recon_l": "Recon",
   "settings.grp_target_l": "Target requests",
-  "reports.preview_btn": "Preview"
+  "reports.preview_btn": "Preview",
+  "settings.prep_cancelled": "Preparation stopped. Search engines prepared: {n}",
+  "settings.prep_partial": "Search engines prepared: {n} of {total}. Check not passed: {names}"
 }

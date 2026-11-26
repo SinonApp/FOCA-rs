@@ -18,6 +18,35 @@
   // states" menu, "Reset demo data", demo PIN hints, "Demo: …" buttons, "demo" badges).
   F.isDemo = !TAURI && !!demoBackend;
 
+  // Outcome of platform_verify_search: "done" | "cancelled" | "failed" | "not_solved" | "unsupported".
+  // Only "done" (Done on a page without the engine's challenge) means the engine accepts us; an answer
+  // without `state` is never treated as solved.
+  F.verifyState = r => {
+    if (!r || r.unsupported) return "unsupported";
+    if (["done", "cancelled", "failed", "not_solved"].includes(r.state)) return r.state;
+    return r.ok === false ? "unsupported" : "cancelled";
+  };
+  // Short snack text for a check that did not pass (the engine stays blocked).
+  F.verifyStateMsg = (state, name) => {
+    if (state === "failed")
+      return F.t(
+        "scan.verify_st_failed",
+        { name },
+        "«{name}»: страница проверки не загрузилась. Проверьте связь или прокси и попробуйте ещё раз",
+      );
+    if (state === "not_solved")
+      return F.t(
+        "scan.verify_st_not_solved",
+        { name },
+        "«{name}»: проверка ещё не пройдена, поисковик всё ещё показывает капчу. Попробуйте ещё раз",
+      );
+    return F.t(
+      "scan.verify_st_cancelled",
+      { name },
+      "«{name}»: проверка отменена, поисковик пока заблокирован. Пройти её можно позже",
+    );
+  };
+
   // ================= event bus =================
   const bus = {};
   F.on = (ev, fn, { late = false } = {}) => {
@@ -938,6 +967,8 @@
     platform_permissions_status: () => run("platform_permissions_status", {}),
     platform_bg_status: () => run("platform_bg_status", {}),
     platform_bg_set: o => run("platform_bg_set", o || {}),
+    // Manual captcha check: { state: done|cancelled|failed|not_solved, ok, closed, detail? } (see
+    // F.verifyState); only "done" may mark the engine verified.
     platform_verify_search: o => run("platform_verify_search", o || {}),
     platform_request_notifications: () => run("platform_request_notifications", {}),
     platform_exit: () => run("platform_exit", {}),

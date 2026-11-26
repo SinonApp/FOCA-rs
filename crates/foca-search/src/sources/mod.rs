@@ -25,8 +25,8 @@ pub use engines::{
 };
 pub use render_engines::{
     classify, detect_captcha_signals, parse_brave_web, parse_mojeek, parse_startpage, parse_yahoo,
-    startpage_has_next, verify_url, CaptchaSignals, RenderDork, RenderEngine, CAPTCHA_ABORT,
-    RENDER_SOURCES,
+    startpage_has_next, verify_markers, verify_url, CaptchaSignals, RenderDork, RenderEngine,
+    CAPTCHA_ABORT, RENDER_SOURCES,
 };
 pub use searx_pool::{parse_searx_html, parse_searx_space, SearxPool};
 pub use subdomains::{extract_hosts, host_source, HostSource, HOST_SOURCES};

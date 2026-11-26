@@ -1572,11 +1572,18 @@
     if (!src || !src.verifyUrl) return;
     F.api.platform_verify_search({ url: src.verifyUrl, title: sn(src) }).then(
       r => {
-        if (!r || r.ok === false) {
+        const state = F.verifyState(r);
+        if (state === "unsupported") {
           F.snack(
             (r && r.error) ||
               F.t("scan.verify_phone_only", "Пройти проверку можно только в приложении на телефоне"),
           );
+          return;
+        }
+        // Cancelled, failed or still unsolved: the engine stays blocked and keeps its "Pass the check" button.
+        if (state !== "done") {
+          F.snack(F.verifyStateMsg(state, sn(src)), { ms: 6000 });
+          refresh();
           return;
         }
         src.verifyDone = true; // Cookies are saved even if this scan can no longer query the source.
@@ -1616,6 +1623,8 @@
   F.actions["scan-verify-all"] = async () => {
     const pending = needVerify();
     let passed = 0;
+    let solved = 0;
+    let miss = null;
     for (const src of pending) {
       let result;
       try {
@@ -1625,15 +1634,25 @@
         });
       } catch (e) {
         F.snack(F.t("scan.verify_open_err", { err: e.message || e }, "Не удалось открыть проверку: {err}"));
-        break;
+        return;
       }
-      if (!result || result.ok === false) {
+      const state = F.verifyState(result);
+      if (state === "unsupported") {
         F.snack(
           (result && result.error) ||
             F.t("scan.verify_phone_only", "Пройти проверку можно только в приложении на телефоне"),
         );
-        break;
+        return;
       }
+      if (state !== "done") {
+        // Not verified: the engine stays blocked. Cancel stops the queue; a failed or unsolved page
+        // moves on to the next engine.
+        miss = [state, src];
+        refresh();
+        if (state === "cancelled") break;
+        continue;
+      }
+      solved++;
       src.verifyDone = true; // The check passed (cookies saved), even if this scan can no longer retry the source.
       const retried = await F.api.scan_retry_source(src.id).catch(() => null);
       if (retried && retried.ok) {
@@ -1642,7 +1661,8 @@
       }
       refresh();
     }
-    if (passed)
+    if (miss) F.snack(F.verifyStateMsg(miss[0], sn(miss[1])), { ms: 6000 });
+    else if (passed)
       F.snack(
         passed > 1
           ? F.t(
@@ -1653,7 +1673,7 @@
           : F.t("scan.verify_passed_one", "Проверка пройдена: поисковик будет опрошен ещё раз"),
         { ms: 5000 },
       );
-    else if (pending.length)
+    else if (solved)
       F.snack(
         F.t(
           "scan.verify_next",

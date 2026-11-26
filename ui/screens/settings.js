@@ -1066,27 +1066,50 @@
   ];
   F.actions["st-prep-engines"] = async () => {
     let n = 0;
+    const missed = [];
     for (const [url, name] of PREP) {
       let res;
       try {
         res = await F.api.platform_verify_search({
           url,
-          title: F.t("settings.prep_title", { name, i: n + 1, n: PREP.length }, "{name} ({i} из {n})"),
+          title: F.t(
+            "settings.prep_title",
+            { name, i: n + missed.length + 1, n: PREP.length },
+            "{name} ({i} из {n})",
+          ),
         });
       } catch (e) {
         F.snack(F.t("settings.engine_open_fail", "Не удалось открыть поисковик: ") + (e.message || e));
         return;
       }
-      if (!res || res.ok === false) {
+      const state = F.verifyState(res);
+      if (state === "unsupported") {
         F.snack(
           (res && res.error) ||
             F.t("settings.prep_phone_only", "Подготовить поисковики можно только в приложении на телефоне"),
         );
         return;
       }
-      n++;
+      // Only a solved page counts; Cancel stops the whole round.
+      if (state === "cancelled") {
+        F.snack(F.t("settings.prep_cancelled", { n }, "Подготовка прервана. Подготовлено поисковиков: {n}"), {
+          ms: 5000,
+        });
+        return;
+      }
+      if (state === "done") n++;
+      else missed.push(name);
     }
-    F.snack(F.t("settings.prep_done", { n }, "Поисковиков подготовлено: {n}, куки сохранены"), { ms: 5000 });
+    F.snack(
+      missed.length
+        ? F.t(
+            "settings.prep_partial",
+            { n, total: PREP.length, names: missed.join(", ") },
+            "Подготовлено поисковиков: {n} из {total}. Не прошли проверку: {names}",
+          )
+        : F.t("settings.prep_done", { n }, "Поисковиков подготовлено: {n}, куки сохранены"),
+      { ms: 5000 },
+    );
   };
   F.actions["st-ppreset"] = p => {
     if (p === "orbot") {

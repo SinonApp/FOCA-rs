@@ -808,5 +808,7 @@
   "settings.grp_search_l": "Пошук",
   "settings.grp_recon_l": "Розвідка",
   "settings.grp_target_l": "Запити до цілі",
-  "reports.preview_btn": "Перегляд"
+  "reports.preview_btn": "Перегляд",
+  "settings.prep_cancelled": "Підготовку перервано. Підготовлено пошуковиків: {n}",
+  "settings.prep_partial": "Підготовлено пошуковиків: {n} з {total}. Не пройшли перевірку: {names}"
 }

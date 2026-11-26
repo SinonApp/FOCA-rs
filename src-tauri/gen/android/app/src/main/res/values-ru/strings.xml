@@ -21,6 +21,14 @@
     <string name="monitor_error_fallback">откройте проект для запуска</string>
     <string name="verify_hint">Пройдите проверку и нажмите «Готово»</string>
     <string name="verify_done">Готово</string>
+    <string name="verify_cancel">Отмена</string>
+    <string name="verify_retry">Повторить</string>
+    <string name="verify_checking">Проверяем…</string>
+    <string name="verify_title_default">Проверка поисковика</string>
+    <string name="verify_err_timeout">Страница слишком долго загружается. Проверьте связь или прокси и нажмите «Повторить».</string>
+    <string name="verify_err_load">Страница не загрузилась: %1$s</string>
+    <string name="verify_bad_url">Адрес проверки не из списка поисковиков</string>
+    <string name="verify_open_failed">Не удалось открыть браузер: %1$s</string>
     <string name="monitor_reminder_title">Пора пересканировать проект «%1$s»</string>
     <string name="scan_interrupted_body">Система выгрузила FOCA-rs во время скана. Всё, что успели скачать, сохранено. Нажмите, и приложение откроется и продолжит скан с места остановки.</string>
     <string name="scan_tip_recents_lock">Закрепите FOCA-rs в «Недавних» (зажмите карточку и нажмите замок), иначе смахивание остановит скан.</string>

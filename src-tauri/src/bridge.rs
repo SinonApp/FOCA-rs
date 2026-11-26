@@ -828,7 +828,8 @@ impl Bridge {
             "bg_set" => n("bg_set", a.clone()),
             // Manual verification: a visible search engine WebView sharing the hidden browser's profile
             // (a human solves the Startpage/Mojeek/Brave captcha); the reply comes after the window
-            // closes.
+            // closes: `{ state: done | cancelled | failed | not_solved, ok, closed, detail? }`, only
+            // `done` (Done on a page without challenge markers) means the engine accepts us.
             "verify_search" => {
                 let url = a.get("url").and_then(Value::as_str).unwrap_or("");
                 let ok = [
@@ -847,7 +848,11 @@ impl Bridge {
                 }
                 n(
                     "render_verify",
-                    json!({ "url": url, "title": a.get("title").and_then(Value::as_str).map_or_else(|| self.tr("Проверка поисковика"), str::to_string) }),
+                    json!({
+                        "url": url,
+                        "title": a.get("title").and_then(Value::as_str).map_or_else(|| self.tr("Проверка поисковика"), str::to_string),
+                        "markers": foca_engine::verify_markers(),
+                    }),
                 )
             }
             // External link (e.g. "How to get a key"): http/https only, opened by the system browser.

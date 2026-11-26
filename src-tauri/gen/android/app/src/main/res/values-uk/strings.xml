@@ -21,6 +21,14 @@
     <string name="monitor_error_fallback">відкрийте проєкт для запуску</string>
     <string name="verify_hint">Пройдіть перевірку та натисніть «Готово»</string>
     <string name="verify_done">Готово</string>
+    <string name="verify_cancel">Скасувати</string>
+    <string name="verify_retry">Повторити</string>
+    <string name="verify_checking">Перевіряємо…</string>
+    <string name="verify_title_default">Перевірка пошуковика</string>
+    <string name="verify_err_timeout">Сторінка надто довго завантажується. Перевірте зʼєднання або проксі й натисніть «Повторити».</string>
+    <string name="verify_err_load">Сторінка не завантажилася: %1$s</string>
+    <string name="verify_bad_url">Адреса перевірки не зі списку пошуковиків</string>
+    <string name="verify_open_failed">Не вдалося відкрити браузер: %1$s</string>
     <string name="monitor_reminder_title">Час повторно просканувати проєкт «%1$s»</string>
     <string name="scan_interrupted_body">Система вивантажила FOCA-rs під час скану. Усе, що встигли завантажити, збережено. Натисніть, і застосунок відкриється й продовжить скан з місця зупинки.</string>
     <string name="scan_tip_recents_lock">Закріпіть FOCA-rs у «Нещодавніх» (затисніть картку й натисніть замок), інакше змахування зупинить скан.</string>

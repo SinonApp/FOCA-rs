@@ -65,6 +65,7 @@ use serde::Serialize;
 use serde_json::Value;
 
 pub use engine::Engine;
+pub use foca_search::sources::verify_markers;
 pub use foca_search::{BoxFuture, RenderFetch, RenderPage, RenderRequest, RenderStep};
 #[cfg(feature = "report")]
 pub use services::report::FocaReport;

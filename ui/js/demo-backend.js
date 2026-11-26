@@ -10368,7 +10368,12 @@
     platform_clipboard_read: () => ({ ok: false, unsupported: true, text: "", available: false, demo: true }),
     platform_clipboard_write: () => ({ ok: false, unsupported: true, demo: true }),
     platform_clipboard_clear: () => ({ ok: false, unsupported: true, cleared: false, demo: true }),
-    platform_verify_search: ({ url } = {}) => ({ ok: true, closed: true, demo: true, url }),
+    // Mirrors the native tri-state reply. The demo answers "done"; QA scenarios pick another outcome
+    // via `demo_state` (done | cancelled | failed | not_solved) to exercise the UI paths.
+    platform_verify_search: ({ url, demo_state } = {}) => {
+      const state = ["done", "cancelled", "failed", "not_solved"].includes(demo_state) ? demo_state : "done";
+      return { state, ok: state === "done", closed: state !== "done", demo: true, url };
+    },
     platform_device_info: () => ({
       demo: true,
       manufacturer: "Xiaomi",

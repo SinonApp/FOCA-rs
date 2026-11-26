@@ -42,6 +42,7 @@ import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Channel
 import app.tauri.plugin.Invoke
+import app.sinon.focars.R
 import app.tauri.plugin.JSObject
 import app.tauri.plugin.Plugin
 import app.tauri.plugin.PluginManager
@@ -101,19 +102,31 @@ class FocaPlugin(private val created: Activity) : Plugin(created) {
 
   // Device events.
   /** Manual search engine verification (captcha) in a visible WebView sharing the hidden browser's
-   *  profile; replies `{ ok, closed }` after closing. Startpage/Mojeek/Brave URLs only. */
+   *  profile. Replies after the dialog closes with `{ state, ok, closed, detail? }`: `state` is
+   *  `done` (Done on a page without the engine's challenge), `not_solved` (Done while the challenge
+   *  is still shown), `cancelled` (Cancel, Back, dismiss, app left the foreground) or `failed` (the
+   *  page did not load); `ok` is true only for `done`. Startpage/Mojeek/Brave/Yahoo URLs only. */
   @Command
   fun render_verify(invoke: Invoke) {
     val a = invoke.getArgs()
+    val res = AppLocale.wrap(activity)
     val url = a.getString("url", null) ?: ""
-    if (!VerifyDialog.allowed(url)) { invoke.reject("Адрес проверки не из списка поисковиков", "bad_args"); return }
+    if (!VerifyDialog.allowed(url)) { invoke.reject(res.getString(R.string.verify_bad_url), "bad_args"); return }
+    val raw = a.optJSONArray("markers")
+    val markers = VerifyLogic.markers(raw?.let { arr -> (0 until arr.length()).map { arr.optString(it, "") } })
     try {
-      VerifyDialog.show(activity, url, a.getString("title", null) ?: "Проверка поисковика") { how ->
-        invoke.resolve(JSObject().put("ok", true).put("closed", how == "closed"))
+      val title = a.getString("title", null)?.takeIf { it.isNotBlank() } ?: res.getString(R.string.verify_title_default)
+      VerifyDialog.show(activity, url, title, markers) { r ->
+        val o = JSObject()
+          .put("state", r.outcome.wire)
+          .put("ok", r.outcome == VerifyLogic.Outcome.DONE)
+          .put("closed", r.outcome != VerifyLogic.Outcome.DONE)
+        r.detail?.let { o.put("detail", it) }
+        invoke.resolve(o)
       }
     } catch (e: Throwable) {
       FLog.e("verify", e)
-      invoke.reject("Не удалось открыть браузер: $e", "platform")
+      invoke.reject(res.getString(R.string.verify_open_failed, e.message ?: e.toString()), "platform")
     }
   }
 

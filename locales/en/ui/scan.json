@@ -929,5 +929,8 @@
   "scan.delete_hold": "To delete, hold the Delete button for 1-2 seconds.",
   "scan.del_requests": "Log entries",
   "scan.deleted_snack": "Scan deleted: {docs} documents, {findings} findings",
-  "scan.delete_failed": "Could not delete the scan: "
+  "scan.delete_failed": "Could not delete the scan: ",
+  "scan.verify_st_cancelled": "“{name}”: check cancelled, the search engine stays blocked. You can pass it later",
+  "scan.verify_st_failed": "“{name}”: the check page did not load. Check the connection or proxy and try again",
+  "scan.verify_st_not_solved": "“{name}”: the check is not passed yet, the search engine still shows a captcha. Try again"
 }

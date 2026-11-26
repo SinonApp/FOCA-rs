@@ -179,7 +179,7 @@ export default async (page, { W, fsc, theme, out }) => {
     await toStage("download");
     await go("/p/scan");
     await ev(() => {
-      FOCA.api.platform_verify_search = async () => ({ ok: true });
+      FOCA.api.platform_verify_search = async () => ({ ok: true, state: "done" });
       const sp = FOCA.scan.sources.find(s => s.id === "startpage");
       Object.assign(sp, {
         status: "blocked",
