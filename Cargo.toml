@@ -61,11 +61,11 @@ cfb = "0.16"
 clap = { version = "4", features = ["derive", "env"] }
 anyhow = "1"
 regex = "1"
-toml = "0.8"
+toml = "1.2"
 sha2 = "0.11"
 ring = "0.17"
 strsim = "0.11"
-rusqlite = { version = "0.37", features = ["bundled"] }
+rusqlite = { version = "0.43", features = ["bundled"] }
 tempfile = "3"
 # Networking (foca-net / foca-search): rustls + ring + webpki-roots only (no OpenSSL, no JNI on Android).
 tokio = { version = "1", default-features = false, features = ["rt", "net", "time", "sync", "io-util", "fs", "macros"] }

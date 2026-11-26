@@ -4,7 +4,7 @@
   "repository": "https://github.com/SinonApp/FOCA-rs",
   "counts": {
     "data_assets": 11,
-    "rust_total": 536,
+    "rust_total": 535,
     "rust_direct": 43,
     "android_total": 9,
     "android_play_only": 1,
@@ -92,7 +92,7 @@
   "rust_crates": [
     {
       "name": "anyhow",
-      "version": "1.0.104",
+      "version": "1.0.105",
       "license": "MIT OR Apache-2.0",
       "direct": true,
       "repository": "https://github.com/dtolnay/anyhow"
@@ -232,7 +232,7 @@
     },
     {
       "name": "rusqlite",
-      "version": "0.37.0",
+      "version": "0.43.0",
       "license": "MIT",
       "direct": true,
       "repository": "https://github.com/rusqlite/rusqlite"
@@ -365,7 +365,7 @@
     },
     {
       "name": "url",
-      "version": "2.5.8",
+      "version": "2.5.9",
       "license": "MIT OR Apache-2.0",
       "direct": true,
       "repository": "https://github.com/servo/rust-url"
@@ -386,7 +386,7 @@
     },
     {
       "name": "zip",
-      "version": "9.8.0",
+      "version": "9.8.2",
       "license": "MIT",
       "direct": true,
       "repository": "https://github.com/zip-rs/zip2"
@@ -1191,13 +1191,6 @@
     },
     {
       "name": "foldhash",
-      "version": "0.1.5",
-      "license": "Zlib",
-      "direct": false,
-      "repository": "https://github.com/orlp/foldhash"
-    },
-    {
-      "name": "foldhash",
       "version": "0.2.0",
       "license": "Zlib",
       "direct": false,
@@ -1226,7 +1219,7 @@
     },
     {
       "name": "form_urlencoded",
-      "version": "1.2.2",
+      "version": "1.2.3",
       "license": "MIT OR Apache-2.0",
       "direct": false,
       "repository": "https://github.com/servo/rust-url"
@@ -1436,13 +1429,6 @@
     },
     {
       "name": "hashbrown",
-      "version": "0.15.5",
-      "license": "MIT OR Apache-2.0",
-      "direct": false,
-      "repository": "https://github.com/rust-lang/hashbrown"
-    },
-    {
-      "name": "hashbrown",
       "version": "0.17.1",
       "license": "MIT OR Apache-2.0",
       "direct": false,
@@ -1450,10 +1436,10 @@
     },
     {
       "name": "hashlink",
-      "version": "0.10.0",
+      "version": "0.12.2",
       "license": "MIT OR Apache-2.0",
       "direct": false,
-      "repository": "https://github.com/kyren/hashlink"
+      "repository": "https://github.com/djc/hashlink"
     },
     {
       "name": "heck",
@@ -1870,7 +1856,7 @@
     },
     {
       "name": "libsqlite3-sys",
-      "version": "0.35.0",
+      "version": "0.40.0",
       "license": "MIT",
       "direct": false,
       "repository": "https://github.com/rusqlite/rusqlite"
@@ -2555,6 +2541,13 @@
       "repository": "https://github.com/rust-lang/regex"
     },
     {
+      "name": "rsqlite-vfs",
+      "version": "0.2.0",
+      "license": "MIT",
+      "direct": false,
+      "repository": "https://github.com/Spxg/sqlite-wasm-rs"
+    },
+    {
       "name": "rustc-hash",
       "version": "2.1.3",
       "license": "Apache-2.0 OR MIT",
@@ -2863,6 +2856,13 @@
       "repository": "https://gitlab.gnome.org/World/Rust/soup3-rs"
     },
     {
+      "name": "sqlite-wasm-rs",
+      "version": "0.6.3",
+      "license": "MIT",
+      "direct": false,
+      "repository": "https://github.com/Spxg/sqlite-wasm-rs"
+    },
+    {
       "name": "stable_deref_trait",
       "version": "1.2.1",
       "license": "MIT OR Apache-2.0",
@@ -3138,13 +3138,6 @@
     {
       "name": "toml_parser",
       "version": "1.1.5+spec-1.1.0",
-      "license": "MIT OR Apache-2.0",
-      "direct": false,
-      "repository": "https://github.com/toml-rs/toml"
-    },
-    {
-      "name": "toml_write",
-      "version": "0.1.2",
       "license": "MIT OR Apache-2.0",
       "direct": false,
       "repository": "https://github.com/toml-rs/toml"
