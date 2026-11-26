@@ -932,5 +932,10 @@
   "scan.delete_failed": "Could not delete the scan: ",
   "scan.verify_st_cancelled": "“{name}”: check cancelled, the search engine stays blocked. You can pass it later",
   "scan.verify_st_failed": "“{name}”: the check page did not load. Check the connection or proxy and try again",
-  "scan.verify_st_not_solved": "“{name}”: the check is not passed yet, the search engine still shows a captcha. Try again"
+  "scan.verify_st_not_solved": "“{name}”: the check is not passed yet, the search engine still shows a captcha. Try again",
+  "toolbox.log_clear": "Clear",
+  "toolbox.log_clear_q": "Clear the tools log?",
+  "toolbox.log_clear_text": "Records: {n}. Only quick tool requests are deleted; projects and their request logs are not affected.",
+  "toolbox.log_cleared": "Tools log cleared",
+  "toolbox.log_clear_fail": "Could not clear: {err}"
 }

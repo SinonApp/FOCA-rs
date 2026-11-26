@@ -1721,3 +1721,65 @@ fn list_projects_reads_summaries_cached_by_older_versions() {
     assert_eq!(lb.name, "contoso.example");
     assert!(lb.archived);
 }
+
+#[test]
+fn request_log_clear_filters_by_scan_age_and_kept_scan() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let db = s.open_project(&new_project(&s).id).unwrap();
+    let rows = [
+        ("2026-11-01T08:00:00.120Z", Some("s1")),
+        ("2026-11-02T08:00:00Z", Some("s1")),
+        ("2026-11-15T08:00:00Z", Some("s2")),
+        ("2026-11-19T08:00:00Z", Some("s3")),
+        ("2026-11-03T08:00:00Z", None),
+    ];
+    let fill = || {
+        for (time, scan) in rows {
+            db.log_request(&RequestLog {
+                time: time.into(),
+                scan_id: scan.map(String::from),
+                module: "crt".into(),
+                method: "GET".into(),
+                url: "https://crt.example/".into(),
+                host: "crt.example".into(),
+                ..Default::default()
+            })
+            .unwrap();
+        }
+    };
+    fill();
+    let all = RequestLogFilter::default();
+    let old = RequestLogFilter {
+        before: Some("2026-11-10T00:00:00"),
+        ..Default::default()
+    };
+    // a dry run counts without deleting
+    assert_eq!(db.request_log_clear(&all, true).unwrap(), 5);
+    assert_eq!(db.request_log_clear(&old, true).unwrap(), 3);
+    assert_eq!(db.requests(None, false).unwrap().len(), 5);
+    // one scan
+    let s1 = RequestLogFilter {
+        scan_id: Some("s1"),
+        ..Default::default()
+    };
+    assert_eq!(db.request_log_clear(&s1, false).unwrap(), 2);
+    assert!(db.requests(Some("s1"), false).unwrap().is_empty());
+    // older than: the row without a scan goes, the later ones stay
+    assert_eq!(db.request_log_clear(&old, false).unwrap(), 1);
+    assert_eq!(db.requests(None, false).unwrap().len(), 2);
+    // everything except a running scan
+    let keep = RequestLogFilter {
+        keep_scan: Some("s3"),
+        ..Default::default()
+    };
+    assert_eq!(db.request_log_clear(&keep, false).unwrap(), 1);
+    let left = db.requests(None, false).unwrap();
+    assert_eq!(left.len(), 1);
+    assert_eq!(left[0].scan_id.as_deref(), Some("s3"));
+    // rows without a scan are not protected by keep_scan, and the whole log goes at once
+    fill();
+    assert_eq!(db.request_log_clear(&keep, true).unwrap(), 4);
+    assert_eq!(db.request_log_clear(&all, false).unwrap(), 6);
+    assert!(db.requests(None, false).unwrap().is_empty());
+}

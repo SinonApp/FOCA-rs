@@ -1,5 +1,6 @@
 //! Debug tab and first run: terms_get/terms_accept (plus reset by wipe_all), core and Android logs,
-//! crashes, the project request log, ZIP log export without secrets, and clearing.
+//! crashes, the project request log, ZIP log export without secrets, and clearing (app logs and
+//! the request log: all, older than N days, one scan, never the rows of a running scan).
 
 mod common;
 
@@ -185,4 +186,109 @@ async fn debug_logs_requests_crashes_export_without_secrets() {
         .is_empty());
     let left: Value = e.call("logs_get", json!({ "source": "android" })).await;
     assert!(left.as_array().unwrap().is_empty());
+}
+
+fn req_count(log: &Value, scan: Option<&str>) -> usize {
+    log.as_array()
+        .unwrap()
+        .iter()
+        .filter(|r| scan.is_none_or(|s| r["scan_id"] == s))
+        .count()
+}
+
+async fn log_of(e: &Env, id: &str) -> Value {
+    e.call("request_log_get", json!({ "project": id, "limit": 100000 }))
+        .await
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn request_log_clear_by_age_scan_and_running_guard() {
+    let e = env(0).await;
+    let id = e.project("example.test").await;
+    let first = e.passive_scan(&id).await["scan_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    {
+        // two old rows without a scan (the test clock is 2026-11-20)
+        let st = foca_store::Store::open(e.dir.path()).unwrap();
+        let db = st.open_project(&id).unwrap();
+        for t in ["2026-09-01T08:00:00Z", "2026-10-01T08:00:00.250Z"] {
+            db.log_request(&foca_store::RequestLog {
+                time: t.into(),
+                module: "crt".into(),
+                method: "GET".into(),
+                url: "https://crt.example/".into(),
+                host: "crt.example".into(),
+                ..Default::default()
+            })
+            .unwrap();
+        }
+    }
+    let log = log_of(&e, &id).await;
+    let n_first = req_count(&log, Some(&first));
+    assert!(n_first > 0);
+    let total = req_count(&log, None);
+    assert_eq!(total, n_first + 2);
+    // a dry run only counts
+    let dry = e
+        .call(
+            "request_log_clear",
+            json!({ "project": id, "dry_run": true }),
+        )
+        .await;
+    assert_eq!(dry["removed"], total);
+    assert_eq!(dry["dry_run"], true);
+    assert_eq!(req_count(&log_of(&e, &id).await, None), total);
+    let er = e
+        .err("request_log_clear", json!({ "project": id, "days": 0 }))
+        .await;
+    assert_eq!(er.code, "bad_args");
+    // older than 30 days: only the injected rows
+    let r = e
+        .call("request_log_clear", json!({ "project": id, "days": 30 }))
+        .await;
+    assert_eq!(r["removed"], 2, "{r}");
+    assert_eq!(req_count(&log_of(&e, &id).await, None), n_first);
+
+    // a second scan paused while running: its rows stay, clearing it alone is refused
+    *e.pause_at.lock().unwrap() = Some("network".into());
+    let sid = e
+        .call(
+            "scan_start",
+            json!({ "project": id, "profile": "passive", "sources": ["crt", "wayback"] }),
+        )
+        .await["scan_id"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    e.wait_paused("network").await;
+    *e.pause_at.lock().unwrap() = None;
+    let n_run = req_count(&log_of(&e, &id).await, Some(&sid));
+    assert!(n_run > 0, "the paused scan logged nothing");
+    let er = e
+        .err(
+            "request_log_clear",
+            json!({ "project": id, "scan_id": sid }),
+        )
+        .await;
+    assert_eq!(er.code, "busy");
+    let r = e.call("request_log_clear", json!({ "project": id })).await;
+    assert_eq!(r["removed"], n_first, "{r}");
+    assert_eq!(r["kept_running"], n_run, "{r}");
+    let log = log_of(&e, &id).await;
+    assert_eq!(req_count(&log, None), n_run);
+    assert_eq!(req_count(&log, Some(&sid)), n_run);
+    e.call("scan_stop", json!({ "reason": "user" })).await;
+    // a finished scan can be cleared on its own
+    let left = req_count(&log_of(&e, &id).await, Some(&sid));
+    let r = e
+        .call(
+            "request_log_clear",
+            json!({ "project": id, "scan_id": sid }),
+        )
+        .await;
+    assert_eq!(r["removed"], left, "{r}");
+    assert_eq!(r["kept_running"], 0);
+    assert_eq!(req_count(&log_of(&e, &id).await, None), 0);
 }

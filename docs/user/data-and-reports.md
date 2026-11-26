@@ -63,7 +63,7 @@ Project overflow menu (⋮):
 
 App-wide utilities accessible from Projects and ⋮:
 
-- **Quick Tools (`/tools`):** Run standalone checks without creating a project: inspect a single file (100% offline), check domain mail policies (`SPF`/`DMARC`/`DKIM`/`MTA-STS`), probe a host/URL (TLS, headers, tech, favicon), or test password strength (offline unless HIBP is checked).
+- **Quick Tools (`/tools`):** Run standalone checks without creating a project: inspect a single file (100% offline), check domain mail policies (`SPF`/`DMARC`/`DKIM`/`MTA-STS`), probe a host/URL (TLS, headers, tech, favicon), or test password strength (offline unless HIBP is checked). The Log tab lists recent tool requests (kept in memory, up to 200); Clear empties it after a confirmation that shows the count.
 - **Scan Queue (`/queue`):** Queue multiple projects to scan strictly sequentially with unified progress and pause/resume controls.
 
 ## Reports, DOCX & Chain of Custody

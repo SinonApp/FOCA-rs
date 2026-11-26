@@ -190,6 +190,7 @@ put("tool_secret", call("tool_secret", { value: "Qwerty2024!", hibp_opt_in: fals
 put("tool_mail_domain", call("tool_mail_domain", { domain: "weak.test" }));
 put("tool_host", call("tool_host", { url: "http://127.0.0.1/" }));
 put("tool_log", call("tool_log"));
+put("tool_log_clear", call("tool_log_clear"));
 put("queue_pause", call("queue_pause"));
 const qa = call("queue_add", { projects: ["agro", "logistics"], profile: "passive" });
 put("queue_add", qa);
@@ -197,6 +198,9 @@ put("queue_list", call("queue_list"));
 put("queue_remove", call("queue_remove", { id: qa.items[0].id }));
 put("queue_clear", call("queue_clear", {}));
 put("queue_resume", call("queue_resume"));
+// Clearing the request log: a count, then rows older than 30 days
+put("request_log_clear", call("request_log_clear", { project: "agro", dry_run: true }));
+put("request_log_clear", call("request_log_clear", { project: "agro", days: 30 }));
 // Deleting one scan: what it would remove, then the deletion itself
 put("scan_delete", call("scan_delete", { project: "agro", scan_id: stp.id, dry_run: true }));
 put("scan_delete", call("scan_delete", { project: "agro", scan_id: stp.id }));

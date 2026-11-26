@@ -268,5 +268,6 @@
   "core.alert.config": "настройка уведомлений: {detail}",
   "core.alert.rejected": "сервис отклонил сообщение: HTTP {status} {reason}",
   "core.alert.rate_limited": "лимит запросов сервиса: повтор через {s} с",
-  "core.demo_case.name": "Эталонный кейс"
+  "core.demo_case.name": "Эталонный кейс",
+  "core.reqlog.scan_running": "Скан ещё идёт: его журнал запросов можно очистить после завершения"
 }

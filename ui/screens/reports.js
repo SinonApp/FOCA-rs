@@ -511,7 +511,12 @@
       </div>
       ${exp.secrets ? `<div class="banner crit rp-secw">${ic("alert")}<div><b>${esc(F.t("reports.secrets_plain_b", "Секреты попадут в файл открытым текстом."))}</b> ${esc(F.t("reports.secrets_plain", "Передавайте его только по защищённому каналу и удалите после передачи заказчику."))}</div></div>` : `<p class="fhint rp-hint">${ic("lock")} ${esc(F.t("reports.secrets_masked", "Секреты будут заменены на «[скрыто]»."))}</p>`}`;
     const file = `<div class="rp-file">${ic("doc")}<span class="mono">${esc(fileName())}</span><span class="muted">~${estSize()}</span></div>`;
-    return head() + body + privacy + file;
+    // The request log can be cleared where it is exported (debug.js F.reqLogClear).
+    const clear =
+      exp.o.kind === "log" && F.reqLogClear
+        ? `<button class="btn text crit rp-logclr" data-act="rl-clear">${ic("trash")}${esc(F.t("debug.rl_clear", "Очистить журнал запросов"))}</button>`
+        : "";
+    return head() + body + privacy + file + clear;
   }
   const step2Footer = () =>
     `<button class="btn rp-back" data-act="rp-ex-back"

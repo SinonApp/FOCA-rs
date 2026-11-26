@@ -48,7 +48,7 @@ export default async (page, o) => {
     ok('"Отладка" level applied in core', (await api('app_info')).log_level === 'debug');
     await click('dbg-level:info'); await wait(300);
     await click('dbg-clear'); await wait(300);
-    ok('clearing requires confirmation', /Очистить логи\?/.test(await t.sheetText()));
+    ok('clearing requires confirmation', /Очистить логи приложения\?/.test(await t.sheetText()));
     await click('dbg-clear-go'); await wait(800);
     ok('no crash reports after clearing', (await api('crash_list')).length === 0);
     await api('key_delete', { service: 'brave' });

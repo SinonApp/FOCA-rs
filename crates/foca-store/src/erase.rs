@@ -12,6 +12,9 @@
 //! Entities (people, e-mails, paths, hosts, metadata summaries) are derived from documents and
 //! network facts, so the caller re-runs the analysis between the two phases below; that also
 //! tells which findings are still backed by data of other scans.
+//!
+//! Clearing the request log (`request_log_clear`: all rows, rows older than a date, one scan) lives
+//! here too: `scan_delete` removes a scan's rows through the same code.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -39,6 +42,18 @@ pub struct ScanErase {
     pub findings: Vec<u64>,
     /// Remaining scans that started after the deleted one, oldest first.
     pub later: Vec<String>,
+}
+
+/// Which request log rows [`ProjectDb::request_log_clear`] takes; every set field narrows the
+/// selection, the default selects the whole log.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RequestLogFilter<'a> {
+    /// Only rows of this scan.
+    pub scan_id: Option<&'a str>,
+    /// Only rows logged before this time (`YYYY-MM-DDTHH:MM:SS`, UTC like the stored rows).
+    pub before: Option<&'a str>,
+    /// Rows of this scan stay (a scan that is still running).
+    pub keep_scan: Option<&'a str>,
 }
 
 /// True for a project setting key that belongs to one scan: `<prefix>.<id>` or `<prefix>:<id>`.
@@ -91,6 +106,27 @@ impl ProjectDb {
         reanalyze(self, &out)?;
         out.findings = self.settle_scan_findings(scan_id, &out.later)?;
         Ok(out)
+    }
+
+    /// Deletes the request log rows the filter selects and returns how many there were;
+    /// `dry_run` only counts them. Stored times are RFC 3339 (UTC), so the first 19 characters
+    /// compare as text with `before`.
+    pub fn request_log_clear(&self, f: &RequestLogFilter, dry_run: bool) -> Result<usize> {
+        const WHERE: &str = "WHERE (?1 IS NULL OR scan_id = ?1)
+            AND (?2 IS NULL OR substr(time, 1, 19) < substr(?2, 1, 19))
+            AND (?3 IS NULL OR scan_id IS NULL OR scan_id <> ?3)";
+        let args = params![f.scan_id, f.before, f.keep_scan];
+        if dry_run {
+            let n: i64 = self.conn().query_row(
+                &format!("SELECT COUNT(*) FROM request_log {WHERE}"),
+                args,
+                |r| r.get(0),
+            )?;
+            return Ok(n as usize);
+        }
+        Ok(self
+            .conn()
+            .execute(&format!("DELETE FROM request_log {WHERE}"), args)?)
     }
 
     /// Remaining scan ids in history order, without `scan_id`, and the index where it stood.
@@ -185,7 +221,11 @@ impl ProjectDb {
                 files.push(p.to_string());
             }
         }
-        let requests = conn.execute("DELETE FROM request_log WHERE scan_id = ?1", [scan_id])?;
+        let only_scan = RequestLogFilter {
+            scan_id: Some(scan_id),
+            ..Default::default()
+        };
+        let requests = self.request_log_clear(&only_scan, false)?;
         // A row last written by this scan may have existed before it: it then stays, attributed
         // to the previous scan. Without an earlier scan nothing else produced it.
         let infra = match &prev {

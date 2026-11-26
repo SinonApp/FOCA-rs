@@ -224,7 +224,7 @@
         ),
         action: `<button class="btn tonal" data-act="tbx-reload-log">${ic("refresh")}${esc(F.t("common.refresh", "Обновить"))}</button>`,
       });
-    return `<div class="tbx-qbar">${ui.secH(F.t("toolbox.log_requests", "Запросы утилит"), list.length)}<button class="btn sm tonal" data-act="tbx-reload-log">${ic("refresh")}${esc(F.t("common.refresh", "Обновить"))}</button></div>
+    return `<div class="tbx-qbar">${ui.secH(F.t("toolbox.log_requests", "Запросы утилит"), list.length)}<div class="tbx-qbtns"><button class="btn sm tonal" data-act="tbx-reload-log">${ic("refresh")}${esc(F.t("common.refresh", "Обновить"))}</button><button class="btn sm danger-o" data-act="tbx-log-clear">${ic("trash")}${esc(F.t("toolbox.log_clear", "Очистить"))}</button></div></div>
       <div class="list">${list
         .map(r =>
           ui.row({
@@ -452,6 +452,30 @@
       F.render(true);
     },
     "tbx-reload-log": () => loadLog(),
+    // In-memory journal of the quick tools: a plain confirm is enough (it is also lost on restart).
+    "tbx-log-clear": () => {
+      const n = (st.logList || []).length;
+      F.sheet({
+        title: F.t("toolbox.log_clear_q", "Очистить журнал инструментов?"),
+        html: `<p class="lead">${esc(F.t("toolbox.log_clear_text", { n }, "Записей: {n}. Удаляются только запросы быстрых инструментов, проекты и их журнал запросов не затрагиваются."))}</p>`,
+        footer: `<button class="btn" data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn danger" data-act="tbx-log-clear-go">${ic("trash")}${esc(F.t("toolbox.log_clear", "Очистить"))}</button>`,
+      });
+    },
+    "tbx-log-clear-go": () => {
+      F.closeSheet();
+      F.api.tool_log_clear().then(
+        () => {
+          st.logList = [];
+          F.render(true);
+          F.snack(F.t("toolbox.log_cleared", "Журнал инструментов очищен"));
+          loadLog();
+        },
+        e =>
+          F.snack(
+            F.t("toolbox.log_clear_fail", { err: (e && e.message) || e }, "Не удалось очистить: {err}"),
+          ),
+      );
+    },
     "tbx-pick-file": () => {
       F.api
         .platform_pick_files({ multiple: false })

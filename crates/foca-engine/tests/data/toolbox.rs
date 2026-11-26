@@ -147,6 +147,13 @@ async fn secret_tool_is_local_and_never_echoes_the_value() {
     assert_eq!(tlog[0]["tool"], "secret");
     assert!(!tlog.to_string().contains(raw_pw));
     assert!(!tlog.to_string().contains(suffix));
+    // clearing the journal reports how many records went
+    let n = tlog.as_array().unwrap().len();
+    assert!(n > 0);
+    let cl = e.call("tool_log_clear", json!({})).await;
+    assert_eq!(cl, json!({ "ok": true, "removed": n }));
+    assert_eq!(e.call("tool_log", json!({})).await, json!([]));
+    assert_eq!(e.call("tool_log_clear", json!({})).await["removed"], 0);
     // Still no project created.
     assert_eq!(e.call("project_list", json!({})).await, json!([]));
 }

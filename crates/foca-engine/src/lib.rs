@@ -28,7 +28,7 @@
 //! ```
 //!
 //! Stage 1.5: quick tools without a project (`tool_file`, `tool_mail_domain`, `tool_host`,
-//! `tool_secret`, `tool_log`; [`toolbox`]) and the scan queue (`queue_*`; [`queue`]).
+//! `tool_secret`, `tool_log`, `tool_log_clear`; [`toolbox`]) and the scan queue (`queue_*`; [`queue`]).
 //!
 //! One extra command outside the contract table: `doc_import { project, paths }` imports local
 //! files without network access.

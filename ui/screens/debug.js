@@ -1,8 +1,9 @@
 // Settings → Debug: #/settings/debug[/log|req|crash|dev|search] (search shows the search browser
 // fingerprint and the per-engine journal). Core and Android log (logs_get), project network request log
 // (request_log_get), crashes (crash_list / crash_get), device info (app_info + platform_device_info).
-// Actions: Copy, Share logs (logs_export → secret-free ZIP → platform_share), Clear logs, and the log level
-// (settings.debug.level: info | debug: applied by the core at runtime).
+// Actions: Copy, Share logs (logs_export → secret-free ZIP → platform_share), Clear app logs (logs_clear),
+// Clear request log (request_log_clear, F.reqLogClear, also opened from the Reports export sheet) and the
+// log level (settings.debug.level: info | debug: applied by the core at runtime).
 (function () {
   const F = window.FOCA,
     ui = F.ui,
@@ -416,7 +417,8 @@
       <div class="list">
         ${ui.row({ lead: ui.leadIcon("copy"), title: F.t("debug.copy", "Скопировать"), sub: dbg.seg === "dev" ? F.t("debug.copy_dev", "Сведения об устройстве") : dbg.seg === "req" ? F.t("debug.copy_req", "Показанные запросы") : F.t("debug.copy_log", "Показанные записи журнала"), act: "dbg-copy" })}
         ${ui.row({ lead: ui.leadIcon("share", "var(--accent)"), title: F.t("debug.share", "Поделиться логами"), sub: F.t("debug.share_sub", "ZIP: журналы, сбои, устройство · ключи и пароли вычищаются"), act: "dbg-share" })}
-        ${ui.row({ lead: ui.leadIcon("trash", "var(--bad)"), title: F.t("debug.clear", "Очистить логи"), sub: F.t("debug.clear_sub", "Журналы ядра и Android, отчёты о сбоях"), act: "dbg-clear" })}
+        ${ui.row({ lead: ui.leadIcon("trash", "var(--bad)"), title: F.t("debug.clear", "Очистить логи приложения"), sub: F.t("debug.clear_sub", "Ядро, Android и отчёты о сбоях; журнал запросов проекта остаётся"), act: "dbg-clear" })}
+        ${dbg.seg === "req" && F.db && F.db.project ? ui.row({ lead: ui.leadIcon("trash", "var(--bad)"), title: F.t("debug.rl_clear", "Очистить журнал запросов"), sub: F.t("debug.rl_clear_sub", { name: F.db.project.name }, "Проект «{name}»: весь, старше N дней или один скан"), act: "rl-clear" }) : ""}
       </div>
       ${ui.secH(F.t("debug.log_level", "Уровень журнала"))}
       <div class="seg dbg-level" role="radiogroup">${[
@@ -522,6 +524,119 @@
   F.route("/settings/debug", def);
   F.route("/settings/debug/:seg", def);
 
+  // ---------- clearing the project request log (request_log_clear) ----------
+  // A persistent audit trail that feeds the report "Request log" section, so the confirm is
+  // hold-to-confirm like other bulk deletes. Every option change asks the core for a dry-run count.
+  const rlc = (F.state.rlc = F.state.rlc || { mode: "all", days: 30, scan: null, n: null, kept: 0, seq: 0 });
+  const RLC_DAYS = [7, 30, 90];
+  // Finished scans of the project, newest first (the running one cannot be cleared on its own).
+  const rlcScans = () => {
+    const run = F.scan && F.scan.running && F.scan.project === (F.db.project || {}).id ? F.scan.scanId : null;
+    return (F.sel.scans() || [])
+      .filter(sc => sc.id !== run && sc.status !== "running")
+      .slice()
+      .sort((a, b) => String(b.started_at || "").localeCompare(String(a.started_at || "")))
+      .slice(0, 8);
+  };
+  const rlcArgs = () =>
+    rlc.mode === "older" ? { days: rlc.days } : rlc.mode === "scan" ? { scan_id: rlc.scan } : {};
+  function rlcBody() {
+    const scans = rlcScans();
+    const opt = (k, l) =>
+      `<button class="${rlc.mode === k ? "on" : ""}" role="radio" aria-checked="${rlc.mode === k}"
+        data-act="rlc-mode:${k}">${esc(l)}</button>`;
+    const chips = (items, on, act) =>
+      `<div class="chips wrap rlc-chips" role="radiogroup">${items
+        .map(
+          ([v, l]) =>
+            `<button class="chip ${on === v ? "on" : ""}" role="radio" aria-checked="${on === v}"
+              data-act="${act}:${esc(v)}">${esc(l)}</button>`,
+        )
+        .join("")}</div>`;
+    const count =
+      rlc.n == null
+        ? F.t("debug.rl_counting", "Считаем…")
+        : rlc.n
+          ? F.tp(
+              "debug.rl_n",
+              rlc.n,
+              { n: rlc.n },
+              "Будет удалена {n} запись|Будут удалены {n} записи|Будут удалены {n} записей",
+            )
+          : F.t("debug.rl_none", "Под этот вариант записей нет");
+    return `<div class="seg rlc-seg" role="radiogroup">${opt("all", F.t("debug.rl_all", "Весь"))}${opt("older", F.t("debug.rl_older", "Старше"))}${opt("scan", F.t("debug.rl_scan", "Один скан"))}</div>
+      ${
+        rlc.mode === "older"
+          ? chips(
+              RLC_DAYS.map(d => [String(d), F.tp("debug.rl_days", d, { n: d }, "{n} день|{n} дня|{n} дней")]),
+              String(rlc.days),
+              "rlc-days",
+            )
+          : ""
+      }
+      ${
+        rlc.mode === "scan"
+          ? scans.length
+            ? chips(
+                scans.map(sc => [
+                  sc.id,
+                  F.fmt && F.fmt.dmyhm ? F.fmt.dmyhm(sc.started_at) : sc.started_at || sc.id,
+                ]),
+                rlc.scan,
+                "rlc-scan",
+              )
+            : `<p class="fhint">${esc(F.t("debug.rl_no_scans", "Нет завершённых сканов"))}</p>`
+          : ""
+      }
+      <p class="rlc-n" id="rlc-n" role="status"><b>${esc(count)}</b>${rlc.kept ? `<small>${esc(F.t("debug.rl_kept", { n: rlc.kept }, "Записи идущего скана ({n}) останутся"))}</small>` : ""}</p>
+      <p class="fhint rlc-why">${esc(F.t("debug.rl_text", "Записи о запросах сканера к целям и сервисам будут удалены из проекта. Находки, документы и отчёты останутся, раздел «Журнал запросов» в новых отчётах станет короче."))}</p>`;
+  }
+  const rlcFooter = () =>
+    `<button class="btn" data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button
+      class="btn danger hold" data-hold="rlc-go" ${rlc.n ? "" : "disabled"}><span class="hold-fill"></span>${ic("trash")}${esc(F.t("debug.rl_hold", "Удерживайте, чтобы очистить"))}</button>`;
+  function rlcPaint() {
+    const sh = document.querySelector(".sheet.rlc-sheet");
+    if (!sh) return;
+    sh.querySelector(".sh-b").innerHTML = rlcBody();
+    sh.querySelector(".sh-f").innerHTML = rlcFooter();
+  }
+  function rlcCount() {
+    const seq = ++rlc.seq;
+    rlc.n = null;
+    rlc.kept = 0;
+    rlcPaint();
+    if (rlc.mode === "scan" && !rlc.scan) {
+      rlc.n = 0;
+      return rlcPaint();
+    }
+    F.api.request_log_clear({ ...rlcArgs(), dry_run: true }).then(
+      r => {
+        if (seq !== rlc.seq) return;
+        rlc.n = r.removed || 0;
+        rlc.kept = r.kept_running || 0;
+        rlcPaint();
+      },
+      e => {
+        if (seq !== rlc.seq) return;
+        rlc.n = 0;
+        rlcPaint();
+        F.snack(F.t("debug.fail", { err: F.coreMsg(e.message, e.message_msg) }, "Не удалось: {err}"));
+      },
+    );
+  }
+  /** Opens the "Clear request log" sheet for the open project. */
+  F.reqLogClear = () => {
+    if (!F.db || !F.db.project) return;
+    const scans = rlcScans();
+    if (!scans.some(sc => sc.id === rlc.scan)) rlc.scan = scans.length ? scans[0].id : null;
+    F.sheet({
+      title: F.t("debug.rl_q", "Очистить журнал запросов?"),
+      cls: "rlc-sheet",
+      html: rlcBody(),
+      footer: rlcFooter(),
+    });
+    rlcCount();
+  };
   Object.assign(F.actions, {
     "dbg-seg": k => {
       dbg.seg = k;
@@ -638,10 +753,43 @@
         e => F.snack(F.t("debug.collect_fail", { err: e.message }, "Не удалось собрать журналы: {err}")),
       );
     },
+    "rl-clear": () => F.reqLogClear(),
+    "rlc-mode": k => {
+      rlc.mode = k;
+      rlcCount();
+    },
+    "rlc-days": d => {
+      rlc.days = Number(d) || 30;
+      rlcCount();
+    },
+    "rlc-scan": id => {
+      rlc.scan = id;
+      rlcCount();
+    },
+    "rlc-go": () => {
+      F.api.request_log_clear(rlcArgs()).then(
+        r => {
+          F.closeSheet();
+          dbg.req = null;
+          if (F.sel.requestsReload) F.sel.requestsReload();
+          F.snack(
+            F.tp(
+              "debug.rl_done",
+              r.removed || 0,
+              { n: r.removed || 0 },
+              "Удалена {n} запись журнала|Удалены {n} записи журнала|Удалено {n} записей журнала",
+            ),
+          );
+          if (/^\/settings\/debug/.test(F.current())) reload();
+          else F.render(true);
+        },
+        e => F.snack(F.t("debug.fail", { err: F.coreMsg(e.message, e.message_msg) }, "Не удалось: {err}")),
+      );
+    },
     "dbg-clear": () =>
       F.sheet({
-        title: F.t("debug.clear_q", "Очистить логи?"),
-        html: `<p class="lead">${esc(F.t("debug.clear_text", "Журналы ядра и Android и отчёты о сбоях будут удалены. Данные проектов не затрагиваются."))}</p>`,
+        title: F.t("debug.clear_q", "Очистить логи приложения?"),
+        html: `<p class="lead">${esc(F.t("debug.clear_text", "Журналы ядра и Android и отчёты о сбоях будут удалены. Данные проектов и журнал запросов не затрагиваются."))}</p>`,
         footer: `<button class="btn"
           data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn danger"
           data-act="dbg-clear-go">${ic("trash")}${esc(F.t("debug.clear_go", "Очистить"))}</button>`,
@@ -652,7 +800,7 @@
         () => {
           dbg.logs = null;
           dbg.crashes = null;
-          F.snack(F.t("debug.cleared", "Журналы очищены"));
+          F.snack(F.t("debug.cleared", "Логи приложения очищены"));
           reload();
         },
         e => F.snack(F.t("debug.fail", { err: e.message }, "Не удалось: {err}")),

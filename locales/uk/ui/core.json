@@ -268,5 +268,6 @@
   "core.alert.config": "налаштування сповіщень: {detail}",
   "core.alert.rejected": "сервіс відхилив повідомлення: HTTP {status} {reason}",
   "core.alert.rate_limited": "ліміт запитів сервісу: повтор через {s} с",
-  "core.demo_case.name": "Еталонний кейс"
+  "core.demo_case.name": "Еталонний кейс",
+  "core.reqlog.scan_running": "Сканування ще триває: його журнал запитів можна очистити після завершення"
 }

@@ -636,6 +636,7 @@ async fn contract_shape_matches_demo_backend_inner() {
         json!({ "url": format!("{}/", site.url()) })
     );
     c!("tool_log", "tool_log", json!({}));
+    c!("tool_log_clear", "tool_log_clear", json!({}));
     c!("queue_pause", "queue_pause", json!({}));
     let qa = c!(
         "queue_add",
@@ -676,6 +677,17 @@ async fn contract_shape_matches_demo_backend_inner() {
             "http_status only for http errors: {d}"
         );
     }
+    // clearing the request log: a count, then the deletion of rows older than 30 days
+    c!(
+        "request_log_clear",
+        "request_log_clear",
+        json!({ "project": id, "dry_run": true })
+    );
+    c!(
+        "request_log_clear",
+        "request_log_clear",
+        json!({ "project": id, "days": 30 })
+    );
     // deleting one scan: what it would remove, then the deletion (everything is wiped next)
     c!(
         "scan_delete",

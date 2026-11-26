@@ -13,6 +13,7 @@
 - [How Do I Change the App Language?](#how-do-i-change-the-app-language)
 - [Are Plugins Safe?](#are-plugins-safe)
 - [How to Report a Problem and Send Logs](#how-to-report-a-problem-and-send-logs)
+  - [Clearing logs](#clearing-logs)
 - [The App Crashed](#the-app-crashed)
 - [Update Fails to Install](#update-fails-to-install)
 
@@ -95,6 +96,12 @@ To collect logs only:
 4. Send the archive via e-mail or issue tracker.
 
 API keys, tokens, and passwords are automatically scrubbed from exported logs (`crates/foca-engine/src/analysis/redact.rs`). Per-project network request history is viewable on the Requests tab of the same screen.
+
+### Clearing logs
+
+- **Clear app logs** (Debug screen, Actions) deletes the core and Android logs and crash reports. Projects and their request logs stay.
+- **Clear request log** (Debug screen, Requests tab, or the Request log export sheet in Reports) deletes the open project's request records: the whole log, records older than 7, 30 or 90 days, or one finished scan. The sheet shows how many records go; hold the button to confirm. Records of a scan that is still running are kept, and a running scan cannot be cleared on its own. Reports built afterwards have a shorter Request log section; findings and documents are not touched.
+- **Quick tools → Log → Clear** empties the quick tools request journal (in memory, it also resets when the app restarts).
 
 ## The App Crashed
 

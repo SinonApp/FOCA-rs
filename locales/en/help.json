@@ -459,7 +459,7 @@
       "rel": [
         "background"
       ],
-      "body": "\n      <p>FOCA-rs 2.0 is a beta: some things may break. A report with logs helps fix them faster.</p>\n      <h3>Quick way</h3>\n      <p>Tap “Report a problem” (below, in “Settings → About”, or in the beta note on the projects screen). The app saves a logs ZIP to <code>Download/FOCA-rs</code> and opens the GitHub issue form in the browser. Describe what you did and attach the ZIP.</p>\n      <h3>Logs only</h3>\n      <ol><li>Open “Settings → Debug &amp; diagnostics”.</li><li>Tap “Share logs”: the ZIP contains app logs, crash reports and device details.</li>\n      <li>Choose where to send it (e-mail, messenger).</li></ol>\n      <p>API keys and passwords are removed from the archive. If the problem repeats, set the log level to “Debug” on the same screen and reproduce it before sending.</p>",
+      "body": "\n      <p>FOCA-rs 2.0 is a beta: some things may break. A report with logs helps fix them faster.</p>\n      <h3>Quick way</h3>\n      <p>Tap “Report a problem” (below, in “Settings → About”, or in the beta note on the projects screen). The app saves a logs ZIP to <code>Download/FOCA-rs</code> and opens the GitHub issue form in the browser. Describe what you did and attach the ZIP.</p>\n      <h3>Logs only</h3>\n      <ol><li>Open “Settings → Debug &amp; diagnostics”.</li><li>Tap “Share logs”: the ZIP contains app logs, crash reports and device details.</li>\n      <li>Choose where to send it (e-mail, messenger).</li></ol>\n      <p>API keys and passwords are removed from the archive. If the problem repeats, set the log level to “Debug” on the same screen and reproduce it before sending.</p>\n      <h3>App logs and the request log</h3>\n      <p>“Clear app logs” deletes the core and Android logs and crash reports. The project request log is separate: on the “Requests” tab, “Clear request log” removes the whole log, records older than 7, 30 or 90 days, or one finished scan (hold to confirm). Records of a running scan stay; reports built afterwards show a shorter request log.</p>\n",
       "act": [
         "Report a problem",
         "beta-report-about",
@@ -954,7 +954,7 @@
         "hibp-kanon",
         "alerts-monitoring"
       ],
-      "body": "\n      <p><b>Quick tools</b> let you inspect an individual file, domain mail policies (SPF/DMARC/DKIM/MTA-STS), a host/URL (TLS, headers, technologies, favicon), or password strength without creating a project.</p>\n      <ul><li><b>File</b> and <b>Password</b> (with HIBP unchecked) run 100% locally without a single network request.</li>\n      <li><b>Scan queue</b> (<code>/queue</code>) lets you select multiple projects and run them strictly sequentially with unified progress and pause controls.</li></ul>"
+      "body": "\n      <p><b>Quick tools</b> let you inspect an individual file, domain mail policies (SPF/DMARC/DKIM/MTA-STS), a host/URL (TLS, headers, technologies, favicon), or password strength without creating a project.</p>\n      <ul><li><b>File</b> and <b>Password</b> (with HIBP unchecked) run 100% locally without a single network request.</li>\n      <li><b>Scan queue</b> (<code>/queue</code>) lets you select multiple projects and run them strictly sequentially with unified progress and pause controls.</li>\n      <li>The <b>Log</b> tab lists recent tool requests (in memory, up to 200). “Clear” removes them after a confirmation that shows the count; projects are not affected.</li></ul>"
     },
     {
       "id": "hibp-kanon",

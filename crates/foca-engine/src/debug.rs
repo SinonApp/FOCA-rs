@@ -251,6 +251,56 @@ impl Engine {
         ))
     }
 
+    /// `request_log_clear { project, scan_id?, days?, before?, dry_run? }` deletes request log rows of
+    /// the project: all of them, those older than `days` days (or `before`, an ISO time in UTC), or
+    /// only one scan's. Rows of a scan that is still running stay (`kept_running` counts them) and
+    /// clearing that scan alone is refused. Returns `{ ok, removed, kept_running, dry_run }`.
+    pub(crate) fn request_log_clear(&self, a: &Value) -> CmdResult {
+        let id = self.project_arg(a)?;
+        let scan_id = arg_str(a, "scan_id").filter(|s| !s.is_empty());
+        let dry = a.get("dry_run").and_then(Value::as_bool).unwrap_or(false);
+        let before = match (arg_str(a, "before"), arg_u64(a, "days")) {
+            (Some(b), _) => Some(b.to_string()),
+            (None, Some(0)) => return Err(CmdError::new("bad_args", "days: не меньше 1")),
+            (None, Some(d)) => {
+                let t = self.now().to_offset(time::UtcOffset::UTC)
+                    - time::Duration::days(d.min(36_500) as i64);
+                Some(crate::util::iso(t))
+            }
+            (None, None) => None,
+        };
+        let running = self.running_scan().filter(|r| r.0 == id).map(|r| r.1);
+        if scan_id.is_some() && scan_id == running.as_deref() {
+            return Err(CmdError::new(
+                "busy",
+                "Скан ещё идёт: его журнал запросов можно очистить после завершения",
+            ));
+        }
+        let db = self.db(&id)?;
+        let db = lock(&db);
+        let filter = foca_store::RequestLogFilter {
+            scan_id,
+            before: before.as_deref(),
+            keep_scan: running.as_deref(),
+        };
+        let kept = match &running {
+            Some(r) if scan_id.is_none() => db.request_log_clear(
+                &foca_store::RequestLogFilter {
+                    scan_id: Some(r),
+                    keep_scan: None,
+                    ..filter
+                },
+                true,
+            )?,
+            _ => 0,
+        };
+        let removed = db.request_log_clear(&filter, dry)?;
+        if !dry && removed > 0 {
+            tracing::info!(target: "foca::debug", "журнал запросов очищен: {removed}");
+        }
+        Ok(json!({ "ok": true, "removed": removed, "kept_running": kept, "dry_run": dry }))
+    }
+
     /// `app_info` returns `{ version, commit, data_dir_mb, log_level }`.
     pub(crate) fn app_info(&self) -> CmdResult {
         fn size(p: &std::path::Path) -> u64 {

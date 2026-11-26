@@ -268,5 +268,6 @@
   "core.alert.config": "notification settings: {detail}",
   "core.alert.rejected": "the service rejected the message: HTTP {status} {reason}",
   "core.alert.rate_limited": "service rate limit: retry in {s} s",
-  "core.demo_case.name": "Reference case"
+  "core.demo_case.name": "Reference case",
+  "core.reqlog.scan_running": "The scan is still running: clear its request log after it finishes"
 }

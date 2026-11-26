@@ -987,6 +987,8 @@
     crash_list: () => run("crash_list", {}),
     crash_get: name => run("crash_get", { name }),
     request_log_get: (o = {}) => run("request_log_get", { project: cur(), ...o }),
+    // { scan_id?, days?, dry_run? } -> { removed, kept_running }: rows of a running scan stay
+    request_log_clear: (o = {}) => run("request_log_clear", { project: cur(), ...o }),
     search_journal: () => run("search_journal", {}),
     search_fingerprint: () => run("search_fingerprint", {}),
     search_fingerprint_page: () => run("search_fingerprint_page", {}),
@@ -1030,6 +1032,7 @@
     tool_host: (o = {}) => run("tool_host", o),
     tool_secret: (o = {}) => run("tool_secret", o),
     tool_log: (o = {}) => run("tool_log", o),
+    tool_log_clear: () => run("tool_log_clear", {}),
     queue_add: (o = {}) => run("queue_add", o),
     queue_list: () => run("queue_list", {}),
     queue_pause: () => run("queue_pause", {}),

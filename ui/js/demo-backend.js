@@ -7177,6 +7177,40 @@
     emit({ type: "stopped", scan_id: id, project: st.project.id, reason });
     return { ok: true };
   }
+  // request_log_clear (docs/API.md): the demo log is rebuilt from the scans on every read, so a clear
+  // is kept as a rule: rows of the listed scans (those that existed then), optionally only before a
+  // time. A scan started later is never covered. Rows of the running scan stay, like in the core.
+  const reqLogGone = (st, r) =>
+    (st.reqlog_cut || []).some(
+      c => c.scans.includes(r.scan_id) && (!c.before || String(r.time).slice(0, 19) < c.before),
+    );
+  function reqLogClear({ project, scan_id, days, before, dry_run } = {}) {
+    const st = P(project || load().settings.last_project);
+    const run = RUN && RUN.project === st.project.id ? RUN.id : null;
+    if (scan_id && scan_id === run)
+      throw apiErr("busy", "Скан ещё идёт: его журнал запросов можно очистить после завершения", {
+        code: "reqlog.scan_running",
+        params: {},
+      });
+    if (days === 0) throw apiErr("bad_args", "days: не меньше 1");
+    const cut =
+      before ||
+      (days
+        ? new Date(Date.UTC(2026, 10, 20, 12, 0) - Math.min(days, 36500) * 86400000)
+            .toISOString()
+            .slice(0, 19)
+        : null);
+    const rows = COMMANDS.request_log_get({ project: st.project.id, limit: 1e9 }).filter(
+      r => (!scan_id || r.scan_id === scan_id) && (!cut || String(r.time).slice(0, 19) < cut),
+    );
+    const kept = scan_id ? 0 : rows.filter(r => r.scan_id === run).length;
+    const scans = [...new Set(rows.map(r => r.scan_id))].filter(id => id !== run);
+    if (!dry_run && scans.length) {
+      st.reqlog_cut = [...(st.reqlog_cut || []), { scans, before: cut }];
+      save();
+    }
+    return { ok: true, removed: rows.length - kept, kept_running: kept, dry_run: !!dry_run };
+  }
   // scan_delete (docs/API.md): erases one scan and what only it produced, like the core. An item first
   // seen in the scan stays when a later scan still listed it (its snapshot) and moves to that scan;
   // the rest goes. A running or paused scan is cancelled first.
@@ -9708,6 +9742,26 @@
     };
   }
   const toolTiming = { partial: false, elapsed_ms: 40, requests: [] };
+  // Quick tools request ring (tool_log): in memory like the core, newest last, 200 records.
+  const TOOL_LOG = [];
+  function toolLog(tool, method, url, host, status) {
+    const target = tool === "host";
+    TOOL_LOG.push({
+      time: new Date(Date.UTC(2026, 10, 20, 12, 0) + TOOL_LOG.length * 1000).toISOString(),
+      module: "toolbox",
+      method,
+      url,
+      host,
+      status,
+      bytes: status ? 512 : 0,
+      active: target,
+      access: target ? "target" : "passive",
+      blocked: false,
+      error: null,
+      tool,
+    });
+    if (TOOL_LOG.length > 200) TOOL_LOG.shift();
+  }
   function toolFile(name) {
     const n = String(name || "Отчёт_2026.docx")
       .split(/[\\/]/)
@@ -10279,10 +10333,11 @@
         );
       });
       return out
-        .filter(r => !only_active || r.access !== "passive")
+        .filter(r => (!only_active || r.access !== "passive") && !reqLogGone(st, r))
         .reverse()
         .slice(0, limit || 500);
     },
+    request_log_clear: a => reqLogClear(a),
     app_info: () => ({
       version: "0.9.0-beta",
       commit: "a3f9c2e",
@@ -11041,6 +11096,14 @@
         (classes.symbol ? 33 : 0);
       const bits = Math.round(v.length * Math.log2(Math.max(pool, 1)) * 10) / 10;
       const score = bits < 28 ? 0 : bits < 36 ? 1 : bits < 60 ? 2 : bits < 80 ? 3 : 4;
+      if (hibp_opt_in)
+        toolLog(
+          "secret",
+          "GET",
+          "https://api.pwnedpasswords.com/range/[PREFIX]",
+          "api.pwnedpasswords.com",
+          200,
+        );
       return {
         length: v.length,
         classes,
@@ -11067,6 +11130,9 @@
         .split("@")
         .pop()
         .toLowerCase();
+      ["TXT", "MX", "TXT"].forEach((t, i) =>
+        toolLog("mail", "DNS", `dns://${i === 2 ? "_dmarc." : ""}${d}/${t}`, d, null),
+      );
       return {
         domain: d,
         risk: {
@@ -11109,6 +11175,8 @@
         .replace(/^\w+:\/\//, "")
         .split(/[/:?#]/)[0]
         .toLowerCase();
+      toolLog("host", "GET", /^\w+:\/\//.test(input) ? input : `https://${h}/`, h, 200);
+      toolLog("host", "TLS", `tls://${h}:443`, h, null);
       return {
         input,
         host: h,
@@ -11149,7 +11217,11 @@
         elapsed_ms: 1300,
       };
     },
-    tool_log: () => [],
+    tool_log: ({ limit } = {}) =>
+      TOOL_LOG.slice()
+        .reverse()
+        .slice(0, limit || 100),
+    tool_log_clear: () => ({ ok: true, removed: TOOL_LOG.splice(0).length }),
     queue_add: ({ projects, project, profile, args }) => {
       const ids = projects || (project ? [project] : []);
       if (!ids.length) throw apiErr("bad_args", "нужен список projects");
@@ -11550,6 +11622,7 @@
       if (confirm !== "WIPE") throw apiErr("bad_confirm", "Нужно подтверждение");
       RUN = null;
       clearTimeout(tickT);
+      TOOL_LOG.length = 0;
       const S = load();
       S.projects = {};
       S.order = [];

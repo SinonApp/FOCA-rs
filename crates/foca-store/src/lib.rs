@@ -27,7 +27,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-pub use erase::ScanErase;
+pub use erase::{RequestLogFilter, ScanErase};
 pub use lock::{DataDirLock, LockOwner};
 pub use project::{
     AddDoc, DocAdded, DocErrorKind, FindingPatch, ProjectDb, RequestLog, Task, TaskCounts,

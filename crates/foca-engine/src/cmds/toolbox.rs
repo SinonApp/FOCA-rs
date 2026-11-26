@@ -12,7 +12,7 @@
 //!
 //! Every network request goes through `NetClient` (settings.net: proxy, UA, rate limits) with a
 //! request log: the records of the call come back in `requests` and the last records stay in a
-//! memory ring (`tool_log`). Each tool has a wall-clock budget (`timeout_ms`, 5 s by default):
+//! memory ring (`tool_log`, emptied by `tool_log_clear`). Each tool has a wall-clock budget (`timeout_ms`, 5 s by default):
 //! when it runs out, the finished parts are returned with `partial: true` and the unfinished
 //! steps marked `timeout`.
 
@@ -569,6 +569,14 @@ pub(crate) fn tool_log(core: &Core, a: &Value) -> CmdResult {
         .take(limit)
         .cloned()
         .collect::<Vec<_>>()))
+}
+
+/// `tool_log_clear` empties the toolbox request ring; returns `{ ok, removed }`.
+pub(crate) fn tool_log_clear(core: &Core) -> CmdResult {
+    let mut g = lock(&core.tool_log);
+    let removed = g.len();
+    g.clear();
+    Ok(json!({ "ok": true, "removed": removed }))
 }
 
 /// `tool_file { path | data, name?, timeout_ms? }`.

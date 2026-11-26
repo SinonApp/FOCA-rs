@@ -246,6 +246,26 @@
 .dbg-level {
   margin-bottom: 4px;
 }
+/* "Clear request log" sheet (debug.js F.reqLogClear). Prefix rlc- */
+.rlc-seg {
+  margin: 4px 0 10px;
+}
+.rlc-chips {
+  margin-bottom: 10px;
+}
+.rlc-n {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.rlc-n small {
+  color: var(--text-2);
+}
+.rlc-why {
+  margin-top: 10px;
+}
 .dbg-pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;

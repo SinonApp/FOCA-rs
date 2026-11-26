@@ -1055,6 +1055,10 @@
     }
     return { total: RQ.total, by_scan: RQ.by_scan, sample: RQ.sample };
   }
+  // After the log was cleared: the next requests() call reads the count again.
+  const requestsReload = () => {
+    RQ.key = null;
+  };
 
   F.sel = {
     counts,
@@ -1078,6 +1082,7 @@
     reportPicked,
     reportFindings,
     requests,
+    requestsReload,
   };
   // Reset the graph cache when data changes.
   if (F.on)

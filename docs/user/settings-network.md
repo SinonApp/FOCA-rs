@@ -30,7 +30,7 @@
 | Appearance & Language | `/settings/appearance` | Live interface language (Auto (System) / English / Русский / Українська), dark/light theme, font density |
 | Signature Databases & OCR | `/settings/signatures` | Signed `Ed25519` signature bundle updates, offline import, rollback + optional on-device ML Kit OCR (`play` flavor only) |
 | Cloud AI | `/settings/ai` | 10 cloud AI providers, live `/models` discovery, Thinking (reasoning) parameters, redaction toggles |
-| Debug & diagnostics | `/settings/debug` | Core log, request log, crash reports, Share logs; Search tab with WebView fingerprint check & per-engine stats |
+| Debug & diagnostics | `/settings/debug` | Core log, request log, crash reports, Share logs; Clear app logs (core, Android, crashes) and Clear request log (project: all, older than 7/30/90 days, or one finished scan); Search tab with WebView fingerprint check & per-engine stats |
 | About, Licenses & Terms | `/settings/about`, `/settings/licenses`, `/settings/terms` | App version & build flavor (`foss`/`play`), auto-generated offline license inventory, Terms of Use |
 
 ## Browser Profile (User-Agent)

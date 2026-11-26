@@ -19377,7 +19377,91 @@
    "t": [
     "array"
    ],
-   "items": null
+   "items": {
+    "t": [
+     "object"
+    ],
+    "keys": {
+     "time": {
+      "t": [
+       "string"
+      ]
+     },
+     "module": {
+      "t": [
+       "string"
+      ]
+     },
+     "method": {
+      "t": [
+       "string"
+      ]
+     },
+     "url": {
+      "t": [
+       "string"
+      ]
+     },
+     "host": {
+      "t": [
+       "string"
+      ]
+     },
+     "status": {
+      "t": [
+       "null",
+       "number"
+      ]
+     },
+     "bytes": {
+      "t": [
+       "number"
+      ]
+     },
+     "active": {
+      "t": [
+       "bool"
+      ]
+     },
+     "access": {
+      "t": [
+       "string"
+      ]
+     },
+     "blocked": {
+      "t": [
+       "bool"
+      ]
+     },
+     "error": {
+      "t": [
+       "null"
+      ]
+     },
+     "tool": {
+      "t": [
+       "string"
+      ]
+     }
+    }
+   }
+  },
+  "tool_log_clear": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "ok": {
+     "t": [
+      "bool"
+     ]
+    },
+    "removed": {
+     "t": [
+      "number"
+     ]
+    }
+   }
   },
   "queue_pause": {
    "t": [
@@ -19950,6 +20034,33 @@
      ]
     },
     "waiting": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
+  "request_log_clear": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "ok": {
+     "t": [
+      "bool"
+     ]
+    },
+    "removed": {
+     "t": [
+      "number"
+     ]
+    },
+    "kept_running": {
+     "t": [
+      "number"
+     ]
+    },
+    "dry_run": {
      "t": [
       "bool"
      ]
