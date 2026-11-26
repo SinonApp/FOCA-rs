@@ -157,6 +157,10 @@ impl FidMap {
     pub fn get(&self, hash: u64) -> u64 {
         self.map.get(&hash).copied().unwrap_or(hash)
     }
+    /// Drops the numbers of deleted findings (`scan_delete`).
+    pub fn forget(&mut self, gone: &[u64]) {
+        self.map.retain(|h, _| !gone.contains(h));
+    }
     pub fn hash_of(&self, seq: u64) -> Option<u64> {
         self.map.iter().find(|(_, s)| **s == seq).map(|(h, _)| *h)
     }

@@ -1460,3 +1460,198 @@ fn error_docs_carry_reason_and_http_status() {
     );
     assert_eq!(crate::project::http_status_of("HTTP 99"), None);
 }
+
+/// A downloaded, analyzed document first found in `scan`, with a real file in `dir`.
+fn scan_doc(db: &ProjectDb, dir: &std::path::Path, n: u64, scan: &str, text: Option<&str>) -> u64 {
+    let path = dir.join(format!("d{n}.docx"));
+    std::fs::write(&path, b"document body").unwrap();
+    let d = db
+        .add_document(&AddDoc {
+            url: Some(format!("https://files.contoso.example/d{n}.docx")),
+            name: format!("d{n}.docx"),
+            source: "crawler".into(),
+            first_scan: Some(scan.into()),
+            status: DocStatus::Downloaded,
+            size: 4096,
+            sha256: Some(format!("{n:064x}")),
+            local_path: Some(path.to_string_lossy().into_owned()),
+            ..Default::default()
+        })
+        .unwrap();
+    db.set_analyzed(
+        d.id,
+        &meta("Андрій Бондар", "Microsoft Office Word 15.0000"),
+        text,
+    )
+    .unwrap();
+    db.task_enqueue(
+        "download",
+        &format!("https://files.contoso.example/d{n}.docx"),
+        "crawler",
+        Some(scan),
+    )
+    .unwrap();
+    db.log_request(&RequestLog {
+        module: "crawler".into(),
+        method: "GET".into(),
+        url: format!("https://files.contoso.example/d{n}.docx"),
+        host: "files.contoso.example".into(),
+        status: Some(200),
+        scan_id: Some(scan.into()),
+        ..Default::default()
+    })
+    .unwrap();
+    d.id
+}
+
+fn save_scan(db: &ProjectDb, id: &str, started: &str) {
+    db.scan_save(&Scan {
+        id: id.into(),
+        profile_id: "std".into(),
+        status: "done".into(),
+        started_at: started.into(),
+        finished_at: Some(started.into()),
+        ..Default::default()
+    })
+    .unwrap();
+}
+
+fn reanalyze(db: &ProjectDb, _: &ScanErase) -> Result<()> {
+    db.run_analysis(None).map(|_| ())
+}
+
+/// Deleting the first of two scans: its own document, file, requests, queue rows, settings and
+/// scan-only finding go; a finding the second scan also produced stays with first scan moved.
+#[test]
+fn scan_delete_keeps_shared_findings_and_drops_the_rest() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let db = s.open_project(&new_project(&s).id).unwrap();
+    let files = tmp.path().join("files");
+    std::fs::create_dir_all(&files).unwrap();
+    save_scan(&db, "s1", "2026-11-01T10:00:00");
+    let d1 = scan_doc(&db, &files, 1, "s1", Some(SECRET_TEXT));
+    db.run_analysis(Some("s1")).unwrap();
+    save_scan(&db, "s2", "2026-11-02T10:00:00");
+    let d2 = scan_doc(&db, &files, 2, "s2", None);
+    db.run_analysis(Some("s2")).unwrap();
+    db.set_setting("engine.scan.s1", &serde_json::json!({ "added": {} }))
+        .unwrap();
+    db.set_setting("engine.scan.s2", &serde_json::json!({ "added": {} }))
+        .unwrap();
+    let all = db.findings().unwrap();
+    let secret = all
+        .iter()
+        .find(|f| f.provenance.rule == "secret")
+        .unwrap()
+        .clone();
+    let eol = all
+        .iter()
+        .find(|f| f.provenance.rule == "eol-software")
+        .unwrap()
+        .clone();
+    assert_eq!(secret.first_scan.as_deref(), Some("s1"));
+    assert_eq!(eol.first_scan.as_deref(), Some("s1"));
+    assert!(ProjectDb::finding_doc_ids(&eol).contains(&d2));
+    // triage on the shared finding survives the deletion
+    db.finding_set_status(eol.id, "confirmed").unwrap();
+
+    let out = db.scan_delete("s1", reanalyze).unwrap();
+    assert_eq!(out.docs, vec![d1]);
+    assert_eq!(out.requests, 1);
+    assert_eq!(out.tasks, 1);
+    assert_eq!(out.later, vec!["s2".to_string()]);
+    assert_eq!(out.findings, vec![secret.id]);
+    assert_eq!(out.files.len(), 1);
+    assert!(out.files[0].ends_with("d1.docx"));
+
+    assert!(db.scans().unwrap().iter().all(|x| x.id != "s1"));
+    let docs = db.documents(true).unwrap();
+    assert_eq!(docs.iter().map(|d| d.doc.id).collect::<Vec<_>>(), vec![d2]);
+    assert!(db.requests(Some("s1"), false).unwrap().is_empty());
+    assert_eq!(db.requests(Some("s2"), false).unwrap().len(), 1);
+    assert_eq!(db.tasks(None).unwrap().len(), 1);
+    assert!(db.setting("engine.scan.s1").unwrap().is_none());
+    assert!(db.setting("engine.scan.s2").unwrap().is_some());
+    assert!(matches!(
+        db.finding(secret.id),
+        Err(StoreError::NotFound(_))
+    ));
+    let kept = db.finding(eol.id).unwrap();
+    assert_eq!(kept.first_scan.as_deref(), Some("s2"));
+    assert_eq!(kept.status, FindingStatus::Confirmed);
+    // the analysis no longer sees the deleted document's author text or file
+    assert!(db
+        .findings()
+        .unwrap()
+        .iter()
+        .all(|f| !ProjectDb::finding_doc_ids(f).contains(&d1)));
+
+    // a document of a deleted scan that a later scan still listed stays, moved to that scan
+    save_scan(&db, "s3", "2026-11-03T10:00:00");
+    let d3 = scan_doc(&db, &files, 3, "s3", Some(SECRET_TEXT));
+    db.run_analysis(Some("s3")).unwrap();
+    let mut s4 = Scan {
+        id: "s4".into(),
+        profile_id: "std".into(),
+        status: "done".into(),
+        started_at: "2026-11-04T10:00:00".into(),
+        ..Default::default()
+    };
+    s4.snapshot.docs = vec![d2, d3];
+    db.scan_save(&s4).unwrap();
+    let out = db.scan_delete("s3", reanalyze).unwrap();
+    assert!(out.docs.is_empty() && out.files.is_empty());
+    let d = db.document(d3).unwrap();
+    assert_eq!(d.first_scan.as_deref(), Some("s4"));
+    let secret3 = db
+        .findings()
+        .unwrap()
+        .into_iter()
+        .find(|f| f.provenance.rule == "secret")
+        .unwrap();
+    assert_eq!(secret3.first_scan.as_deref(), Some("s4"));
+}
+
+/// A finding fixed by the deleted (last) scan is no longer fixed; one fixed by a scan followed by
+/// another moves its fix to the next scan.
+#[test]
+fn scan_delete_recomputes_fixed_scan() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let db = s.open_project(&new_project(&s).id).unwrap();
+    let files = tmp.path().join("files");
+    std::fs::create_dir_all(&files).unwrap();
+    for (id, t) in [
+        ("s1", "2026-11-01T10:00:00"),
+        ("s2", "2026-11-02T10:00:00"),
+        ("s3", "2026-11-03T10:00:00"),
+    ] {
+        save_scan(&db, id, t);
+    }
+    scan_doc(&db, &files, 1, "s1", Some(SECRET_TEXT));
+    db.run_analysis(Some("s1")).unwrap();
+    let fl = db.findings().unwrap();
+    let (a, b) = (fl[0].id, fl[1].id);
+    db.conn()
+        .execute(
+            "UPDATE findings SET status = 'fixed', fixed_scan = 's3', tags_json = '[\"reopened\"]' WHERE id = ?1",
+            [a as i64],
+        )
+        .unwrap();
+    db.conn()
+        .execute(
+            "UPDATE findings SET status = 'fixed', fixed_scan = 's2' WHERE id = ?1",
+            [b as i64],
+        )
+        .unwrap();
+    db.scan_delete("s3", reanalyze).unwrap();
+    let fa = db.finding(a).unwrap();
+    assert_eq!((fa.status, fa.fixed_scan), (FindingStatus::New, None));
+    assert!(!fa.tags.iter().any(|t| t == crate::project::REOPENED_TAG));
+    db.scan_delete("s2", reanalyze).unwrap();
+    let fb = db.finding(b).unwrap();
+    assert_eq!((fb.status, fb.fixed_scan), (FindingStatus::New, None));
+    assert_eq!(db.scans().unwrap().len(), 1);
+}
+

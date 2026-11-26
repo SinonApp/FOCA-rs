@@ -168,6 +168,7 @@ impl Engine {
             "scan_pause" => Ok(json!({ "ok": self.pause("user") })),
             "scan_resume" => Ok(json!({ "ok": self.resume() })),
             "scan_status" => Ok(self.scan_status(None)),
+            "scan_delete" => self.scan_delete(&a).await,
             "oos_list" => {
                 let id = self.project_arg(&a)?;
                 self.oos_json(&id)

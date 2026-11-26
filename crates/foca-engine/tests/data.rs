@@ -8,6 +8,7 @@ mod data {
     mod files;
     mod hygiene;
     mod offline;
+    mod scan_delete;
     mod scope_bulk;
     mod toolbox;
 }

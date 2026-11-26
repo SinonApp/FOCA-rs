@@ -451,6 +451,23 @@ impl Engine {
         self.queue_emit(&self.queue_load());
     }
 
+    /// Drops the queue rows of a deleted scan. A running row pauses the queue, as a user stop
+    /// would, so the next project does not start right after the deletion.
+    pub(crate) fn queue_forget_scan(&self, scan_id: &str) {
+        let _ = self.queue_edit(|q| {
+            let was_running = q
+                .items
+                .iter()
+                .any(|i| i.scan_id.as_deref() == Some(scan_id) && i.status == "running");
+            q.items.retain(|i| i.scan_id.as_deref() != Some(scan_id));
+            if was_running {
+                q.paused = true;
+                q.pause_reason = Some("user".into());
+            }
+            Ok(())
+        });
+    }
+
     fn queue_set(&self, id: &str, f: impl FnOnce(&mut QueueItem)) -> Result<(), CmdError> {
         self.queue_edit(|q| {
             if let Some(i) = q.items.iter_mut().find(|i| i.id == id) {

@@ -16,7 +16,7 @@
   // 10: port scan (Host.ports/ports_scan, ports stage); 9: technologies in scan snapshots;
   // 8: site recon (snapshot.recon); 7: Startpage/Brave via the browser; 6: no Google CSE;
   // 5: no allow_active / "active" target marks / confirmation log.
-  const GEN_VERSION = 22;
+  const GEN_VERSION = 23;
   // User rule presets of the core (foca-analysis::rules::presets), same ids, titles and patterns.
   const DEMO_RULE_PRESETS = [
     {
@@ -7156,16 +7156,128 @@
     const { snapshot, ...rest } = s;
     return rest;
   };
+  // Like the core, results found so far carry the scan id at once (not only when the scan finishes).
+  function stampFirstScan(st, id) {
+    ["docs", "hosts", "findings"].forEach(k =>
+      (st[k] || []).forEach(x => {
+        if (!x.first_scan) x.first_scan = id;
+      }),
+    );
+  }
   function scanStop(reason = "user") {
     if (!RUN) return { ok: false };
     const st = P(RUN.project);
     const id = RUN.id;
+    stampFirstScan(st, id);
     st.scans.push(scanRecord(st, "stopped", reason)); // progress/stage, for resuming (scan_start { resume_from }).
     RUN = null;
     clearTimeout(tickT);
     persistRun();
     emit({ type: "stopped", scan_id: id, project: st.project.id, reason });
     return { ok: true };
+  }
+  // scan_delete (docs/API.md): erases one scan and what only it produced, like the core. An item first
+  // seen in the scan stays when a later scan still listed it (its snapshot) and moves to that scan;
+  // the rest goes. A running or paused scan is cancelled first.
+  function scanDelete({ project, scan_id: sid, dry_run } = {}) {
+    const st = P(project || load().settings.last_project);
+    const isRun = !!(RUN && RUN.project === st.project.id && RUN.id === sid);
+    const idx = st.scans.findIndex(x => x.id === sid);
+    if (!isRun && idx < 0) throw apiErr("not_found", `Скан ${sid} не найден`);
+    const mine = x => x.first_scan === sid || (isRun && !x.first_scan);
+    const requests = COMMANDS.request_log_get({ project: st.project.id }).filter(
+      r => r.scan_id === sid,
+    ).length;
+    if (dry_run)
+      return {
+        ok: true,
+        scan_id: sid,
+        dry_run: true,
+        docs: st.docs.filter(mine).length,
+        findings: st.findings.filter(mine).length,
+        hosts: st.hosts.filter(mine).length,
+        requests,
+        files: 0,
+      };
+    if (RUN && RUN.project === st.project.id && !isRun)
+      throw apiErr("busy", "Сначала остановите текущий скан проекта");
+    if (isRun) {
+      RUN = null;
+      clearTimeout(tickT);
+      persistRun();
+    }
+    const later = idx < 0 ? [] : st.scans.slice(idx + 1);
+    const listed = has => (later.find(has) || {}).id;
+    const settle = (arr, key) => {
+      const gone = [];
+      const keep = (arr || []).filter(x => {
+        if (!mine(x)) return true;
+        const next = listed(sc => key(sc.snapshot || EMPTY_SNAP, x));
+        if (next) x.first_scan = next;
+        else gone.push(x);
+        return !!next;
+      });
+      return [keep, gone];
+    };
+    const [docs, goneDocs] = settle(st.docs, (sn, d) => (sn.docs || []).includes(d.id));
+    const [hosts, goneHosts] = settle(st.hosts, (sn, h) => h.name in (sn.hosts || {}));
+    const [finds, goneFinds] = settle(st.findings, (sn, f) => String(f.id) in (sn.findings || {}));
+    const gd = new Set(goneDocs.map(d => d.id)),
+      gh = new Set(goneHosts.map(h => h.name)),
+      gf = new Set(goneFinds.map(f => String(f.id)));
+    st.docs = docs;
+    st.hosts = hosts;
+    st.findings = finds.filter(f => !(f.doc != null && gd.has(f.doc)));
+    st.findings.forEach(f => {
+      if (f.fixed_scan !== sid) return;
+      const reopened = (f.tags || []).includes("reopened");
+      if (later[0] && !reopened) f.fixed_scan = later[0].id;
+      else {
+        f.status = "new";
+        f.fixed_scan = null;
+        f.tags = (f.tags || []).filter(t => t !== "reopened");
+      }
+    });
+    // Entities extracted from the deleted documents.
+    Object.keys(ENT_KEY).forEach(k => {
+      if (!Array.isArray(st[k])) return;
+      st[k] = st[k].filter(e => {
+        if (k === "gps") return !gd.has(e.doc);
+        if (!Array.isArray(e.docs)) return true;
+        const had = e.docs.length;
+        e.docs = e.docs.filter(d => !gd.has(typeof d === "object" ? d.id : d));
+        return !had || e.docs.length > 0;
+      });
+    });
+    st.events = deriveEvents(st);
+    const people = new Set(goneDocs.map(d => d.author).filter(Boolean));
+    st.docs.forEach(d => people.delete(d.author));
+    st.scans = st.scans.filter(x => x.id !== sid);
+    let prev = idx > 0 ? st.scans[idx - 1].snapshot : null;
+    st.scans.forEach((x, i) => {
+      if (i < Math.max(0, idx)) return;
+      const sn = x.snapshot || clone(EMPTY_SNAP);
+      sn.docs = (sn.docs || []).filter(d => !gd.has(d));
+      sn.people = (sn.people || []).filter(p => !people.has(p));
+      gh.forEach(h => delete (sn.hosts || {})[h]);
+      gf.forEach(f => delete (sn.findings || {})[f]);
+      const { snapshot, ...counts } = countsOf(sn, prev);
+      Object.assign(x, i === idx ? counts : { ...counts, new_findings: x.new_findings, added: x.added });
+      x.snapshot = snapshot;
+      prev = sn;
+    });
+    save();
+    if (isRun) emit({ type: "stopped", scan_id: sid, project: st.project.id, reason: "deleted" });
+    return {
+      ok: true,
+      scan_id: sid,
+      dry_run: false,
+      docs: goneDocs.length,
+      findings: goneFinds.length,
+      hosts: goneHosts.length,
+      requests,
+      files: goneDocs.filter(d => d.status !== "error").length,
+    };
   }
   // The running scan is kept in state (STATE.run) so that after an app restart it can be recorded as
   // interrupted.
@@ -7183,6 +7295,7 @@
     const st = r && STATE.projects[r.project];
     if (!st) return;
     RUN = { ...r, paused: false };
+    stampFirstScan(st, r.id);
     st.scans = st.scans.filter(s => s.id !== r.id);
     st.scans.push(scanRecord(st, "stopped", "restart"));
     RUN = null;
@@ -9717,6 +9830,7 @@
     },
     scan_start: a => scanStart(a),
     scan_stop: ({ reason } = {}) => scanStop(reason),
+    scan_delete: a => scanDelete(a),
     scan_pause: () => {
       if (RUN) RUN.paused = true;
       return { ok: !!RUN };

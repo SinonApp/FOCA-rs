@@ -35,6 +35,8 @@ Each project represents one assessment (one organization or client engagement). 
 
 From the Projects screen (`/projects`), you can create, open, duplicate, delete, or transfer projects using encrypted `.foca.enc` bundles (see [Encrypted `.foca.enc` bundles](data-and-reports.md#encrypted-focaenc-project-bundles)). Each project card shows its overall risk score and counters from the latest scan.
 
+To delete a single scan, open it in the scan history on the Scan screen (or the card of a stopped or paused scan), tap Delete scan and hold Delete. The scan is erased with everything only it produced: downloaded documents and their files (wiped), findings, hosts and the request log. Anything a later scan also listed stays, with your notes, tags and statuses; a paused scan is stopped first and can no longer be resumed.
+
 Inside a project, the bottom bar provides Overview · Findings · Data · Reports. The overflow menu (⋮) opens projects, scope, search rules, project tools (link graph, attack paths, internal network map, GPS map, timeline, diff, monitoring, pre-publication check, AI summary), quick tools, scan queue, settings, and offline help.
 
 ## Scope: Honest Network Targets & Exclusions

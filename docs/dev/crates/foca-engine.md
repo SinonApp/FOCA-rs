@@ -81,6 +81,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `cmds/findings.rs` | 202 | Finding status, edits, photos, playbooks |
 | `cmds/documents.rs` | 234 | Files, deletion, local import, secret reveal, breach checks |
 | `cmds/reports.rs` | 552 | Report and export build, list, verify, delete |
+| `cmds/scans.rs` | 329 | `scan_delete`: cancels a running scan, prunes per-scan engine state, wipes files, rewrites the remaining history |
 | `cmds/ai.rs` | 766 | AI summary: provider requests, model lists, stored summary |
 | `cmds/config.rs` | 234 | API keys, network checks, UI dictionary |
 | `cmds/security.rs` | 154 | PIN and wipe-all |

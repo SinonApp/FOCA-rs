@@ -19713,6 +19713,53 @@
     }
    }
   },
+  "scan_delete": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "ok": {
+     "t": [
+      "bool"
+     ]
+    },
+    "scan_id": {
+     "t": [
+      "string"
+     ]
+    },
+    "dry_run": {
+     "t": [
+      "bool"
+     ]
+    },
+    "docs": {
+     "t": [
+      "number"
+     ]
+    },
+    "findings": {
+     "t": [
+      "number"
+     ]
+    },
+    "hosts": {
+     "t": [
+      "number"
+     ]
+    },
+    "requests": {
+     "t": [
+      "number"
+     ]
+    },
+    "files": {
+     "t": [
+      "number"
+     ]
+    }
+   }
+  },
   "pin_set": {
    "t": [
     "object"

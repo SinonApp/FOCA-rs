@@ -638,6 +638,11 @@
         scan.running = false;
         scan.paused = false;
         scan.endedAt = Date.now();
+        if (ev.reason === "deleted") {
+          // scan_delete cancelled the running scan: nothing to resume, the deleting screen refreshes itself
+          scan.stopped = null;
+          break;
+        }
         scan.stopped = {
           scanId: ev.scan_id,
           project: ev.project,
@@ -1122,6 +1127,9 @@
     return `<div class="banner warn scn-pbn"
       id="scn-pbn">${ic(R.icon)}<div><b>${esc(R.label || R.title)}</b><div>${esc(R.text)}</div></div></div>`;
   }
+  // "Delete scan" (history sheet, stopped card, paused scan): opens the hold-to-confirm sheet.
+  const delBtn = id =>
+    `<button class="btn text crit block scn-del" data-act="scan-del:${esc(id)}">${ic("trash")}${esc(F.t("scan.delete_scan", "Удалить скан"))}</button>`;
   function ctlHTML() {
     const s = F.scan;
     return `${pauseBanner()}<div class="btnrow">
@@ -1133,7 +1141,7 @@
           data-act="scan-pause">${ic("pause")}${esc(F.t("scan.pause", "Пауза"))}</button>`
         }
         <button class="btn danger-o scn-stop" data-act="scan-stop">${ic("stop")}${esc(F.t("scan.stop", "Стоп"))}</button>
-      </div>`;
+      </div>${s.paused && s.scanId ? delBtn(s.scanId) : ""}`;
   }
   function killText() {
     const net = settings().net || {};
@@ -1879,7 +1887,7 @@
       <div class="pbar scn-hpb paused"><i style="width:${st.progress}%"></i></div>
       <div class="btnrow"><button class="btn primary"
         data-act="scan-continue">${ic("play")}${esc(F.t("scan.resume", "Продолжить"))}</button><button class="btn"
-        data-act="go:/p/scan-stopped">${esc(F.t("common.details", "Подробнее"))}</button></div></div>`;
+        data-act="go:/p/scan-stopped">${esc(F.t("common.details", "Подробнее"))}</button></div>${delBtn(st.scanId)}</div>`;
   }
   function renderIdle() {
     const hist = (F.db.scans || []).slice().reverse();
@@ -2247,10 +2255,71 @@
           <div class="kvr"><div class="k">${esc(F.t("scan.kv_targets", "Цели"))}</div><div class="v">${esc(rec.targets.join(", ") || "-")}</div></div>
           <div class="kvr"><div class="k">${esc(F.t("scan.sources", "Источники"))}</div><div class="v">${esc(F.t("scan.kv_src_ok", { ok: okS.length, n: rec.sources.length }, "{ok} из {n} OK"))}${bad.length ? " · " + esc(F.t("scan.kv_src_bad", { list: bad.map(sn).join(", ") }, "без ключа или с ошибкой: {list}")) : ""}</div></div>
           <div class="kvr"><div class="k">${esc(F.t("scan.egress", "Выходной IP"))}</div><div class="v">${esc(rec.egress)}</div></div>
-        </div>`,
+        </div>
+        ${delBtn(rec.id)}`,
       footer: `<button class="btn" data-act="sheet-close">${esc(F.t("common.close", "Закрыть"))}</button><button class="btn primary"
         data-act="go:/p/findings">${ic("bug")}${esc(F.t("scan.findings", "Находки"))}</button>`,
     });
+  };
+  // ---------- delete one scan (scan_delete) ----------
+  // The sheet shows what goes, from a dry run of the core; results a later scan also has stay.
+  const delCounts = r =>
+    [
+      [F.t("scan.kv_docs", "Документы"), r.docs],
+      [F.t("scan.findings", "Находки"), r.findings],
+      [F.t("scan.kv_hosts", "Хосты"), r.hosts],
+      [F.t("scan.del_requests", "Записи журнала"), r.requests],
+    ]
+      .map(
+        ([k, n]) =>
+          `<div class="kvr"><div class="k">${esc(k)}</div><div class="v">${num(n || 0)}</div></div>`,
+      )
+      .join("");
+  F.actions["scan-del"] = id => {
+    const rec = scanRec(id);
+    const live = F.scan.running && F.scan.scanId === id;
+    const title = rec
+      ? F.t("scan.delete_scan_date", { date: rec.date }, "Удалить скан {date}?")
+      : F.t("scan.delete_scan_q", "Удалить скан?");
+    const open = counts =>
+      F.sheet({
+        cls: "la-sheet scn-del-sh",
+        title,
+        html: `<div class="banner crit">${ic("alert")}<div>${esc(live ? F.t("scan.delete_running_text", "Скан будет остановлен и стёрт вместе со всем, что он успел найти: документами и их файлами, находками, хостами и журналом запросов. Отменить нельзя.") : F.t("scan.delete_text", "Скан будет стёрт вместе со всем, что нашёл только он: документами и их файлами, находками, хостами и журналом запросов. Отменить нельзя."))}</div></div>
+          ${counts ? `<div class="kv scn-del-g">${delCounts(counts)}</div>` : ""}
+          <p class="pj-sh-sub">${esc(F.t("scan.delete_keeps", "То, что нашли и другие сканы, останется вместе с вашими заметками и статусами."))}</p>
+          <p class="pj-sh-sub">${esc(F.t("scan.delete_hold", "Чтобы удалить, удерживайте кнопку «Удалить» 1-2 секунды."))}</p>`,
+        footer: `<button class="btn"
+          data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn danger hold"
+          data-hold="scan-del-go:${esc(id)}"><span class="hold-fill"></span>${ic("trash")}${esc(F.t("common.delete", "Удалить"))}</button>`,
+      });
+    if (F.closeSheet) F.closeSheet();
+    F.api.scan_delete(id, true).then(open, () => open(null));
+  };
+  F.actions["scan-del-go"] = id => {
+    F.closeSheet();
+    const s = F.scan;
+    F.api.scan_delete(id).then(
+      r => {
+        if (s.scanId === id) Object.assign(s, { running: false, paused: false, stopped: null });
+        if (s.stopped && s.stopped.scanId === id) s.stopped = null;
+        if (s.finished && s.finished.scanId === id) s.finished = null;
+        if (F.cur && F.cur.path.startsWith("/p/scan-stopped")) F.go("/p/scan", { replace: true });
+        else F.render(true);
+        F.updateChrome();
+        F.snack(
+          F.t(
+            "scan.deleted_snack",
+            { docs: r.docs || 0, findings: r.findings || 0 },
+            "Скан удалён: документов {docs}, находок {findings}",
+          ),
+        );
+      },
+      e =>
+        F.snack(
+          F.t("scan.delete_failed", "Не удалось удалить скан: ") + F.coreMsg(e.message || e, e.message_msg),
+        ),
+    );
   };
   F.actions["scan-menu"] = () => {
     const scan = F.scan;
@@ -2361,6 +2430,7 @@
           ${extra ? `<div class="btnrow">${extra}</div>` : ""}
           ${st.reason === "restart" ? `<div class="banner info scn-pin">${ic("info")}<div>${esc(F.t("scan.xiaomi_pin", "На Xiaomi (HyperOS/MIUI) смахивание из «Недавних» останавливает скан. Включите «Скрывать из „Недавних“ во время скана» в Настройках › Работа в фоне или закрепите карточку: зажмите её и нажмите замок."))}</div></div>` : ""}
           <button class="btn text block" data-act="scan-restart">${ic("refresh")}${esc(F.t("scan.restart", "Начать заново"))}</button>
+          ${delBtn(st.scanId)}
         </div>
       </div>
       ${ui.secH(F.t("scan.done_so_far", "Что успели"), "", `<span class="muted scn-sgh">${esc(F.t("scan.this_scan", "за этот скан"))}</span>`)}

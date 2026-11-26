@@ -660,6 +660,17 @@ async fn contract_shape_matches_demo_backend_inner() {
             "http_status only for http errors: {d}"
         );
     }
+    // deleting one scan: what it would remove, then the deletion (everything is wiped next)
+    c!(
+        "scan_delete",
+        "scan_delete",
+        json!({ "project": id, "scan_id": stp["id"], "dry_run": true })
+    );
+    c!(
+        "scan_delete",
+        "scan_delete",
+        json!({ "project": id, "scan_id": stp["id"] })
+    );
     c!("wipe_all", "wipe_all", json!({ "confirm": "WIPE" }));
 
     let mut r = Report::default();

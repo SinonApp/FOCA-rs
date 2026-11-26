@@ -11,6 +11,7 @@
 //! live in the Android Keystore. Secrets found in documents are stored because the report
 //! needs them, but they are masked in `Debug`/`Display` ([`foca_core::api::SecretValue`]).
 
+mod erase;
 pub mod lock;
 pub mod project;
 pub mod schema;
@@ -26,6 +27,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+pub use erase::ScanErase;
 pub use lock::{DataDirLock, LockOwner};
 pub use project::{
     AddDoc, DocAdded, DocErrorKind, FindingPatch, ProjectDb, RequestLog, Task, TaskCounts,
@@ -127,6 +129,19 @@ fn zero_fill<W: std::io::Write>(w: &mut W, len: u64) -> std::io::Result<()> {
         left -= n as u64;
     }
     w.flush()
+}
+
+/// Overwrites a file with zeros, syncs it and removes it; a missing file is not an error. Used for
+/// project databases and for document files of a deleted scan.
+pub fn wipe_file(path: &std::path::Path) -> std::io::Result<()> {
+    let Ok(meta) = std::fs::metadata(path) else {
+        return Ok(());
+    };
+    let mut f = std::fs::OpenOptions::new().write(true).open(path)?;
+    zero_fill(&mut f, meta.len())?;
+    f.sync_all()?;
+    drop(f);
+    std::fs::remove_file(path)
 }
 
 /// Removes a project database together with its WAL/SHM side files, ignoring errors.
@@ -449,13 +464,7 @@ impl Store {
             PathBuf::from(format!("{}-wal", path.display())),
             PathBuf::from(format!("{}-shm", path.display())),
         ] {
-            if let Ok(meta) = std::fs::metadata(&p) {
-                let mut f = std::fs::OpenOptions::new().write(true).open(&p)?;
-                zero_fill(&mut f, meta.len())?;
-                f.sync_all()?;
-                drop(f);
-                std::fs::remove_file(&p)?;
-            }
+            wipe_file(&p)?;
         }
         self.index
             .execute("DELETE FROM projects WHERE id = ?1", [id])?;

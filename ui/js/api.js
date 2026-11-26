@@ -724,6 +724,16 @@
     // --- scan (events arrive via F.on("scan")) ---
     scan_start: opts => run("scan_start", { project: cur(), ...opts }),
     scan_stop: reason => run("scan_stop", { reason }),
+    // Deletes one scan and everything only it produced (docs/API.md → scan_delete). dryRun: counts only.
+    scan_delete: (scanId, dryRun = false) =>
+      dryRun
+        ? run("scan_delete", { project: cur(), scan_id: scanId, dry_run: true })
+        : run("scan_delete", { project: cur(), scan_id: scanId }).then(r =>
+            reload("data").then(() => {
+              refreshList();
+              return r;
+            }),
+          ),
     // netHint: pause/resume caused by a native network event. Environment pauses are governed by the core's
     // policy and are not a user decision (src-tauri/src/policy.rs).
     scan_pause: () => run("scan_pause", netHint ? { reason: netHint } : {}),

@@ -1043,6 +1043,10 @@ html[data-theme="light"] .seg button.on {
   color: var(--accent);
   padding: 0 10px;
 }
+/* Destructive text button (e.g. "Delete scan" under the main actions). */
+.btn.text.crit {
+  color: var(--crit);
+}
 .btn.block {
   width: 100%;
 }

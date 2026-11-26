@@ -918,5 +918,15 @@
   "scan.ctl_l_pause": "Pause",
   "scan.ctl_l_resume": "Resume",
   "scan.ctl_l_skip": "Skip",
-  "scan.ctl_l_restart": "Restart"
+  "scan.ctl_l_restart": "Restart",
+  "scan.delete_scan": "Delete scan",
+  "scan.delete_scan_date": "Delete the scan of {date}?",
+  "scan.delete_scan_q": "Delete this scan?",
+  "scan.delete_running_text": "The scan will be stopped and erased with everything it found so far: documents and their files, findings, hosts and the request log. This cannot be undone.",
+  "scan.delete_text": "The scan will be erased with everything only it found: documents and their files, findings, hosts and the request log. This cannot be undone.",
+  "scan.delete_keeps": "Anything other scans also found stays, with your notes and statuses.",
+  "scan.delete_hold": "To delete, hold the Delete button for 1-2 seconds.",
+  "scan.del_requests": "Log entries",
+  "scan.deleted_snack": "Scan deleted: {docs} documents, {findings} findings",
+  "scan.delete_failed": "Could not delete the scan: "
 }

@@ -191,6 +191,9 @@ put("queue_list", call("queue_list"));
 put("queue_remove", call("queue_remove", { id: qa.items[0].id }));
 put("queue_clear", call("queue_clear", {}));
 put("queue_resume", call("queue_resume"));
+// Deleting one scan: what it would remove, then the deletion itself
+put("scan_delete", call("scan_delete", { project: "agro", scan_id: stp.id, dry_run: true }));
+put("scan_delete", call("scan_delete", { project: "agro", scan_id: stp.id }));
 put("pin_set", call("pin_set", { pin: "2580" }));
 put("pin_check", call("pin_check", { pin: "0000" }));
 put("wipe_all", call("wipe_all", { confirm: "WIPE" }));
