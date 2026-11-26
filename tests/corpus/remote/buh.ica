@@ -1,0 +1,16 @@
+[WFClient]
+Version=2
+ProxyType=Auto
+HttpBrowserAddress=ctx.contoso.example:8080
+
+[ApplicationServers]
+1C Бухгалтерія=
+
+[1C Бухгалтерія]
+Address=10.10.1.40:1494
+InitialProgram=#1C Бухгалтерія
+WorkDirectory=C:\Users\o.kovalenko\AppData\Local\1C
+Username=o.kovalenko
+Domain=CONTOSO
+ClearPassword=Buh2023!
+SSLProxyHost=*:443

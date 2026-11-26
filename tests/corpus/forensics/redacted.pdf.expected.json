@@ -1,0 +1,49 @@
+{
+  "bad_redactions": [
+    {
+      "fill": "black",
+      "page": 1,
+      "rect": [
+        70.0,
+        695.0,
+        330.0,
+        713.0
+      ],
+      "text": "Passport AB123456 Ivan Petrenko"
+    },
+    {
+      "fill": "white",
+      "page": 1,
+      "rect": [
+        70.0,
+        655.0,
+        270.0,
+        671.0
+      ],
+      "text": "Phone +380 44 000 00 00"
+    },
+    {
+      "fill": "black",
+      "page": 2,
+      "rect": [
+        70.0,
+        695.0,
+        330.0,
+        715.0
+      ],
+      "text": "Account UA00 0000 0000 secret"
+    }
+  ],
+  "fields": {
+    "pdf:version": "1.7"
+  },
+  "format": "pdf",
+  "incremental_updates": 0,
+  "producer": "FOCA-rs fixture",
+  "software": [
+    "FOCA-rs fixture"
+  ],
+  "stats": {
+    "pages": 2
+  }
+}

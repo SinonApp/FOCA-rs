@@ -1,0 +1,15 @@
+# Синтетическая зона (имя ТИП значение) для офлайн-тестов DNS-сводки, SPF/DMARC/DKIM и takeover.
+contoso.example A 192.0.2.10
+contoso.example MX 10 mail.contoso.example
+contoso.example NS ns1.contoso.example
+contoso.example NS ns2.contoso.example
+contoso.example TXT "v=spf1 ip4:192.0.2.0/24 include:spf.protection.outlook.com ~all"
+contoso.example TXT "google-site-verification=abc"
+contoso.example SOA ns1.contoso.example. hostmaster.contoso.example. 2026111901 3600 600 1209600 300
+_dmarc.contoso.example TXT "v=DMARC1; p=none; rua=mailto:dmarc@contoso.example"
+selector1._domainkey.contoso.example TXT "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC"
+10.2.0.192.in-addr.arpa PTR web01.contoso.example
+_autodiscover._tcp.contoso.example SRV 0 0 443 mail.contoso.example
+www.contoso.example CNAME contoso-old.azurewebsites.net
+old.contoso.example CNAME contoso-example.azurewebsites.net
+mail.contoso.example A 192.0.2.20

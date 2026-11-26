@@ -1,0 +1,27 @@
+[package]
+name = "foca-fuzz"
+description = "FOCA-rs content discovery for authorized audits: forgotten documents, backups and exposed files on the client's own site (ffuf-style calibration, SecLists wordlists, polite limits, auto-stop)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+foca-core.workspace = true
+foca-net.workspace = true
+foca-analysis.workspace = true
+foca-recon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+url.workspace = true
+regex.workspace = true
+flate2.workspace = true
+sha2.workspace = true
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tempfile.workspace = true

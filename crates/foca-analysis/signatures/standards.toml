@@ -1,0 +1,792 @@
+# Finding rule → security standards (declarative, loaded by `foca_analysis::standards`).
+#
+# Every field is optional; a rule lists only correspondences that hold without a stretch.
+# Sources (checked against the primary documents, see docs/STANDARDS.md):
+#   mitre   : MITRE ATT&CK Enterprise v20 technique ids (same ids the rules already emit); none
+#              is revoked or deprecated in the v20.0 STIX bundle.
+#   cwe     : MITRE CWE ids; ids in the 2025 CWE Top 25 are flagged (`standards::CWE_TOP25_2025`).
+#   owasp   : OWASP Top 10:2025 category; only when one of the rule's CWE ids is listed by OWASP
+#              under that category (A03 also for vulnerable components without a CWE).
+#              2021 → 2025: A01 → A01, A02 → A04, A05 → A02, A06 → A03, A07 → A07.
+#   wstg    : OWASP Web Security Testing Guide v4.2 (stable) test ids. The ids shift
+#              between WSTG versions (e.g. CONF-12 differs in v4.2 and in "latest").
+#   iso27001: ISO/IEC 27001:2022 Annex A controls (adopted in Ukraine as ДСТУ ISO/IEC
+#              27001:2023, IDT).
+#   nist    : NIST SP 800-53 Rev. 5 (5.2.0) control ids. The НД ТЗІ 3.6-006-24 catalogue uses
+#              the same measure codes; every id here is listed in its section 9.
+#   privacy : personal data law articles for findings that expose personal data (GDPR,
+#              Law of Ukraine No. 2297-VI "On Personal Data Protection").
+#   ndtzi   : НД ТЗІ 2.5-004-99 functional security services (codes from section 4). Legacy:
+#              for systems certified under КСЗІ. A code is given only where the finding shows a
+#              failure of exactly that function of the protection complex (КЗЗ).
+#   kszi    : НД ТЗІ 3.7-003-05 clause (stage/work of creating a КСЗІ) whose results the
+#              finding feeds. Legacy: for systems certified under КСЗІ.
+#
+# The mapping is a guide for the auditor, not a conclusion of a КСЗІ expert examination.
+
+[disclaimer]
+uk = "Відповідність стандартам є орієнтиром для аудитора і не є висновком державної експертизи КСЗІ чи атестації. Остаточну оцінку відповідності робить уповноважений експерт за первинними документами."
+ru = "Соответствие стандартам: ориентир для аудитора, а не заключение государственной экспертизы КСЗИ или аттестации. Окончательную оценку соответствия делает уполномоченный эксперт по первоисточникам."
+en = "The standards mapping is a guide for the auditor, not the conclusion of a state КСЗІ (complex information security system) examination or certification. The final conformity assessment is made by an authorised expert against the primary documents."
+
+# ── ISO/IEC 27001:2022 Annex A controls used below ─────────────────────────────────────────
+[iso27001]
+"5.9" = "Inventory of information and other associated assets"
+"5.12" = "Classification of information"
+"5.17" = "Authentication information"
+"5.23" = "Information security for use of cloud services"
+"5.34" = "Privacy and protection of PII"
+"6.3" = "Information security awareness, education and training"
+"8.7" = "Protection against malware"
+"8.8" = "Management of technical vulnerabilities"
+"8.9" = "Configuration management"
+"8.10" = "Information deletion"
+"8.11" = "Data masking"
+"8.12" = "Data leakage prevention"
+"8.20" = "Networks security"
+"8.21" = "Security of network services"
+"8.22" = "Segregation of networks"
+"8.24" = "Use of cryptography"
+"8.26" = "Application security requirements"
+"8.28" = "Secure coding"
+
+# ── NIST SP 800-53 Rev. 5 controls used below (en: NIST title, uk: НД ТЗІ 3.6-006-24 name) ──
+[nist."AC-3"]
+en = "Access Enforcement"
+uk = "Забезпечення доступу"
+ru = "Обеспечение доступа"
+[nist."AC-4"]
+en = "Information Flow Enforcement"
+uk = "Управління інформаційними потоками"
+ru = "Управление информационными потоками"
+[nist."AC-22"]
+en = "Publicly Accessible Content"
+uk = "Публічно доступний контент"
+ru = "Публично доступный контент"
+[nist."AT-2(3)"]
+en = "Literacy Training and Awareness | Social Engineering and Mining"
+uk = "Соціальна інженерія та соціальний інтелектуальний аналіз даних"
+ru = "Социальная инженерия и сбор сведений"
+[nist."CM-7"]
+en = "Least Functionality"
+uk = "Мінімально необхідна функціональність"
+ru = "Минимально необходимая функциональность"
+[nist."IA-5(7)"]
+en = "Authenticator Management | No Embedded Unencrypted Static Authenticators"
+uk = "Відсутність вбудованих незашифрованих статичних автентифікаторів"
+ru = "Отсутствие встроенных незашифрованных статических аутентификаторов"
+[nist."RA-5"]
+en = "Vulnerability Monitoring and Scanning"
+uk = "Сканування вразливостей"
+ru = "Мониторинг и сканирование уязвимостей"
+[nist."SA-22"]
+en = "Unsupported System Components"
+uk = "Компоненти системи, що не підтримуються"
+ru = "Неподдерживаемые компоненты системы"
+[nist."SC-7"]
+en = "Boundary Protection"
+uk = "Захист периметра"
+ru = "Защита периметра"
+[nist."SC-8"]
+en = "Transmission Confidentiality and Integrity"
+uk = "Конфіденційність та цілісність передачі"
+ru = "Конфиденциальность и целостность передачи"
+[nist."SC-12"]
+en = "Cryptographic Key Establishment and Management"
+uk = "Встановлення та управління криптографічними ключами"
+ru = "Установление и управление криптографическими ключами"
+[nist."SC-13"]
+en = "Cryptographic Protection"
+uk = "Криптографічний захист"
+ru = "Криптографическая защита"
+[nist."SC-17"]
+en = "Public Key Infrastructure Certificates"
+uk = "Сертифікати інфраструктури відкритих ключів"
+ru = "Сертификаты инфраструктуры открытых ключей"
+[nist."SC-18"]
+en = "Mobile Code"
+uk = "Мобільний код"
+ru = "Мобильный код"
+[nist."SC-23"]
+en = "Session Authenticity"
+uk = "Автентифікація сесії"
+ru = "Аутентичность сеанса"
+[nist."SI-2"]
+en = "Flaw Remediation"
+uk = "Виправлення дефектів"
+ru = "Устранение дефектов"
+[nist."SI-10"]
+en = "Information Input Validation"
+uk = "Перевірка вводу інформації"
+ru = "Проверка вводимой информации"
+[nist."SI-12(1)"]
+en = "Information Management and Retention | Limit Personally Identifiable Information Elements"
+uk = "Обмеження елементів персональних даних"
+ru = "Ограничение состава персональных данных"
+
+# ── Personal data law articles used below ──────────────────────────────────────────────────
+[privacy."gdpr-5-1-c"]
+code = "GDPR Art. 5(1)(c)"
+uk = "GDPR, ст. 5(1)(c): мінімізація даних"
+ru = "GDPR, ст. 5(1)(c): минимизация данных"
+en = "GDPR Art. 5(1)(c): data minimisation"
+[privacy."gdpr-5-1-f"]
+code = "GDPR Art. 5(1)(f)"
+uk = "GDPR, ст. 5(1)(f): цілісність і конфіденційність"
+ru = "GDPR, ст. 5(1)(f): целостность и конфиденциальность"
+en = "GDPR Art. 5(1)(f): integrity and confidentiality"
+[privacy."gdpr-32"]
+code = "GDPR Art. 32"
+uk = "GDPR, ст. 32: безпека обробки"
+ru = "GDPR, ст. 32: безопасность обработки"
+en = "GDPR Art. 32: security of processing"
+[privacy."ua2297-6"]
+code = "2297-VI ст. 6"
+uk = "Закон України № 2297-VI «Про захист персональних даних», ст. 6 ч. 3: склад даних відповідний, адекватний і ненадмірний"
+ru = "Закон Украины № 2297-VI «О защите персональных данных», ст. 6 ч. 3: состав данных соответствующий, адекватный и неизбыточный"
+en = "Law of Ukraine No. 2297-VI \"On Personal Data Protection\", Art. 6(3): data relevant, adequate and not excessive"
+[privacy."ua2297-24"]
+code = "2297-VI ст. 24"
+uk = "Закон України № 2297-VI «Про захист персональних даних», ст. 24: забезпечення захисту персональних даних"
+ru = "Закон Украины № 2297-VI «О защите персональных данных», ст. 24: обеспечение защиты персональных данных"
+en = "Law of Ukraine No. 2297-VI \"On Personal Data Protection\", Art. 24: protection of personal data"
+
+# ── НД ТЗІ 2.5-004-99 functional services used below (legacy, clause in the document) ─────
+[ndtzi."КА"]
+clause = "6.2"
+uk = "Адміністративна конфіденційність"
+ru = "Административная конфиденциальность"
+en = "Administrative confidentiality"
+[ndtzi."КВ"]
+clause = "6.5"
+uk = "Конфіденційність при обміні"
+ru = "Конфиденциальность при обмене"
+en = "Confidentiality during exchange"
+[ndtzi."ЦВ"]
+clause = "7.4"
+uk = "Цілісність при обміні"
+ru = "Целостность при обмене"
+en = "Integrity during exchange"
+[ndtzi."НИ"]
+clause = "9.2"
+uk = "Ідентифікація і автентифікація"
+ru = "Идентификация и аутентификация"
+en = "Identification and authentication"
+[ndtzi."НА"]
+clause = "9.8"
+uk = "Автентифікація відправника"
+ru = "Аутентификация отправителя"
+en = "Sender authentication"
+
+# ── НД ТЗІ 3.7-003-05 clauses used below (legacy) ──────────────────────────────────────────
+[kszi."6.1.2.4"]
+uk = "Обстеження обчислювальної системи ІТС"
+ru = "Обследование вычислительной системы ИТС"
+en = "Survey of the ITS computing system"
+[kszi."6.1.2.5"]
+uk = "Обстеження інформаційного середовища"
+ru = "Обследование информационной среды"
+en = "Survey of the information environment"
+[kszi."6.1.2.7"]
+uk = "Обстеження середовища користувачів"
+ru = "Обследование среды пользователей"
+en = "Survey of the user environment"
+[kszi."6.6"]
+uk = "Супроводження КСЗІ"
+ru = "Сопровождение КСЗИ"
+en = "КСЗІ maintenance"
+
+# ── Document metadata ──────────────────────────────────────────────────────────────────────
+[[rule]]
+id = "internal-addresses"
+mitre = ["T1590.005"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "remote-file"
+mitre = ["T1590.002"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "internal-paths"
+mitre = ["T1592"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "internal-pcs"
+mitre = ["T1590"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "eol-software"
+cwe = ["CWE-1104"]
+owasp = ["A03:2025"]
+iso27001 = ["8.8"]
+kszi = ["6.1.2.4"]
+nist = ["SA-22"]
+
+[[rule]]
+id = "eol-os"
+mitre = ["T1592.002"]
+cwe = ["CWE-1104"]
+owasp = ["A03:2025"]
+iso27001 = ["8.8"]
+kszi = ["6.1.2.4"]
+nist = ["SA-22"]
+
+[[rule]]
+id = "revisions"
+mitre = ["T1213"]
+cwe = ["CWE-212"]
+iso27001 = ["8.10", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "pdf-revisions"
+mitre = ["T1213"]
+cwe = ["CWE-212"]
+iso27001 = ["8.10", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "thumbnail"
+cwe = ["CWE-212"]
+iso27001 = ["8.10", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "hidden-sheets"
+mitre = ["T1213"]
+cwe = ["CWE-212"]
+iso27001 = ["8.10", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "macros"
+mitre = ["T1059.005"]
+iso27001 = ["8.7"]
+nist = ["SC-18"]
+
+[[rule]]
+id = "pdf-javascript"
+mitre = ["T1204.002"]
+iso27001 = ["8.7"]
+nist = ["SC-18"]
+
+[[rule]]
+id = "gps"
+mitre = ["T1591.001"]
+cwe = ["CWE-359"]
+owasp = ["A01:2025"]
+iso27001 = ["5.34", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22", "SI-12(1)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+[[rule]]
+id = "mass-names"
+mitre = ["T1589.003"]
+cwe = ["CWE-359"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["5.34", "8.12"]
+kszi = ["6.1.2.7"]
+nist = ["AC-22", "SI-12(1)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+[[rule]]
+id = "service-accounts"
+mitre = ["T1087"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.7"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "email-pattern"
+mitre = ["T1589.002"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["6.3"]
+kszi = ["6.1.2.7"]
+nist = ["AT-2(3)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+[[rule]]
+id = "pii"
+mitre = ["T1213"]
+cwe = ["CWE-359"]
+owasp = ["A01:2025"]
+iso27001 = ["5.34", "8.11", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22", "SI-12(1)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+# ── Secrets ────────────────────────────────────────────────────────────────────────────────
+[[rule]]
+id = "secret"
+mitre = ["T1552.001"]
+cwe = ["CWE-798"]
+owasp = ["A07:2025"]
+wstg = ["WSTG-INFO-01"]
+iso27001 = ["5.17", "8.12"]
+ndtzi = ["НИ"]
+kszi = ["6.1.2.5"]
+nist = ["IA-5(7)"]
+
+[[rule]]
+id = "rdp-password"
+mitre = ["T1552.001"]
+cwe = ["CWE-256"]
+owasp = ["A06:2025"]
+iso27001 = ["5.17", "8.12"]
+ndtzi = ["НИ"]
+kszi = ["6.1.2.5"]
+nist = ["IA-5(7)"]
+
+[[rule]]
+id = "ica-password"
+mitre = ["T1552.001"]
+cwe = ["CWE-256"]
+owasp = ["A06:2025"]
+iso27001 = ["5.17", "8.12"]
+ndtzi = ["НИ"]
+kszi = ["6.1.2.5"]
+nist = ["IA-5(7)"]
+
+[[rule]]
+id = "recon.js_secret"
+mitre = ["T1552.001"]
+cwe = ["CWE-798"]
+owasp = ["A07:2025"]
+wstg = ["WSTG-INFO-05"]
+iso27001 = ["5.17", "8.28"]
+ndtzi = ["НИ"]
+nist = ["IA-5(7)"]
+
+# ── Document forensics ─────────────────────────────────────────────────────────────────────
+[[rule]]
+id = "doc.bad_redaction"
+mitre = ["T1213"]
+cwe = ["CWE-212"]
+iso27001 = ["8.11", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.hidden_content"
+mitre = ["T1213"]
+cwe = ["CWE-212"]
+iso27001 = ["8.10", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.pdf_removed_text"
+mitre = ["T1213"]
+cwe = ["CWE-212"]
+iso27001 = ["8.10", "8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.pdf_revision_authors"
+cwe = ["CWE-212"]
+iso27001 = ["8.10"]
+kszi = ["6.1.2.7"]
+nist = ["AC-22", "SI-12(1)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+[[rule]]
+id = "doc.modified_after_signing"
+mitre = ["T1565.001"]
+iso27001 = ["8.24"]
+ndtzi = ["ЦВ", "НА"]
+kszi = ["6.1.2.5"]
+
+[[rule]]
+id = "doc.signature_digest_mismatch"
+mitre = ["T1565.001"]
+iso27001 = ["8.24"]
+ndtzi = ["ЦВ", "НА"]
+kszi = ["6.1.2.5"]
+
+[[rule]]
+id = "doc.signer_identity"
+mitre = ["T1589.001"]
+iso27001 = ["5.34"]
+kszi = ["6.1.2.7"]
+nist = ["SI-12(1)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+[[rule]]
+id = "doc.signature_tsa_gap"
+iso27001 = ["8.24"]
+ndtzi = ["НА"]
+
+[[rule]]
+id = "doc.data_connection"
+mitre = ["T1590"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.lnk_host_mac"
+mitre = ["T1592.001"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.lnk_unc_path"
+mitre = ["T1135"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.lineage"
+iso27001 = ["5.9", "5.12"]
+kszi = ["6.1.2.5"]
+
+[[rule]]
+id = "mail.internal_relay"
+mitre = ["T1590.005"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+iso27001 = ["8.12", "8.21"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "mail.originating_ip"
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+iso27001 = ["8.21"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "mail.reply_to_mismatch"
+mitre = ["T1566"]
+iso27001 = ["6.3"]
+kszi = ["6.1.2.7"]
+nist = ["AT-2(3)"]
+
+[[rule]]
+id = "pim.contact_pii"
+cwe = ["CWE-359"]
+owasp = ["A01:2025"]
+iso27001 = ["5.34", "8.12"]
+kszi = ["6.1.2.7"]
+nist = ["AC-22", "SI-12(1)"]
+privacy = ["gdpr-5-1-c", "gdpr-5-1-f", "gdpr-32", "ua2297-6", "ua2297-24"]
+
+[[rule]]
+id = "media.device_serial"
+mitre = ["T1592.001"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "zip.path_traversal"
+cwe = ["CWE-22"]
+owasp = ["A01:2025"]
+iso27001 = ["8.7"]
+nist = ["SI-10"]
+
+[[rule]]
+id = "net.internal_map"
+mitre = ["T1590"]
+iso27001 = ["8.12", "8.22"]
+kszi = ["6.1.2.4"]
+
+[[rule]]
+id = "org.structure"
+iso27001 = ["8.12"]
+kszi = ["6.1.2.7"]
+
+[[rule]]
+id = "sw.kev"
+cwe = ["CWE-1104"]
+owasp = ["A03:2025"]
+iso27001 = ["8.8"]
+kszi = ["6.6"]
+nist = ["RA-5", "SI-2"]
+
+# ── Web and infrastructure ─────────────────────────────────────────────────────────────────
+[[rule]]
+id = "fuzz-backup"
+cwe = ["CWE-530"]
+wstg = ["WSTG-CONF-04"]
+iso27001 = ["8.9", "8.12"]
+ndtzi = ["КА"]
+nist = ["AC-3"]
+
+[[rule]]
+id = "fuzz-db-backup"
+cwe = ["CWE-530"]
+wstg = ["WSTG-CONF-04"]
+iso27001 = ["8.9", "8.12"]
+ndtzi = ["КА"]
+nist = ["AC-3"]
+
+[[rule]]
+id = "fuzz-git"
+cwe = ["CWE-527"]
+wstg = ["WSTG-CONF-04"]
+iso27001 = ["8.9", "8.12"]
+ndtzi = ["КА"]
+nist = ["AC-3"]
+
+[[rule]]
+id = "fuzz-listing"
+cwe = ["CWE-548"]
+owasp = ["A01:2025"]
+iso27001 = ["8.9"]
+ndtzi = ["КА"]
+nist = ["AC-3", "CM-7"]
+
+[[rule]]
+id = "recon.bucket_listing"
+mitre = ["T1530"]
+cwe = ["CWE-548"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-CONF-11"]
+iso27001 = ["5.23", "8.9"]
+ndtzi = ["КА"]
+nist = ["AC-3"]
+
+[[rule]]
+id = "recon.bucket_missing"
+mitre = ["T1584"]
+wstg = ["WSTG-CONF-10"]
+iso27001 = ["5.23"]
+
+[[rule]]
+id = "dangling-cname"
+wstg = ["WSTG-CONF-10"]
+iso27001 = ["8.9"]
+
+[[rule]]
+id = "recon.robots_hidden"
+mitre = ["T1594"]
+wstg = ["WSTG-INFO-03"]
+
+[[rule]]
+id = "recon.sourcemap"
+mitre = ["T1592"]
+cwe = ["CWE-540"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-05"]
+iso27001 = ["8.28"]
+
+[[rule]]
+id = "recon.outdated_tech"
+mitre = ["T1190"]
+cwe = ["CWE-1104"]
+owasp = ["A03:2025"]
+wstg = ["WSTG-INFO-08"]
+iso27001 = ["8.8"]
+nist = ["SI-2"]
+
+[[rule]]
+id = "recon.web.version_disclosure"
+mitre = ["T1592.002"]
+cwe = ["CWE-497"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-INFO-02"]
+iso27001 = ["8.9"]
+
+[[rule]]
+id = "recon.web.hsts_missing"
+mitre = ["T1557"]
+cwe = ["CWE-319"]
+owasp = ["A04:2025"]
+wstg = ["WSTG-CONF-07"]
+iso27001 = ["8.24"]
+ndtzi = ["КВ"]
+nist = ["SC-8"]
+
+[[rule]]
+id = "recon.web.cors_reflected"
+mitre = ["T1190"]
+cwe = ["CWE-942"]
+owasp = ["A02:2025"]
+wstg = ["WSTG-CLNT-07"]
+iso27001 = ["8.26"]
+nist = ["AC-4"]
+
+[[rule]]
+id = "recon.web.cors_wildcard_credentials"
+mitre = ["T1190"]
+cwe = ["CWE-942"]
+owasp = ["A02:2025"]
+wstg = ["WSTG-CLNT-07"]
+iso27001 = ["8.26"]
+nist = ["AC-4"]
+
+[[rule]]
+id = "recon.web.cookie_flags"
+mitre = ["T1539"]
+cwe = ["CWE-614", "CWE-1004"]
+owasp = ["A02:2025"]
+wstg = ["WSTG-SESS-02"]
+iso27001 = ["8.26"]
+nist = ["SC-23"]
+
+[[rule]]
+id = "recon.web.clickjacking"
+mitre = ["T1189"]
+cwe = ["CWE-1021"]
+owasp = ["A06:2025"]
+wstg = ["WSTG-CLNT-09"]
+iso27001 = ["8.26"]
+
+[[rule]]
+id = "recon.web.csp_missing"
+cwe = ["CWE-693"]
+owasp = ["A06:2025"]
+iso27001 = ["8.26"]
+
+[[rule]]
+id = "recon.web.trace_enabled"
+wstg = ["WSTG-CONF-06"]
+iso27001 = ["8.9"]
+nist = ["CM-7"]
+
+[[rule]]
+id = "recon.web.methods_unsafe_allowed"
+cwe = ["CWE-749"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-CONF-06"]
+iso27001 = ["8.9"]
+nist = ["CM-7"]
+
+[[rule]]
+id = "recon.web.webdav"
+cwe = ["CWE-749"]
+owasp = ["A01:2025"]
+wstg = ["WSTG-CONF-06"]
+iso27001 = ["8.9"]
+nist = ["CM-7"]
+
+[[rule]]
+id = "infra.tls_legacy_version"
+cwe = ["CWE-327"]
+owasp = ["A04:2025"]
+wstg = ["WSTG-CRYP-01"]
+iso27001 = ["8.24"]
+ndtzi = ["КВ", "ЦВ"]
+nist = ["SC-8", "SC-13"]
+
+[[rule]]
+id = "infra.tls_weak_cipher"
+cwe = ["CWE-327"]
+owasp = ["A04:2025"]
+wstg = ["WSTG-CRYP-01"]
+iso27001 = ["8.24"]
+ndtzi = ["КВ", "ЦВ"]
+nist = ["SC-8", "SC-13"]
+
+[[rule]]
+id = "infra.cert_weak_key"
+cwe = ["CWE-326"]
+owasp = ["A04:2025"]
+wstg = ["WSTG-CRYP-01"]
+iso27001 = ["8.24"]
+nist = ["SC-12", "SC-13"]
+
+[[rule]]
+id = "infra.cert_weak_signature"
+cwe = ["CWE-327"]
+owasp = ["A04:2025"]
+wstg = ["WSTG-CRYP-01"]
+iso27001 = ["8.24"]
+nist = ["SC-13", "SC-17"]
+
+[[rule]]
+id = "infra.cert_expired"
+wstg = ["WSTG-CRYP-01"]
+iso27001 = ["8.24"]
+nist = ["SC-17"]
+
+[[rule]]
+id = "infra.cert_self_signed"
+wstg = ["WSTG-CRYP-01"]
+iso27001 = ["8.24"]
+nist = ["SC-17"]
+
+[[rule]]
+id = "infra.ct_abandoned_subdomain"
+wstg = ["WSTG-CONF-10"]
+iso27001 = ["8.9"]
+
+[[rule]]
+id = "infra.origin_exposed"
+iso27001 = ["8.20"]
+kszi = ["6.1.2.4"]
+nist = ["SC-7"]
+
+[[rule]]
+id = "axfr-open"
+mitre = ["T1590.002"]
+cwe = ["CWE-200"]
+owasp = ["A01:2025"]
+iso27001 = ["8.21"]
+kszi = ["6.1.2.4"]
+nist = ["AC-3"]
+
+[[rule]]
+id = "ports-exposed"
+wstg = ["WSTG-CONF-01"]
+iso27001 = ["8.20"]
+kszi = ["6.1.2.4"]
+nist = ["CM-7", "SC-7"]
+
+[[rule]]
+id = "ports-outdated"
+cwe = ["CWE-1104"]
+owasp = ["A03:2025"]
+iso27001 = ["8.8"]
+kszi = ["6.1.2.4"]
+nist = ["SI-2"]
+
+[[rule]]
+id = "internetdb-cve"
+owasp = ["A03:2025"]
+iso27001 = ["8.8"]
+kszi = ["6.6"]
+nist = ["RA-5", "SI-2"]

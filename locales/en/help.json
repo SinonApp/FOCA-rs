@@ -1,0 +1,1122 @@
+{
+  "sections": {
+    "start": "Getting started",
+    "problem": "Common issues",
+    "set": "Settings",
+    "docs": "Documents & forensics",
+    "ref": "Reference"
+  },
+  "acc": {
+    "free": "no API key",
+    "web": "no API key · built-in browser (phone only)",
+    "opt": "no API key · higher limit with key",
+    "target": "no API key · contacts target",
+    "dns": "no API key · queries target DNS",
+    "key": "API key required"
+  },
+  "screens_lead": "Bottom navigation: Overview, Findings, Data, Reports. Menu ⋮: projects, scope, tools, settings.",
+  "screens": [
+    [
+      "Projects",
+      "Project list, new project, reference case, offline file analysis, encrypted import."
+    ],
+    [
+      "Overview",
+      "Project risk score, counters, recent findings, new scan button."
+    ],
+    [
+      "New scan",
+      "Targets, profile, sources; “Advanced”: exclusions, file types, depth, limits, network. On some firmwares: the background setup card."
+    ],
+    [
+      "Scan",
+      "Stages with sub-steps, sources and their statuses, pause/skip/restart per item, live findings feed."
+    ],
+    [
+      "Scope",
+      "Project targets and exclusions, authorization note."
+    ],
+    [
+      "Out of scope",
+      "Names and IPs found during a scan but outside the scope: add one, add in bulk and scan."
+    ],
+    [
+      "Findings",
+      "Security issues with severity and triage status, standards chips, remediation plan, filters."
+    ],
+    [
+      "Data",
+      "Documents, people, e-mail, hosts, software, paths, printers, secrets, certificates, SaaS."
+    ],
+    [
+      "Document",
+      "File metadata, download source, forensics. Signatures, revisions, hidden content, personal data."
+    ],
+    [
+      "Text search and rules",
+      "Search inside document text; built-in and custom search rules."
+    ],
+    [
+      "Analytics",
+      "Link graph, network map, timeline, org chart, attack paths and choke points."
+    ],
+    [
+      "GPS map",
+      "Photos with coordinates on a globe."
+    ],
+    [
+      "Monitoring",
+      "Alert rules, Telegram/webhook delivery, risk trend, scan history and scan comparison."
+    ],
+    [
+      "AI summary",
+      "Project summary through a cloud AI provider, with placeholders instead of secrets."
+    ],
+    [
+      "Reports",
+      "Templated reports (PDF, HTML, DOCX, Markdown), exports, report history and signature check."
+    ],
+    [
+      "Pre-publication check",
+      "Hygiene grade A-F and cleaning of files before you publish them."
+    ],
+    [
+      "Quick tools and queue",
+      "File, mail policy, host/URL and password checks without a project; sequential scan queue."
+    ],
+    [
+      "Settings",
+      "API keys, sources, wordlists, plugins, AI, network & proxy, traffic & power, background execution, security, appearance, debug, help, about."
+    ]
+  ],
+  "glossary": [
+    [
+      "QES (КЕП)",
+      "Qualified Electronic Signature (Ukraine). Its certificate contains the signer's full name, title, organization, ЄДРПОУ (EDRPOU), and РНОКПП (RNOKPP)."
+    ],
+    [
+      "RNOKPP (РНОКПП)",
+      "Ukrainian Individual Taxpayer Registration Number (ІПН), 10 digits. The app stores only a masked value."
+    ],
+    [
+      "EDRPOU (ЄДРПОУ)",
+      "Organization code in the Unified State Register of Ukraine (8 digits), public information."
+    ],
+    [
+      "TSA",
+      "Time Stamping Authority server: proves when a document was signed."
+    ],
+    [
+      "XMP",
+      "Adobe metadata block embedded inside a file: edit history, software used, document identifiers."
+    ],
+    [
+      "w:vanish",
+      "Hidden text in a Word document: invisible on screen and in print, yet still stored inside the file."
+    ],
+    [
+      "Scope",
+      "List of authorized targets that may be tested and exclusions that must not be touched. The app blocks any target request outside the scope."
+    ],
+    [
+      "Exclusion",
+      "Host, IP, or network that must not be contacted even if covered by a target. Exclusions take precedence over targets."
+    ],
+    [
+      "Target",
+      "Network target for assessment: domain, *.domain, URL (http/https), IP, CIDR network, or IP range."
+    ],
+    [
+      "Dork",
+      "Search query with operators, such as site:example.com filetype:pdf. Finds site documents via a search engine."
+    ],
+    [
+      "Metadata",
+      "Hidden fields inside a file: author, login, software, disk path, printer, timestamps. FOCA extracts people and infrastructure from them."
+    ],
+    [
+      "EXIF",
+      "Photo metadata: camera model, timestamp, and sometimes GPS coordinates."
+    ],
+    [
+      "Passive mode",
+      "No requests are sent to the target itself. Only open external sources and archives are queried."
+    ],
+    [
+      "Active phase",
+      "Requests that noticeably interact with the target: DNS zone transfer (AXFR), port scanning, and web path fuzzing. Only in “Full” (or “Custom” with these modules enabled) and with authorization."
+    ],
+    [
+      "Path fuzzing",
+      "Probing common web paths (backups, .env, .git, directory listings) using a wordlist. Called “Forgotten file discovery” in the app."
+    ],
+    [
+      "Wordlist",
+      "List of paths and filenames used for fuzzing. Built-in, extended (downloaded from SecLists), and custom."
+    ],
+    [
+      "Soft 404",
+      "When a website returns “200 OK” with a placeholder page for nonexistent URLs. Calibration filters out such responses."
+    ],
+    [
+      "Directory listing",
+      "An exposed “Index of /” page displaying the list of files in a folder."
+    ],
+    [
+      "vhost",
+      "Virtual host: multiple websites hosted on the same IP, distinguished by the hostname in the request."
+    ],
+    [
+      "EOL",
+      "End of Life: software that no longer receives security updates. A document produced by such software is a reason to audit the workstation fleet."
+    ],
+    [
+      "CVE",
+      "Identifier for a publicly disclosed vulnerability, e.g., CVE-2021-44228."
+    ],
+    [
+      "CVSS",
+      "Vulnerability severity score ranging from 0 to 10."
+    ],
+    [
+      "CPE",
+      "Standardized naming identifier for software and versions, used to look up CVEs."
+    ],
+    [
+      "Severity",
+      "Critical, High, Medium, Low, Info. Indicates how urgently a finding should be remediated."
+    ],
+    [
+      "Finding",
+      "A security issue with evidence, source provenance, and remediation advice."
+    ],
+    [
+      "False positive",
+      "A finding that is not actually a security issue. Mark it as “False positive” to exclude it from the report."
+    ],
+    [
+      "Subdomain",
+      "A hostname within a domain: mail.example.com is a subdomain of example.com."
+    ],
+    [
+      "CT logs",
+      "Public Certificate Transparency logs containing all issued TLS certificates, useful for discovering subdomains."
+    ],
+    [
+      "AXFR",
+      "DNS zone transfer: requesting an entire zone from a nameserver. If permitted, it leaks all DNS records."
+    ],
+    [
+      "NS",
+      "Authoritative nameservers for a domain that answer DNS queries about it."
+    ],
+    [
+      "SPF",
+      "DNS record listing servers authorized to send mail on behalf of a domain."
+    ],
+    [
+      "DMARC",
+      "DNS policy specifying how to handle emails failing SPF/DKIM checks. Without DMARC, spoofing the domain is much easier."
+    ],
+    [
+      "DKIM",
+      "Cryptographic email signature using the domain's key; the public key is published in DNS."
+    ],
+    [
+      "RDAP",
+      "Modern replacement for WHOIS: shows who owns an IP network or domain."
+    ],
+    [
+      "ASN",
+      "Autonomous System Number: identifies an ISP's or large organization's network."
+    ],
+    [
+      "CIDR",
+      "Network range notation: 203.0.113.0/24 represents 256 IP addresses."
+    ],
+    [
+      "WAF",
+      "Web Application Firewall protecting a site by blocking suspicious traffic. High request rates can trigger blocks."
+    ],
+    [
+      "CAPTCHA",
+      "“Verify you are human” challenge. Search engines show it when they detect frequent automated queries."
+    ],
+    [
+      "Web archive",
+      "Saved snapshots of pages and files (Wayback Machine, Common Crawl, Arquivo.pt): documents can be found even after removal from the live site."
+    ],
+    [
+      "Infostealer",
+      "Malware that steals passwords from browsers. HudsonRock surfaces domain URLs appearing in such stealer logs."
+    ],
+    [
+      "Kill switch",
+      "If the VPN or proxy drops, the scan stops or pauses automatically so your real IP address is not exposed."
+    ],
+    [
+      "Proxy",
+      "Intermediary for network requests: the target sees its IP address rather than yours (for example, Orbot / Tor)."
+    ],
+    [
+      "DoH",
+      "DNS over HTTPS: domain lookups are encrypted and routed through the proxy."
+    ],
+    [
+      "Secret",
+      "Password, API key, or token found in a document or file. Hidden in the app until confirmed with biometrics."
+    ],
+    [
+      "Software fingerprint",
+      "Applications and versions identified on a host or inside documents."
+    ],
+    [
+      "Crawler",
+      "Follows links across the target website to discover documents. Contacts the target."
+    ],
+    [
+      "Subdomain brute-force",
+      "Tests hostnames from a wordlist (vpn, dev, mail…) via DNS queries to the target's nameservers. Contacts the target."
+    ],
+    [
+      "Wildcard DNS",
+      "A zone that resolves any arbitrary hostname; without filtering, brute-forcing would produce thousands of nonexistent hosts."
+    ],
+    [
+      "NSEC",
+      "DNSSEC record pointing to the “next name” in a zone; without NSEC3, it allows walking and enumerating the entire zone."
+    ],
+    [
+      "SAN",
+      "Subject Alternative Name: list of hostnames covered by a TLS certificate. Unrelated names in it become out-of-scope candidates."
+    ],
+    [
+      "MTA-STS",
+      "Domain policy requiring TLS encryption when delivering email to its mail servers."
+    ],
+    [
+      "CAA",
+      "DNS record listing the Certificate Authorities permitted to issue certificates for a domain."
+    ],
+    [
+      "M365 tenant",
+      "An organization in Microsoft 365 / Entra ID: its tenant ID, associated domains, and authentication method."
+    ],
+    [
+      "AD FS",
+      "On-premises Microsoft sign-in server in the organization's network; under federation, it validates passwords instead of the cloud."
+    ],
+    [
+      "Origin",
+      "The underlying backend server hidden behind a CDN. If it responds directly, CDN protection can be bypassed."
+    ]
+  ],
+  "profiles_html": "<h3>Profiles</h3><dl class=\"hl-gl\"><dt>Passive · ~5 min</dt><dd>Does not contact the target: search engines, certificates, web archives, Shodan cache. Target site documents are downloaded as archived copies from web archives.</dd><dt>Standard · ~25 min</dt><dd>Passive + downloading public documents, DNS records, host liveness checks, crawler, subdomain brute-force (top 1,500), and TLS certificate inspection. Contacts in-scope targets.</dd><dt>Full · ~45 min</dt><dd>Standard + active phase: forgotten file discovery on the website, DNS zone transfer (AXFR) and NSEC walking, TCP port scanning of live in-scope hosts (TCP connect with canary checks for VPN/proxy interference), TLS audit (TLS 1.0/1.1, weak ciphers, STARTTLS, direct-IP check without SNI), and top-5,000 subdomain brute-force. Shodan InternetDB is strictly a passive cache of ports and CVEs, and its data is labeled separately.</dd><dt>Custom</dt><dd>Select modules manually.</dd></dl><h3>Sources</h3><p>All sources except the crawler, port scanner, subdomain brute-forcer, and TLS inspector are passive. They do not contact the target. SaaS, Microsoft 365, CDN, and mail policies are detected via DNS in all profiles. Toggle them in “Settings → Sources”.</p>",
+  "articles": [
+    {
+      "id": "first-scan",
+      "sec": "start",
+      "icon": "play",
+      "t": "First scan",
+      "sub": "3 steps · 1 min",
+      "go": [
+        "New project",
+        "/projects"
+      ],
+      "rel": [
+        "demo-case",
+        "profiles",
+        "legal",
+        "read-report"
+      ],
+      "body": "\n      <p>FOCA-rs discovers an organization's publicly available documents, extracts their metadata (authors, usernames, software, file paths, printers), and maps out the underlying infrastructure.</p>\n      <ol><li><b>Create a project.</b> Go to “Projects” → “New project” and enter a domain, e.g., <code>example.com</code>. A project can hold several targets: domains, <code>*.domain</code>, URLs, IP addresses, CIDR networks and IP ranges.</li>\n      <li><b>Choose a profile.</b> “Passive” sends no requests to the target site. Start with it. “Standard” and “Full” contact targets directly: use them only with authorization.</li>\n      <li><b>Tap “Start”.</b> The scan runs in the background, showing live progress on the “Scan” screen and in the notification. Discovered data appears in real time.</li></ol>\n      <p>On Xiaomi, Samsung and other firmwares that close background apps, the launch screen shows a “Keep the firmware from stopping the scan” card. Fix the items it lists before a long scan.</p>\n      <p>No API keys are required: search engines, web archives, subdomain discovery, and reconnaissance work out of the box. Keys are optional and can be added in “Settings → API keys”.</p>"
+    },
+    {
+      "id": "demo-case",
+      "sec": "start",
+      "icon": "spark",
+      "t": "First steps: reference case",
+      "sub": "12 documents offline · 1 min",
+      "act": [
+        "Open reference case",
+        "demo-case",
+        "spark"
+      ],
+      "rel": [
+        "graph-chain",
+        "hygiene",
+        "report-templates"
+      ],
+      "body": "\n      <p>To explore what FOCA-rs can do without scanning a live site, the app includes a built-in <b>reference case</b>: 12 synthetic documents belonging to the fictional company <b>ТОВ «Приклад» (Pryklad LLC)</b>.</p>\n      <ol><li>Tap <b>“Open reference case”</b>: here, on the “Projects” screen, or in “Analyze files offline”.</li>\n      <li>The documents are imported and analyzed locally on your phone <b>without a single network request</b>; progress is displayed on the analysis screen. In a few seconds, a new “Reference case” project opens.</li>\n      <li>Explore the findings, link graph and attack chain, internal network map, timeline and activity heatmap, “Pre-publication check” with sanitization, and generate a report from a template such as “Laboratory work”.</li></ol>\n      <p>The bundle includes document version lineage (RSID), a QES (КЕП) signature, broken redaction, incremental PDF revisions, a hidden worksheet and data connection, an LNK shortcut, an e-mail with a Received chain, a photo with GPS, an ODT document, a calendar invite, and a contact card. All names, addresses, and keys are fictional.</p>\n      <p>Tapping again lets you open the existing project or re-import the reference case from scratch.</p>"
+    },
+    {
+      "id": "report-templates",
+      "sec": "start",
+      "icon": "report",
+      "t": "Report templates",
+      "sub": "full, executive, КСЗІ, laboratory",
+      "go": [
+        "Reports",
+        "/p/reports"
+      ],
+      "rel": [
+        "standards",
+        "read-report"
+      ],
+      "body": "\n      <p>In the report builder (“Reports → New report”), select a template at the top. A description of the chosen template appears below the chips in the report language.</p>\n      <ul><li><b>Full</b>: cover page, executive summary, scope, all findings with evidence, infrastructure, diagrams, and appendices; individual sections can be toggled via checkboxes.</li>\n      <li><b>Summary</b> and <b>Data</b>: concise Markdown overview and CSV/JSON exports for external tools.</li>\n      <li><b>Executive</b>: single-page brief: overall risk score, top five findings in plain language, and three priority actions, without technical tables.</li>\n      <li><b>КСЗІ</b>: “finding × standards” matrix (MITRE ATT&amp;CK v20, CWE, OWASP Top 10:2025, WSTG, ISO/IEC 27001, NIST SP 800-53 / НД ТЗІ 3.6-006-24, НД ТЗІ 2.5-004-99 and 3.7-003-05), per-standard summaries, personal data articles, and an auditor's disclaimer.</li>\n      <li><b>Laboratory</b>: goal, methodology, input data, course of work, findings table mapped to standards, conclusions, and blank “Performed by / Checked by” signature fields.</li></ul>\n      <p>The “Executive”, “КСЗІ”, and “Laboratory” templates use a fixed structure: sections cannot be toggled, while finding filters, language (RU/UA/EN), header fields, and secrets policy still apply. Formats: PDF, HTML, DOCX and Markdown. On the phone a PDF is saved straight to a file (A4); if that fails, system printing opens.</p>\n      <p><b>Executive summary (AI-assisted)</b>: a switch in the builder that adds the project's latest AI summary as a separate section, labelled with its source. Without a summary the section is not added.</p>"
+    },
+    {
+      "id": "read-report",
+      "sec": "start",
+      "icon": "report",
+      "t": "How to read a report",
+      "sub": "what matters",
+      "rel": [
+        "severity",
+        "glossary"
+      ],
+      "go": [
+        "Reports",
+        "/p/reports"
+      ],
+      "body": "\n      <h3>Overview</h3><p>Displays the project's overall risk score and counters for documents, people, hosts, and findings. Tap any counter to open the corresponding list.</p>\n      <h3>Findings</h3><p>Each finding represents a security issue with a severity level: <b>Critical, High, Medium, Low, Info</b>. Inside, you will see where it was found, supporting evidence, provenance, and remediation advice.</p>\n      <p>Triage your findings: “Confirmed” includes the item in the report, “False positive” hides it, and “Fixed” marks it as already remediated by the client.</p>\n      <h3>Data</h3><p>Raw intelligence extracted from documents: people and logins, e-mail addresses, hosts, software and versions, file paths, printers, and secrets (masked until confirmed via biometrics).</p>\n      <h3>Report</h3><p>“Reports” → “New report”: generate PDF, HTML or DOCX for the client, or CSV/JSON/Markdown for your own tooling. Secrets can be hidden or masked in the report.</p>"
+    },
+    {
+      "id": "legal",
+      "sec": "start",
+      "icon": "contract",
+      "t": "Legal boundaries",
+      "sub": "rules of engagement",
+      "rel": [
+        "profiles",
+        "scope-help"
+      ],
+      "body": "\n      <p>This application is intended for authorized assessments: auditing your own organization or a client under contract. This is not legal advice. Laws in your jurisdiction may vary.</p>\n      <ul><li><b>Passive profile</b> reads only publicly available external sources (search engines, web archives, Certificate Transparency logs). No requests are sent to the target site.</li>\n      <li><b>Standard</b> downloads public documents and sends DNS queries to target nameservers. Make sure you own the target or have explicit permission.</li>\n      <li><b>Full</b> adds the active phase (AXFR zone transfer, port scanning, forgotten file discovery on the website). Run only with written authorization from the owner.</li></ul>\n      <p>Scope enforces where the app is allowed to connect: exclusions override targets, and out-of-scope hosts are never contacted. Store and transmit discovered secrets and personal data with care.</p>"
+    },
+    {
+      "id": "captcha",
+      "sec": "problem",
+      "icon": "alert",
+      "t": "Source reports “CAPTCHA”",
+      "sub": "search engines",
+      "rel": [
+        "sources-ref",
+        "set-rps"
+      ],
+      "body": "\n      <p>Search engines protect themselves against automated queries. The “CAPTCHA / blocked” status means the search engine presented a verification challenge or blocked your IP. The scan continues without it.</p>\n      <ul><li>Startpage, Brave, Yahoo, and public SearXNG instances run inside the built-in browser. It behaves like a normal mobile browser and automatically handles proof-of-work checks (Startpage). Works only in the mobile app.</li>\n      <li><b>Dorks are never lost:</b> a search engine that hits a CAPTCHA hands off its remaining queries to other healthy engines; identical queries are not repeated across engines, and results are cached for 24 hours.</li>\n      <li><b>Complete verification</b>: a single button on the scan screen walks you through all CAPTCHA-blocked engines one by one; cookies are saved so subsequent dorks run automatically. To prepare in advance, go to “Settings → Network → Warm up search engines”.</li>\n      <li>The primary cause of CAPTCHAs is IP reputation: shared ISP Wi‑Fi IPs (CGNAT), VPNs, or proxies. If regular Chrome on the same network also gets “Something went wrong during verification” on Startpage, the issue is the network rather than the app, switching to mobile data or another hotspot usually helps.</li>\n      <li>DuckDuckGo, Bing, and Mojeek are “best-effort”: datacenter IPs, VPNs, and Tor trigger CAPTCHAs more often. Since 2026, Mojeek serves ALTCHA to almost everyone, which requires human completion.</li>\n      <li>To compare the built-in browser fingerprint against Chrome: “Settings → Debug” → “Search” tab.</li>\n      <li>Lower your request rate: select the “Gentle” preset in “Settings → Network”, retry later, or switch networks.</li>\n      <li>Web archives and Certificate Transparency logs do not show CAPTCHAs. Documents will still be discovered through them.</li></ul>"
+    },
+    {
+      "id": "background",
+      "sec": "problem",
+      "icon": "battery",
+      "t": "Scan stops in the background",
+      "sub": "Xiaomi, HyperOS, etc.",
+      "go": [
+        "Background execution",
+        "/settings/battery"
+      ],
+      "rel": [
+        "slow-scan",
+        "logs",
+        "security-pin"
+      ],
+      "body": "\n      <p><b>In short:</b> Android, especially Xiaomi/HyperOS, closes background apps. On Xiaomi, swiping the app away from Recents ends the whole process, scan included.</p>\n      <h3>One-time setup</h3>\n      <p>Open “Settings → Background execution”. On firmwares known to kill apps, the screen shows a card with two checks and buttons to the right system screens:</p>\n      <ol><li><b>Autostart</b>: must be on, otherwise the scan cannot continue after the system stops the app.</li>\n      <li><b>Battery restrictions</b>: must be removed, that is, FOCA-rs excluded from battery optimization.</li></ol>\n      <p>The same card appears on the launch screen while something is still missing. Below it there are notifications and step-by-step instructions for your phone brand.</p>\n      <h3>Hide from Recents during scans</h3>\n      <p>With this switch on, the FOCA-rs card disappears from Recents while a scan runs and the app is in the background. It cannot be swiped away or cleared with the rest. Go back to the app through the scan notification. Locking the card in Recents (long-press it and tap the lock) is the alternative: you need it only if you turn hiding off.</p>\n      <h3>If the scan was stopped anyway</h3>\n      <p>The progress is saved. FOCA-rs tries to continue the scan in the background a little later. On Android 12 and newer this works only when the battery is unrestricted; otherwise a “Continue” notification appears. You can also open the app and resume from where the scan stopped.</p>"
+    },
+    {
+      "id": "zero-docs",
+      "sec": "problem",
+      "icon": "doc",
+      "t": "0 documents found",
+      "sub": "why results are empty",
+      "rel": [
+        "captcha",
+        "sources-ref"
+      ],
+      "body": "\n      <ul><li><b>Target:</b> double-check the domain spelling (omit <code>www</code> if documents are hosted across the apex domain). For an organization, add its domains.</li>\n      <li><b>Sources:</b> check “Settings → Sources” to ensure source groups are not disabled. The scan screen shows what each source returned.</li>\n      <li><b>Document types:</b> scan wizard → “Advanced” → “Document types”.</li>\n      <li><b>A site with no documents</b> is a normal outcome. It means nothing has leaked publicly. Subdomains, hosts, and other findings will still be collected.</li>\n      <li>Search engines may have hit a CAPTCHA. See “Source reports ‘CAPTCHA’”.</li></ul>"
+    },
+    {
+      "id": "slow-scan",
+      "sec": "problem",
+      "icon": "clock",
+      "t": "Scan is taking too long",
+      "sub": "how to speed it up",
+      "rel": [
+        "set-timeout",
+        "set-threads"
+      ],
+      "body": "\n      <ul><li><b>Controls on the scan screen.</b> While a scan runs, stages, sources and the brute-force steps of “Network and DNS” have their own buttons: pause, skip and restart. The rest of the scan keeps going.</li>\n      <li><b>A stage that is already over</b> cannot restart inside the same scan: the restart is queued. After the scan, tap “Re-run queued” to run only those parts.</li>\n      <li><b>“Network and DNS” looks idle?</b> It shows the current step with a counter, e.g. “Subdomain brute force 420/1500”. When DNS is slow (often behind a VPN), a warning gives the expected time and a “Skip brute force” button.</li>\n      <li>Every source stops on its own once its time limit is reached. Paginated web archives (Wayback Machine, Common Crawl) take the longest; partial results are saved as they arrive.</li>\n      <li>“Full” takes the longest because of the site search. You can stop it separately and keep everything found so far.</li>\n      <li>Scanning over Tor is several times slower, this is expected.</li>\n      <li>A lower per-target document limit speeds up downloading (wizard → “Advanced” → “Limits”).</li></ul>"
+    },
+    {
+      "id": "logs",
+      "sec": "problem",
+      "icon": "share",
+      "t": "Report a problem",
+      "sub": "logs and the GitHub issue form",
+      "go": [
+        "Debug & diagnostics",
+        "/settings/debug"
+      ],
+      "rel": [
+        "background"
+      ],
+      "body": "\n      <p>FOCA-rs 2.0 is a beta: some things may break. A report with logs helps fix them faster.</p>\n      <h3>Quick way</h3>\n      <p>Tap “Report a problem” (below, in “Settings → About”, or in the beta note on the projects screen). The app saves a logs ZIP to <code>Download/FOCA-rs</code> and opens the GitHub issue form in the browser. Describe what you did and attach the ZIP.</p>\n      <h3>Logs only</h3>\n      <ol><li>Open “Settings → Debug &amp; diagnostics”.</li><li>Tap “Share logs”: the ZIP contains app logs, crash reports and device details.</li>\n      <li>Choose where to send it (e-mail, messenger).</li></ol>\n      <p>API keys and passwords are removed from the archive. If the problem repeats, set the log level to “Debug” on the same screen and reproduce it before sending.</p>",
+      "act": [
+        "Report a problem",
+        "beta-report-about",
+        "bug"
+      ]
+    },
+    {
+      "id": "set-threads",
+      "sec": "set",
+      "icon": "net",
+      "t": "Threads",
+      "sub": "Settings → Network",
+      "rel": [
+        "set-rps",
+        "presets"
+      ],
+      "body": "\n      <p>Number of concurrent requests kept in flight. More threads make scans faster, but are more noticeable to WAFs and consume more battery.</p>\n      <p><b>Recommended: 4-8.</b> Over Tor or cellular data: 2-4. Allowed range: 1-64.</p>\n      <p>The per-host rate limit (“Requests per second”) is enforced regardless of the thread count.</p>"
+    },
+    {
+      "id": "set-rps",
+      "sec": "set",
+      "icon": "net",
+      "t": "Requests per second",
+      "sub": "Settings → Network",
+      "rel": [
+        "set-threads",
+        "presets"
+      ],
+      "body": "\n      <p>Global request rate cap. Lower values reduce the likelihood of triggering CAPTCHAs or IP blocks.</p>\n      <p><b>Recommended: 5-10.</b> Allowed range: 1-100. Client website fuzzing runs even slower using its own cap configured under “Wordlists”.</p>"
+    },
+    {
+      "id": "set-timeout",
+      "sec": "set",
+      "icon": "clock",
+      "t": "Timeout",
+      "sub": "Settings → Network",
+      "rel": [
+        "slow-scan",
+        "presets"
+      ],
+      "body": "\n      <p>Seconds to wait when establishing a connection. Shorter timeouts drop dead hosts faster; longer timeouts help on slow networks.</p>\n      <p><b>Recommended: 15-30 s</b> (60 s for Tor). Allowed range: 5-120. Each search source also has its own overall time cap after which it stops automatically.</p>"
+    },
+    {
+      "id": "set-retries",
+      "sec": "set",
+      "icon": "refresh",
+      "t": "Retries",
+      "sub": "Settings → Network",
+      "rel": [
+        "set-timeout"
+      ],
+      "body": "\n      <p>How many times to retry a request on connection drop or network error. <b>Recommended: 1-3.</b> Allowed range: 0-5. Excessive retries only burden the server and drag out the scan.</p>"
+    },
+    {
+      "id": "presets",
+      "sec": "set",
+      "icon": "st-gauge",
+      "t": "Speed presets",
+      "sub": "Gentle · Normal · Fast",
+      "rel": [
+        "set-threads",
+        "set-rps",
+        "set-timeout"
+      ],
+      "body": "\n      <ul><li><b>Gentle</b>: 2 threads, 3 req/s, 30 s timeout: mobile networks, Tor, sensitive targets.</li>\n      <li><b>Normal</b>: 6 threads, 8 req/s, 15 s timeout: Wi-Fi, suitable for most engagements.</li>\n      <li><b>Fast</b>: 16 threads, 20 req/s, 10 s timeout: your own server or a fast proxy link.</li></ul>\n      <p>A preset updates all three values at once; any parameter can still be tuned manually. Presets do not modify the retry count.</p>"
+    },
+    {
+      "id": "set-limits",
+      "sec": "set",
+      "icon": "filter",
+      "t": "Limits",
+      "sub": "documents, file size, traffic",
+      "rel": [
+        "slow-scan"
+      ],
+      "body": "\n      <ul><li><b>Documents per target</b>: maximum files to download per target (recommended: 200-1,000). Subsequent scans pick up new files without re-downloading previously seen ones.</li>\n      <li><b>Max file size</b>: larger files are skipped (recommended: 20-100 MB).</li>\n      <li><b>Monthly data cap</b> (“Traffic & power”). Limits how much mobile data scans may consume.</li></ul>"
+    },
+    {
+      "id": "security-pin",
+      "sec": "set",
+      "icon": "lock",
+      "t": "PIN, panic PIN and screenshots",
+      "sub": "Settings → Security",
+      "go": [
+        "Security",
+        "/settings/security"
+      ],
+      "rel": [
+        "logs",
+        "pii-help",
+        "legal"
+      ],
+      "body": "\n      <ul><li><b>PIN code</b>: 4 digits, asked at every launch. <b>Auto-lock</b> locks the app again after the chosen time in the background.</li>\n      <li><b>Biometrics</b>: a fingerprint or face instead of the PIN.</li>\n      <li><b>Secrets after fingerprint</b>: one fingerprint opens document secrets, finding evidence and API keys for a few minutes. Access closes with “Close”, when you leave the app, or when it locks.</li>\n      <li><b>Panic PIN</b>: a second PIN. Entering it on the lock screen permanently wipes all projects, keys and settings. It must differ from the normal PIN.</li>\n      <li><b>Forgot PIN?</b> Resetting it also wipes all projects: this protects client data.</li>\n      <li><b>Clear the clipboard after 30 s</b>: after you copy passwords, keys or e-mails.</li>\n      <li><b>Block screenshots</b>: off by default. When on, screenshots and screen recording are blocked and the Recents card is blank.</li></ul>"
+    },
+    {
+      "id": "set-fuzz",
+      "sec": "set",
+      "icon": "folder",
+      "t": "Forgotten file discovery",
+      "sub": "rate and budget",
+      "go": [
+        "Wordlists",
+        "/settings/wordlists"
+      ],
+      "rel": [
+        "legal"
+      ],
+      "body": "\n      <p>Runs only in “Full” (or “Custom” with the module enabled): the “Site search” stage probes the client's website for forgotten documents, backups, service files (<code>.env</code>, <code>.git</code>) and open directory listings, so the owner can remove them.</p>\n      <ul><li><b>Rate</b>: recommended 3-5 req/s (allowed: 1-10).</li>\n      <li><b>Budget per scan</b> and <b>time per scan</b>: when either runs out, the search stops on its own. <b>Addresses per scan</b>: up to 10, probed one after another.</li>\n      <li>If the site starts answering 429/403/5xx, the search stops at once without retries.</li>\n      <li>Before it starts, the app checks how the site answers non-existent paths (soft 404 calibration) to avoid noisy findings.</li></ul>\n      <h3>Wordlists</h3>\n      <p>“Settings → Wordlists” has three groups: <b>Built-in</b>; <b>Large: download</b> (from SecLists on GitHub, a pinned version with a verified checksum, never from the target site); <b>Custom</b>: a text file with one path per line, up to 64 MB. “Do not request paths” lists paths the search must never touch.</p>"
+    },
+    {
+      "id": "recon-help",
+      "sec": "set",
+      "icon": "globe",
+      "t": "Website reconnaissance",
+      "sub": "technologies, favicon, JS, cloud",
+      "go": [
+        "Data",
+        "/p/data/tech"
+      ],
+      "rel": [
+        "legal",
+        "sources-ref"
+      ],
+      "body": "\n      <p>The “Website reconnaissance” stage collects what the client's site already exposes publicly: web technologies with versions (outdated versions are flagged), analytics IDs, favicon hash,\n      API endpoints and keys embedded in JavaScript, disallowed paths in robots.txt, URLs from sitemap and security.txt contacts, cloud storage bucket links, and domain mentions in public code repositories (grep.app).</p>\n      <ul><li><b>Passive profile</b>: sends zero requests to the site: the homepage, favicon, and scripts are read from Wayback Machine snapshots.</li>\n      <li><b>Favicon hash</b>: ready-made Shodan / FOFA / Censys queries can be copied with one tap to locate other servers sharing the same icon (forgotten staging hosts, admin panels).</li>\n      <li><b>Secrets in JS</b> are shown masked only and are never stored in full; compromised keys must be revoked by the owner.</li>\n      <li><b>Cloud storage buckets</b> are checked for public listing only in “Full”; other profiles collect links without probing them.</li>\n      <li><b>grep.app</b> occasionally enables bot protection. The source is marked “CAPTCHA / blocked” and the scan continues.</li></ul>\n      <p>Results appear under “Data” (Website technologies, Site, JS &amp; API, Cloud, Code in repositories) and in the report's “Website and technologies” section.</p>"
+    },
+    {
+      "id": "ports-unreliable",
+      "sec": "problem",
+      "icon": "alert",
+      "t": "Port scan unreliable",
+      "sub": "VPN, AdGuard, proxy",
+      "go": [
+        "Hosts",
+        "/p/data/hosts"
+      ],
+      "rel": [
+        "ports-help",
+        "captcha"
+      ],
+      "body": "\n      <p>Before scanning a host, the app probes two or three guaranteed-unused ports (“canaries”) and once tests an unroutable documentation IP (192.0.2.1). If a TCP connection “succeeds” where none is possible, the phone's network layer is intercepting and accepting arbitrary TCP connections, typical of local VPNs (AdGuard, v2rayNG, NetGuard), corporate firewalls, and proxies.</p>\n      <ul><li>In this state, nearly every port appears “open”, which is false. The app <b>creates no port findings</b>, does not record ports as “scan” (Shodan InternetDB data is preserved), and displays a warning on the “Port scan” source and in the report.</li>\n      <li>Port findings left over from earlier unreliable scans are cleared automatically on the next scan (not marked as “Fixed” by the client).</li>\n      <li><b>What to do:</b> disable the local VPN while scanning or exclude FOCA-rs (AdGuard: “App management → FOCA-rs → Route traffic through AdGuard: off”; v2rayNG: “Settings → Per-app proxy”), then re-run the scan.</li>\n      <li>Using a SOCKS proxy configured in “Settings → Network” is supported: the 192.0.2.1 probe is skipped and canary ports are verified through the proxy.</li></ul>"
+    },
+    {
+      "id": "ports-help",
+      "sec": "set",
+      "icon": "server",
+      "t": "Port scan",
+      "sub": "open services and banners",
+      "go": [
+        "Hosts",
+        "/p/data/hosts"
+      ],
+      "rel": [
+        "legal",
+        "scope-help"
+      ],
+      "body": "\n      <p>Runs only in “Full” (or “Custom” with the “Port scan” module): the app opens TCP connections to ports on live in-scope hosts and reads service banners and version strings so the owner can close unnecessary services.</p>\n      <ul><li><b>Top 100</b> (default, ~1 s per host) or <b>Top 1,000</b> can be selected in the launch wizard; custom port lists are configured in “Settings → Network &amp; proxy”.</li>\n      <li><b>In-scope only:</b> excluded hosts and IPs are never touched by a single packet; in “Passive” and “Standard” this stage is skipped entirely. Capped at 20 hosts per scan, one scan per IP address.</li>\n      <li><b>Source label on the host card:</b> “scan”, verified live now; “InternetDB cache”: passive Shodan data; “not confirmed by scan”. Shodan reported the port open, but the live scan did not.</li>\n      <li><b>Findings:</b> internet-exposed RDP, SMB, Telnet, FTP, databases (MySQL, PostgreSQL, MongoDB, Redis, Elasticsearch), and Docker API with remediation advice; outdated web servers detected from banners.</li>\n      <li>Tapping “Skip” in the sources list stops port scanning while the rest of the scan continues; after stopping, “Resume” skips hosts already scanned.</li></ul>\n      <p>Results appear on each host card (“Ports” block) and in the report's ports table under the hosts section.</p>"
+    },
+    {
+      "id": "scope-help",
+      "sec": "set",
+      "icon": "target",
+      "t": "Scope",
+      "sub": "targets and exclusions",
+      "go": [
+        "Scope",
+        "/p/scope"
+      ],
+      "rel": [
+        "legal"
+      ],
+      "body": "\n      <p>Defines what may be tested and what exclusions must never be touched. <b>Exclusions take precedence over targets.</b></p>\n      <ul><li>A domain covers itself and all its subdomains; <code>*.example.com</code> covers subdomains only; a URL targets that specific host.</li><li>IPs, CIDR networks, and IP ranges participate in network checks (RDAP, InternetDB, liveness, TLS, and port scanning depending on the profile).</li>\n      <li>The client's name is stored in project settings (“Client” field), and domain mail policies can be checked in “Quick tools”.</li></ul>"
+    },
+    {
+      "id": "subdomains-help",
+      "sec": "set",
+      "icon": "domain",
+      "t": "Subdomain brute-force",
+      "sub": "wordlist, permutations, legality",
+      "go": [
+        "Hosts",
+        "/p/data/hosts"
+      ],
+      "rel": [
+        "legal",
+        "scope-help",
+        "oos-help"
+      ],
+      "body": "\n      <p>In “Standard” and “Full” (or “Custom” with this module enabled), the app tests wordlist names such as <code>vpn.domain</code> and <code>dev.domain</code> as well as permutations of already discovered names (<code>dev2</code>, <code>api-v2</code>, names extracted from document metadata). Revealing hosts absent from CT logs and search engines.</p>\n      <ul><li><b>This contacts the target.</b> Every name generates a DNS query visible to the client's authoritative nameservers (and, under direct resolution, to your ISP). Like host liveness checks, run this only with the owner's authorization, as with the entire “Standard” profile.</li>\n      <li><b>In-scope only:</b> only target domains are enumerated; excluded names are never queried; completely disabled in “Passive” mode and in background monitoring.</li>\n      <li><b>Wordlist</b> (chosen in the launch wizard): <b>Off</b> (permutations and PTR only), <b>Top 1,500</b> (default in “Standard”), <b>Top 5,000</b> (in “Full”), or a <b>custom</b> list.</li>\n      <li><b>Wildcard detection:</b> if a zone resolves arbitrary hostnames, the app detects wildcards at each level (<code>*.domain</code>, <code>*.dev.domain</code>) and filters out false hosts.</li>\n      <li><b>Adaptive rate:</b> if the network or ISP throttles DNS queries, the rate slows down automatically and a note is recorded in the summary.</li>\n      <li><b>NSEC walking</b> (“Full” only): if a DNSSEC-signed zone uses NSEC instead of NSEC3, all hostnames can be enumerated by walking the NSEC chain. Similar to a zone transfer.</li></ul>\n      <p>Discovered hosts appear in “Data → Hosts” tagged with their source (“Subdomain brute-force”, “Name permutations”, “Document metadata …”, “PTR”, “NSEC”). Tapping “Skip” in the scan's source list halts enumeration between domains.</p>"
+    },
+    {
+      "id": "tls-help",
+      "sec": "set",
+      "icon": "lock",
+      "t": "TLS certificate inspection",
+      "sub": "expiry, chain, deprecated TLS",
+      "go": [
+        "Certificates",
+        "/p/data/certs"
+      ],
+      "rel": [
+        "legal",
+        "ports-help"
+      ],
+      "body": "\n      <p>In “Standard” and “Full”, the app connects to open TLS ports (443, 8443, etc.) on live in-scope hosts and inspects each certificate: subject, issuer, expiration date, hostname match, chain completeness, and whether the CA is permitted by CAA records.</p>\n      <ul><li><b>Findings:</b> expired or soon-to-expire certificates, self-signed or untrusted CA certificates, hostname mismatches, incomplete chains, SHA-1 signatures and weak RSA keys, as well as internal PKI endpoints and Active Directory domains leaked in CDP/AIA fields.</li>\n      <li><b>“Full” only:</b> checks for deprecated TLS 1.0/1.1 and weak cipher suites, STARTTLS on mail, FTP, PostgreSQL, and RDP, and direct IP connections without SNI to check whether a server behind a CDN responds directly. Shared hosting IPs are excluded from direct-IP checks.</li>\n      <li><b>History (CT):</b> Certificate Transparency logs reveal when a host first appeared and whether its CA changed; hostnames whose certificates stopped being renewed are marked as “abandoned”.</li></ul>\n      <p>Results appear in “Data → Certificates”, the “TLS certificate” block on host cards, and the “TLS certificates” section of the report.</p>"
+    },
+    {
+      "id": "m365-help",
+      "sec": "set",
+      "icon": "db",
+      "t": "SaaS & Microsoft 365",
+      "sub": "organization services via DNS",
+      "go": [
+        "SaaS & CDN",
+        "/p/data/saas"
+      ],
+      "rel": [
+        "oos-help",
+        "legal"
+      ],
+      "body": "\n      <p>In all profiles, including “Passive”, the app inspects public DNS records for the domain: verification TXT records (<code>MS=</code>, <code>google-site-verification</code>, Atlassian, DocuSign…), SPF includes, MX records, and service CNAMEs. Compiling an inventory of the organization's cloud services without contacting the client's servers.</p>\n      <ul><li><b>Microsoft 365:</b> public Microsoft discovery endpoints (OpenID, getuserrealm) reveal whether a tenant exists, its tenant ID and region, and whether authentication is cloud-managed or federated via an on-premises AD FS server. The AD FS server itself is not queried.</li>\n      <li><b>CDNs &amp; clouds:</b> host IPs are matched against an embedded IP-range table for Cloudflare, AWS, Azure, GCP, and others; for sites behind a CDN, <b>origin IP candidates</b> (from MX, SPF, subdomains) are listed strictly for manual verification.</li>\n      <li><b>Mail policies:</b> MTA-STS, TLS-RPT, BIMI, CAA, and DNSSEC appear in “Data → Mail policies”.</li></ul>\n      <p>Why this matters for pentesters: a SaaS inventory is valuable context for phishing and password-spraying assessments, and helps clients understand their externally visible footprint.</p>"
+    },
+    {
+      "id": "oos-help",
+      "sec": "set",
+      "icon": "link",
+      "t": "Out-of-scope candidates",
+      "sub": "discovered but never probed",
+      "go": [
+        "Out of scope",
+        "/p/out-of-scope"
+      ],
+      "rel": [
+        "scope-help",
+        "legal"
+      ],
+      "body": "\n      <p>During a scan, the app often discovers hostnames and IPs that may belong to the client but fall outside the current scope: unrelated names in certificate SANs, domains sharing the same organization (<code>O=</code>) in CT logs, Microsoft 365 tenant domains, PTR hostnames, an AD FS host, or a potential origin IP behind a CDN.</p>\n      <ul><li><b>They are never probed.</b> Zero DNS or TCP packets are sent to candidates; in the list they are marked “Not checked, out of scope”.</li>\n      <li>Add a candidate to scope only after the client confirms in writing that they own the asset (WHOIS/RDAP, contract).</li>\n      <li><b>One at a time:</b> “Add to scope” next to a candidate adds exactly one IP or hostname.</li>\n      <li><b>In bulk:</b> tick candidates or tap “All subdomains of …”, then “Add to scope and scan”. The names go into the scope and a scan starts for them.</li>\n      <li>Some candidates cannot be added: shared CDN and hosting IPs (other owners' sites live there), names whose CNAME points to a free resource (see the dangling CNAME finding), and names excluded from the scope. Remove the exclusion on the “Scope” screen first.</li></ul>"
+    },
+    {
+      "id": "forensics-help",
+      "sec": "docs",
+      "icon": "shield",
+      "t": "Document forensics",
+      "sub": "what the document card reveals",
+      "go": [
+        "Documents",
+        "/p/data/docs"
+      ],
+      "rel": [
+        "kep-help",
+        "redaction-help",
+        "pii-help",
+        "formats-help"
+      ],
+      "body": "\n      <p>Below the standard metadata on every document card is the <b>“Forensics”</b> section. Everything stored inside the file beyond its visible text. Sections start collapsed; the number on the right shows the entry count, and the colored badge reflects the highest severity.</p>\n      <ul><li><b>Signatures &amp; QES (КЕП)</b>: signer name, organization, ЄДРПОУ (EDRPOU), masked РНОКПП (RNOKPP), CA (АЦСК), signing time and TSA timestamp, and whether modifications occurred after signing.</li>\n      <li><b>Broken redaction</b>: text hidden underneath a black or white rectangle that can still be copied.</li>\n      <li><b>PDF revisions</b>: earlier document versions stacked inside the file: who saved each revision and which lines were deleted (−) or added (+).</li>\n      <li><b>Hidden content</b>: hidden Word text (<code>w:vanish</code>), hidden Excel rows, columns, and worksheets.</li>\n      <li><b>Data connections</b>: databases, <code>.odc</code> files, and pivot tables revealing servers, databases, and credentials.</li>\n      <li><b>Edit history (XMP)</b>: applications used to create, convert, and save the file; an identical DocumentID across files indicates a shared source document.</li>\n      <li><b>Attachments</b>, <b>personal data</b>, <b>cloud links &amp; tokens</b>, and format-specific artifacts: shortcuts (computer name, MAC address, network share), e-mails (Reply-To, Received chain), calendars, contacts, and video files (device, GPS).</li></ul>\n      <p>Each signal raises a coded finding whose detail card links straight back via “Open document”.</p>"
+    },
+    {
+      "id": "formats-help",
+      "sec": "docs",
+      "icon": "doc",
+      "t": "Supported formats",
+      "sub": "what is parsed and what it reveals",
+      "rel": [
+        "forensics-help",
+        "offline-help"
+      ],
+      "body": "\n      <p>In addition to Office, PDF, OpenDocument, photos, and <code>.rdp</code> files, FOCA-rs parses:</p>\n      <ul><li><b>.lnk shortcuts</b>: computer name, MAC address, volume serial number, local and UNC network paths.</li>\n      <li><b>.eml and .msg emails</b>: sender, recipients, Reply-To, Message-ID, Received header chain with internal servers and IPs, Microsoft 365 tenant, X.500 addresses, and attachments.</li>\n      <li><b>.ics calendars and .vcf contacts</b>: organizer, attendees, online meeting links; phone numbers, street addresses, and birthdates (masked).</li>\n      <li><b>Diagrams &amp; desktop publishing</b>: Visio (<code>.vsdx</code>, <code>.vsd</code>), Publisher, InDesign, WordPerfect, Works.</li>\n      <li><b>Video &amp; iPhone photos</b>: <code>.mp4</code>, <code>.mov</code>, <code>.heic</code>: device model, serial number, timestamp, GPS coordinates.</li>\n      <li><b>.zip archives</b>: parsed in memory, with contained files analyzed as documents (nested archives up to 2 levels deep); path-traversal entries such as <code>./</code> are flagged.</li></ul>\n      <p><b>Limitations:</b> digital signatures inside legacy <code>.doc</code>/<code>.xls</code> files are not parsed; hidden text applied solely via Word styles is not detected; full-text search indexes the first 64 KB of extracted text per file.</p>"
+    },
+    {
+      "id": "kep-help",
+      "sec": "docs",
+      "icon": "contract",
+      "t": "Signatures & QES (КЕП)",
+      "sub": "what a document signature exposes",
+      "rel": [
+        "forensics-help",
+        "pii-help"
+      ],
+      "body": "\n      <p>A digitally signed PDF or Office document embeds the signer's certificate. For Ukrainian QES (КЕП), this includes full name, job title, organization, <b>ЄДРПОУ (EDRPOU) code</b>, <b>РНОКПП (RNOKPP / ІПН)</b>, and the issuing Certification Authority (АЦСК).</p>\n      <ul><li><b>РНОКПП is displayed masked only</b> (<code>********57</code>) and validated by checksum; the full number is never stored anywhere. Neither in the database nor in reports.</li>\n      <li><b>Post-signature modifications</b>: extra bytes were appended after the signed byte range, meaning what appears on screen may differ from what was signed.</li>\n      <li><b>TSA timestamp</b>: trusted timestamp from a Time Stamping Authority. If it diverges from the claimed signing time by more than 24 hours, the date warrants investigation.</li>\n      <li>The cryptographic digest is verified for SHA-256/384/512; for ДСТУ and SHA-1 signatures it is marked “not verified”.</li></ul>\n      <p><b>What the app does not do:</b> it does not validate certificate chains or revocation status. It reports only what is recorded in the signature. QES (КЕП) fields are parsed according to ETSI EN 319 412 and the Ukrainian certificate profile; this has not yet been tested across a large corpus of production signatures.</p>"
+    },
+    {
+      "id": "redaction-help",
+      "sec": "docs",
+      "icon": "eraser",
+      "t": "Broken redaction",
+      "sub": "why a black box does not hide text",
+      "rel": [
+        "forensics-help",
+        "pii-help"
+      ],
+      "body": "\n      <p>When part of a PDF is covered with a drawn rectangle, the underlying text remains in the file and can be selected, copied, or extracted by any tool. This is a critical finding.</p>\n      <ul><li>The app detects text underneath opaque black or white rectangles as well as unapplied <code>/Redact</code> annotations, reporting the page number and a short snippet (up to 80 characters, with personal data masked).</li>\n      <li><b>How to redact properly:</b> use “Redact → Apply” in a PDF editor, save a fresh copy of the PDF, and verify by attempting to select and copy the redacted area.</li>\n      <li><b>Detector limitations:</b> character widths are estimated approximately, nested Form XObjects, transparency, and clipping paths are not evaluated, and rectangles covering more than 80% of the page are ignored. Misses and occasional false positives are possible. Always verify against the source PDF.</li></ul>"
+    },
+    {
+      "id": "pii-help",
+      "sec": "docs",
+      "icon": "user",
+      "t": "Personal data & masking",
+      "sub": "РНОКПП, cards, IBAN, passports, markings",
+      "rel": [
+        "kep-help",
+        "rules-help"
+      ],
+      "body": "\n      <p>Document text is scanned for РНОКПП (RNOKPP), ЄДРПОУ (EDRPOU) codes, IBANs, payment card numbers, passports and ID cards, phone numbers, and classification markings (“Таємно” / Secret, “ДСК” / For Official Use Only, “Конфіденційно” / Confidential). Identifiers are verified with checksums (РНОКПП, ЄДРПОУ, IBAN, and the Luhn algorithm for cards) so random numbers are excluded.</p>\n      <ul><li><b>Values are masked before storage:</b> only the trailing characters (<code>••••••••90</code>) appear in the database, search results, reports, and exports. The full number cannot be revealed because it is never stored on the device.</li>\n      <li>One finding per data type is created per document with a match count; organization ЄДРПОУ codes are public and rated “Info”.</li>\n      <li>Reports include only data types and counts, never raw values.</li></ul>"
+    },
+    {
+      "id": "fts-help",
+      "sec": "docs",
+      "icon": "search",
+      "t": "Full-text document search",
+      "sub": "words, phrases, exclusions",
+      "go": [
+        "Full-text search",
+        "/p/docs-search"
+      ],
+      "rel": [
+        "rules-help",
+        "pii-help"
+      ],
+      "body": "\n      <p>“Data → Documents → Full-text search” searches filenames and text across all project documents completely offline. Matches are highlighted inside short snippets; tap a result to open its document card.</p>\n      <ul><li>Multiple words require all terms to match: <code>contract plant-2</code>.</li>\n      <li>Exact phrase in quotes: <code>\"connection point\"</code>; exclude a term with a minus sign: <code>-2019</code>; prefix wildcard with an asterisk: <code>energ*</code>.</li>\n      <li>Personal data and secrets are redacted inside snippets, with a note underneath indicating what was hidden.</li>\n      <li>The first 64 KB of text from each file is indexed; scanned images without a text layer are not searchable unless OCR is enabled. Toggle “Include trash” to search trashed documents.</li></ul>\n      <p>Global search (the bottom bar) also returns matches from document text.</p>"
+    },
+    {
+      "id": "rules-help",
+      "sec": "docs",
+      "icon": "filter",
+      "t": "Search rules",
+      "sub": "custom patterns and built-in presets",
+      "go": [
+        "Search rules",
+        "/p/rules"
+      ],
+      "rel": [
+        "fts-help",
+        "pii-help"
+      ],
+      "body": "\n      <p>Rules match project-specific patterns in document text: contract numbers, internal codes, or asset tags. Open them from the ⋮ menu or the “Scope” screen.</p>\n      <ul><li><b>Built-in presets:</b> Ukrainian government documents, inline credentials, internal infrastructure, cryptocurrency wallets, and free-form personal data.</li>\n      <li><b>Custom rules</b> use regular expressions. A named capture group <code>(?P&lt;v&gt;…)</code> sets the value recorded in the finding. Use “Test” to preview matches on your own sample text.</li>\n      <li>Limits: patterns up to 512 characters, up to 64 rules; patterns that match empty strings are rejected. Validation errors appear directly below the pattern field.</li>\n      <li>After saving, findings are recalculated immediately without running a new scan.</li></ul>"
+    },
+    {
+      "id": "offline-help",
+      "sec": "docs",
+      "icon": "folder",
+      "t": "Offline file analysis",
+      "sub": "folder, files, or ZIP from your phone",
+      "go": [
+        "Analyze files",
+        "/import"
+      ],
+      "rel": [
+        "formats-help",
+        "forensics-help"
+      ],
+      "body": "\n      <p>Documents provided by a client or collected manually can be analyzed without running a network scan: “Projects → Analyze files offline” or via the ⋮ menu.</p>\n      <ul><li><b>No network access is used.</b> Files are copied into the app's private storage, parsed locally on your phone, and never leave the device; temporary import copies are deleted once parsing completes.</li>\n      <li>Select an entire folder (including subfolders), individual files, or a ZIP archive. Limits: up to 500 files and 512 MB per batch, up to 100 MB per file; any file taking longer than 30 seconds to parse is skipped.</li>\n      <li>Produces a new project (or adds to the current one) complete with metadata, forensics, and findings. Re-imported files are deduplicated automatically.</li>\n      <li>You can cancel analysis at any time. Files already parsed remain in the project.</li></ul>"
+    },
+    {
+      "id": "graph-chain",
+      "sec": "docs",
+      "icon": "graph",
+      "t": "Link graph & attack chain",
+      "sub": "layers, clusters, path to domain",
+      "go": [
+        "Link graph",
+        "/p/graph"
+      ],
+      "rel": [
+        "netmap",
+        "org-chart"
+      ],
+      "body": "\n      <p>The link graph organizes discovered artifacts into layers from left to right: <b>People → Documents → PCs → Servers → PKI/Domains</b>. Top chips toggle individual layers; the badge on each chip shows the total node count in that layer across the project.</p>\n      <ul><li><b>Clusters.</b> Identical node types sharing the same connections collapse into a single group, e.g., “14 documents”. Tap a cluster to expand it, and tap again to collapse it.</li>\n      <li><b>Red border</b> indicates a document or host with a critical or high finding. Dashed lines connect versions of the same document; arrows mean “created from”.</li>\n      <li><b>“Link chain” mode.</b> Tap any node or critical finding to view a vertical path card: <i>file → author → PC → printer/share → server → domain</i>. If multiple paths exist, switch between them using tabs; an ↑ arrow indicates an edge traversed in reverse.</li>\n      <li>The graph pans in all directions and zooms via the − / + buttons.</li></ul>\n      <p>Chains are built strictly from document and infrastructure relationships to illustrate <b>how</b> a single leak connects to internal systems. Treat them as hypotheses to verify, not proof of access.</p>"
+    },
+    {
+      "id": "netmap",
+      "sec": "docs",
+      "icon": "net",
+      "t": "Internal network map",
+      "sub": "domain, servers, PCs, users",
+      "go": [
+        "Network map",
+        "/p/netmap"
+      ],
+      "rel": [
+        "graph-chain",
+        "org-chart"
+      ],
+      "body": "\n      <p>The map is reconstructed from internal details leaked by documents: UNC paths (<code>\\\\SRV-FILE01\\Buh</code>), printers, LNK shortcuts, e-mail Received headers, <code>word/people.xml</code>, and CDP/AIA URLs in certificates.</p>\n      <ul><li>Hierarchy: <b>AD domain → servers by role</b> (domain controller, PKI, file, mail, print, database, terminal) <b>→ workstations → users</b>.</li>\n      <li>“Domain undetermined” groups nodes whose domain name never appeared in any document.</li>\n      <li>Tap any node to inspect its sources. Which document, path, or header exposed it. Along with a confidence percentage.</li></ul>\n      <p>These are internal names that should never be visible externally: exposing them assists both phishing and post-exploitation.</p>"
+    },
+    {
+      "id": "timeline-activity",
+      "sec": "docs",
+      "icon": "history",
+      "t": "Timeline & activity heatmap",
+      "sub": "yearly evolution and 7 × 24 hours",
+      "go": [
+        "Timeline",
+        "/p/timeline"
+      ],
+      "rel": [
+        "anomalies"
+      ],
+      "body": "\n      <p><b>Yearly evolution</b> displays three tracks: document formats, authoring software, and earliest host certificates from CT logs. Together they show when an organization upgraded Office, standardized on PDF, or launched a new subdomain. Tap any year for the full list.</p>\n      <p><b>7 × 24 heatmap</b> plots when documents were created: rows are days of the week, columns are hours of the day. Working hours (Mon-Fri, configurable in Settings) are outlined; yellow borders highlight off-hours activity (evenings, nights, weekends). Below the chart are the peak hour and off-hours percentage.</p>\n      <p>Hours reflect each document's local timestamp; the time zone is shown beneath the heatmap. Documents created across multiple time zones may shift the pattern.</p>"
+    },
+    {
+      "id": "anomalies",
+      "sec": "docs",
+      "icon": "alert",
+      "t": "Metadata anomalies",
+      "sub": "contradictions in dates and edit history",
+      "rel": [
+        "forensics-help",
+        "timeline-activity"
+      ],
+      "body": "\n      <p>An anomaly is an internal contradiction within a single file's metadata:</p>\n      <ul><li>creation date later than modification date, or a timestamp in the future;</li>\n      <li>mismatches between PDF (Info), XMP, or EXIF timestamps;</li>\n      <li>XMP edit history starts before the creation date (file derived from an older template/document) or ends after the modification date;</li>\n      <li>software in the edit history conflicts with the Producer field, software version is newer than the document, or total editing time exceeds the file's lifespan.</li></ul>\n      <p>Each anomaly carries a confidence score. It is an investigative signal for the analyst (indicating editing, re-saving, or template reuse) rather than a vulnerability itself; findings are rated Low or Info and listed on the document card under “Metadata anomalies”.</p>"
+    },
+    {
+      "id": "kev",
+      "sec": "docs",
+      "icon": "app",
+      "t": "KEV: “possibly” vs. “likely”",
+      "sub": "actively exploited software vulnerabilities",
+      "go": [
+        "Software",
+        "/p/data/software"
+      ],
+      "rel": [
+        "anomalies"
+      ],
+      "body": "\n      <p><b>CISA KEV</b> is the catalog of vulnerabilities known to be actively exploited in the wild. The catalog is bundled inside the app and works offline.</p>\n      <ul><li><b>“Possibly vulnerable software”</b>: the product appears in KEV, but the catalog does not specify exact affected versions. Verify the installed version against the vendor's advisory.</li>\n      <li><b>“Likely vulnerable software”</b>: the detected version is already EOL, and KEV lists CVEs published after end of support, meaning no patch exists for it.</li></ul>\n      <p>Versions are inferred from document metadata and service banners rather than directly from endpoints, so these are leads rather than confirmed vulnerabilities. A “ransomware” tag indicates the CVE has been used in ransomware campaigns.</p>"
+    },
+    {
+      "id": "org-chart",
+      "sec": "docs",
+      "icon": "users",
+      "t": "Org chart",
+      "sub": "departments, roles, confidence",
+      "go": [
+        "People",
+        "/p/data/people"
+      ],
+      "rel": [
+        "netmap",
+        "graph-chain"
+      ],
+      "body": "\n      <p>Departments are inferred from file paths and network shares (<code>\\\\SRV\\Buh\\</code>, <code>Documents\\HR\\</code>), printers, “Organization” metadata fields, certificate OUs, and document roles (author, reviewer, approver).</p>\n      <ul><li>Each department and person displays a confidence percentage; tap a person to inspect the <b>evidence</b>: which paths and documents linked them to that department.</li>\n      <li>“Possibly also…” groups weaker-confidence candidates and stays collapsed by default.</li></ul>\n      <p>This is an open-source hypothesis and should be corroborated with additional sources before inclusion in a formal report.</p>"
+    },
+    {
+      "id": "webaudit",
+      "sec": "docs",
+      "icon": "shield",
+      "t": "Web audit & profiles",
+      "sub": "headers, CSP, source maps, APIs",
+      "rel": [
+        "profiles",
+        "recon-help"
+      ],
+      "body": "\n      <p>Web audit inspects the target website for security headers (HSTS, CSP, CORS, cookies, version disclosure), domains referenced in CSP, JavaScript source maps (<code>.js.map</code>), Swagger/OpenAPI, GraphQL, Spring Actuator, <code>openid-configuration</code>, and allowed HTTP methods.</p>\n      <ul><li><b>Passive profile</b>: sends zero requests to the site: analyzes already captured responses and web archive snapshots.</li>\n      <li><b>Standard</b>: adds standard GET requests to in-scope hosts for source maps and API documentation.</li>\n      <li><b>Active phase</b>: adds OPTIONS, TRACE, PROPFIND, and CORS probes with a spoofed Origin (never PUT or DELETE).</li></ul>\n      <p>In-scope domains found in CSP are added to the host list; out-of-scope domains go strictly to “Out-of-scope candidates” and are never queried. Results appear in the host card's “Web audit” section and in Findings.</p>"
+    },
+    {
+      "id": "hygiene",
+      "sec": "docs",
+      "icon": "eraser",
+      "t": "Document hygiene & sanitization",
+      "sub": "A-F grade, “Before / After”",
+      "go": [
+        "Pre-publication check",
+        "/p/preflight"
+      ],
+      "rel": [
+        "share-target",
+        "redaction-help"
+      ],
+      "body": "\n      <p>The <b>A-F grade</b> reflects how much information a document leaks about people and infrastructure. Starting from 100 points, deductions are: Critical −40, High −20, Medium −10, Low −4; any Critical issue (exposed secret, broken redaction, deleted text) caps the grade at E. A batch's overall grade is at most one letter above its worst file.</p>\n      <ul><li><b>Remediation steps:</b> items with a checkmark are fixed automatically by “Clean”; items with a warning triangle require manual action (accepting tracked changes, removing secrets, properly re-redacting text).</li>\n      <li><b>Sanitization</b> produces a clean copy stripped of metadata: PDFs are rewritten from scratch without incremental revisions, and ODF/Office files have properties, paths, printers, revision authors, and thumbnails removed. The original file is untouched.</li>\n      <li><b>“Before / After”</b> re-parses the cleaned copy, showing removed fields, the “0 metadata · file valid” verdict, and page counts before and after.</li>\n      <li><b>Digital signatures are always stripped</b> because any rewrite invalidates them. If a signature is required, re-sign the clean copy afterward.</li></ul>"
+    },
+    {
+      "id": "share-target",
+      "sec": "docs",
+      "icon": "share",
+      "t": "Share to FOCA-rs",
+      "sub": "inspect a file from Telegram or e-mail",
+      "rel": [
+        "hygiene"
+      ],
+      "body": "\n      <p>From Telegram, e-mail, a browser, or a file manager, tap <b>“Share” → “Inspect in FOCA-rs”</b>. The app opens the preflight screen displaying the hygiene grade, what would leak, remediation steps, and a “Clean” button.</p>\n      <ul><li>No project is created and no network access is used: the file is copied into private app storage and analyzed locally on your phone.</li>\n      <li>Accepts documents, photos, and archives. Up to 20 files and 256 MB per share, up to 100 MB per file.</li>\n      <li>After cleaning, the “Before / After” screen offers <b>“Share clean copy”</b> via the system share sheet, stripping the local directory path from the filename.</li></ul>"
+    },
+    {
+      "id": "quick-tools",
+      "sec": "docs",
+      "icon": "spark",
+      "t": "Quick tools & scan queue",
+      "sub": "standalone checks and batch runs",
+      "go": [
+        "Quick tools",
+        "/tools"
+      ],
+      "rel": [
+        "hibp-kanon",
+        "alerts-monitoring"
+      ],
+      "body": "\n      <p><b>Quick tools</b> let you inspect an individual file, domain mail policies (SPF/DMARC/DKIM/MTA-STS), a host/URL (TLS, headers, technologies, favicon), or password strength without creating a project.</p>\n      <ul><li><b>File</b> and <b>Password</b> (with HIBP unchecked) run 100% locally without a single network request.</li>\n      <li><b>Scan queue</b> (<code>/queue</code>) lets you select multiple projects and run them strictly sequentially with unified progress and pause controls.</li></ul>"
+    },
+    {
+      "id": "hibp-kanon",
+      "sec": "docs",
+      "icon": "key",
+      "t": "HIBP breach check (k-anonymity)",
+      "sub": "only 5 SHA-1 characters are sent",
+      "rel": [
+        "quick-tools"
+      ],
+      "body": "\n      <p>Checking passwords and discovered secrets against the Pwned Passwords database is always disabled by default and runs only when explicitly triggered by the user.</p>\n      <ul><li>The device computes the SHA-1 hash locally and sends only the first 5 hex characters to <code>/range/&lt;prefix&gt;</code> with the <code>Add-Padding: true</code> header.</li>\n      <li>The full password, full hash, and hash suffix never leave the device and are never written to the request log.</li></ul>"
+    },
+    {
+      "id": "alerts-monitoring",
+      "sec": "docs",
+      "icon": "history",
+      "t": "Alerts, risk trend & wordlists",
+      "sub": "Telegram/Webhook, 9 rules, login patterns",
+      "rel": [
+        "quick-tools",
+        "standards"
+      ],
+      "body": "\n      <p>The <b>Monitoring</b> screen tracks changes between scans across 9 rules (new hosts, open ports, secrets/PII/GPS in documents, TLS expiration, dangling CNAMEs, new CT certificates, risk score increases) and charts the risk trend over time.</p>\n      <ul><li>Telegram bot tokens and Webhook URLs are stored exclusively in Android KeyVault (Keystore) and are never saved in <code>settings.json</code> or exported in logs.</li>\n      <li>Under “Data → People → Generator”, you can generate username patterns (KMU-2010 / ICAO transliteration + AD domain) and a contextual pentest wordlist <code>.txt</code> excluding project secrets.</li></ul>\n      <p>“Compare” in the scan history opens a diff of any two finished scans: what appeared, disappeared or changed. If a source failed during one of them, removals are hidden so the diff does not mislead.</p>"
+    },
+    {
+      "id": "playbooks-custody-docx",
+      "sec": "docs",
+      "icon": "report",
+      "t": "Playbooks, DOCX, Chain of Custody, STIX 2.1 & offline OCR",
+      "sub": "remediation, signed reports, exports and OCR",
+      "go": [
+        "Reports",
+        "/p/reports"
+      ],
+      "rel": [
+        "report-templates",
+        "standards",
+        "hygiene"
+      ],
+      "body": "\n      <p><b>Remediation Playbook.</b> On any finding card, tap <b>“Remediation plan (Playbook)”</b> to open step-by-step remediation guidance with effort estimates, owner roles, verification commands (never interpolating raw secrets), and a verification checklist.</p>\n      <p><b>DOCX reports &amp; Chain of Custody.</b> The report builder supports <b>DOCX (Word)</b> output with an embedded PNG severity chart across all 6 templates. Enabling <b>“Chain of Custody &amp; Digital Signature”</b> embeds a cryptographic digest of the report inputs and creates detached <code>.sha256</code> and <code>.sig.json</code> files signed with an <code>ECDSA P-256</code> key stored in Android Keystore. Verify any report's integrity from the history menu (<b>“Verify signature / SHA-256”</b>).</p>\n      <p><b>STIX 2.1, Nuclei &amp; httpx exports.</b> Quick export supports an <b>OASIS STIX 2.1 JSON</b> bundle (for MISP, OpenCTI, and SIEM; secrets and PII are forcibly masked) as well as deduplicated <code>.txt</code> target lists ready for <code>nuclei -l</code> and <code>httpx -l</code>.</p>\n      <p><b>Optional offline OCR (Android ML Kit).</b> Under “Settings → Signature databases &amp; OCR”, you can enable on-device text recognition for scanned PDFs and images lacking a text layer (&lt; 40 characters). Recognition runs 100% locally with no cloud APIs, and the extracted text is indexed in FTS5 and scanned by the masked PII detector.</p>"
+    },
+    {
+      "id": "screens",
+      "sec": "ref",
+      "icon": "grid",
+      "t": "App screens",
+      "sub": "where everything is · 18 screens",
+      "body": ""
+    },
+    {
+      "id": "profiles",
+      "sec": "ref",
+      "icon": "scan",
+      "t": "Profiles & sources",
+      "sub": "which one to choose",
+      "go": [
+        "Sources",
+        "/settings/sources"
+      ],
+      "body": ""
+    },
+    {
+      "id": "standards",
+      "sec": "ref",
+      "icon": "shield",
+      "t": "Standards mapping",
+      "sub": "MITRE, CWE, OWASP, ISO, NIST, НД ТЗІ",
+      "rel": [
+        "report-templates"
+      ],
+      "body": "\n      <p>On a finding card, the <b>“Standards”</b> block shows which frameworks correspond to the rule that triggered it:</p>\n      <ul><li><b>ATT&amp;CK</b>: MITRE ATT&amp;CK v20 technique (e.g., T1213, Data from Information Repositories);</li>\n      <li><b>CWE</b>: weakness class (CWE-212, Improper Removal of Sensitive Information Before Storage or Transfer); the <b>Top 25</b> mark means the weakness is in the 2025 CWE Top 25;</li>\n      <li><b>OWASP</b>: OWASP Top 10:2025 category and WSTG v4.2 test identifier;</li>\n      <li><b>ISO 27001 A.</b>: control from ISO/IEC 27001:2022 Annex A (ДСТУ ISO/IEC 27001:2023);</li>\n      <li><b>NIST</b>: NIST SP 800-53 Rev. 5 control; the security measures of НД ТЗІ 3.6-006-24, used for Ukrainian security profiles, have the same codes;</li>\n      <li><b>GDPR</b> and <b>2297-VI</b>: articles of the GDPR and of the Law of Ukraine “On Personal Data Protection” for findings with personal data;</li>\n      <li><b>НД ТЗІ</b>: functional security service under НД ТЗІ 2.5-004-99 (КВ, ЦВ, НА…); <b>КСЗІ</b>: КСЗІ implementation stage under НД ТЗІ 3.7-003-05. Both apply to systems certified under КСЗІ.</li></ul>\n      <p>Mappings are bundled offline and verified against primary specifications; only well-founded mappings are included, so some findings intentionally omit this block. The same mappings appear in the “КСЗІ” and “Laboratory” report templates.</p>\n      <p><b>Disclaimer.</b> This mapping is an auditor's reference guide, not an official state КСЗІ expertise or compliance certification. Formal compliance determinations must be made by a qualified assessor after a full audit.</p>"
+    },
+    {
+      "id": "attack-paths",
+      "sec": "docs",
+      "icon": "graph",
+      "t": "Attack paths & choke points",
+      "sub": "how isolated findings combine into an attack chain",
+      "go": [
+        "Open analytics",
+        "/p/insights"
+      ],
+      "rel": [
+        "graph-chain",
+        "netmap",
+        "read-report"
+      ],
+      "body": "<p class=\"hl-lead\">The attack-path engine links leaked documents, usernames, secrets, internal hosts, and external services into ranked compromise scenarios.</p><h3>How it works</h3><ul><li>Builds a directed weighted graph from leaked documents and artifacts (.ovpn, config files, logins) to external entry points (VPN, OWA, RDP, web panels with KEV).</li><li>Computes the top 5 most probable chains with direct references to specific findings, documents, and hosts.</li><li>Identifies <b>Choke Points</b>: minimum-cut nodes whose remediation breaks the maximum number of attack chains at once.</li></ul><p>The attack paths and choke points summary is available in project analytics and included in HTML, DOCX, and Markdown reports.</p>"
+    },
+    {
+      "id": "plugins-sandbox",
+      "sec": "set",
+      "icon": "app",
+      "t": "Plugins & sandbox",
+      "sub": "extra rules and sources, isolated from keys and other projects",
+      "go": [
+        "Open plugins",
+        "/settings/plugins"
+      ],
+      "rel": [
+        "rules-help",
+        "legal",
+        "scope-help"
+      ],
+      "body": "<p class=\"hl-lead\">Plugins add finding rules, metadata patterns and sources. There are two kinds: declarative (a JSON or TOML manifest) and WASM modules that run in a sandbox.</p>\n      <h3>Where they run</h3><ul><li>Enabled plugins run during the “Network and DNS” stage of a real scan. A failing plugin does not stop the scan: its error is shown on the scan screen.</li>\n      <li>Plugins that contact the target are not run in “Passive”; the scan screen marks them as skipped.</li>\n      <li>“Sandbox test” in the plugin card runs it once in passive mode to check it.</li></ul>\n      <h3>Limits</h3><ul><li>A WASM plugin gets up to 16 MiB of memory and a fixed instruction budget, and has no file or socket access.</li>\n      <li>Network requests go through the app's shared client: scope, proxy/Orbot, rate limits and the request log apply. Plugins never see API keys from KeyVault or other projects.</li>\n      <li>Before enabling an unsigned plugin, the app lists the access it asks for. Enable it only if you trust the author.</li></ul>\n      <p>Built-in, installed and custom plugins are managed in “Settings → Plugins”.</p>"
+    },
+    {
+      "id": "cloud-ai",
+      "sec": "set",
+      "icon": "spark",
+      "t": "Cloud AI, model catalog & Thinking",
+      "sub": "OpenAI, Anthropic, Gemini, DeepSeek, xAI, OpenRouter. Live model list and editable redaction",
+      "go": [
+        "AI settings",
+        "/settings/ai"
+      ],
+      "rel": [
+        "pii-help",
+        "read-report",
+        "report-templates"
+      ],
+      "body": "<p class=\"hl-lead\">The AI assistant generates a structured project summary via your chosen cloud API provider.</p><h3>Live model list</h3><p>FOCA-rs does not hardcode stale models: the app fetches the up-to-date list of available models directly from the provider's API using your key (or accepts any custom model ID manually).</p><h3>Reasoning settings (Thinking)</h3><p>Supports official provider reasoning controls (Anthropic adaptive/manual thinking, Gemini <code>thinkingLevel</code>/<code>thinkingBudget</code>, OpenAI/xAI/Groq/Mistral/OpenRouter <code>reasoning_effort</code>, DeepSeek <code>thinking</code>), token budgets, temperature, and optional display of the reasoning trace.</p><h3>Data protection</h3><p>Before sending, secrets, PII, e-mail addresses, and the client's name are replaced with <code>[SECRET]</code>, <code>[NAME]</code>, <code>[EMAIL]</code>, and <code>[CLIENT]</code> placeholders, and the full prompt can be edited manually in the preview dialog.</p><h3>Where the summary goes</h3><p>Open a project, then “AI summary”. The text is AI-generated, so check the facts before sending it to a client. To put it in a report, turn on “Executive summary (AI-assisted)” in the report builder; placeholders such as <code>[CLIENT]</code> are restored only in the report.</p>"
+    },
+    {
+      "id": "encrypted-bundle",
+      "sec": "docs",
+      "icon": "lock",
+      "t": "Encrypted .foca.enc bundle & CLI scenarios",
+      "sub": "password-protected project transfer and reproducible scenario.toml audits",
+      "go": [
+        "All projects",
+        "/projects"
+      ],
+      "rel": [
+        "playbooks-custody-docx",
+        "offline-help"
+      ],
+      "body": "<p class=\"hl-lead\">A project can be exported as a single encrypted <code>.foca.enc</code> file for secure handover to a colleague or archival.</p><h3>Cryptography</h3><ul><li>The encryption key is derived from the password using <code>PBKDF2-HMAC-SHA256</code> (210,000 iterations, random 16-byte salt).</li><li>Project data and <code>CustodyManifest</code> are encrypted with authenticated <code>ChaCha20-Poly1305</code>; a wrong password and a corrupted file are distinguished clearly.</li><li>The password is never persisted in the database, settings, or logs. Importing always creates a new project without overwriting existing ones.</li></ul><h3>CLI automation</h3><p>The command <code>foca run scenario.toml [--json] [--dry-run]</code> executes a reproducible audit enforcing <code>fail_on_severity</code> and <code>max_risk</code> gates for CI/CD pipelines.</p>"
+    },
+    {
+      "id": "android-flavors",
+      "sec": "ref",
+      "icon": "shield",
+      "t": "Android builds (foss / play) & licenses",
+      "sub": "pure GPL-3.0 build for F-Droid and build with ML Kit offline OCR",
+      "go": [
+        "Licenses & components",
+        "/settings/licenses"
+      ],
+      "rel": [
+        "legal",
+        "playbooks-custody-docx"
+      ],
+      "body": "<p class=\"hl-lead\">The FOCA-rs Android app is built in two flavors for full compliance with the free GPL-3.0 license.</p><ul><li><b>foss</b>: 100% free build for F-Droid and direct releases without proprietary Google ML Kit (offline photo OCR is unavailable; all other features and document analysis work in full).</li><li><b>play</b>: build adding optional offline OCR via <code>com.google.mlkit:text-recognition</code> with explicit Google APIs ToS attribution.</li></ul><p>The full inventory of Rust, Android, and data libraries plus the complete texts of all 9 open-source licenses are available offline in “Settings → About → Licenses”.</p>"
+    },
+    {
+      "id": "glossary",
+      "sec": "ref",
+      "icon": "note",
+      "t": "Glossary",
+      "sub": "scope, EOL, CVE, dorks… · 55 terms",
+      "body": ""
+    }
+  ]
+}

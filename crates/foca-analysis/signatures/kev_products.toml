@@ -1,0 +1,447 @@
+# Offline CISA KEV mapping: which entries of the CISA Known Exploited
+# Vulnerabilities catalog are comparable with the software FOCA-rs detects.
+#
+# Single source of truth for both sides:
+# * `update_kev.py` keeps only KEV records whose `vendorProject` is in `vendors` (case-insensitive,
+#   exact) and whose `product` matches `products` (Python/Rust-compatible regex, case-insensitive);
+#   the record is tagged with every matching `key` and written to `kev.tsv.gz`;
+# * `kev.rs` matches detected software / OS / web technology names against `match`
+#   (case-insensitive) and reports the KEV records of the key.
+#
+# KEV has no version ranges: a match only says "this product has exploited CVEs, check the
+# version", never "this host is vulnerable". Photoshop/Illustrator/InDesign, LibreOffice and
+# nginx have no KEV records at the snapshot date, so they are not listed.
+#
+# kind: office | os | pdf | browser | server | web | mail | network | mobile | tool
+
+[[product]]
+key = "ms_office"
+label = "Microsoft Office"
+kind = "office"
+vendors = ["Microsoft"]
+products = '^(Office|Office Outlook|Outlook|Word|Excel|PowerPoint|Publisher|Project|Visual Basic for Applications.*|Office and WordPad|MSCOMCTL\.OCX)$'
+match = 'microsoft.*\b(office|word|excel|powerpoint|outlook|publisher|visio|onenote|access|project)\b'
+
+[[product]]
+key = "ms_windows"
+label = "Microsoft Windows"
+kind = "os"
+vendors = ["Microsoft"]
+products = '^(Windows|Windows .*|Win32k|SMBv1.*|SMBv3|Graphics Device Interface.*|Graphics Component|DirectX.*|Task Scheduler|Netlogon|Remote Desktop Services|Kerberos.*|Active Directory|Ancillary Function Driver.*|Client-Server Run-time Subsystem.*|DWM Core Library|Internet Key Exchange.*|Enhanced Cryptographic Provider|WinVerifyTrust function|ATM Font Driver|HTTP Protocol Stack|HTTP\.sys|MSHTML|XML Core Services|Streaming Service.*|Update Notification Manager|SmartScreen Prompt|WordPad|Input Method Editor.*|Hyper-V.*)$'
+match = '\bwindows\b'
+
+[[product]]
+key = "ms_ie"
+label = "Microsoft Internet Explorer / Edge"
+kind = "browser"
+vendors = ["Microsoft"]
+products = '^(Internet Explorer.*|Edge.*|Silverlight)$'
+match = 'internet explorer|\bmsie\b|microsoft edge'
+
+[[product]]
+key = "ms_exchange"
+label = "Microsoft Exchange Server"
+kind = "mail"
+vendors = ["Microsoft"]
+products = '^Exchange( Server)?$'
+match = '\bexchange\b|outlook web (app|access)|\bowa\b'
+
+[[product]]
+key = "ms_sharepoint"
+label = "Microsoft SharePoint"
+kind = "web"
+vendors = ["Microsoft"]
+products = 'SharePoint'
+match = 'sharepoint'
+
+[[product]]
+key = "ms_iis"
+label = "Microsoft IIS"
+kind = "server"
+vendors = ["Microsoft"]
+products = '^Internet Information Services'
+match = '\biis\b|internet information services'
+
+[[product]]
+key = "ms_sql"
+label = "Microsoft SQL Server"
+kind = "server"
+vendors = ["Microsoft"]
+products = '^SQL Server$'
+match = 'sql server|\bmssql\b'
+
+[[product]]
+key = "ms_adfs"
+label = "Microsoft AD FS"
+kind = "server"
+vendors = ["Microsoft"]
+products = '^Active Directory Federation Services$'
+match = '\bad ?fs\b|federation services'
+
+[[product]]
+key = "ms_dotnet"
+label = "Microsoft .NET Framework"
+kind = "server"
+vendors = ["Microsoft"]
+products = '^\.NET Framework'
+match = 'asp\.net|\.net framework'
+
+[[product]]
+key = "adobe_acrobat"
+label = "Adobe Acrobat / Reader"
+kind = "pdf"
+vendors = ["Adobe"]
+products = 'Acrobat|Reader'
+match = '\bacrobat\b|adobe reader|\bdistiller\b|pdfmaker'
+
+[[product]]
+key = "adobe_coldfusion"
+label = "Adobe ColdFusion"
+kind = "web"
+vendors = ["Adobe"]
+products = 'ColdFusion'
+match = 'coldfusion'
+
+[[product]]
+key = "adobe_flash"
+label = "Adobe Flash Player"
+kind = "browser"
+vendors = ["Adobe"]
+products = 'Flash Player'
+match = 'flash player|shockwave flash'
+
+[[product]]
+key = "adobe_magento"
+label = "Adobe Commerce / Magento"
+kind = "web"
+vendors = ["Adobe"]
+products = 'Magento'
+match = 'magento'
+
+[[product]]
+key = "apache_httpd"
+label = "Apache HTTP Server"
+kind = "server"
+vendors = ["Apache"]
+products = '^(HTTP Server|Apache)$'
+match = '^apache( http server| httpd)?(\s*/?\s*\d.*)?$|\bhttpd\b'
+
+[[product]]
+key = "apache_tomcat"
+label = "Apache Tomcat"
+kind = "server"
+vendors = ["Apache"]
+products = '^Tomcat$'
+match = 'tomcat'
+
+[[product]]
+key = "apache_struts"
+label = "Apache Struts"
+kind = "web"
+vendors = ["Apache"]
+products = 'Struts'
+match = 'struts'
+
+[[product]]
+key = "apache_log4j"
+label = "Apache Log4j"
+kind = "server"
+vendors = ["Apache"]
+products = 'Log4j'
+match = 'log4j'
+
+[[product]]
+key = "oracle_java"
+label = "Oracle Java SE"
+kind = "server"
+vendors = ["Oracle"]
+products = 'Java|JRockit'
+match = '^java\b|\bjre\b|\bjdk\b|java\(tm\)'
+
+[[product]]
+key = "oracle_weblogic"
+label = "Oracle WebLogic"
+kind = "server"
+vendors = ["Oracle"]
+products = 'WebLogic|Fusion Middleware'
+match = 'weblogic'
+
+[[product]]
+key = "oracle_ebs"
+label = "Oracle E-Business Suite"
+kind = "web"
+vendors = ["Oracle"]
+products = 'E-Business Suite'
+match = 'e-business suite|oracle ebs'
+
+[[product]]
+key = "php"
+label = "PHP"
+kind = "server"
+vendors = ["PHP", "PHP Group"]
+products = '^(PHP|FastCGI Process Manager.*)$'
+match = '^php\b'
+
+[[product]]
+key = "wordpress"
+label = "WordPress"
+kind = "web"
+vendors = ["WordPress"]
+products = '^(WordPress Core|Core)$'
+match = 'wordpress'
+
+[[product]]
+key = "joomla"
+label = "Joomla!"
+kind = "web"
+vendors = ["Joomla!"]
+products = '.'
+match = 'joomla'
+
+[[product]]
+key = "drupal"
+label = "Drupal"
+kind = "web"
+vendors = ["Drupal"]
+products = '.'
+match = 'drupal'
+
+[[product]]
+key = "atlassian_confluence"
+label = "Atlassian Confluence"
+kind = "web"
+vendors = ["Atlassian"]
+products = 'Confluence|Multiple Products'
+match = 'confluence'
+
+[[product]]
+key = "atlassian_jira"
+label = "Atlassian Jira"
+kind = "web"
+vendors = ["Atlassian"]
+products = 'Jira|Multiple Products'
+match = '\bjira\b'
+
+[[product]]
+key = "atlassian_bitbucket"
+label = "Atlassian Bitbucket"
+kind = "web"
+vendors = ["Atlassian"]
+products = 'Bitbucket'
+match = 'bitbucket'
+
+[[product]]
+key = "citrix"
+label = "Citrix NetScaler / Gateway / StoreFront"
+kind = "network"
+vendors = ["Citrix"]
+products = '.'
+match = 'citrix|netscaler|storefront|xenapp|xendesktop'
+
+[[product]]
+key = "fortinet"
+label = "Fortinet FortiOS / FortiGate"
+kind = "network"
+vendors = ["Fortinet"]
+products = '.'
+match = 'forti(gate|os|net|web|mail|client|manager|proxy)'
+
+[[product]]
+key = "vmware"
+label = "VMware vCenter / ESXi / Horizon"
+kind = "server"
+vendors = ["VMware"]
+products = 'ESXi|vCenter|Workstation|Horizon|Workspace ONE|Tools|Multiple Products'
+match = 'vmware|vcenter|\besxi\b|vsphere'
+
+[[product]]
+key = "f5_bigip"
+label = "F5 BIG-IP"
+kind = "network"
+vendors = ["F5"]
+products = 'BIG-IP'
+match = 'big-?ip|\bf5\b'
+
+[[product]]
+key = "ivanti_connect"
+label = "Ivanti / Pulse Connect Secure"
+kind = "network"
+vendors = ["Ivanti"]
+products = 'Connect Secure|Pulse'
+match = 'pulse (connect )?secure|ivanti'
+
+[[product]]
+key = "roundcube"
+label = "Roundcube Webmail"
+kind = "mail"
+vendors = ["Roundcube"]
+products = '.'
+match = 'roundcube'
+
+[[product]]
+key = "zimbra"
+label = "Zimbra Collaboration"
+kind = "mail"
+vendors = ["Synacor"]
+products = 'Zimbra'
+match = 'zimbra'
+
+[[product]]
+key = "gitlab"
+label = "GitLab"
+kind = "web"
+vendors = ["GitLab"]
+products = '.'
+match = 'gitlab'
+
+[[product]]
+key = "jenkins"
+label = "Jenkins"
+kind = "web"
+vendors = ["Jenkins"]
+products = '.'
+match = 'jenkins'
+
+[[product]]
+key = "grafana"
+label = "Grafana"
+kind = "web"
+vendors = ["Grafana Labs"]
+products = '.'
+match = 'grafana'
+
+[[product]]
+key = "phpmyadmin"
+label = "phpMyAdmin"
+kind = "web"
+vendors = ["phpMyAdmin"]
+products = '.'
+match = 'phpmyadmin'
+
+[[product]]
+key = "telerik"
+label = "Progress Telerik UI"
+kind = "web"
+vendors = ["Progress", "Telerik"]
+products = 'Telerik|ASP\.NET AJAX'
+match = 'telerik'
+
+[[product]]
+key = "manageengine"
+label = "Zoho ManageEngine"
+kind = "server"
+vendors = ["Zoho"]
+products = '.'
+match = 'manageengine'
+
+[[product]]
+key = "sap_netweaver"
+label = "SAP NetWeaver"
+kind = "server"
+vendors = ["SAP"]
+products = 'NetWeaver'
+match = 'netweaver'
+
+[[product]]
+key = "elastic"
+label = "Elasticsearch / Kibana"
+kind = "server"
+vendors = ["Elastic"]
+products = '.'
+match = 'elasticsearch|kibana'
+
+[[product]]
+key = "jboss"
+label = "Red Hat JBoss"
+kind = "server"
+vendors = ["Red Hat"]
+products = 'JBoss'
+match = 'jboss|wildfly'
+
+[[product]]
+key = "papercut"
+label = "PaperCut NG/MF"
+kind = "server"
+vendors = ["PaperCut"]
+products = '.'
+match = 'papercut'
+
+[[product]]
+key = "apple_ios"
+label = "Apple iOS / iPadOS"
+kind = "mobile"
+vendors = ["Apple"]
+products = '\biOS\b|iPadOS'
+match = '\bios\b|\biphone\b|\bipad\b'
+
+[[product]]
+key = "apple_macos"
+label = "Apple macOS"
+kind = "os"
+vendors = ["Apple"]
+products = 'macOS|OS X'
+match = '\bmac ?os\b|\bos x\b|quartz pdfcontext'
+
+[[product]]
+key = "android"
+label = "Android"
+kind = "mobile"
+vendors = ["Android"]
+products = '.'
+match = '\bandroid\b'
+
+[[product]]
+key = "samsung_mobile"
+label = "Samsung mobile devices"
+kind = "mobile"
+vendors = ["Samsung"]
+products = 'Mobile Devices'
+match = 'samsung'
+
+[[product]]
+key = "google_chrome"
+label = "Google Chrome / Chromium"
+kind = "browser"
+vendors = ["Google"]
+products = '^(Chrom(e|ium).*|Skia|Dawn)$'
+match = '\bchrome\b|chromium|\bskia\b'
+
+[[product]]
+key = "mozilla"
+label = "Mozilla Firefox / Thunderbird"
+kind = "browser"
+vendors = ["Mozilla"]
+products = 'Firefox|Thunderbird'
+match = 'firefox|thunderbird'
+
+[[product]]
+key = "ghostscript"
+label = "Artifex Ghostscript"
+kind = "pdf"
+vendors = ["Artifex"]
+products = 'Ghostscript'
+match = 'ghostscript'
+
+[[product]]
+key = "winrar"
+label = "RARLAB WinRAR"
+kind = "tool"
+vendors = ["RARLAB"]
+products = '.'
+match = 'winrar'
+
+[[product]]
+key = "sevenzip"
+label = "7-Zip"
+kind = "tool"
+vendors = ["7-Zip"]
+products = '.'
+match = '7-?zip'
+
+[[product]]
+key = "linux_kernel"
+label = "Linux kernel"
+kind = "os"
+vendors = ["Linux"]
+products = 'Kernel'
+match = '\blinux\s+kernel\b'

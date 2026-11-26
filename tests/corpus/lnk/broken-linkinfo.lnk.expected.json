@@ -1,0 +1,13 @@
+{
+  "created": "2024-03-01T09:15:00Z",
+  "fields": {
+    "lnk:access_time": "2024-03-14T18:40:00Z",
+    "lnk:file_attributes": "0x00000020",
+    "lnk:target_size": "48213"
+  },
+  "format": "lnk",
+  "modified": "2024-03-12T16:05:30Z",
+  "warnings": [
+    "LNK: LinkInfo malformed"
+  ]
+}

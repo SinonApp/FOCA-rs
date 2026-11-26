@@ -1,0 +1,30 @@
+<resources>
+    <string name="share_target_label">Перевірити у FOCA-rs</string>
+    <string name="scan_service_description">Утримує скан FOCA-rs у фоні та показує його перебіг</string>
+    <string name="scan_channel_name">Скан</string>
+    <string name="scan_channel_description">Перебіг сканування та кнопка зупинки</string>
+    <string name="scan_title_default">Триває скан</string>
+    <string name="scan_stopping">Зупиняю…</string>
+    <string name="scan_action_open">Відкрити</string>
+    <string name="scan_action_stop">Зупинити</string>
+    <string name="scan_interrupted_title">Скан перервано системою</string>
+    <string name="scan_interrupted_text">Натисніть, щоб відкрити FOCA-rs і продовжити скан</string>
+    <string name="monitor_channel_name">Підсумки сканів і моніторинг</string>
+    <string name="monitor_channel_description">Завершення скану та нагадування про повторний скан</string>
+    <string name="monitor_done_default">Скан завершено</string>
+    <string name="monitor_done_project">Плановий скан завершено · %1$s</string>
+    <string name="monitor_paused_project">Плановий скан призупинено · %1$s</string>
+    <string name="monitor_budget_text">Досягнуто ліміт фонової роботи. Відкрийте проєкт, щоб продовжити.</string>
+    <string name="monitor_profile_std">Стандартний</string>
+    <string name="monitor_profile_passive">Пасивний</string>
+    <string name="monitor_error_text">Фоновий скан (%1$s) завершився з помилкою: %2$s.</string>
+    <string name="monitor_error_fallback">відкрийте проєкт для запуску</string>
+    <string name="verify_hint">Пройдіть перевірку та натисніть «Готово»</string>
+    <string name="verify_done">Готово</string>
+    <string name="monitor_reminder_title">Час повторно просканувати проєкт «%1$s»</string>
+    <string name="scan_interrupted_body">Система вивантажила FOCA-rs під час скану. Усе, що встигли завантажити, збережено. Натисніть, і застосунок відкриється й продовжить скан з місця зупинки.</string>
+    <string name="scan_tip_recents_lock">Закріпіть FOCA-rs у «Нещодавніх» (затисніть картку й натисніть замок), інакше змахування зупинить скан.</string>
+    <string name="scan_tip_battery_unrestricted">Щоб цього не було: Налаштування → Батарея → «Без обмежень» і ввімкніть автозапуск.</string>
+    <string name="scan_hidden_hint">FOCA-rs приховано з «Нещодавніх», поки триває скан. Натисніть, щоб відкрити</string>
+    <string name="scan_action_continue">Продовжити</string>
+</resources>

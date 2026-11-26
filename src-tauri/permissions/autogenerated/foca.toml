@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-foca"
+description = "Enables the foca command without any pre-configured scope."
+commands.allow = ["foca"]
+
+[[permission]]
+identifier = "deny-foca"
+description = "Denies the foca command without any pre-configured scope."
+commands.deny = ["foca"]

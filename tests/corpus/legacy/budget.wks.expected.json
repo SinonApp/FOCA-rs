@@ -1,0 +1,7 @@
+{
+  "application": "Microsoft Works for DOS",
+  "fields": {
+    "wks:bof_version": "0x5404"
+  },
+  "format": "wks"
+}

@@ -1,0 +1,53 @@
+{
+  "created": "2024-03-01T09:15:00Z",
+  "description": "Звіт за квартал (чернетка)",
+  "fields": {
+    "lnk:access_time": "2024-03-14T18:40:00Z",
+    "lnk:arguments": "/p",
+    "lnk:birth_droid_file_id": "0b974000-cfc6-11ee-9f21-0a002700002a",
+    "lnk:description": "Звіт за квартал (чернетка)",
+    "lnk:drive_type": "fixed",
+    "lnk:droid_file_id": "0b974000-cfc6-11ee-9f21-0a002700002a",
+    "lnk:droid_time": "2024-02-20T08:00:00Z",
+    "lnk:droid_volume_id": "2e211407-483b-4255-6f7c-8996a3b0bdca",
+    "lnk:env_target": "%USERPROFILE%\\Documents\\Звіт.docx",
+    "lnk:file_attributes": "0x00000020",
+    "lnk:local_base_path": "C:\\Users\\i.petrenko\\Documents\\Звіт.docx",
+    "lnk:mac": "0a:00:27:00:00:2a",
+    "lnk:machine_id": "ws-042",
+    "lnk:relative_path": "..\\..\\Documents\\Звіт.docx",
+    "lnk:target_size": "48213",
+    "lnk:volume_label": "DATA",
+    "lnk:volume_serial": "1A2B-3C4D",
+    "lnk:working_dir": "C:\\Users\\i.petrenko\\Documents"
+  },
+  "format": "lnk",
+  "modified": "2024-03-12T16:05:30Z",
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\i.petrenko\\Documents\\Звіт.docx",
+      "source": "lnk:local_base_path",
+      "user": "i.petrenko"
+    },
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\i.petrenko\\Documents",
+      "source": "lnk:working_dir",
+      "user": "i.petrenko"
+    }
+  ],
+  "people": [
+    {
+      "name": "i.petrenko",
+      "role": "path_user",
+      "source": "C:\\Users\\i.petrenko\\Documents\\Звіт.docx"
+    }
+  ],
+  "servers": [
+    {
+      "name": "ws-042",
+      "source": "lnk:machine_id"
+    }
+  ]
+}

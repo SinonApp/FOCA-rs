@@ -1,0 +1,57 @@
+{
+  "application": "Adobe Photoshop 7.0",
+  "author": "Phil Harvey",
+  "created": "2005-07-18T14:30:45-04:00",
+  "description": "A witty caption",
+  "fields": {
+    "pdf:version": "1.3"
+  },
+  "format": "pdf",
+  "incremental_updates": 0,
+  "keywords": "ExifTool; Test; XMP",
+  "modified": "2005-07-18T14:30:45-04:00",
+  "people": [
+    {
+      "name": "Phil Harvey",
+      "role": "creator",
+      "source": "xmp:dc:creator"
+    }
+  ],
+  "producer": "Adobe Photoshop for Macintosh",
+  "scan_without_text": true,
+  "software": [
+    "Adobe Photoshop 7.0",
+    "Adobe Photoshop for Macintosh"
+  ],
+  "stats": {
+    "pages": 1
+  },
+  "title": "Test IPTC picture",
+  "xmp": {
+    "dc:creator": "Phil Harvey",
+    "dc:description": "A witty caption",
+    "dc:rights": "Copyright 2004 Phil Harvey",
+    "dc:subject": "ExifTool; Test; XMP",
+    "dc:title": "Test IPTC picture",
+    "photoshop:AuthorsPosition": "My Position",
+    "photoshop:CaptionWriter": "I wrote it",
+    "photoshop:Category": "1",
+    "photoshop:City": "Kingston",
+    "photoshop:Country": "Canada",
+    "photoshop:Credit": "My Credit",
+    "photoshop:DateCreated": "2004-02-26",
+    "photoshop:Headline": "No headline",
+    "photoshop:Instructions": "What instructions",
+    "photoshop:Source": "I'm the source",
+    "photoshop:State": "Ont",
+    "photoshop:SupplementalCategories": "amazing; image; utilities",
+    "photoshop:TransmissionReference": "What is a transmission reference",
+    "photoshop:Urgency": "8",
+    "xapBJ:JobRef/stJob:name": "My Job",
+    "xapMM:DocumentID": "adobe:docid:photoshop:cbcc2a62-f127-11d9-ac4d-e8be6f73552e",
+    "xapRights:WebStatement": "https://exiftool.org/"
+  },
+  "xmp_ids": {
+    "document_id": "adobe:docid:photoshop:cbcc2a62-f127-11d9-ac4d-e8be6f73552e"
+  }
+}

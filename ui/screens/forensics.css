@@ -1,0 +1,553 @@
+/* Document forensics: card sections, full-text search, offline import, search rules (forensics.js). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.fx-break {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* New document types (ext pills). */
+.ext.eml,
+.ext.msg {
+  background: #0369a1;
+}
+.ext.ics,
+.ext.vcf {
+  background: #0f766e;
+}
+.ext.vsdx,
+.ext.vsd,
+.ext.pub,
+.ext.indd,
+.ext.wpd,
+.ext.wps,
+.ext.wks,
+.ext.rtf,
+.ext.svg {
+  background: #4338ca;
+}
+.ext.heic,
+.ext.tiff,
+.ext.mp4,
+.ext.mov {
+  background: #7c3aed;
+}
+.ext.zip {
+  background: #57534e;
+}
+.ext.ods,
+.ext.odp,
+.ext.sxw {
+  background: #0e7490;
+}
+
+/* ---------- collapsible sections ---------- */
+.fx-secs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fx-sec {
+  border: 1px solid var(--stroke);
+  border-radius: var(--r);
+  background: var(--layer);
+  min-width: 0;
+}
+.fx-sec > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+}
+.fx-sec > summary::-webkit-details-marker {
+  display: none;
+}
+.fx-sic {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--layer-3);
+  color: var(--text-2);
+}
+.fx-sic svg.i {
+  width: 16px;
+  height: 16px;
+}
+.fx-sh {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+}
+.fx-st {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.fx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-weight: 400;
+}
+.fx-n {
+  flex: none;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--layer-3);
+  color: var(--text-2);
+  font-size: 0.8rem;
+  text-align: center;
+}
+.fx-chev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--text-3);
+  transition: transform 0.15s;
+}
+.fx-sec[open] > summary .fx-chev {
+  transform: rotate(180deg);
+}
+.fx-body {
+  padding: 0 12px 12px;
+  min-width: 0;
+}
+.fx-body > .list,
+.fx-body > .card {
+  margin-top: 4px;
+}
+.fx-body .card + .card {
+  margin-top: 8px;
+}
+.fx-kv .kvr .v {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.fx-sub {
+  font-size: 0.82rem;
+  color: var(--text-3);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.fx-sub svg.i,
+.fx-err svg.i {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  margin-right: 4px;
+}
+.fx-warn {
+  color: var(--warn);
+}
+.fx-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 4px 0;
+}
+.fx-pills .pill {
+  max-width: 100%;
+  white-space: normal;
+}
+.fx-red {
+  padding: 10px 12px;
+}
+.fx-sig + .fx-sig {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--stroke);
+}
+.fx-sig .kv {
+  margin-top: 6px;
+}
+.fx-quote {
+  font-style: italic;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.fx-red .fx-quote {
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--crit);
+  background: var(--crit-soft);
+  border-radius: 6px;
+}
+.fx-note {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+.fx-note > svg.i {
+  flex: none;
+  margin-top: 2px;
+}
+.fx-note .hl-i {
+  margin: -10px -6px -10px auto;
+}
+.fx-gh {
+  margin: 12px 0 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.fx-p {
+  margin: 4px 0 0;
+}
+.fx-row .t {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.fx-sample {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+.fx-row .pill {
+  margin-right: 4px;
+}
+
+/* Timelines: XMP history and PDF revisions. */
+.fx-tl {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--stroke-2);
+}
+.fx-tli {
+  position: relative;
+  padding: 6px 0 10px 8px;
+}
+.fx-tli::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: 11px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.fx-tlh {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.fx-diff {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+.fx-diff.del {
+  background: var(--crit-soft);
+  color: var(--text);
+  text-decoration: line-through;
+  text-decoration-color: var(--crit);
+}
+.fx-diff.ins {
+  background: var(--ok-soft, rgba(34, 197, 94, 0.14));
+}
+.fx-diff > span[aria-hidden] {
+  flex: none;
+  font-weight: 700;
+  text-decoration: none;
+}
+.fx-rcv {
+  margin: 4px 0 0;
+  padding-left: 22px;
+  font-size: 0.82rem;
+}
+.fx-rcv li + li {
+  margin-top: 6px;
+}
+
+/* ---------- highlight and masks (snippets, test results) ---------- */
+mark.fx-hl {
+  background: color-mix(in srgb, var(--warn) 35%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.fx-mask {
+  font-family: var(--mono, monospace);
+  background: var(--layer-3);
+  border-radius: 3px;
+  padding: 0 3px;
+  color: var(--text-2);
+}
+
+/* ---------- documents segment: full-text search entry ---------- */
+.fx-ftsb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  margin: 0 0 10px;
+  padding: 0 14px;
+  border: 1px solid var(--stroke-2);
+  border-radius: var(--r);
+  background: var(--layer);
+  color: var(--text-2);
+  font: inherit;
+  text-align: left;
+}
+.fx-ftsb span {
+  flex: 1;
+  min-width: 0;
+}
+.fx-ftsb svg.i {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* ---------- /p/docs-search ---------- */
+.fx-field {
+  margin-bottom: 10px;
+}
+.fx-chips {
+  margin-bottom: 10px;
+}
+.fx-cnt {
+  margin: 6px 2px 8px;
+  color: var(--text-2);
+  font-size: 0.88rem;
+}
+.fx-hit {
+  align-items: flex-start;
+}
+.fx-hit .ext {
+  margin-top: 2px;
+}
+.fx-snip {
+  margin-top: 4px;
+  font-size: 0.86rem;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fx-more {
+  margin-top: 10px;
+}
+.fx-tips ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.fx-tips li + li {
+  margin-top: 6px;
+}
+.fx-tips code {
+  overflow-wrap: anywhere;
+}
+.fx-load {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-2);
+}
+
+/* ---------- /import ---------- */
+.fx-offline {
+  margin-bottom: 4px;
+}
+.fx-pick {
+  margin-top: 4px;
+}
+.fx-pickb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid var(--stroke);
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+}
+.fx-pickb > span {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.fx-pickb small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-3);
+}
+.fx-picked {
+  margin-top: 10px;
+}
+.fx-files {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.88rem;
+}
+.fx-files li + li {
+  margin-top: 4px;
+}
+.fx-clear {
+  margin-top: 6px;
+  min-height: 44px;
+}
+.fx-go {
+  margin-top: 14px;
+}
+.fx-prog .pbar {
+  margin: 10px 0 6px;
+}
+.fx-prog .btn {
+  margin-top: 12px;
+}
+.fx-res .fx-sec {
+  margin-top: 10px;
+}
+.fx-btns {
+  margin-top: 12px;
+}
+.fx-into button[disabled] {
+  opacity: 0.5;
+}
+
+/* ---------- /p/rules ---------- */
+.fx-lead {
+  margin: 0 2px 4px;
+}
+.fx-preset {
+  align-items: flex-start;
+}
+.fx-preset .body .t {
+  white-space: normal;
+}
+.fx-preset .toggle {
+  flex: none;
+  margin-top: 4px;
+}
+.fx-pd {
+  margin-top: 4px;
+}
+.fx-pd > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.86rem;
+}
+.fx-rule {
+  margin-top: 10px;
+}
+.fx-rule.bad {
+  border-color: var(--bad);
+}
+.fx-rtop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.fx-rtop .field {
+  flex: 1;
+  min-width: 0;
+}
+.fx-rtop .toggle {
+  flex: none;
+}
+.fx-rpat input {
+  font-family: var(--mono, monospace);
+  font-size: max(16px, 0.95rem);
+}
+.fx-err {
+  color: var(--bad);
+  font-size: 0.85rem;
+  margin: 6px 2px 0;
+  overflow-wrap: anywhere;
+}
+.fx-err:empty {
+  display: none;
+}
+.fx-rsev {
+  margin-top: 10px;
+}
+.fx-rsev button {
+  flex: 1 1 auto;
+  padding: 6px 8px;
+}
+.fx-rchecks .checkrow {
+  min-height: 48px;
+}
+.fx-rtest {
+  margin-top: 8px;
+}
+.fx-rta {
+  width: 100%;
+  min-height: 84px;
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--stroke-2);
+  border-radius: var(--r);
+  background: var(--layer-2, var(--layer));
+  color: var(--text);
+  font: inherit;
+  font-size: max(16px, 1rem);
+  box-sizing: border-box;
+}
+.fx-tres .fx-sample {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--layer-3);
+  border-radius: 8px;
+}
+.fx-rdel {
+  margin-top: 8px;
+  min-height: 44px;
+  color: var(--bad);
+}
+.fx-radd {
+  margin-top: 12px;
+}
+.fx-rsave {
+  margin-top: 14px;
+}
+
+/* Wizard: document type groups; finding card: link to the source document. */
+.la-dg {
+  margin: 10px 2px 6px;
+  font-size: 0.82rem;
+  color: var(--text-3);
+}
+.fd-todoc-r {
+  margin: 6px 2px 0;
+}
+.pj-offline {
+  margin-top: 12px;
+}
+.la-rules {
+  margin-bottom: 4px;
+}

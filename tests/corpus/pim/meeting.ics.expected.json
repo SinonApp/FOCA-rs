@@ -1,0 +1,66 @@
+{
+  "application": "Microsoft Exchange Server 2010",
+  "author": "Іван Петренко <i.petrenko@example.com>",
+  "created": "2024-03-14T16:45:00Z",
+  "emails": [
+    "i.petrenko@example.com",
+    "john.doe@example.org",
+    "o.kovalenko@example.com"
+  ],
+  "fields": {
+    "ics:event.01.description": "Обговорення кошторису\n\nПриєднатися до наради Microsoft Teams\nhttps://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d\nРезерв: https://example.zoom.us/j/1234567890?pwd=EXAMPLE",
+    "ics:event.01.location": "Переговорна 3 (корпус А), \\\\FS01\\rooms",
+    "ics:event.01.organizer": "Іван Петренко <i.petrenko@example.com>",
+    "ics:event.01.start": "2024-03-18T10:00:00",
+    "ics:event.01.summary": "Кошторис 2024: нарада",
+    "ics:meeting_links": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d https://example.zoom.us/j/1234567890?pwd=EXAMPLE https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0",
+    "ics:method": "REQUEST",
+    "ics:uid_domains": "exchange.corp.example.test"
+  },
+  "format": "ics",
+  "links": [
+    "https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d",
+    "https://example.zoom.us/j/1234567890?pwd=EXAMPLE",
+    "https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0"
+  ],
+  "modified": "2024-03-15T08:10:00Z",
+  "paths": [
+    {
+      "host": "FS01",
+      "kind": "unc",
+      "path": "\\\\FS01\\rooms",
+      "source": "ics:event.01.location"
+    }
+  ],
+  "people": [
+    {
+      "name": "Іван Петренко <i.petrenko@example.com>",
+      "role": "author",
+      "source": "ics:organizer"
+    },
+    {
+      "name": "Doe, John <john.doe@example.org>",
+      "role": "other",
+      "source": "ics:attendee"
+    },
+    {
+      "name": "Olena Kovalenko <o.kovalenko@example.com>",
+      "role": "other",
+      "source": "ics:attendee"
+    }
+  ],
+  "servers": [
+    {
+      "name": "FS01",
+      "source": "path"
+    }
+  ],
+  "software": [
+    "Microsoft Exchange Server 2010"
+  ],
+  "stats": {
+    "attendees": 2,
+    "events": 1
+  },
+  "title": "Фінансовий відділ"
+}

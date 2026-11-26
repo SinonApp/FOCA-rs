@@ -1,0 +1,64 @@
+{
+  "application": "Adobe InDesign 19.2 (Windows)",
+  "author": "Olena Kovalenko",
+  "created": "2024-03-01T10:00:00+02:00",
+  "fields": {
+    "indd:byte_order": "little_endian"
+  },
+  "format": "indd",
+  "modified": "2024-03-14T18:42:00+02:00",
+  "paths": [
+    {
+      "host": "FS01.corp.example.test",
+      "kind": "unc",
+      "path": "\\\\FS01.corp.example.test\\design\\annual-2023\\report.indd",
+      "source": "xmp:Label"
+    }
+  ],
+  "people": [
+    {
+      "name": "Olena Kovalenko",
+      "role": "creator",
+      "source": "xmp:dc:creator"
+    }
+  ],
+  "servers": [
+    {
+      "name": "FS01.corp.example.test",
+      "source": "path"
+    }
+  ],
+  "software": [
+    "Adobe InDesign 19.2 (Windows)"
+  ],
+  "stats": {
+    "xmp_packets": 1
+  },
+  "title": "Річний звіт 2023",
+  "xmp": {
+    "dc:creator": "Olena Kovalenko",
+    "dc:title": "Річний звіт 2023",
+    "xmp:CreateDate": "2024-03-01T10:00:00+02:00",
+    "xmp:CreatorTool": "Adobe InDesign 19.2 (Windows)",
+    "xmp:Label": "\\\\FS01.corp.example.test\\design\\annual-2023\\report.indd",
+    "xmp:ModifyDate": "2024-03-14T18:42:00+02:00",
+    "xmpMM:DocumentID": "xmp.did:0a1b2c3d-0000-4000-8000-000000000001",
+    "xmpMM:History/stEvt:action": "saved",
+    "xmpMM:History/stEvt:instanceID": "xmp.iid:0a1b2c3d-0000-4000-8000-000000000002",
+    "xmpMM:History/stEvt:softwareAgent": "Adobe InDesign 19.2 (Windows)",
+    "xmpMM:History/stEvt:when": "2024-03-14T18:42:00+02:00",
+    "xmpMM:InstanceID": "xmp.iid:0a1b2c3d-0000-4000-8000-000000000002"
+  },
+  "xmp_history": [
+    {
+      "action": "saved",
+      "instance_id": "xmp.iid:0a1b2c3d-0000-4000-8000-000000000002",
+      "software_agent": "Adobe InDesign 19.2 (Windows)",
+      "when": "2024-03-14T18:42:00+02:00"
+    }
+  ],
+  "xmp_ids": {
+    "document_id": "xmp.did:0a1b2c3d-0000-4000-8000-000000000001",
+    "instance_id": "xmp.iid:0a1b2c3d-0000-4000-8000-000000000002"
+  }
+}

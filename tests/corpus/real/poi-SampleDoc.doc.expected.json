@@ -1,0 +1,43 @@
+{
+  "application": "Microsoft Office Word",
+  "author": "Nick Burch",
+  "created": "2008-01-04T09:15:00Z",
+  "description": "This document is used for testing text and metadata extraction",
+  "edit_time_secs": 0,
+  "fields": {
+    "ole:AppVersion": "12.0000",
+    "ole:Security": "0",
+    "ole:TitlesOfParts": "Test Document"
+  },
+  "format": "doc",
+  "keywords": "Testing Sample",
+  "last_modified_by": "Nick Burch",
+  "modified": "2008-01-04T09:15:00Z",
+  "os": "Windows XP",
+  "people": [
+    {
+      "name": "Nick Burch",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "Nick Burch",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "revision": "2",
+  "software": [
+    "Microsoft Office Word"
+  ],
+  "stats": {
+    "characters": 118,
+    "lines": 1,
+    "pages": 2,
+    "paragraphs": 1,
+    "words": 20
+  },
+  "subject": "This is a sample document",
+  "template": "Normal",
+  "title": "Test Document"
+}

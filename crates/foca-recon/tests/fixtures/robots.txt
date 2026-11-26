@@ -1,0 +1,18 @@
+# robots.txt for ex.com
+User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+Disallow: /backup_2019/
+Disallow: /staging/
+Disallow: /.git/
+Disallow: /files/price.xlsx
+Disallow: /reports/annual.pdf
+Disallow: /about/
+Crawl-delay: 2
+
+User-agent: Yandex
+User-agent: Googlebot
+Disallow: /search?q=
+Host: ex.com
+
+Sitemap: https://ex.com/sitemap_index.xml

@@ -1,0 +1,15 @@
+# Pre-Publication Folder Audit (100% offline, 0 network requests)
+name = "Preflight Folder Audit"
+client = "Internal Publication Check"
+mode = "offline"
+inputs = ["./docs-to-publish"]
+
+[report]
+enabled = true
+format = "md"
+template = "executive"
+lang = "en"
+custody = false
+
+[gate]
+fail_on_severity = "high"

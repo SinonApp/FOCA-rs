@@ -1,0 +1,16 @@
+{
+  "fields": {
+    "vcf:01.fn": "=ZZ"
+  },
+  "format": "vcf",
+  "people": [
+    {
+      "name": "=ZZ",
+      "role": "other",
+      "source": "vcf:fn"
+    }
+  ],
+  "stats": {
+    "cards": 1
+  }
+}

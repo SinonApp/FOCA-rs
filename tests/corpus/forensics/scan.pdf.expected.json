@@ -1,0 +1,123 @@
+{
+  "embedded": [
+    {
+      "metadata": {
+        "application": "16.6",
+        "author": "Viktor Tkachenko",
+        "camera": {
+          "lens": "iPhone 13 Pro back triple camera 5.7mm f/1.5",
+          "make": "Apple",
+          "model": "iPhone 13 Pro",
+          "owner": "v.tkachenko",
+          "serial": "F2LXK0QJQ6"
+        },
+        "created": "2024-08-02T11:05:33",
+        "description": "ТЕС-2, будмайданчик",
+        "fields": {
+          "exif:Artist": "Viktor Tkachenko",
+          "exif:BodySerialNumber": "F2LXK0QJQ6",
+          "exif:CameraOwnerName": "v.tkachenko",
+          "exif:DateTime": "2024:08:02 11:06:00",
+          "exif:DateTimeOriginal": "2024:08:02 11:05:33",
+          "exif:GPSAltitude": "120.5 meters above sea level",
+          "exif:GPSAltitudeRef": "above sea level",
+          "exif:GPSLatitude": "47 deg 55 min 12 sec N",
+          "exif:GPSLatitudeRef": "N",
+          "exif:GPSLongitude": "33 deg 25 min 48 sec E",
+          "exif:GPSLongitudeRef": "E",
+          "exif:GPSVersionID": "2.3.0.0",
+          "exif:ImageDescription": "ТЕС-2, будмайданчик",
+          "exif:LensModel": "iPhone 13 Pro back triple camera 5.7mm f/1.5",
+          "exif:Make": "Apple",
+          "exif:Model": "iPhone 13 Pro",
+          "exif:Software": "16.6",
+          "exif:Tag(Tiff, 316)": "ENG-WS11",
+          "iptc:By-line": "Viktor Tkachenko",
+          "iptc:City": "Kryvyi Rih",
+          "iptc:CopyrightNotice": "(c) Contoso Energy",
+          "iptc:Keywords": "ТЕС-2, будівництво",
+          "jpeg:comment": "Shot by v.tkachenko for \\\\SRV-FILE01\\photo\\TES2"
+        },
+        "format": "jpeg",
+        "gps": {
+          "alt": 120.5,
+          "lat": 47.92,
+          "lon": 33.43
+        },
+        "keywords": "ТЕС-2, будівництво",
+        "modified": "2024-08-02T11:06:00",
+        "paths": [
+          {
+            "host": "SRV-FILE01",
+            "kind": "unc",
+            "path": "\\\\SRV-FILE01\\photo\\TES2",
+            "source": "jpeg:comment"
+          }
+        ],
+        "people": [
+          {
+            "name": "v.tkachenko",
+            "role": "owner",
+            "source": "exif:CameraOwnerName"
+          },
+          {
+            "name": "Viktor Tkachenko",
+            "role": "author",
+            "source": "exif:Artist"
+          },
+          {
+            "name": "Віктор Ткаченко",
+            "role": "creator",
+            "source": "xmp:dc:creator"
+          }
+        ],
+        "servers": [
+          {
+            "name": "ENG-WS11",
+            "source": "exif:HostComputer"
+          },
+          {
+            "name": "SRV-FILE01",
+            "source": "path"
+          }
+        ],
+        "software": [
+          "16.6",
+          "Adobe Photoshop CC 2019 (Windows)"
+        ],
+        "thumbnail": {
+          "data": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA0JCgsKCA0LCgsODg0PEyAVExISEyccHhcgLikxMC4pLSwzOko+MzZGNywtQFdBRkxOUlNSMj5aYVpQYEpRUk//2wBDAQ4ODhMREyYVFSZPNS01T09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0//wAARCAAMABADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDGooorzT7Y/9k=",
+          "differs": true,
+          "mime": "image/jpeg"
+        },
+        "xmp": {
+          "dc:creator": "Віктор Ткаченко",
+          "xmp:CreateDate": "2024-08-02T11:05:33+03:00",
+          "xmp:CreatorTool": "Adobe Photoshop CC 2019 (Windows)",
+          "xmpMM:History/stEvt:action": "saved",
+          "xmpMM:History/stEvt:softwareAgent": "Adobe Photoshop CC 2019 (Windows)"
+        },
+        "xmp_history": [
+          {
+            "action": "saved",
+            "software_agent": "Adobe Photoshop CC 2019 (Windows)"
+          }
+        ]
+      },
+      "name": "pdf:obj 5 (image-5.jpg)"
+    }
+  ],
+  "fields": {
+    "pdf:version": "1.7"
+  },
+  "format": "pdf",
+  "incremental_updates": 0,
+  "producer": "Scanner Example 1.0",
+  "scan_without_text": true,
+  "software": [
+    "Scanner Example 1.0"
+  ],
+  "stats": {
+    "pages": 1
+  }
+}

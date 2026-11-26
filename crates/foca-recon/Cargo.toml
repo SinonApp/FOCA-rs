@@ -1,0 +1,19 @@
+[package]
+name = "foca-recon"
+description = "FOCA-rs passive site recon: favicon hash, technologies, JS endpoints/secrets, grep.app, robots/sitemap/security.txt from archives, cloud buckets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+foca-core.workspace = true
+foca-net.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+regex.workspace = true
+url.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

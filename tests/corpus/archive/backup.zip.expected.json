@@ -1,0 +1,436 @@
+{
+  "attachments": [
+    {
+      "name": "finance/Кошторис.docx",
+      "size": 712
+    },
+    {
+      "name": "finance/Звіт.lnk",
+      "size": 1316
+    },
+    {
+      "name": "mail/Кошторис.eml",
+      "size": 3930
+    },
+    {
+      "name": "nested/inner.zip",
+      "size": 1459
+    },
+    {
+      "name": "../../evil.txt",
+      "size": 15
+    }
+  ],
+  "created": "2024-03-14T18:42:00",
+  "description": "Backup of \\\\FS01.corp.example.test\\finance$ by i.petrenko",
+  "embedded": [
+    {
+      "metadata": {
+        "author": "Іван Петренко",
+        "created": "2024-03-10T08:00:00Z",
+        "format": "docx",
+        "last_modified_by": "John Doe",
+        "people": [
+          {
+            "name": "Іван Петренко",
+            "role": "author",
+            "source": "core.xml:dc:creator"
+          },
+          {
+            "name": "John Doe",
+            "role": "last_modified_by",
+            "source": "core.xml:cp:lastModifiedBy"
+          }
+        ],
+        "title": "Кошторис 2024"
+      },
+      "name": "finance/Кошторис.docx"
+    },
+    {
+      "metadata": {
+        "created": "2024-03-01T09:15:00Z",
+        "description": "Звіт за квартал (чернетка)",
+        "fields": {
+          "lnk:access_time": "2024-03-14T18:40:00Z",
+          "lnk:arguments": "/p",
+          "lnk:birth_droid_file_id": "0b974000-cfc6-11ee-9f21-0a002700002a",
+          "lnk:description": "Звіт за квартал (чернетка)",
+          "lnk:drive_type": "fixed",
+          "lnk:droid_file_id": "0b974000-cfc6-11ee-9f21-0a002700002a",
+          "lnk:droid_time": "2024-02-20T08:00:00Z",
+          "lnk:droid_volume_id": "2e211407-483b-4255-6f7c-8996a3b0bdca",
+          "lnk:env_target": "%USERPROFILE%\\Documents\\Звіт.docx",
+          "lnk:file_attributes": "0x00000020",
+          "lnk:local_base_path": "C:\\Users\\i.petrenko\\Documents\\Звіт.docx",
+          "lnk:mac": "0a:00:27:00:00:2a",
+          "lnk:machine_id": "ws-042",
+          "lnk:relative_path": "..\\..\\Documents\\Звіт.docx",
+          "lnk:target_size": "48213",
+          "lnk:volume_label": "DATA",
+          "lnk:volume_serial": "1A2B-3C4D",
+          "lnk:working_dir": "C:\\Users\\i.petrenko\\Documents"
+        },
+        "format": "lnk",
+        "modified": "2024-03-12T16:05:30Z",
+        "paths": [
+          {
+            "kind": "windows",
+            "path": "C:\\Users\\i.petrenko\\Documents\\Звіт.docx",
+            "source": "lnk:local_base_path",
+            "user": "i.petrenko"
+          },
+          {
+            "kind": "windows",
+            "path": "C:\\Users\\i.petrenko\\Documents",
+            "source": "lnk:working_dir",
+            "user": "i.petrenko"
+          }
+        ],
+        "people": [
+          {
+            "name": "i.petrenko",
+            "role": "path_user",
+            "source": "C:\\Users\\i.petrenko\\Documents\\Звіт.docx"
+          }
+        ],
+        "servers": [
+          {
+            "name": "ws-042",
+            "source": "lnk:machine_id"
+          }
+        ]
+      },
+      "name": "finance/Звіт.lnk"
+    },
+    {
+      "metadata": {
+        "application": "Microsoft Outlook 16.0",
+        "attachments": [
+          {
+            "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "name": "Кошторис.docx",
+            "size": 712
+          },
+          {
+            "mime": "message/rfc822",
+            "name": "Draft budget.eml",
+            "size": 538
+          }
+        ],
+        "author": "Петренко Іван",
+        "company": "Contoso Energy (fictional)",
+        "created": "2024-03-14T18:42:07+02:00",
+        "emails": [
+          "i.petrenko@example.com",
+          "i.petrenko.private@example.net",
+          "john.doe@example.org",
+          "o.kovalenko@example.com",
+          "buh@example.com"
+        ],
+        "embedded": [
+          {
+            "metadata": {
+              "author": "Іван Петренко",
+              "created": "2024-03-10T08:00:00Z",
+              "format": "docx",
+              "last_modified_by": "John Doe",
+              "people": [
+                {
+                  "name": "Іван Петренко",
+                  "role": "author",
+                  "source": "core.xml:dc:creator"
+                },
+                {
+                  "name": "John Doe",
+                  "role": "last_modified_by",
+                  "source": "core.xml:cp:lastModifiedBy"
+                }
+              ],
+              "title": "Кошторис 2024"
+            },
+            "name": "attachment:Кошторис.docx"
+          },
+          {
+            "metadata": {
+              "application": "Microsoft Outlook 16.0",
+              "author": "Olena Kovalenko",
+              "created": "2024-03-11T09:00:00+02:00",
+              "emails": [
+                "o.kovalenko@example.com",
+                "i.petrenko@example.com"
+              ],
+              "fields": {
+                "eml:internal_hosts": "ws-017.corp.example.test, EXCH02.corp.example.test",
+                "eml:internal_ips": "192.168.10.17, 10.20.0.16",
+                "eml:message-id": "<inner-0001@EXCH02.corp.example.test>",
+                "eml:message_id_domain": "exch02.corp.example.test",
+                "eml:received.01": "from ws-017.corp.example.test (ws-017.corp.example.test [192.168.10.17]) by EXCH02.corp.example.test (10.20.0.16) with Microsoft SMTP Server; Mon, 11 Mar 2024 09:00:00 +0200",
+                "eml:x-mailer": "Microsoft Outlook 16.0"
+              },
+              "format": "eml",
+              "people": [
+                {
+                  "name": "Olena Kovalenko <o.kovalenko@example.com>",
+                  "role": "author",
+                  "source": "eml:from"
+                },
+                {
+                  "name": "Іван Петренко <i.petrenko@example.com>",
+                  "role": "other",
+                  "source": "eml:to"
+                }
+              ],
+              "servers": [
+                {
+                  "name": "exch02.corp.example.test",
+                  "source": "eml:message-id"
+                },
+                {
+                  "name": "ws-017.corp.example.test",
+                  "source": "eml:received"
+                },
+                {
+                  "name": "192.168.10.17",
+                  "source": "eml:received"
+                },
+                {
+                  "name": "10.20.0.16",
+                  "source": "eml:received"
+                }
+              ],
+              "software": [
+                "Microsoft Outlook 16.0"
+              ],
+              "stats": {
+                "received_hops": 1
+              },
+              "title": "Draft budget"
+            },
+            "name": "attachment:Draft budget.eml"
+          }
+        ],
+        "fields": {
+          "eml:dkim_domain": "example.com",
+          "eml:dkim_selector": "selector1",
+          "eml:internal_hosts": "EXCH01.corp.example.test, ws-042.corp.example.test",
+          "eml:internal_ips": "10.20.30.42, 10.20.0.15",
+          "eml:message-id": "<a1b2c3d4e5@EXCH01.corp.example.test>",
+          "eml:message_id_domain": "exch01.corp.example.test",
+          "eml:organization": "Contoso Energy (fictional)",
+          "eml:originating_ips": "10.20.30.42",
+          "eml:received.01": "from mx1.example.org (mx1.example.org [198.51.100.25]) by mail.example.org (Postfix) with ESMTPS id 4F2A1; Thu, 14 Mar 2024 16:42:10 +0000",
+          "eml:received.02": "from EXCH01.corp.example.test (unknown [203.0.113.10]) by mx1.example.org (Postfix) with ESMTPS; Thu, 14 Mar 2024 16:42:09 +0000",
+          "eml:received.03": "from ws-042.corp.example.test (10.20.30.42) by EXCH01.corp.example.test (10.20.0.15) with Microsoft SMTP Server id 15.2.1118.40; Thu, 14 Mar 2024 18:42:07 +0200",
+          "eml:reply-to": "i.petrenko.private@example.net",
+          "eml:reply_to_differs": "true",
+          "eml:return-path": "<i.petrenko@example.com>",
+          "eml:x-mailer": "Microsoft Outlook 16.0",
+          "eml:x-ms-exchange-crosstenant-id": "00000000-1111-2222-3333-444444444444",
+          "eml:x-originating-ip": "[10.20.30.42]"
+        },
+        "format": "eml",
+        "links": [
+          "https://intranet.example.test/finance/budget?id=42",
+          "https://contoso-my.sharepoint.example.test/personal/i_petrenko/Documents/budget.xlsx"
+        ],
+        "people": [
+          {
+            "name": "Петренко Іван <i.petrenko@example.com>",
+            "role": "author",
+            "source": "eml:from"
+          },
+          {
+            "name": "i.petrenko.private@example.net",
+            "role": "other",
+            "source": "eml:reply-to"
+          },
+          {
+            "name": "John Doe <john.doe@example.org>",
+            "role": "other",
+            "source": "eml:to"
+          },
+          {
+            "name": "Olena Kovalenko <o.kovalenko@example.com>",
+            "role": "other",
+            "source": "eml:to"
+          },
+          {
+            "name": "buh@example.com",
+            "role": "other",
+            "source": "eml:cc"
+          }
+        ],
+        "servers": [
+          {
+            "name": "exch01.corp.example.test",
+            "source": "eml:message-id"
+          },
+          {
+            "name": "10.20.30.42",
+            "source": "eml:x-originating-ip"
+          },
+          {
+            "name": "mx1.example.org",
+            "source": "eml:received"
+          },
+          {
+            "name": "mail.example.org",
+            "source": "eml:received"
+          },
+          {
+            "name": "198.51.100.25",
+            "source": "eml:received"
+          },
+          {
+            "name": "203.0.113.10",
+            "source": "eml:received"
+          },
+          {
+            "name": "ws-042.corp.example.test",
+            "source": "eml:received"
+          },
+          {
+            "name": "10.20.0.15",
+            "source": "eml:received"
+          }
+        ],
+        "software": [
+          "Microsoft Outlook 16.0"
+        ],
+        "stats": {
+          "attachments": 2,
+          "received_hops": 3
+        },
+        "title": "Кошторис на 2024 рік"
+      },
+      "name": "mail/Кошторис.eml"
+    },
+    {
+      "metadata": {
+        "attachments": [
+          {
+            "name": "contacts/i.petrenko.vcf",
+            "size": 2000
+          }
+        ],
+        "created": "2024-03-14T18:42:00",
+        "embedded": [
+          {
+            "metadata": {
+              "application": "-//Apple Inc.//iPhone OS 17.4//EN",
+              "attachments": [
+                {
+                  "mime": "image/jpeg",
+                  "name": "card-01-photo.jpeg",
+                  "size": 829
+                }
+              ],
+              "company": "Contoso Energy (fictional), Фінансовий відділ",
+              "emails": [
+                "i.petrenko@example.com",
+                "john.doe@example.org"
+              ],
+              "embedded": [
+                {
+                  "metadata": {
+                    "camera": {
+                      "make": "ExampleCam",
+                      "model": "Phone X1"
+                    },
+                    "fields": {
+                      "exif:GPSLatitude": "50 deg 27 min 0 sec N",
+                      "exif:GPSLatitudeRef": "N",
+                      "exif:GPSLongitude": "30 deg 31 min 0 sec E",
+                      "exif:GPSLongitudeRef": "E",
+                      "exif:GPSVersionID": "2.3.0.0",
+                      "exif:Make": "ExampleCam",
+                      "exif:Model": "Phone X1"
+                    },
+                    "format": "jpeg",
+                    "gps": {
+                      "lat": 50.45,
+                      "lon": 30.516667
+                    }
+                  },
+                  "name": "card-01-photo.jpeg"
+                }
+              ],
+              "fields": {
+                "vcf:01.adr": "вул. Прикладна, 1, Київ, 01001, Україна",
+                "vcf:01.bday": "1985-01-01",
+                "vcf:01.fn": "Іван Петренко",
+                "vcf:01.note": "VPN: vpn.corp.example.test\nПК: WS-042",
+                "vcf:01.org": "Contoso Energy (fictional), Фінансовий відділ",
+                "vcf:01.tel": "+380 67 000 00 00; +380 44 000 00 01",
+                "vcf:01.title": "Головний бухгалтер",
+                "vcf:02.fn": "John Doe • IT"
+              },
+              "format": "vcf",
+              "gps": {
+                "lat": 50.4501,
+                "lon": 30.5234
+              },
+              "links": [
+                "https://intranet.example.test/people/i.petrenko"
+              ],
+              "modified": "2024-03-14T18:00:00Z",
+              "people": [
+                {
+                  "name": "Іван Петренко",
+                  "role": "other",
+                  "source": "vcf:fn"
+                },
+                {
+                  "name": "John Doe • IT",
+                  "role": "other",
+                  "source": "vcf:fn"
+                }
+              ],
+              "software": [
+                "-//Apple Inc.//iPhone OS 17.4//EN"
+              ],
+              "stats": {
+                "cards": 2
+              }
+            },
+            "name": "contacts/i.petrenko.vcf"
+          }
+        ],
+        "format": "zip",
+        "modified": "2024-03-14T18:42:00",
+        "stats": {
+          "files": 1,
+          "uncompressed_bytes": 2000
+        }
+      },
+      "name": "nested/inner.zip"
+    }
+  ],
+  "fields": {
+    "zip:unsafe_names": "../../evil.txt"
+  },
+  "format": "zip",
+  "modified": "2024-03-14T18:42:00",
+  "paths": [
+    {
+      "host": "FS01.corp.example.test",
+      "kind": "unc",
+      "path": "\\\\FS01.corp.example.test\\finance$ by i.petrenko",
+      "source": "description"
+    }
+  ],
+  "servers": [
+    {
+      "name": "FS01.corp.example.test",
+      "source": "path"
+    }
+  ],
+  "stats": {
+    "dirs": 1,
+    "files": 5,
+    "uncompressed_bytes": 7432
+  },
+  "warnings": [
+    "ZIP: 1 entries with path traversal names"
+  ]
+}

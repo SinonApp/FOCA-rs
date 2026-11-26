@@ -1,0 +1,41 @@
+{
+  "application": "Microsoft Office PowerPoint",
+  "author": "Hogwarts",
+  "company": "Torchbox",
+  "created": "2005-05-13T16:59:39Z",
+  "edit_time_secs": 48,
+  "fields": {
+    "ole:AppVersion": "11.6360",
+    "ole:TitlesOfParts": "Arial",
+    "ppt:CurrentUser": "Hogwarts"
+  },
+  "format": "ppt",
+  "last_modified_by": "Hogwarts",
+  "modified": "2005-05-13T17:03:55Z",
+  "os": "Windows XP x64/Server 2003",
+  "people": [
+    {
+      "name": "Hogwarts",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "Hogwarts",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "revision": "3",
+  "software": [
+    "Microsoft Office PowerPoint"
+  ],
+  "stats": {
+    "hidden_slides": 0,
+    "mm_clips": 0,
+    "notes": 2,
+    "paragraphs": 9,
+    "slides": 2,
+    "words": 54
+  },
+  "title": "This is a test title"
+}

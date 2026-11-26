@@ -1,0 +1,95 @@
+.tbx-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.tbx-box {
+  margin-top: 10px;
+}
+
+.tbx-row-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.tbx-row-form .field {
+  flex: 1;
+  min-width: 0;
+}
+
+.tbx-row-form .field input {
+  min-width: 0;
+}
+
+.tbx-row-form > .btn {
+  flex: none;
+}
+
+.tbx-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.tbx-opt input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.tbx-grade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tbx-gbadge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  background: var(--surface-3);
+}
+
+.tbx-gbadge.ok {
+  color: var(--ok);
+}
+
+.tbx-gbadge.warn {
+  color: var(--warn);
+}
+
+.tbx-gbadge.bad,
+.tbx-gbadge.crit {
+  color: var(--crit);
+}
+
+.tbx-kv {
+  margin-top: 8px;
+}
+
+.tbx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tbx-qbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}

@@ -1,0 +1,120 @@
+{
+  "author": "Mallory Example",
+  "company": "ТОВ Приклад",
+  "emails": [
+    "ivan.petrenko@example.com"
+  ],
+  "fields": {
+    "pdf:acroform": "true",
+    "pdf:version": "1.7"
+  },
+  "format": "pdf",
+  "incremental_updates": 1,
+  "modified": "2024-03-05T12:00:00+02:00",
+  "old_versions": [
+    {
+      "fields": {
+        "Author": "Ivan Petrenko",
+        "CreationDate": "D:20240301095500+02'00'",
+        "Producer": "FOCA-rs fixture"
+      },
+      "revision": 1
+    }
+  ],
+  "pdf_revisions": [
+    {
+      "author": "Ivan Petrenko",
+      "end_offset": 17643,
+      "objects": 7,
+      "producer": "FOCA-rs fixture",
+      "revision": 1
+    },
+    {
+      "added_text": [
+        "Contract No 43 between Example LLC and Ivan Petrenko"
+      ],
+      "author": "Mallory Example",
+      "end_offset": 18019,
+      "modified": "2024-03-05T12:00:00+02:00",
+      "objects": 2,
+      "producer": "FOCA-rs fixture",
+      "removed_text": [
+        "Contract No 42 between Example LLC and Ivan Petrenko"
+      ],
+      "revision": 2
+    }
+  ],
+  "people": [
+    {
+      "name": "Mallory Example",
+      "role": "author",
+      "source": "pdf:Info:Author"
+    },
+    {
+      "name": "Ivan Petrenko",
+      "role": "author",
+      "source": "pdf:Info:rev1"
+    },
+    {
+      "name": "Іван Петренко",
+      "role": "other",
+      "source": "signature:pdf"
+    }
+  ],
+  "producer": "FOCA-rs fixture",
+  "signatures": [
+    {
+      "byte_range": [
+        0,
+        741,
+        17127,
+        517
+      ],
+      "bytes_after": 376,
+      "certificates": 2,
+      "contact": "ivan.petrenko@example.com",
+      "digest_algorithm": "sha256",
+      "digest_valid": true,
+      "kind": "pdf",
+      "location": "Kyiv",
+      "modified_after_signing": true,
+      "name": "Ivan Petrenko",
+      "reason": "Approval",
+      "signer": {
+        "common_name": "Іван Петренко",
+        "country": "UA",
+        "edrpou": "12345678",
+        "email": "ivan.petrenko@example.com",
+        "given_name": "Іван",
+        "issuer": "C=UA, O=Example Trust Services, organizationIdentifier=NTRUA-00000001, CN=Example Test QTSP CA",
+        "issuer_cn": "Example Test QTSP CA",
+        "locality": "Київ",
+        "not_after": "2031-11-21T01:06:56Z",
+        "not_before": "2026-11-22T01:06:56Z",
+        "org_unit": "Відділ ІТ",
+        "organization": "ТОВ Приклад",
+        "rnokpp_masked": "********99",
+        "rnokpp_valid": true,
+        "serial": "00B9DC7FAEEA7B0E5C",
+        "subject": "C=UA, L=Київ, O=ТОВ Приклад, OU=Відділ ІТ, T=Директор, SN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-********99, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@example.com",
+        "surname": "Петренко",
+        "title": "Директор"
+      },
+      "signing_time": "2026-11-22T01:06:56Z",
+      "source": "pdf:obj 6",
+      "sub_filter": "ETSI.CAdES.detached",
+      "timestamp": {
+        "gen_time": "2026-11-22T01:06:56Z",
+        "policy": "1.2.3.4.1",
+        "serial": "2B",
+        "tsa": "C=UA, O=Example Trust Services, CN=Example Test TSA"
+      }
+    }
+  ],
+  "software": [
+    "FOCA-rs fixture"
+  ],
+  "stats": {
+    "pages": 1
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "author": "John Doe",
+  "fields": {
+    "chart:xl/charts/chart1.xml:externalRef": "'C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1'!$A$1:$A$5",
+    "xl:connection:srv-sql01 Payroll:command": "SELECT * FROM salaries",
+    "xl:connection:srv-sql01 Payroll:connection": "Provider=SQLOLEDB.1;Integrated Security=SSPI;Data Source=srv-sql01.corp.example.com;Initial Catalog=Payroll;User ID=svc_report",
+    "xl:connection:srv-sql01 Payroll:database": "Payroll",
+    "xl:connection:srv-sql01 Payroll:odcFile": "C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc",
+    "xl:connection:srv-sql01 Payroll:user": "svc_report",
+    "xl:pivotCache1:refreshedBy": "Ivan Petrenko",
+    "xl:pivotCache1:refreshedDate": "45352.5",
+    "xl:pivotCache1:refreshedVersion": "8",
+    "xl:pivotCache1:source": "Payroll!A1:D10"
+  },
+  "format": "xlsx",
+  "hidden_content": [
+    {
+      "kind": "row",
+      "location": "Payroll!3:4",
+      "text": "Ivan Petrenko | 12000 | Bonus fund"
+    },
+    {
+      "kind": "column",
+      "location": "Payroll!C:D",
+      "text": "Salary | 5000"
+    }
+  ],
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1",
+      "source": "chart:xl/charts/chart1.xml:externalRef",
+      "user": "ipetrenko"
+    },
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc",
+      "source": "xl:connection:srv-sql01 Payroll:odcFile",
+      "user": "ipetrenko"
+    }
+  ],
+  "people": [
+    {
+      "name": "John Doe",
+      "role": "author",
+      "source": "core.xml:dc:creator"
+    },
+    {
+      "name": "Ivan Petrenko",
+      "role": "other",
+      "source": "xl/pivotCache/pivotCacheDefinition1.xml:refreshedBy"
+    },
+    {
+      "name": "ipetrenko",
+      "role": "path_user",
+      "source": "C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1"
+    }
+  ],
+  "servers": [
+    {
+      "name": "srv-sql01.corp.example.com",
+      "source": "xl/connections.xml:srv-sql01 Payroll"
+    }
+  ]
+}

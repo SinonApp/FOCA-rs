@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="FOCA-rs 2.0.0-beta.2">
+<meta name="referrer" content="no-referrer">
+<title>Лабораторна робота: contoso.example</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 18mm; @bottom-right { content: counter(page); font: 8pt sans-serif; color: #64748b; } }
+:root { --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --soft: #f8fafc; --accent: #1d4ed8;
+  --crit: #b91c1c; --high: #c2410c; --warn: #a16207; --low: #1d4ed8; --info: #475569; }
+* { box-sizing: border-box; }
+html { background: #fff; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; color-scheme: light; }
+body { margin: 0 auto; max-width: 190mm; padding: 10mm 0 16mm; font: 10.5pt/1.5 "Segoe UI", "Noto Sans", Roboto, Arial, sans-serif; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .5em; break-after: avoid; }
+h1 { font-size: 22pt; }
+h2 { font-size: 15pt; margin-top: 1.6em; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
+h3 { font-size: 12pt; margin-top: 1.2em; }
+h4 { font-size: 10.5pt; margin: 1em 0 .3em; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+p { margin: .4em 0 .7em; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 9pt; }
+.cover { min-height: 250mm; display: flex; flex-direction: column; break-after: page; }
+.cover .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cover .conf { border: 1.5px solid var(--crit); color: var(--crit); padding: 2px 10px; border-radius: 4px; font-weight: 700; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; }
+.cover .logo img { max-height: 18mm; max-width: 60mm; }
+.cover .initials { width: 16mm; height: 16mm; border-radius: 50%; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14pt; }
+.cover .title { margin-top: 55mm; }
+.cover .title .kicker { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 10pt; }
+.cover .title h1 { font-size: 26pt; margin: 6px 0 4px; }
+.cover .title .proj { font-size: 15pt; color: var(--muted); }
+.cover dl { margin-top: auto; display: grid; grid-template-columns: 45mm 1fr; gap: 4px 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.cover dt { color: var(--muted); }
+.cover dd { margin: 0; font-weight: 600; }
+.head-data { border-bottom: 2px solid var(--ink); margin-bottom: 1em; padding-bottom: 6px; }
+.toc ol { padding-left: 1.2em; columns: 2; }
+.toc a { color: inherit; text-decoration: none; }
+section { break-inside: auto; }
+p.warn { border-left: 4px solid var(--warn); background: #fef9c3; color: #713f12; padding: 8px 12px; border-radius: 4px; break-inside: avoid; }
+.riskbox { display: flex; gap: 16px; align-items: stretch; margin: .6em 0 1em; }
+.risk { min-width: 46mm; border-radius: 8px; padding: 10px 14px; color: #fff; background: var(--info); }
+.risk.crit { background: #7f1d1d; } .risk.high { background: var(--crit); } .risk.mid { background: var(--warn); } .risk.low { background: #15803d; }
+.risk .n { font-size: 26pt; font-weight: 800; line-height: 1; }
+.risk .n small { font-size: 11pt; font-weight: 600; opacity: .85; }
+.risk .l { font-weight: 700; margin-top: 4px; }
+.risk .s { font-size: 8.5pt; opacity: .9; }
+.chart { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+table { width: 100%; border-collapse: collapse; margin: .3em 0 .9em; font-size: 9pt; }
+th, td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+th { background: var(--soft); font-weight: 600; color: var(--muted); }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+dl.kv { display: grid; grid-template-columns: 42mm 1fr; gap: 3px 12px; margin: .4em 0 .9em; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 8.5pt; font-weight: 700; color: #fff; white-space: nowrap; }
+.badge.crit { background: var(--crit); } .badge.high { background: var(--high); } .badge.warn { background: var(--warn); }
+.badge.low { background: var(--low); } .badge.info { background: var(--info); }
+.tag { display: inline-block; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-size: 8.5pt; margin: 0 3px 2px 0; }
+.finding { border: 1px solid var(--line); border-left: 4px solid var(--info); border-radius: 6px; padding: 10px 12px; margin: 0 0 12px; break-inside: avoid-page; }
+.finding.crit { border-left-color: var(--crit); } .finding.high { border-left-color: var(--high); } .finding.warn { border-left-color: var(--warn); } .finding.low { border-left-color: var(--low); }
+.finding h3 { margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
+.finding h3 .id { color: var(--muted); font-weight: 600; font-size: 10pt; white-space: nowrap; }
+.finding .meta { font-size: 9pt; color: var(--muted); margin-bottom: 6px; }
+.finding .meta span + span::before { content: " · "; }
+.txt { white-space: pre-wrap; }
+pre.ev { white-space: pre-wrap; background: var(--soft); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font: 8.5pt/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; margin: .2em 0 .6em; }
+.prov { font-size: 8.5pt; color: var(--muted); }
+.note { font-size: 9pt; border-left: 3px solid var(--line); padding-left: 8px; margin: 4px 0; }
+.empty { color: var(--muted); font-style: italic; }
+.mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 8.5pt; }
+.viz { margin: .4em 0 .3em; border: 1px solid var(--line); border-radius: 8px; padding: 6px; break-inside: avoid; }
+.viz svg { display: block; width: 100%; height: auto; max-width: 150mm; margin: 0 auto; }
+.viz.wide svg { max-width: 175mm; }
+@media screen and (max-width: 520px) { .viz.wide { overflow-x: auto; } .viz.wide svg { min-width: 450px; } }
+footer.gen { margin-top: 2em; border-top: 1px solid var(--line); padding-top: 6px; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; }
+@media print { html, body { background: #fff !important; color: var(--ink); } body { padding: 0; max-width: none; } a { color: inherit; text-decoration: none; } section#findings, section#infra, section#docs, section#appx, section#graph, section#netmap, section#timeline { break-before: page; } table { page-break-inside: auto; } thead { display: table-header-group; } pre.ev { break-inside: auto; } }
+.lead { font-size: 11.5pt; color: var(--muted); }
+.disclaimer { border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: 6px; padding: 8px 12px; margin: 1em 0; font-size: 9.5pt; }
+.sign { display: grid; grid-template-columns: 40mm 1fr; gap: 14px 12px; margin-top: 2em; }
+.sign dd { margin: 0; border-bottom: 1px solid var(--ink); min-height: 1.4em; }
+.sign dd small { display: block; color: var(--muted); font-size: 8pt; padding-top: 1.6em; }
+.onepage { break-inside: avoid-page; }
+</style>
+</head>
+<body class="tpl-lab">
+<header class="head-data"><h1>Лабораторна робота</h1><div class="muted">contoso.example · ТОВ «Контосо Енерджі» · 20.11.2026</div></header>
+<div class="body">
+<h2>1. Мета</h2>
+<p>Дослідити відкриті джерела щодо об&#39;єкта «contoso.example» методами OSINT: зібрати опубліковані документи, вилучити метадані, виявити витоки інформації та зіставити знахідки зі стандартами захисту інформації.</p>
+<h2>2. Методика</h2>
+<dl class="kv"><dt>Профіль перевірки</dt><dd>Стандартний</dd><dt>Джерела</dt><dd>EXIF, Люди та e-mail, Метадані, ПЗ → EOL, Персональні дані, Секрети в документах, Форензика документів</dd><dt>Інструмент</dt><dd>FOCA-rs 2.0.0-beta.2</dd><dt>Запитів до мережі</dt><dd>5</dd><dt>Обмеження</dt><dd>Використано лише загальнодоступні дані та надані файли; без спроб обійти захист. Висновки стосуються стану джерел на дату дослідження.</dd></dl>
+<h2>3. Вихідні дані</h2>
+<dl class="kv"><dt>Об&#39;єкт</dt><dd>contoso.example</dd><dt>Замовник</dt><dd>ТОВ «Контосо Енерджі»</dd><dt>Цілі (скоуп)</dt><dd>contoso.example, *.contoso-group.example, 203.0.113.0/24</dd><dt>Винятки</dt><dd>mail.contoso.example, 10.10.1.0/24</dd><dt>Дата звіту</dt><dd>20.11.2026</dd></dl>
+<h2>4. Хід дослідження</h2>
+<ol><li>Збір документів: 67 (проаналізовано 65).</li><li>Вилучення метаданих: людей 25, адрес e-mail 25, хостів 27, програм 30.</li><li>Аналіз: знахідок 102 (критичних 4, високих 25, середніх 42, низьких 28, інфо 3).</li><li>Мережеві запити: 5 (пасивних 2, активних 2).</li></ol>
+<h2>5. Таблиця знахідок з відповідністю стандартам</h2>
+<table><thead><tr><th class="num">№</th><th>Важливість</th><th>Знахідка</th><th>MITRE ATT&amp;CK v20</th><th>CWE / OWASP Top 10:2025</th><th>ISO 27001</th><th>NIST SP 800-53 / НД ТЗІ 3.6-006-24</th><th>НД ТЗІ 2.5-004-99</th><th>НД ТЗІ 3.7-003-05</th></tr></thead><tbody>
+<tr><td class="num">1</td><td><span class="badge crit">Критичний</span></td><td>Погане зафарбовування: текст під зафарбуванням читається (redacted.pdf)</td><td>T1213</td><td>CWE-212</td><td>8.11, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">2</td><td><span class="badge crit">Критичний</span></td><td>Посилання на хмарні простори та URL із токенами в personal.docx</td><td>T1213.003</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">3</td><td><span class="badge crit">Критичний</span></td><td>Пароль у рядку підключення</td><td>T1552.001</td><td>CWE-798, A07:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">4</td><td><span class="badge crit">Критичний</span></td><td>ICA-файл з паролем у відкритому вигляді (buh.ica)</td><td>T1552.001</td><td>CWE-256, A06:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">5</td><td><span class="badge high">Високий</span></td><td>Внутрішні поштові сервери та адреси в заголовках листа (budget.msg)</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12, 8.21</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">6</td><td><span class="badge high">Високий</span></td><td>Ярлик LNK розкриває ім&#39;я комп&#39;ютера та MAC-адресу (report.lnk)</td><td>T1592.001</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">7</td><td><span class="badge high">Високий</span></td><td>Ярлик LNK розкриває ім&#39;я комп&#39;ютера та MAC-адресу (network.lnk)</td><td>T1592.001</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">8</td><td><span class="badge high">Високий</span></td><td>Пароль у тексті документа · schedule.xlsx</td><td>T1552.001</td><td>CWE-798, A07:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">9</td><td><span class="badge high">Високий</span></td><td>Ярлик LNK розкриває ім&#39;я комп&#39;ютера та MAC-адресу (backup.zip)</td><td>T1592.001</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">10</td><td><span class="badge high">Високий</span></td><td>Видалений текст відновлюється зі старих ревізій PDF (revisions.pdf)</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">11</td><td><span class="badge high">Високий</span></td><td>Номер банківської картки в документі (personal.docx)</td><td>T1213</td><td>CWE-359, A01:2025</td><td>5.34, 8.11, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">12</td><td><span class="badge high">Високий</span></td><td>РНОКПП (ІПН) фізичної особи в документі (personal.docx)</td><td>T1213</td><td>CWE-359, A01:2025</td><td>5.34, 8.11, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">13</td><td><span class="badge high">Високий</span></td><td>Мініатюра EXIF може відрізнятися від фото (photo.jpg)</td><td>T1591</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">14</td><td><span class="badge high">Високий</span></td><td>RDP-файл зі збереженим паролем (SRV-TS01.rdp)</td><td>T1552.001</td><td>CWE-256, A06:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">15</td><td><span class="badge high">Високий</span></td><td>Видалений текст відновлюється зі старих ревізій PDF (signed_modified.pdf)</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">16</td><td><span class="badge high">Високий</span></td><td>Пароль у тексті документа · objstm.pdf</td><td>T1552.001</td><td>CWE-798, A07:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">17</td><td><span class="badge high">Високий</span></td><td>Прихований текст і приховані рядки/стовпці в hidden.xlsx</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">18</td><td><span class="badge high">Високий</span></td><td>Номер рахунку IBAN у документі (personal.docx)</td><td>T1213</td><td>CWE-359, A01:2025</td><td>5.34, 8.11, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">19</td><td><span class="badge high">Високий</span></td><td>Документ змінено після підписання (signed_modified.pdf)</td><td>T1565.001</td><td>-</td><td>8.24</td><td>-</td><td>ЦВ, НА</td><td>6.1.2.5</td></tr>
+<tr><td class="num">20</td><td><span class="badge high">Високий</span></td><td>Архів із небезпечними шляхами (Zip-Slip): backup.zip</td><td>T1204.002</td><td>CWE-22 (Top 25), A01:2025</td><td>8.7</td><td>SI-10</td><td>-</td><td>-</td></tr>
+<tr><td class="num">21</td><td><span class="badge high">Високий</span></td><td>Пароль у тексті документа · legacy.doc</td><td>T1552.001</td><td>CWE-798, A07:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">22</td><td><span class="badge high">Високий</span></td><td>IP-адреса відправника в заголовках листа (budget.msg)</td><td>-</td><td>CWE-497, A01:2025</td><td>8.21</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">23</td><td><span class="badge high">Високий</span></td><td>Внутрішні поштові сервери та адреси в заголовках листа (backup.zip)</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12, 8.21</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">24</td><td><span class="badge high">Високий</span></td><td>Прихований текст і приховані рядки/стовпці в signed_hidden.docx</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">25</td><td><span class="badge high">Високий</span></td><td>IP-адреса відправника в заголовках листа (backup.zip)</td><td>-</td><td>CWE-497, A01:2025</td><td>8.21</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">26</td><td><span class="badge high">Високий</span></td><td>SAS-токен Azure</td><td>T1552.001</td><td>CWE-798, A07:2025</td><td>5.17, 8.12</td><td>IA-5(7)</td><td>НИ</td><td>6.1.2.5</td></tr>
+<tr><td class="num">27</td><td><span class="badge high">Високий</span></td><td>IP-адреса відправника в заголовках листа (budget.eml)</td><td>-</td><td>CWE-497, A01:2025</td><td>8.21</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">28</td><td><span class="badge high">Високий</span></td><td>Гриф обмеження доступу в документі (personal.docx)</td><td>T1213</td><td>CWE-359, A01:2025</td><td>5.34, 8.11, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">29</td><td><span class="badge high">Високий</span></td><td>Серія та номер паспорта в документі (personal.docx)</td><td>T1213</td><td>CWE-359, A01:2025</td><td>5.34, 8.11, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">30</td><td><span class="badge warn">Середній</span></td><td>Дані підписанта (КЕП) у документі signed.pdf: Іван Петренко</td><td>T1589.001</td><td>-</td><td>5.34</td><td>SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">31</td><td><span class="badge warn">Середній</span></td><td>Дані підписанта (КЕП) у документі signed_hidden.docx: John Doe</td><td>T1589.001</td><td>-</td><td>5.34</td><td>SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">32</td><td><span class="badge warn">Середній</span></td><td>Adobe Acrobat Pro XI (EOL) у 1 документі</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">33</td><td><span class="badge warn">Середній</span></td><td>Скан без текстового шару: exiftool-PDF.pdf</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">34</td><td><span class="badge warn">Середній</span></td><td>Документ із макросами VBA: legacy.doc</td><td>T1059.005</td><td>-</td><td>8.7</td><td>SC-18</td><td>-</td><td>-</td></tr>
+<tr><td class="num">35</td><td><span class="badge warn">Середній</span></td><td>Скан без текстового шару: scan.pdf</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">36</td><td><span class="badge warn">Середній</span></td><td>Внутрішній домен у Message-ID (budget.msg)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">37</td><td><span class="badge warn">Середній</span></td><td>Документ із макросами VBA: budget.xls</td><td>T1059.005</td><td>-</td><td>8.7</td><td>SC-18</td><td>-</td><td>-</td></tr>
+<tr><td class="num">38</td><td><span class="badge warn">Середній</span></td><td>Скан без текстового шару: exiftool-PDF2.pdf</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">39</td><td><span class="badge warn">Середній</span></td><td>Adobe Photoshop CC 2019 (EOL) у 2 документах</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">40</td><td><span class="badge warn">Середній</span></td><td>GPS-координати в 6 фото</td><td>T1591.001</td><td>CWE-359, A01:2025</td><td>5.34, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">41</td><td><span class="badge warn">Середній</span></td><td>Застаріла ОС iOS 16.6 у 1 документі</td><td>T1592.002</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">42</td><td><span class="badge warn">Середній</span></td><td>Документ із макросами VBA: schedule.xlsx</td><td>T1059.005</td><td>-</td><td>8.7</td><td>SC-18</td><td>-</td><td>-</td></tr>
+<tr><td class="num">43</td><td><span class="badge warn">Середній</span></td><td>Reply-To відрізняється від відправника (budget.eml)</td><td>T1566</td><td>-</td><td>6.3</td><td>AT-2(3)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">44</td><td><span class="badge warn">Середній</span></td><td>Структура Exchange (X.500) у листі (budget.msg)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">45</td><td><span class="badge warn">Середній</span></td><td>Особисті контакти у візитних картках (contacts.vcf)</td><td>-</td><td>CWE-359, A01:2025</td><td>5.34, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">46</td><td><span class="badge warn">Середній</span></td><td>iOS 16.6 (EOL) у 1 документі</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">47</td><td><span class="badge warn">Середній</span></td><td>Reply-To відрізняється від відправника (backup.zip)</td><td>T1566</td><td>-</td><td>6.3</td><td>AT-2(3)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">48</td><td><span class="badge warn">Середній</span></td><td>Застаріла ОС iOS 17.4 у 2 документах</td><td>T1592.002</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">49</td><td><span class="badge warn">Середній</span></td><td>Ярлик LNK вказує на мережевий ресурс (network.lnk)</td><td>T1135</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">50</td><td><span class="badge warn">Середній</span></td><td>Внутрішній домен у Message-ID (budget.eml)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">51</td><td><span class="badge warn">Середній</span></td><td>Внутрішній домен у Message-ID (backup.zip)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">52</td><td><span class="badge warn">Середній</span></td><td>Посилання на онлайн-зустрічі в календарі (meeting.ics)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">53</td><td><span class="badge warn">Середній</span></td><td>Виправлення та видалений текст збережено в contract.docx</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">54</td><td><span class="badge warn">Середній</span></td><td>Серійний номер пристрою в медіафайлі (iphone.mov)</td><td>T1592.001</td><td>-</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">55</td><td><span class="badge warn">Середній</span></td><td>Зовнішні джерела даних у hidden.xlsx</td><td>T1590</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">56</td><td><span class="badge warn">Середній</span></td><td>Документ із макросами VBA: vbaProject.bin</td><td>T1059.005</td><td>-</td><td>8.7</td><td>SC-18</td><td>-</td><td>-</td></tr>
+<tr><td class="num">57</td><td><span class="badge warn">Середній</span></td><td>Особисті контакти у візитних картках (backup.zip)</td><td>-</td><td>CWE-359, A01:2025</td><td>5.34, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">58</td><td><span class="badge warn">Середній</span></td><td>Зовнішні джерела даних у schedule.xlsx</td><td>T1590</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">59</td><td><span class="badge warn">Середній</span></td><td>Різні автори або програми в ревізіях PDF (signed_modified.pdf)</td><td>-</td><td>CWE-212</td><td>8.10</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">60</td><td><span class="badge warn">Середній</span></td><td>PDF містить JavaScript: report.pdf</td><td>T1204.002</td><td>-</td><td>8.7</td><td>SC-18</td><td>-</td><td>-</td></tr>
+<tr><td class="num">61</td><td><span class="badge warn">Середній</span></td><td>Приховані аркуші в budget.xls: Зарплати, Службовий</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">62</td><td><span class="badge warn">Середній</span></td><td>Приховані аркуші в schedule.xlsx: Зарплати, Паролі</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">63</td><td><span class="badge warn">Середній</span></td><td>Виправлення та видалений текст збережено в letter.odt</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">64</td><td><span class="badge warn">Середній</span></td><td>Різні автори або програми в ревізіях PDF (report.pdf)</td><td>-</td><td>CWE-212</td><td>8.10</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">65</td><td><span class="badge warn">Середній</span></td><td>iOS 17.4 (EOL) у 2 документах</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">66</td><td><span class="badge warn">Середній</span></td><td>Різні автори або програми в ревізіях PDF (revisions.pdf)</td><td>-</td><td>CWE-212</td><td>8.10</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">67</td><td><span class="badge warn">Середній</span></td><td>Дані підписанта (КЕП) у документі signed_modified.pdf: Іван Петренко</td><td>T1589.001</td><td>-</td><td>5.34</td><td>SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">68</td><td><span class="badge warn">Середній</span></td><td>Зовнішні джерела даних у network.vsdx</td><td>T1590</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">69</td><td><span class="badge warn">Середній</span></td><td>Серійний номер пристрою в медіафайлі (photo.heic)</td><td>T1592.001</td><td>-</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">70</td><td><span class="badge warn">Середній</span></td><td>Microsoft Office Word 2013 (EOL) у 2 документах</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">71</td><td><span class="badge warn">Середній</span></td><td>Розкрито імена та логіни 20 співробітників</td><td>T1589.003</td><td>CWE-359, A01:2025</td><td>5.34, 8.12</td><td>AC-22, SI-12(1)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">72</td><td><span class="badge low">Низький</span></td><td>Microsoft Excel 2010 (EOL) у 1 документі</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">73</td><td><span class="badge low">Низький</span></td><td>Коментарі рецензентів збережено в schedule.xlsx</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">74</td><td><span class="badge low">Низький</span></td><td>Adobe Photoshop 7.0 (EOL) у 3 документах</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">75</td><td><span class="badge low">Низький</span></td><td>Внутрішні адреси та імена хостів у документі (2) · budget.msg</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">76</td><td><span class="badge low">Низький</span></td><td>Коментарі рецензентів збережено в report.pdf</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">77</td><td><span class="badge low">Низький</span></td><td>Старі ревізії PDF збережено в report.pdf</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">78</td><td><span class="badge low">Низький</span></td><td>Старі ревізії PDF збережено в signed_modified.pdf</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">79</td><td><span class="badge low">Низький</span></td><td>Коментарі рецензентів збережено в strategy.pptx</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">80</td><td><span class="badge low">Низький</span></td><td>Внутрішні адреси та імена хостів у документі (1) · contract.docx</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">81</td><td><span class="badge low">Низький</span></td><td>Внутрішні шляхи та логіни в метаданих 17 документів</td><td>T1592</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">82</td><td><span class="badge low">Низький</span></td><td>Внутрішні адреси та імена хостів у документі (1) · buh.ica</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">83</td><td><span class="badge low">Низький</span></td><td>Застаріла ОС Windows 7 / Server 2008 R2 у 1 документі</td><td>T1592.002</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">84</td><td><span class="badge low">Низький</span></td><td>Застаріла ОС Windows XP у 2 документах</td><td>T1592.002</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">85</td><td><span class="badge low">Низький</span></td><td>Ідентифікатор орендаря Microsoft 365 у листі (budget.eml)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">86</td><td><span class="badge low">Низький</span></td><td>Коментарі рецензентів збережено в network.vsdx</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">87</td><td><span class="badge low">Низький</span></td><td>Внутрішні адреси та імена хостів у документі (4)</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">88</td><td><span class="badge low">Низький</span></td><td>Ідентифікатор орендаря Microsoft 365 у листі (backup.zip)</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">89</td><td><span class="badge low">Низький</span></td><td>Microsoft Word 2008 для Mac (EOL) у 1 документі</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">90</td><td><span class="badge low">Низький</span></td><td>Старі ревізії PDF збережено в revisions.pdf</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">91</td><td><span class="badge low">Низький</span></td><td>Попередні версії метаданих збережено в legacy.doc</td><td>T1213</td><td>CWE-212</td><td>8.10, 8.12</td><td>AC-22</td><td>-</td><td>6.1.2.5</td></tr>
+<tr><td class="num">92</td><td><span class="badge low">Низький</span></td><td>LibreOffice 7.2.5.2 (EOL) у 1 документі</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">93</td><td><span class="badge low">Низький</span></td><td>Внутрішні адреси та імена хостів у документі (2) · budget.eml</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">94</td><td><span class="badge low">Низький</span></td><td>Імена 9 комп&#39;ютерів і серверів внутрішньої мережі</td><td>T1590</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">95</td><td><span class="badge low">Низький</span></td><td>Час підпису та позначка TSA розходяться більш ніж на добу (signed_hidden.docx)</td><td>-</td><td>-</td><td>8.24</td><td>-</td><td>НА</td><td>-</td></tr>
+<tr><td class="num">96</td><td><span class="badge low">Низький</span></td><td>Параметри віддаленого доступу розкрито у файлі SRV-TS01.rdp</td><td>T1590.002</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">97</td><td><span class="badge low">Низький</span></td><td>OpenOffice.org 3.2 (EOL) у 1 документі</td><td>T1203</td><td>CWE-1104, A03:2025</td><td>8.8</td><td>SA-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">98</td><td><span class="badge low">Низький</span></td><td>Параметри віддаленого доступу розкрито у файлі buh.ica</td><td>T1590.002</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">99</td><td><span class="badge low">Низький</span></td><td>Внутрішні адреси та імена хостів у документі (1) · network.vsdx</td><td>T1590.005</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.4</td></tr>
+<tr><td class="num">100</td><td><span class="badge info">Інфо</span></td><td>Визначено шаблон корпоративних e-mail: {f}.{last}@contoso.example</td><td>T1589.002</td><td>-</td><td>6.3</td><td>AT-2(3)</td><td>-</td><td>6.1.2.7</td></tr>
+<tr><td class="num">101</td><td><span class="badge info">Інфо</span></td><td>Посилання на хмарні простори та URL із токенами в meeting.ics</td><td>T1213.003</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+<tr><td class="num">102</td><td><span class="badge info">Інфо</span></td><td>Службові облікові записи в метаданих: Administrator, admin, author, scan, user name</td><td>T1087</td><td>CWE-497, A01:2025</td><td>8.12</td><td>AC-22</td><td>-</td><td>6.1.2.7</td></tr>
+</tbody></table>
+<p>НД ТЗІ 2.5-004-99 і НД ТЗІ 3.7-003-05 наведено для систем, атестованих за КСЗІ. Коди заходів НД ТЗІ 3.6-006-24 збігаються з кодами NIST SP 800-53.</p>
+<h2>6. Висновки та рекомендації</h2>
+<p>Загальний рівень ризику: Критичний (100/100). Виявлено знахідок: 102.</p>
+<ul><li>В опублікованих файлах залишилося те, що вважали видаленим або закритим.</li><li>Паролі або ключі доступу лежать у відкритому доступі: ними може скористатися будь-хто.</li><li>Файли розкривають будову внутрішньої мережі: імена комп&#39;ютерів, серверів, шляхи.</li><li>Оприлюднено персональні дані працівників або клієнтів.</li><li>Підписаний документ змінено після підпису: його справжність не можна підтвердити.</li><li>Виявлено проблему безпеки, що потребує уваги.</li><li>Використовується застаріле ПЗ з відомими вразливостями.</li></ul>
+<ol><li>Перед публікацією очищати документи: правки, приховані аркуші, «зачорнений» текст, метадані.</li><li>Негайно змінити паролі й ключі, що потрапили у відкритий доступ, і прибрати файли з сайту.</li><li>Видаляти з документів внутрішні шляхи, імена комп&#39;ютерів і серверів перед публікацією.</li><li>Прибрати персональні дані з публічних файлів і перевірити підстави для їх обробки.</li><li>Перепідписати документи і публікувати лише остаточні підписані версії.</li></ol>
+<div class="disclaimer"><b>Застереження аудитора.</b> Відповідність стандартам є орієнтиром для аудитора і не є висновком державної експертизи КСЗІ чи атестації. Остаточну оцінку відповідності робить уповноважений експерт за первинними документами.</div>
+<dl class="sign"><dt>Виконав</dt><dd><small>ПІБ, підпис, дата</small></dd><dt>Перевірив</dt><dd><small>ПІБ, підпис, дата</small></dd></dl>
+</div>
+<footer class="gen"><span>Сформовано FOCA-rs 2.0.0-beta.2 · 20.11.2026</span><span>Конфіденційно</span></footer>
+</body>
+</html>

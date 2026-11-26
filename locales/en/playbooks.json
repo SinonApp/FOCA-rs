@@ -1,0 +1,357 @@
+{
+  "disclaimer": "Verification commands are contextualized for this finding; run active checks strictly within authorized scope.",
+  "playbooks": {
+    "secrets": {
+      "key": "secrets",
+      "title": "Revoke and rotate leaked secret",
+      "summary": "Exposed credentials, API keys or passwords found in ({docs}) must be treated as compromised and rotated immediately.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Revoke and rotate the credential immediately",
+          "action": "Revoke the token or reset the password at the issuing system (IdP, cloud, DB, RDP/ICA) and audit authentication logs for unauthorized access.",
+          "command": null,
+          "owner": "IAM / SecOps"
+        },
+        {
+          "title": "Purge secret from published files and VCS history",
+          "action": "Remove or redact the credential in ({docs}) hosted on {host}; if committed to Git, purge history cleanly.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "AppSec / Dev"
+        },
+        {
+          "title": "Enforce pre-publish secret scanning",
+          "action": "Enable pre-commit secret scanning and store credentials in a dedicated secret vault instead of files or client JS.",
+          "command": null,
+          "owner": "DevOps"
+        }
+      ],
+      "verify": [
+        "Verify {url} returns 404/403 or redacted copy and old credential fails authentication.",
+        "Re-running FOCA-rs Preflight on updated artifacts reports zero secrets."
+      ]
+    },
+    "doc-sanitize": {
+      "key": "doc-sanitize",
+      "title": "Sanitize document metadata, hidden layers and incremental revisions",
+      "summary": "Published files ({docs}) on {host} contain internal metadata, hidden text/sheets, reversible redactions or incremental PDF revisions.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Rewrite files cleanly without revisions or hidden layers",
+          "action": "Use FOCA-rs Preflight (`doc_clean`) to rewrite PDFs cleanly and strip OOXML/ODF/EXIF metadata; for bad redactions, rasterize or rebuild from sanitized source.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        },
+        {
+          "title": "Replace public file and purge CDN cache",
+          "action": "Publish the sanitized copy to {host} ({url}) and purge edge/proxy caches.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "WebOps"
+        },
+        {
+          "title": "Mandate pre-publication document hygiene check",
+          "action": "Require a clean Preflight hygiene check before external release and disable GPS tagging/incremental saves.",
+          "command": null,
+          "owner": "SecOps / IT"
+        }
+      ],
+      "verify": [
+        "Fetch {url} and confirm FOCA-rs Preflight reports hygiene grade >= B with zero revisions or hidden content."
+      ]
+    },
+    "doc-signature": {
+      "key": "doc-signature",
+      "title": "Re-verify and re-sign modified or unverified signed documents",
+      "summary": "Signed document ({docs}) exhibits post-signature edits, digest mismatch, TSA timestamp drift or exposed signer PII.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Verify authoritative original against signing owner",
+          "action": "Retrieve the authoritative signed copy from DMS/archive; post-signature bytes invalidate integrity and audit trust.",
+          "command": null,
+          "owner": "Legal / SecOps"
+        },
+        {
+          "title": "Re-sign sanitized final revision with valid TSA timestamp",
+          "action": "Produce a clean final copy of ({docs}), apply fresh signature + accredited TSA timestamp, and minimize exposed signer PII where policy permits.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        }
+      ],
+      "verify": [
+        "Confirm in signature verifier and FOCA-rs forensics that zero unsigned trailing modifications remain."
+      ]
+    },
+    "pii": {
+      "key": "pii",
+      "title": "Remove or anonymize exposed PII and GPS coordinates",
+      "summary": "Documents ({docs}) expose regulated personal data (tax IDs, cards, IBAN, contacts) or exact EXIF/XMP GPS coordinates.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Restrict public access to files containing PII",
+          "action": "Remove unauthenticated public access at {url} or move the file behind authenticated access control.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "SecOps / Compliance"
+        },
+        {
+          "title": "Strip GPS EXIF tags and mask PII before re-publishing",
+          "action": "Run FOCA-rs Preflight (`doc_clean`) to strip GPS EXIF metadata from images and mask/redact personal identifiers in documents.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        }
+      ],
+      "verify": [
+        "Re-analyze updated artifacts in FOCA-rs and verify 0 PII and 0 GPS detections."
+      ]
+    },
+    "tls-cert": {
+      "key": "tls-cert",
+      "title": "Remediate TLS certificate or chain issue on {host}:{port}",
+      "summary": "TLS certificate on {host}:{port} failed validation (expired, self-signed, incomplete chain, hostname/CAA mismatch or weak key/signature).",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Reissue certificate (RSA >= 2048 or ECDSA P-256, SHA-256) covering all SAN hostnames",
+          "action": "Provision a trusted CA/ACME certificate for {host}, align CAA records on {domain}, and omit internal PKI/LDAP URLs.",
+          "command": "dig CAA {domain} +short",
+          "owner": "DevOps / SRE"
+        },
+        {
+          "title": "Serve full intermediate chain and OCSP stapling",
+          "action": "Configure `fullchain.pem` (leaf + intermediates) in Nginx/HAProxy/Ingress and enable OCSP stapling and HTTP/2 ALPN.",
+          "command": "openssl s_client -connect {host}:{port} -servername {host} -showcerts < /dev/null",
+          "owner": "DevOps / SRE"
+        }
+      ],
+      "verify": [
+        "Run `openssl s_client -connect {host}:{port} -servername {host} -verify_return_error` and confirm `Verify return code: 0 (ok)`."
+      ]
+    },
+    "tls-crypto": {
+      "key": "tls-crypto",
+      "title": "Harden TLS protocol versions and cipher suites on {host}:{port}",
+      "summary": "Service at {host}:{port} negotiates deprecated TLS versions (1.0/1.1) or weak ciphers (RC4/3DES/EXPORT/anon).",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Restrict server to TLS 1.2 and TLS 1.3 only",
+          "action": "Set `ssl_protocols TLSv1.2 TLSv1.3;` (Mozilla Intermediate/Modern profile) on reverse proxy/load balancer and reload.",
+          "command": "openssl s_client -connect {host}:{port} -servername {host} -tls1_1 < /dev/null",
+          "owner": "DevOps / SRE"
+        },
+        {
+          "title": "Restrict cipher suites to AEAD with PFS (ECDHE + GCM/ChaCha20)",
+          "action": "Disable RC4, 3DES, NULL, EXPORT and static RSA suites; enable ECDHE AEAD cipher suites only.",
+          "command": null,
+          "owner": "DevOps / SRE"
+        }
+      ],
+      "verify": [
+        "Confirm TLS 1.0/1.1 handshakes fail while TLS 1.2/1.3 succeed with ECDHE AEAD ciphers."
+      ]
+    },
+    "web-headers": {
+      "key": "web-headers",
+      "title": "Harden HTTP security headers, HSTS, CSP and cookie flags on {host}",
+      "summary": "Web application at {url} lacks security headers (HSTS, CSP, clickjacking protection), permits permissive CORS/cookies, or discloses exact server versions.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Add Strict-Transport-Security, CSP frame-ancestors and hide server banners",
+          "action": "Add `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, restrictive `Content-Security-Policy` (`frame-ancestors`) and disable `Server`/`X-Powered-By` banners.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "DevOps / AppSec"
+        },
+        {
+          "title": "Harden Set-Cookie attributes and restrict CORS Allow-Origin",
+          "action": "Set `Secure; HttpOnly; SameSite=Lax` on session cookies and replace arbitrary Origin reflection or credentialed wildcards with an explicit origin allowlist.",
+          "command": null,
+          "owner": "AppSec / Dev"
+        }
+      ],
+      "verify": [
+        "Run `curl -sI -H \"Origin: https://evil.example\" \"{url}\"` to verify HSTS, CSP and strict CORS rejection."
+      ]
+    },
+    "web-methods": {
+      "key": "web-methods",
+      "title": "Disable dangerous HTTP methods (TRACE/PUT/DELETE/WebDAV) on {host}",
+      "summary": "Web server {host} accepts or advertises unsafe HTTP methods (TRACE/PUT/DELETE) or WebDAV extensions.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Restrict allowed HTTP methods and disable TRACE / WebDAV",
+          "action": "Disable `TraceEnable` and unused WebDAV handlers; whitelist only required methods per route via `limit_except` or gateway policy.",
+          "command": "curl -sIX OPTIONS \"{url}\"",
+          "owner": "DevOps / SRE"
+        }
+      ],
+      "verify": [
+        "Verify `curl -sIX TRACE \"{url}\"` returns HTTP 403 or 405."
+      ]
+    },
+    "web-exposure": {
+      "key": "web-exposure",
+      "title": "Block exposed backups, .git repositories, directory listings, source maps or public buckets on {host}",
+      "summary": "Resource {url} exposes backups, DB dumps, `.git`, directory autoindexing, source maps or an open/dangling cloud bucket.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Block public access and purge operational artifacts from webroot",
+          "action": "Delete backups, dumps, `.git` and `.map` files from webroot; deny dotfile patterns in proxy config, disable directory `autoindex`, and restrict bucket ACLs/policies.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "DevOps / SecOps"
+        },
+        {
+          "title": "Rotate secrets if dumps, configs or .git were accessible externally",
+          "action": "Inspect access logs for {url} and rotate any DB/app credentials that may have resided in exposed dumps or `.git`.",
+          "command": null,
+          "owner": "SecOps / IAM"
+        }
+      ],
+      "verify": [
+        "Confirm `curl -sI \"{url}\"` returns HTTP 403/404 and re-scan clears the finding."
+      ]
+    },
+    "dns-mail": {
+      "key": "dns-mail",
+      "title": "Remediate DNS exposure and email authentication gaps on {domain}",
+      "summary": "Host/domain {host} exhibits dangling CNAME (subdomain takeover), open AXFR zone transfer, NSEC walking, wildcard ambiguity or mail relay/PTR leaks.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Remove dangling CNAME records, restrict AXFR transfers and switch to NSEC3",
+          "action": "Delete stale CNAME records pointing to unclaimed targets, restrict AXFR via TSIG/IP ACL, and migrate DNSSEC zones to NSEC3.",
+          "command": "dig AXFR {domain} && dig CNAME {host} +short",
+          "owner": "NetOps / SRE"
+        },
+        {
+          "title": "Strip internal relay headers on outbound MTA and align PTR/A records",
+          "action": "Configure outbound mail gateway to sanitize internal `Received`/`X-Originating-IP` headers, enforce SPF/DKIM/DMARC, and align PTR records.",
+          "command": null,
+          "owner": "Mail / NetOps"
+        }
+      ],
+      "verify": [
+        "Confirm `dig AXFR {domain}` returns refused/failed and `dig CNAME {host}` resolves validly or NXDOMAIN."
+      ]
+    },
+    "sw-cve": {
+      "key": "sw-cve",
+      "title": "Patch vulnerable or end-of-life software (CISA KEV / CVE) on {host}",
+      "summary": "Software versions observed on {host} or inside documents ({docs}) correspond to EOL releases or known exploited CVEs ({cve}).",
+      "effort": "planned",
+      "steps": [
+        {
+          "title": "Verify exact deployed software version and backport status",
+          "action": "Confirm exact package/application version on {host} and endpoints, accounting for vendor backports before scheduling downtime.",
+          "command": null,
+          "owner": "SysAdmin / IT"
+        },
+        {
+          "title": "Apply security updates for {cve} or migrate off EOL components",
+          "action": "Upgrade affected components to supported releases, apply vendor patches for {cve}, and enforce compensating ACL/VPN isolation until patched.",
+          "command": null,
+          "owner": "SysAdmin / SecOps"
+        }
+      ],
+      "verify": [
+        "Confirm upgraded build on {host} resolves {cve} and re-scan with FOCA-rs to transition finding to Fixed."
+      ]
+    },
+    "ports-infra": {
+      "key": "ports-infra",
+      "title": "Restrict exposed administrative ports or origin IP behind CDN on {host}",
+      "summary": "Target {host} (port {port}) exposes management/DB ports publicly, reveals CDN origin IP directly, or leaks internal hosts/workstations.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Restrict inbound firewall rules to VPN or CDN origin IP ranges",
+          "action": "Update host firewall / Security Group for {host}:{port} to permit connections solely from corporate VPN or verified CDN edge prefixes.",
+          "command": null,
+          "owner": "NetOps / SRE"
+        },
+        {
+          "title": "Rotate compromised origin IP and enforce CDN Authenticated Origin Pulls",
+          "action": "Once firewall rules are active, rotate the exposed origin IP and enable mTLS between CDN edges and the origin.",
+          "command": null,
+          "owner": "NetOps / Cloud"
+        }
+      ],
+      "verify": [
+        "Verify external connection attempts to {host}:{port} outside VPN/CDN time out or are rejected."
+      ]
+    },
+    "internal-recon": {
+      "key": "internal-recon",
+      "title": "Reduce internal topology exposure (RFC1918 IPs, UNC shares, AD usernames)",
+      "summary": "Analyzed artifacts ({docs}) reveal internal IP addresses, hostnames, UNC/LNK paths, hardware MAC/serials, service accounts or predictable AD username patterns.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Sanitize author names, UNC paths, data connections and LNK artifacts before export",
+          "action": "Strip document author fields, internal UNC paths, Excel external connections and avoid exposing `.lnk` shortcuts externally.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        },
+        {
+          "title": "Enforce MFA, lockout controls and least privilege on predictable/service accounts",
+          "action": "Because login/email templates are predictable externally, enforce MFA across VPN/SSO portals, enable smart lockout and restrict service account interactive logon.",
+          "command": null,
+          "owner": "IAM / SecOps"
+        }
+      ],
+      "verify": [
+        "Re-check published documents with FOCA-rs Preflight and confirm MFA/lockout enforcement on external auth endpoints."
+      ]
+    },
+    "general": {
+      "key": "general",
+      "title": "Triage and remediate security finding on {host}",
+      "summary": "Finding detected on {host} (sources: {docs}). Validate impact in environment and apply least-privilege/exposure minimization controls.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Validate asset ownership and confirm finding context",
+          "action": "Cross-check {host} ({url}) with asset inventory and update triage status (`confirmed` or `false`).",
+          "command": null,
+          "owner": "SecOps"
+        },
+        {
+          "title": "Apply targeted remediation and record change",
+          "action": "Remediate root cause on {host} or source artifacts ({docs}) per the finding recommendation.",
+          "command": null,
+          "owner": "IT / DevOps"
+        }
+      ],
+      "verify": [
+        "Re-run FOCA-rs scan/analysis and verify the finding transitions to Fixed."
+      ]
+    }
+  },
+  "labels": {
+    "effort": {
+      "quick": "Quick fix",
+      "medium": "Medium effort",
+      "planned": "Planned work"
+    },
+    "keys": {
+      "dns-mail": "DNS and mail",
+      "doc-sanitize": "Document sanitization",
+      "doc-signature": "Document signatures",
+      "general": "General plan",
+      "internal-recon": "Internal reconnaissance",
+      "pii": "Personal data",
+      "ports-infra": "Ports and infrastructure",
+      "secrets": "Secrets",
+      "sw-cve": "Software and CVEs",
+      "tls-cert": "TLS certificates",
+      "tls-crypto": "TLS settings",
+      "web-exposure": "Exposed web resources",
+      "web-headers": "Security headers",
+      "web-methods": "HTTP methods"
+    }
+  }
+}

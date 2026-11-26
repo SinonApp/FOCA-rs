@@ -1,0 +1,32 @@
+{
+  "application": "Microsoft Macintosh PowerPoint",
+  "author": "Marina Shevchuk",
+  "created": "2019-11-05T10:00:00Z",
+  "fields": {
+    "ppt:CurrentUser": "m.shevchuk"
+  },
+  "format": "ppt",
+  "last_modified_by": "m.shevchuk",
+  "os": "Macintosh",
+  "people": [
+    {
+      "name": "Marina Shevchuk",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "m.shevchuk",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "software": [
+    "Microsoft Macintosh PowerPoint"
+  ],
+  "stats": {
+    "hidden_slides": 1,
+    "notes": 3,
+    "slides": 12
+  },
+  "title": "Strategy 2020"
+}

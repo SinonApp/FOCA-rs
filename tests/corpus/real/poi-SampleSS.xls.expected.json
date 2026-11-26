@@ -1,0 +1,34 @@
+{
+  "application": "Microsoft Excel",
+  "author": "Nick Burch",
+  "created": "2008-01-04T11:51:36Z",
+  "description": "This is a sample spreadsheet, for use when testing things",
+  "fields": {
+    "ole:AppVersion": "12.0000",
+    "ole:Security": "0",
+    "ole:TitlesOfParts": "First Sheet; Sheet Number 2",
+    "xls:WriteAccess": "Nick Burch"
+  },
+  "format": "xls",
+  "keywords": "Testing Sample Formulas",
+  "last_modified_by": "Nick Burch",
+  "modified": "2008-01-04T11:56:04Z",
+  "os": "Windows XP",
+  "people": [
+    {
+      "name": "Nick Burch",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "Nick Burch",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "software": [
+    "Microsoft Excel"
+  ],
+  "subject": "Spreadsheet for testing",
+  "title": "Sample Spreadsheet"
+}

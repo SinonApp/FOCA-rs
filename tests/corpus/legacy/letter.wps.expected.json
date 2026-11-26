@@ -1,0 +1,25 @@
+{
+  "application": "Microsoft Works",
+  "author": "Іван Петренко",
+  "created": "2024-03-01T09:00:00Z",
+  "format": "wps",
+  "last_modified_by": "John Doe",
+  "modified": "2024-03-14T16:42:00Z",
+  "os": "Windows 10/11",
+  "people": [
+    {
+      "name": "Іван Петренко",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "John Doe",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "software": [
+    "Microsoft Works"
+  ],
+  "title": "Лист"
+}

@@ -1,0 +1,106 @@
+# Documents: Formats, Forensics, Search, Rules & Offline Analysis
+
+↑ [User Guide](README.md) · [Documentation](../README.md)
+
+FOCA-rs parses a wide matrix of office, archive, messaging, publishing, and media formats, surfacing hidden information that lives alongside visible text: digital signatures and Ukrainian QES (КЕП), incremental PDF revisions, broken redactions, hidden content, embedded OLE objects, and personal data (PII). Short offline summaries are also available in ⋮ → Help → Documents & forensics.
+
+- [Supported Formats](#supported-formats)
+- [Forensics in the Document Card](#forensics-in-the-document-card)
+- [Personal Data (PII) & Masking](#personal-data-pii--masking)
+- [Full-Text Document Search](#full-text-document-search)
+- [Custom Search Rules](#custom-search-rules)
+- [Offline File & Folder Analysis](#offline-file--folder-analysis)
+- [Optional Offline OCR (Play Flavor)](#optional-offline-ocr-play-flavor)
+- [Limitations](#limitations)
+
+## Supported Formats
+
+| Format | What is extracted |
+|---|---|
+| Office (`DOC`/`DOCX`, `XLS`/`XLSX`, `PPT`/`PPTX`), OpenDocument (`ODT`/`ODS`/`ODP`), `RTF` | Author, last modifier, company, template, disk/UNC paths, printers, tracked changes & comments, hidden Word text (`w:vanish`), hidden Excel rows/columns/sheets, data connections, pivot tables, XML-DSig & VBA macro signatures; deep binary OLE2 extraction (`\x01Ole10Native` embedded files, original/temp paths, `SttbSavedBy` revision authors) |
+| `PDF` | Author, producer/creator software, XMP edit history, incremental-save revisions with text diff, text remaining under redaction boxes, signatures (`/ByteRange`, CAdES, RFC 3161 TSA timestamps), "scan without text layer" detection, embedded images with EXIF |
+| `Visio` (`VSDX`/`VSD`), `Publisher`, `InDesign`, `WordPerfect`, `Works` | Metadata, pages, comments, Visio data connections, XMP |
+| `EPUB` | Container (`META-INF/container.xml`) & `.opf` Dublin Core metadata (`creator`, `contributor`, `publisher`, `date`, `identifier`, generator), recursive extraction of embedded cover images |
+| `PSD` (Adobe Photoshop) | `8BPS` header and `8BIM` Image Resource Blocks: XMP edit history, TIFF/EXIF metadata, JPEG thumbnails, embedded signatures |
+| `MP3` | `ID3v1` and `ID3v2.2/2.3/2.4` tags (author/composer, publisher/studio, encoding software, comments) + recursive EXIF/GPS extraction from embedded cover art (`APIC`/`PIC`) |
+| Windows Shortcuts (`LNK`) | Computer name, MAC address, volume serial number & label, local and network (`UNC`) paths |
+| E-mails (`EML`/`MSG`) | Sender, recipients, `Reply-To`, `Message-ID`, mail client, `Received` hop chain with internal relays & IPs, `X-Originating-IP`, Microsoft 365 tenant, X.500 addresses, recursive analysis of attachments |
+| Calendars (`ICS`) & Contacts (`VCF`) | Organizer, attendees, locations, online meeting links; phone numbers, addresses, birthdays (masked); embedded VCF photos |
+| Photos & Video (`JPEG`, `PNG`, `TIFF`, `HEIC`, `MP4`, `MOV`) | Camera/phone model, serial number, timestamps, GPS coordinates, EXIF thumbnail mismatch vs. main image |
+| Archives (`ZIP`, `7z`) | Member listing, recursive extraction of contained documents (up to 2 nested levels within shared byte/count budgets), Zip-Slip (`../`) traversal path detection |
+
+Document extensions for online discovery can be filtered by category in the launch wizard (Advanced → Document types). Large video files are fetched partially: only metadata atoms are downloaded.
+
+All major document and media containers (`PDF`, `OOXML`, `ODF`, `JPEG`, binary `OLE2` `.doc`/`.xls`/`.ppt`/`.vsd`/`.pub`, and `ISO-BMFF` `.mp4`/`.mov`/`.heic`) also support metadata sanitization with automatic "Before / After" verification, see [Document Hygiene & Sanitization](analytics-and-hygiene.md#document-hygiene--sanitization).
+
+## Forensics in the Document Card
+
+Open any file under Data → Documents → `<document>` to view its Forensics section beneath basic metadata. Subsections start collapsed on mobile screens, displaying record count and highest severity badge on the right:
+
+| Section | What it shows |
+|---|---|
+| **Signatures & QES (КЕП)** | Signer name, title, organization, EDRPOU (ЄДРПОУ), RNOKPP (РНОКПП, masked only), CA/ACSK, signing time, RFC 3161 TSA timestamp & skew, "modified after signing", SHA-2 hash check |
+| **Broken redaction** | Page number, box fill color, and a short snippet of recoverable text sitting underneath the drawn rectangle |
+| **PDF revisions** | Incremental save history: who saved with which tool, plus removed (`−`) and added (`+`) text lines |
+| **Hidden content** | Hidden Word text (`w:vanish`), hidden Excel rows, columns, and worksheets containing data |
+| **Data connections** | Database connection strings, `.odc` files, pivot tables (refresh author & source), external chart links |
+| **Mail headers / Shortcut / Calendar / Contacts / Media** | Format-specific artifacts (see table above); internal relays highlighted in `Received` chains |
+| **Personal data (PII)** | Detected categories, counts, and masked values |
+| **Cloud links & tokens** | Google Drive, SharePoint, Notion, Jira, Azure/S3 URLs; embedded tokens are masked, SAS tokens & webhooks flagged Critical |
+| **Edit history (XMP)** | Software lineage (created, converted, saved), `DocumentID`, and `DerivedFrom` |
+| **Attachments / Archive entries** | Nested files and formats; unsafe archive traversal paths (`Zip-Slip`) and `Ole10Native` embedded sources |
+
+Each forensic indicator generates a typed finding (`doc.bad_redaction`, `doc.modified_after_signing`, `mail.internal_relay`, `pii`, etc.) with a one-line explanation and a Jump to document button. List badges show a shield for forensic hits and a person icon for PII; the Only with findings filter includes both.
+
+## Personal Data (PII) & Masking
+
+FOCA-rs detects Ukrainian RNOKPP (РНОКПП / ІПН), EDRPOU (ЄДРПОУ), IBAN, payment card numbers, passports & ID cards, phone numbers, and classification markings. Numbers are validated with checksums (RNOKPP, EDRPOU, IBAN mod-97, Luhn for cards).
+
+- **Masked before persistence:** Only masked values (`••••••••90`) are written to the SQLite database, FTS5 search index, reports, and exports. Full PII numbers are never stored on disk, and biometric "reveal secret" does not apply to PII.
+- One finding is created per PII type per document with an occurrence counter. Organizational EDRPOU codes are public registry identifiers and are logged at `Info` severity.
+- Reports include PII categories and counts only.
+
+## Full-Text Document Search
+
+Open Data → Documents → Full-text search (or global project search → Inside document text). Runs completely offline against the project's SQLite FTS5 index:
+
+- Multiple words match documents containing all terms; `"quoted phrase"` matches exact phrases; `-word` excludes terms; `energ*` performs prefix matching.
+- Matches are highlighted in short snippets; any PII or secrets inside snippets are automatically redacted with an inline notice (e.g., *"Redacted in snippet: IBAN, phone"*).
+- Toggle Include trash to search documents removed from the project.
+
+## Custom Search Rules
+
+Configure per-project rules under ⋮ → Search rules or Scope → Document analysis → Search rules:
+
+- **Built-in presets:** Ukrainian government document identifiers (order/outgoing/restricted inventory numbers), credentials in text, internal infrastructure (`UNC`, RDP/SSH endpoints), cryptocurrency wallets, and free-form PII patterns.
+- **Custom regex rules:** Name, pattern, severity, case-insensitivity toggle, and Mask value toggle. A named capture group `(?P<v>…)` extracts the matched value. Use Test on sample text to verify patterns locally (matches are masked).
+- Validation errors appear inline. Guardrails: pattern length ≤ 512 chars, up to 64 rules per project, and patterns cannot match empty strings.
+- Tap Save & recalculate to generate `doc.user_rule` findings immediately without re-scanning.
+
+## Offline File & Folder Analysis
+
+Open Projects → Analyze files offline (or from the ⋮ menu anywhere):
+
+1. Choose the destination: a new project (with name and optional domain for e-mail pattern matching) or the current project.
+2. Pick Select folder (recursive via Android SAF) or Files or ZIP.
+3. Tap Analyze: live per-file progress with a Cancel button (already-parsed files are kept).
+4. Review the summary (added, duplicates, skipped files and reasons) → Open project.
+
+Zero network requests are made: selected files are copied into private app storage, parsed locally on the phone, and temporary import copies are deleted once analysis completes. Limits: up to 500 files and 512 MB per batch, 100 MB per file, 30-second per-file parse timeout.
+
+## Optional Offline OCR (Play Flavor)
+
+When analyzing scanned PDFs or images without an embedded text layer (`< 40` extracted characters), the `play` Android flavor supports optional 100% on-device OCR powered by Google ML Kit (`com.google.mlkit:text-recognition`):
+
+- **Disabled by default** (`settings.ocr.enabled = false`). Enable and configure `max_pages` (default 10) and `max_mb` (default 15 MB) under Settings → Signature databases & OCR (`/settings/signatures`).
+- Runs entirely locally on your phone (zero cloud API calls); recognized text (capped at 256 KiB per file) is indexed into FTS5 full-text search and scanned by the masked PII and forensics detectors.
+- In the pure open-source `foss` build (F-Droid / direct `GPL-3.0` release), ML Kit is excluded and OCR cleanly reports `unavailable_in_foss_build`.
+
+## Limitations
+
+- Signatures inside legacy binary `.doc`/`.xls` OLE2 streams (`\x05DigitalSignature`) are not parsed; certificate chain validation and CRL/OCSP revocation are not performed.
+- Ukrainian QES (КЕП) OIDs follow ETSI EN 319 412-1 and national certificate profiles; verify critical findings against official validation tooling.
+- Hidden Word text applied exclusively through custom style definitions (rather than run-level `w:vanish`) is not detected.
+- The broken-redaction detector approximates glyph widths (~0.5 em), does not descend into nested form XObjects, ignores transparency/clipping masks, and skips rectangles covering > 80% of the page.
+- Full-text search indexes the first 64 KiB of extracted text per document; scanned PDFs/images are searchable only when optional ML Kit OCR is enabled in the `play` build.
+- `RAR` archives are not supported (pure-Rust archive extraction covers `ZIP` and `7z`).

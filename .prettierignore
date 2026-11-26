@@ -1,0 +1,12 @@
+# Generated, vendored or minified files
+ui/vendor/
+ui/data/ne*.js
+**/*.min.js
+**/*.min.css
+target/
+node_modules/
+dist/
+qa/out/
+src-tauri/gen/
+# Whitespace-sensitive markup (inline SVG + text); kept as authored
+ui/index.html

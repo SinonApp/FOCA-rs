@@ -1,0 +1,20 @@
+[package]
+name = "foca-analysis"
+description = "FOCA-rs analysis: people/identity merge, e-mail patterns, hosts/PCs, software signatures, secrets, findings and risk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+foca-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+time.workspace = true
+regex.workspace = true
+toml.workspace = true
+strsim.workspace = true
+flate2.workspace = true
+
+[dev-dependencies]
+foca-meta.workspace = true

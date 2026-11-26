@@ -1,0 +1,678 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 404 234" width="404" height="234" role="img" aria-label="Активність" font-family="sans-serif">
+<title>Активність</title>
+<text x="37" y="26" font-size="8" fill="#475569" text-anchor="middle">00</text>
+<text x="79" y="26" font-size="8" fill="#475569" text-anchor="middle">03</text>
+<text x="121" y="26" font-size="8" fill="#475569" text-anchor="middle">06</text>
+<text x="163" y="26" font-size="8" fill="#475569" text-anchor="middle">09</text>
+<text x="205" y="26" font-size="8" fill="#475569" text-anchor="middle">12</text>
+<text x="247" y="26" font-size="8" fill="#475569" text-anchor="middle">15</text>
+<text x="289" y="26" font-size="8" fill="#475569" text-anchor="middle">18</text>
+<text x="331" y="26" font-size="8" fill="#475569" text-anchor="middle">21</text>
+<path d="M142 16 V12 H296 V16" fill="none" stroke="#0f172a" stroke-width="1"/>
+<text x="219" y="9" font-size="8" fill="#0f172a" text-anchor="middle" font-weight="700">робочий час 08-19</text>
+<text x="26" y="40.5" font-size="9" fill="#0f172a" text-anchor="end">Пн</text>
+<rect x="30.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="30.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 09:00-09:59: 2</title>
+</rect>
+<text x="163" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="170.5" y="30.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 10:00-10:59: 5</title>
+</rect>
+<text x="177" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">5</text>
+<rect x="184.5" y="30.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 11:00-11:59: 8</title>
+</rect>
+<text x="191" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">8</text>
+<rect x="198.5" y="30.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 12:00-12:59: 2</title>
+</rect>
+<text x="205" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="212.5" y="30.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 13:00-13:59: 5</title>
+</rect>
+<text x="219" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">5</text>
+<rect x="226.5" y="30.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 14:00-14:59: 8</title>
+</rect>
+<text x="233" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">8</text>
+<rect x="240.5" y="30.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 15:00-15:59: 2</title>
+</rect>
+<text x="247" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="254.5" y="30.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 16:00-16:59: 5</title>
+</rect>
+<text x="261" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">5</text>
+<rect x="268.5" y="30.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 17:00-17:59: 8</title>
+</rect>
+<text x="275" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">8</text>
+<rect x="282.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="30.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 19:00-19:59: 1</title>
+</rect>
+<text x="303" y="39.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="310.5" y="30.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 20:00-20:59: 2</title>
+</rect>
+<text x="317" y="39.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="324.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 21:00-21:59: 0</title>
+</rect>
+<rect x="338.5" y="30.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 22:00-22:59: 1</title>
+</rect>
+<text x="345" y="39.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="352.5" y="30.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пн 23:00-23:59: 0</title>
+</rect>
+<text x="370" y="40.5" font-size="8.5" fill="#475569">49</text>
+<text x="26" y="54.5" font-size="9" fill="#0f172a" text-anchor="end">Вт</text>
+<rect x="30.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="44.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 09:00-09:59: 9</title>
+</rect>
+<text x="163" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">9</text>
+<rect x="170.5" y="44.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 10:00-10:59: 3</title>
+</rect>
+<text x="177" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">3</text>
+<rect x="184.5" y="44.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 11:00-11:59: 6</title>
+</rect>
+<text x="191" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">6</text>
+<rect x="198.5" y="44.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 12:00-12:59: 9</title>
+</rect>
+<text x="205" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">9</text>
+<rect x="212.5" y="44.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 13:00-13:59: 3</title>
+</rect>
+<text x="219" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">3</text>
+<rect x="226.5" y="44.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 14:00-14:59: 6</title>
+</rect>
+<text x="233" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">6</text>
+<rect x="240.5" y="44.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 15:00-15:59: 9</title>
+</rect>
+<text x="247" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">9</text>
+<rect x="254.5" y="44.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 16:00-16:59: 3</title>
+</rect>
+<text x="261" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">3</text>
+<rect x="268.5" y="44.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 17:00-17:59: 6</title>
+</rect>
+<text x="275" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">6</text>
+<rect x="282.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="44.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 19:00-19:59: 2</title>
+</rect>
+<text x="303" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="310.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 20:00-20:59: 0</title>
+</rect>
+<rect x="324.5" y="44.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 21:00-21:59: 1</title>
+</rect>
+<text x="331" y="53.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="338.5" y="44.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 22:00-22:59: 2</title>
+</rect>
+<text x="345" y="53.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="352.5" y="44.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Вт 23:00-23:59: 0</title>
+</rect>
+<text x="370" y="54.5" font-size="8.5" fill="#475569">59</text>
+<text x="26" y="68.5" font-size="9" fill="#0f172a" text-anchor="end">Ср</text>
+<rect x="30.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="58.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 09:00-09:59: 7</title>
+</rect>
+<text x="163" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">7</text>
+<rect x="170.5" y="58.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 10:00-10:59: 10</title>
+</rect>
+<text x="177" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">10</text>
+<rect x="184.5" y="58.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 11:00-11:59: 4</title>
+</rect>
+<text x="191" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">4</text>
+<rect x="198.5" y="58.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 12:00-12:59: 7</title>
+</rect>
+<text x="205" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">7</text>
+<rect x="212.5" y="58.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 13:00-13:59: 10</title>
+</rect>
+<text x="219" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">10</text>
+<rect x="226.5" y="58.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 14:00-14:59: 4</title>
+</rect>
+<text x="233" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">4</text>
+<rect x="240.5" y="58.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 15:00-15:59: 7</title>
+</rect>
+<text x="247" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">7</text>
+<rect x="254.5" y="58.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 16:00-16:59: 10</title>
+</rect>
+<text x="261" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">10</text>
+<rect x="268.5" y="58.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 17:00-17:59: 4</title>
+</rect>
+<text x="275" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">4</text>
+<rect x="282.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 19:00-19:59: 0</title>
+</rect>
+<rect x="310.5" y="58.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 20:00-20:59: 1</title>
+</rect>
+<text x="317" y="67.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="324.5" y="58.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 21:00-21:59: 2</title>
+</rect>
+<text x="331" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="338.5" y="58.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 22:00-22:59: 0</title>
+</rect>
+<rect x="352.5" y="58.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Ср 23:00-23:59: 4</title>
+</rect>
+<text x="359" y="67.6" font-size="7.5" fill="#fff" text-anchor="middle">4</text>
+<text x="370" y="68.5" font-size="8.5" fill="#475569">70</text>
+<text x="26" y="82.5" font-size="9" fill="#0f172a" text-anchor="end">Чт</text>
+<rect x="30.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="72.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 09:00-09:59: 5</title>
+</rect>
+<text x="163" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">5</text>
+<rect x="170.5" y="72.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 10:00-10:59: 8</title>
+</rect>
+<text x="177" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">8</text>
+<rect x="184.5" y="72.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 11:00-11:59: 2</title>
+</rect>
+<text x="191" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="198.5" y="72.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 12:00-12:59: 5</title>
+</rect>
+<text x="205" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">5</text>
+<rect x="212.5" y="72.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 13:00-13:59: 8</title>
+</rect>
+<text x="219" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">8</text>
+<rect x="226.5" y="72.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 14:00-14:59: 2</title>
+</rect>
+<text x="233" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="240.5" y="72.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 15:00-15:59: 5</title>
+</rect>
+<text x="247" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">5</text>
+<rect x="254.5" y="72.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 16:00-16:59: 8</title>
+</rect>
+<text x="261" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">8</text>
+<rect x="268.5" y="72.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 17:00-17:59: 2</title>
+</rect>
+<text x="275" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="282.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="72.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 19:00-19:59: 1</title>
+</rect>
+<text x="303" y="81.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="310.5" y="72.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 20:00-20:59: 2</title>
+</rect>
+<text x="317" y="81.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="324.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 21:00-21:59: 0</title>
+</rect>
+<rect x="338.5" y="72.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 22:00-22:59: 1</title>
+</rect>
+<text x="345" y="81.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="352.5" y="72.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Чт 23:00-23:59: 0</title>
+</rect>
+<text x="370" y="82.5" font-size="8.5" fill="#475569">49</text>
+<text x="26" y="96.5" font-size="9" fill="#0f172a" text-anchor="end">Пт</text>
+<rect x="30.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="86.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 09:00-09:59: 3</title>
+</rect>
+<text x="163" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">3</text>
+<rect x="170.5" y="86.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 10:00-10:59: 6</title>
+</rect>
+<text x="177" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">6</text>
+<rect x="184.5" y="86.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 11:00-11:59: 9</title>
+</rect>
+<text x="191" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">9</text>
+<rect x="198.5" y="86.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 12:00-12:59: 3</title>
+</rect>
+<text x="205" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">3</text>
+<rect x="212.5" y="86.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 13:00-13:59: 6</title>
+</rect>
+<text x="219" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">6</text>
+<rect x="226.5" y="86.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 14:00-14:59: 9</title>
+</rect>
+<text x="233" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">9</text>
+<rect x="240.5" y="86.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 15:00-15:59: 3</title>
+</rect>
+<text x="247" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">3</text>
+<rect x="254.5" y="86.5" width="13" height="13" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 16:00-16:59: 6</title>
+</rect>
+<text x="261" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">6</text>
+<rect x="268.5" y="86.5" width="13" height="13" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 17:00-17:59: 9</title>
+</rect>
+<text x="275" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">9</text>
+<rect x="282.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="86.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 19:00-19:59: 2</title>
+</rect>
+<text x="303" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="310.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 20:00-20:59: 0</title>
+</rect>
+<rect x="324.5" y="86.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 21:00-21:59: 1</title>
+</rect>
+<text x="331" y="95.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="338.5" y="86.5" width="13" height="13" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 22:00-22:59: 2</title>
+</rect>
+<text x="345" y="95.6" font-size="7.5" fill="#fff" text-anchor="middle">2</text>
+<rect x="352.5" y="86.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Пт 23:00-23:59: 0</title>
+</rect>
+<text x="370" y="96.5" font-size="8.5" fill="#475569">59</text>
+<text x="26" y="110.5" font-size="9" fill="#b91c1c" text-anchor="end" font-weight="700">Сб</text>
+<rect x="30.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 09:00-09:59: 0</title>
+</rect>
+<rect x="170.5" y="100.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 10:00-10:59: 1</title>
+</rect>
+<text x="177" y="109.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="184.5" y="100.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 11:00-11:59: 1</title>
+</rect>
+<text x="191" y="109.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="198.5" y="100.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 12:00-12:59: 1</title>
+</rect>
+<text x="205" y="109.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="212.5" y="100.5" width="13" height="13" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 13:00-13:59: 1</title>
+</rect>
+<text x="219" y="109.6" font-size="7.5" fill="#0f172a" text-anchor="middle">1</text>
+<rect x="226.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 14:00-14:59: 0</title>
+</rect>
+<rect x="240.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 15:00-15:59: 0</title>
+</rect>
+<rect x="254.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 16:00-16:59: 0</title>
+</rect>
+<rect x="268.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 17:00-17:59: 0</title>
+</rect>
+<rect x="282.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 19:00-19:59: 0</title>
+</rect>
+<rect x="310.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 20:00-20:59: 0</title>
+</rect>
+<rect x="324.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 21:00-21:59: 0</title>
+</rect>
+<rect x="338.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 22:00-22:59: 0</title>
+</rect>
+<rect x="352.5" y="100.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Сб 23:00-23:59: 0</title>
+</rect>
+<text x="370" y="110.5" font-size="8.5" fill="#475569">4</text>
+<text x="26" y="124.5" font-size="9" fill="#b91c1c" text-anchor="end" font-weight="700">Нд</text>
+<rect x="30.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 00:00-00:59: 0</title>
+</rect>
+<rect x="44.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 01:00-01:59: 0</title>
+</rect>
+<rect x="58.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 02:00-02:59: 0</title>
+</rect>
+<rect x="72.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 03:00-03:59: 0</title>
+</rect>
+<rect x="86.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 04:00-04:59: 0</title>
+</rect>
+<rect x="100.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 05:00-05:59: 0</title>
+</rect>
+<rect x="114.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 06:00-06:59: 0</title>
+</rect>
+<rect x="128.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 07:00-07:59: 0</title>
+</rect>
+<rect x="142.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 08:00-08:59: 0</title>
+</rect>
+<rect x="156.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 09:00-09:59: 0</title>
+</rect>
+<rect x="170.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 10:00-10:59: 0</title>
+</rect>
+<rect x="184.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 11:00-11:59: 0</title>
+</rect>
+<rect x="198.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 12:00-12:59: 0</title>
+</rect>
+<rect x="212.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 13:00-13:59: 0</title>
+</rect>
+<rect x="226.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 14:00-14:59: 0</title>
+</rect>
+<rect x="240.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 15:00-15:59: 0</title>
+</rect>
+<rect x="254.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 16:00-16:59: 0</title>
+</rect>
+<rect x="268.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 17:00-17:59: 0</title>
+</rect>
+<rect x="282.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 18:00-18:59: 0</title>
+</rect>
+<rect x="296.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 19:00-19:59: 0</title>
+</rect>
+<rect x="310.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 20:00-20:59: 0</title>
+</rect>
+<rect x="324.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 21:00-21:59: 0</title>
+</rect>
+<rect x="338.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 22:00-22:59: 0</title>
+</rect>
+<rect x="352.5" y="114.5" width="13" height="13" rx="2" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.6">
+<title>Нд 23:00-23:59: 0</title>
+</rect>
+<text x="370" y="124.5" font-size="8.5" fill="#475569">0</text>
+<rect x="142" y="30" width="154" height="70" fill="none" stroke="#0f172a" stroke-width="1.8"/>
+<path d="M304.5 30.5 H309.5 V35.5 Z" fill="#b91c1c"/>
+<path d="M318.5 30.5 H323.5 V35.5 Z" fill="#b91c1c"/>
+<path d="M346.5 30.5 H351.5 V35.5 Z" fill="#b91c1c"/>
+<path d="M304.5 44.5 H309.5 V49.5 Z" fill="#b91c1c"/>
+<path d="M332.5 44.5 H337.5 V49.5 Z" fill="#b91c1c"/>
+<path d="M346.5 44.5 H351.5 V49.5 Z" fill="#b91c1c"/>
+<path d="M318.5 58.5 H323.5 V63.5 Z" fill="#b91c1c"/>
+<path d="M332.5 58.5 H337.5 V63.5 Z" fill="#b91c1c"/>
+<path d="M360.5 58.5 H365.5 V63.5 Z" fill="#b91c1c"/>
+<path d="M304.5 72.5 H309.5 V77.5 Z" fill="#b91c1c"/>
+<path d="M318.5 72.5 H323.5 V77.5 Z" fill="#b91c1c"/>
+<path d="M346.5 72.5 H351.5 V77.5 Z" fill="#b91c1c"/>
+<path d="M304.5 86.5 H309.5 V91.5 Z" fill="#b91c1c"/>
+<path d="M332.5 86.5 H337.5 V91.5 Z" fill="#b91c1c"/>
+<path d="M346.5 86.5 H351.5 V91.5 Z" fill="#b91c1c"/>
+<path d="M178.5 100.5 H183.5 V105.5 Z" fill="#b91c1c"/>
+<path d="M192.5 100.5 H197.5 V105.5 Z" fill="#b91c1c"/>
+<path d="M206.5 100.5 H211.5 V105.5 Z" fill="#b91c1c"/>
+<path d="M220.5 100.5 H225.5 V105.5 Z" fill="#b91c1c"/>
+<path d="M30 172 H366" stroke="#94a3b8" stroke-width="1"/>
+<rect x="158" y="146.8" width="10" height="25.2" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>09:00: 26</title>
+</rect>
+<rect x="172" y="140" width="10" height="32" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>10:00: 33</title>
+</rect>
+<rect x="186" y="142.9" width="10" height="29.1" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>11:00: 30</title>
+</rect>
+<rect x="200" y="145.8" width="10" height="26.2" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>12:00: 27</title>
+</rect>
+<rect x="214" y="140" width="10" height="32" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>13:00: 33</title>
+</rect>
+<rect x="228" y="143.9" width="10" height="28.1" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>14:00: 29</title>
+</rect>
+<rect x="242" y="146.8" width="10" height="25.2" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>15:00: 26</title>
+</rect>
+<rect x="256" y="141" width="10" height="31" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>16:00: 32</title>
+</rect>
+<rect x="270" y="143.9" width="10" height="28.1" fill="#93c5fd" stroke="#0f172a" stroke-width="0.4">
+<title>17:00: 29</title>
+</rect>
+<rect x="298" y="166.2" width="10" height="5.8" fill="#fecaca" stroke="#0f172a" stroke-width="1">
+<title>19:00: 6</title>
+</rect>
+<rect x="312" y="167.2" width="10" height="4.8" fill="#fecaca" stroke="#0f172a" stroke-width="1">
+<title>20:00: 5</title>
+</rect>
+<rect x="326" y="168.1" width="10" height="3.9" fill="#fecaca" stroke="#0f172a" stroke-width="1">
+<title>21:00: 4</title>
+</rect>
+<rect x="340" y="166.2" width="10" height="5.8" fill="#fecaca" stroke="#0f172a" stroke-width="1">
+<title>22:00: 6</title>
+</rect>
+<rect x="354" y="168.1" width="10" height="3.9" fill="#fecaca" stroke="#0f172a" stroke-width="1">
+<title>23:00: 4</title>
+</rect>
+<text x="26" y="170" font-size="8" fill="#475569" text-anchor="end">Година</text>
+<text x="37" y="182" font-size="8" fill="#475569" text-anchor="middle">00</text>
+<text x="79" y="182" font-size="8" fill="#475569" text-anchor="middle">03</text>
+<text x="121" y="182" font-size="8" fill="#475569" text-anchor="middle">06</text>
+<text x="163" y="182" font-size="8" fill="#475569" text-anchor="middle">09</text>
+<text x="205" y="182" font-size="8" fill="#475569" text-anchor="middle">12</text>
+<text x="247" y="182" font-size="8" fill="#475569" text-anchor="middle">15</text>
+<text x="289" y="182" font-size="8" fill="#475569" text-anchor="middle">18</text>
+<text x="331" y="182" font-size="8" fill="#475569" text-anchor="middle">21</text>
+<text x="30" y="203" font-size="8" fill="#475569">менше</text>
+<rect x="64" y="194" width="12" height="10" rx="2" fill="#dbeafe" stroke="#e2e8f0" stroke-width="0.6"/>
+<rect x="77" y="194" width="12" height="10" rx="2" fill="#93c5fd" stroke="#e2e8f0" stroke-width="0.6"/>
+<rect x="90" y="194" width="12" height="10" rx="2" fill="#3b82f6" stroke="#e2e8f0" stroke-width="0.6"/>
+<rect x="103" y="194" width="12" height="10" rx="2" fill="#1d4ed8" stroke="#e2e8f0" stroke-width="0.6"/>
+<rect x="116" y="194" width="12" height="10" rx="2" fill="#1e3a8a" stroke="#e2e8f0" stroke-width="0.6"/>
+<text x="132" y="203" font-size="8" fill="#475569">більше</text>
+<rect x="190" y="194" width="12" height="10" fill="#fff" stroke="#e2e8f0" stroke-width="0.6"/>
+<path d="M196.5 194 H202 V199.5 Z" fill="#b91c1c"/>
+<text x="206" y="203" font-size="8" fill="#0f172a" font-weight="700">поза графіком: 29 / 290 (10%)</text>
+<text x="30" y="220" font-size="8.5" fill="#334155">усього: 290 позначок часу · пік: 10:00 · часовий пояс: UTC+2</text>
+</svg>

@@ -1,0 +1,357 @@
+{
+  "disclaimer": "Команды проверки адаптированы к контексту находки; выполняйте активные проверки только в согласованном скоупе.",
+  "playbooks": {
+    "secrets": {
+      "key": "secrets",
+      "title": "Отзыв и ротация утёкшего секрета",
+      "summary": "Обнаруженные учётные данные, токены или ключи в документах ({docs}) необходимо считать скомпрометированными и немедленно перевыпустить.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Немедленно отозвать и перевыпустить секрет",
+          "action": "Отзовите токен или смените пароль в целевой системе (IdP, облако, БД, RDP/ICA) и проверьте журналы аутентификации на сторонний доступ.",
+          "command": null,
+          "owner": "IAM / SecOps"
+        },
+        {
+          "title": "Удалить секрет из файлов и истории репозитория",
+          "action": "Удалите или вручную очистите секрет в документах ({docs}) на {host}; если секрет попал в Git-репозиторий, перепишите историю коммитов.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "AppSec / Dev"
+        },
+        {
+          "title": "Включить pre-commit / CI-проверку секретов",
+          "action": "Настройте pre-commit хуки и перенесите секреты в KeyVault / KMS вместо .env, .rdp, .ica или клиентского JS.",
+          "command": null,
+          "owner": "DevOps"
+        }
+      ],
+      "verify": [
+        "Убедиться, что {url} больше не отдаёт старый секрет (HTTP 404/403) и прежний ключ отклонён системой.",
+        "Повторная проверка файла в FOCA-rs Preflight не находит открытых секретов."
+      ]
+    },
+    "doc-sanitize": {
+      "key": "doc-sanitize",
+      "title": "Очистка метаданных, скрытого содержимого и ревизий в документах",
+      "summary": "Опубликованные файлы ({docs}) на {host} содержат служебные метаданные, скрытый текст/листы, текст под чёрными прямоугольниками или старые ревизии PDF.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Перезаписать файлы с полной очисткой ревизий",
+          "action": "Примените FOCA-rs Preflight (`doc_clean`) для полной перезаписи PDF и очистки OOXML/ODF/JPEG/PNG; при плохом замазывании (bad redaction) пересоберите PDF без исходного текстового слоя.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        },
+        {
+          "title": "Заменить файл на сервере и сбросить CDN/кэш",
+          "action": "Загрузите очищенный файл на {host} ({url}) и принудительно очистите кэш CDN/веб-сервера.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "WebOps"
+        },
+        {
+          "title": "Встроить проверку Preflight перед публикацией",
+          "action": "Добавьте проверку оценки гигиены (A/B) в регламент публикации и отключите сохранение EXIF GPS / авто-ревизий на рабочих станциях.",
+          "command": null,
+          "owner": "SecOps / IT"
+        }
+      ],
+      "verify": [
+        "Скачать файл с {url} и убедиться через FOCA-rs Preflight, что оценка >= B, а ревизии и EXIF-миниатюры удалены."
+      ]
+    },
+    "doc-signature": {
+      "key": "doc-signature",
+      "title": "Проверка и переподписание документов (КЭП / XML-DSig / TSA)",
+      "summary": "Подписанный документ ({docs}) был изменён после подписи, имеет несовпадение дайджеста, расхождение TSA или раскрывает лишние ПДн подписанта.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Сверить подлинник с владельцем подписи",
+          "action": "Поднимите подлинный документ из СЭД/архива: правки после `ByteRange` подписи компрометируют юридическую значимость и целостность.",
+          "command": null,
+          "owner": "Legal / SecOps"
+        },
+        {
+          "title": "Переподписать финальную чистую редакцию с валидной TSA",
+          "action": "Пересоберите чистую редакцию ({docs}), переподпишите с актуальной меткой времени TSA и при возможности ограничьте публикацию РНОКПП/ПДн подписанта.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        }
+      ],
+      "verify": [
+        "Проверить в валидаторе КЭП / PDF, что весь файл покрыт действующей подписью без неподписанного хвоста."
+      ]
+    },
+    "pii": {
+      "key": "pii",
+      "title": "Удаление или обезличивание персональных данных (ПДн) и GPS-меток",
+      "summary": "В документах ({docs}) обнаружены персональные данные (РНОКПП/ИНН, карты, IBAN, контакты) или точные GPS-координаты съёмки.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Немедленно ограничить публичный доступ к файлам с ПДн",
+          "action": "Уберите публичный доступ по адресу {url} или перенесите документ за аутентификацию / DLP-контроль.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "SecOps / Compliance"
+        },
+        {
+          "title": "Удалить GPS-теги и обезличить ПДн в исходнике",
+          "action": "Удалите GPS-метаданные из фото с помощью FOCA-rs Preflight (`doc_clean`), а персональные идентификаторы в документах замените масками.",
+          "command": null,
+          "owner": "IT / Content Owner"
+        }
+      ],
+      "verify": [
+        "Проверить обновлённые файлы через FOCA-rs: детектор ПДн и EXIF GPS должны вернуть 0 срабатываний."
+      ]
+    },
+    "tls-cert": {
+      "key": "tls-cert",
+      "title": "Исправление TLS-сертификата или цепочки доверия на {host}:{port}",
+      "summary": "Сертификат на {host}:{port} имеет проблему (истёк/скоро истечёт, самоподписан, неполная цепочка, неверный SAN/CAA или слабый ключ/подпись).",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Перевыпустить сертификат (RSA >= 2048 / ECDSA P-256, SHA-256+) с нужным SAN",
+          "action": "Выпустите сертификат доверенного УЦ (ACME / Let's Encrypt) для {host}, согласуйте CAA-запись на {domain} и исключите внутренние AIA/CRL/LDAP URL.",
+          "command": "dig CAA {domain} +short",
+          "owner": "DevOps / SRE"
+        },
+        {
+          "title": "Настроить полную цепочку (fullchain.pem) и OCSP stapling на веб-сервере",
+          "action": "Подключите `fullchain.pem` в Nginx/Apache/Ingress, проверьте порядок сертификатов и включите `ssl_stapling on;` / ALPN.",
+          "command": "openssl s_client -connect {host}:{port} -servername {host} -showcerts < /dev/null",
+          "owner": "DevOps / SRE"
+        }
+      ],
+      "verify": [
+        "Выполнить `openssl s_client -connect {host}:{port} -servername {host} -verify_return_error`, Verify return code: 0 (ok)."
+      ]
+    },
+    "tls-crypto": {
+      "key": "tls-crypto",
+      "title": "Усиление версий протокола и наборов шифров TLS на {host}:{port}",
+      "summary": "Сервис на {host}:{port} принимает устаревшие версии TLS (1.0/1.1) или слабые шифры (RC4/3DES/NULL/EXPORT).",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Оставить только TLS 1.2 и TLS 1.3",
+          "action": "Установите `ssl_protocols TLSv1.2 TLSv1.3;` (или аналогичный профиль Mozilla Intermediate) в конфигурации балансировщика и перечитайте конфиг.",
+          "command": "openssl s_client -connect {host}:{port} -servername {host} -tls1_1 < /dev/null",
+          "owner": "DevOps / SRE"
+        },
+        {
+          "title": "Ограничить шифры AEAD-наборами с PFS (ECDHE + AES-GCM / ChaCha20)",
+          "action": "Исключите RC4, 3DES, EXPORT, NULL и устаревшие CBC-наборы; оставьте только AEAD-шифры ECDHE.",
+          "command": null,
+          "owner": "DevOps / SRE"
+        }
+      ],
+      "verify": [
+        "Убедиться, что `openssl s_client -tls1_1` завершается ошибкой, а `-tls1_3` проходит с AEAD-шифром."
+      ]
+    },
+    "web-headers": {
+      "key": "web-headers",
+      "title": "Настройка защитных HTTP-заголовков, CSP, HSTS и cookie на {host}",
+      "summary": "Веб-приложение по адресу {url} не передаёт защитные заголовки (HSTS, CSP, clickjacking), небезопасно выставляет cookie/CORS или раскрывает точные версии ПО.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Добавить HSTS, X-Frame-Options/CSP и скрыть Server/X-Powered-By",
+          "action": "Пропишите на прокси/Ingress заголовки HSTS (`max-age=31536000; includeSubDomains`), `X-Content-Type-Options: nosniff`, строгую `Content-Security-Policy` с `frame-ancestors`, а также отключите `server_tokens` и `X-Powered-By`.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "DevOps / AppSec"
+        },
+        {
+          "title": "Выставить HttpOnly; Secure; SameSite для cookie и белый список CORS",
+          "action": "Для всех сессионных cookie установите `Secure; HttpOnly; SameSite=Lax`. Уберите отражение произвольного заголовка `Origin` и запретите `*` вместе с `Access-Control-Allow-Credentials: true`.",
+          "command": null,
+          "owner": "AppSec / Dev"
+        }
+      ],
+      "verify": [
+        "Выполнить `curl -sI -H \"Origin: https://evil.example\" \"{url}\"` и проверить наличие HSTS/CSP и отсутствие отражения чужого Origin."
+      ]
+    },
+    "web-methods": {
+      "key": "web-methods",
+      "title": "Отключение небезопасных HTTP-методов (TRACE/PUT/DELETE/WebDAV) на {host}",
+      "summary": "Веб-сервер {host} разрешает или объявляет в `Allow` ненужные опасные методы (TRACE/PUT/DELETE) или WebDAV.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Ограничить список HTTP-методов и отключить TRACE / WebDAV",
+          "action": "Установите `TraceEnable off` (Apache) / `limit_except` (Nginx), отключите неиспользуемый WebDAV и оставьте только `GET`, `HEAD`, `POST` для рабочих эндпоинтов.",
+          "command": "curl -sIX OPTIONS \"{url}\"",
+          "owner": "DevOps / SRE"
+        }
+      ],
+      "verify": [
+        "Убедиться, что `OPTIONS` и `TRACE` на {url} не возвращают 200 (ожидаемо 403/405)."
+      ]
+    },
+    "web-exposure": {
+      "key": "web-exposure",
+      "title": "Закрытие публичных резервных копий, .git, листингов каталогов или бакетов на {host}",
+      "summary": "По адресу {url} доступны бэкапы, дампы БД, `.git`, листинг каталогов, `.map`-файлы исходников или открытый облачный бакет.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Немедленно закрыть доступ и удалить служебные файлы с веб-сервера",
+          "action": "Удалите резервные копии, дампы БД, каталоги `.git` и source maps из webroot; настройте правила `deny all` на `location ~ /\\.(git|env|bak|sql)` и закройте публичный листинг/бакет.",
+          "command": "curl -sI \"{url}\"",
+          "owner": "DevOps / SecOps"
+        },
+        {
+          "title": "Провести ротацию секретов, если дампы или .git были открыты",
+          "action": "Если дамп БД или `.git` содержали пароли/ключи/ПДн, выполните ротацию секретов и проверьте журналы доступа к {url}.",
+          "command": null,
+          "owner": "SecOps / IAM"
+        }
+      ],
+      "verify": [
+        "Убедиться, что `curl -sI \"{url}\"` возвращает HTTP 403/404, и повторная проверка FOCA-rs больше не находит ресурс."
+      ]
+    },
+    "dns-mail": {
+      "key": "dns-mail",
+      "title": "Исправление DNS-уязвимостей и почтовой аутентификации для {domain}",
+      "summary": "Для {host} / {domain} выявлены висячий CNAME (takeover), открытый AXFR, перечисление NSEC, внутренние IP в заголовках писем или отсутствие привязки SPF/DMARC/PTR.",
+      "effort": "quick",
+      "steps": [
+        {
+          "title": "Удалить висячие CNAME, закрыть AXFR (allow-transfer ACL) и включить NSEC3",
+          "action": "Удалите неиспользуемые CNAME/A-записи в зоне {domain}, ограничьте передачу зон AXFR списком secondary DNS с TSIG-подписью и переведите DNSSEC на NSEC3.",
+          "command": "dig AXFR {domain} && dig CNAME {host} +short",
+          "owner": "NetOps / SRE"
+        },
+        {
+          "title": "Скрыть внутренние IP-релеи в исходящей почте и согласовать PTR",
+          "action": "Настройте граничный почтовый шлюз на очистку внутренних заголовков `Received`, проверьте SPF/DKIM/DMARC для {domain} и согласуйте записи PTR/A.",
+          "command": null,
+          "owner": "Mail / NetOps"
+        }
+      ],
+      "verify": [
+        "Убедиться, что `dig AXFR {domain}` отклонён (`Transfer failed`), а висячие CNAME удалены."
+      ]
+    },
+    "sw-cve": {
+      "key": "sw-cve",
+      "title": "Обновление уязвимого или снятого с поддержки (EOL / CISA KEV) ПО на {host}",
+      "summary": "В метаданных документов ({docs}) или на сервисах {host} выявлены устаревшие (EOL) продукты или потенциальные уязвимости ({cve}).",
+      "effort": "planned",
+      "steps": [
+        {
+          "title": "Подтвердить фактическую версию и уровень патчей на сервере/АРМ",
+          "action": "Сверьте реальный номер сборки на {host} и рабочих станциях: данные из KEV/баннеров могут требовать подтверждения с учётом бекпортов безопасности.",
+          "command": null,
+          "owner": "SysAdmin / IT"
+        },
+        {
+          "title": "Установить патчи безопасности для {cve} или мигрировать с EOL-версии",
+          "action": "Накатите актуальные обновления ПО, закройте {cve} и, если продукт снят с поддержки (EOL), запланируйте миграцию; на период окна изолируйте доступ через ACL/VPN.",
+          "command": null,
+          "owner": "SysAdmin / SecOps"
+        }
+      ],
+      "verify": [
+        "Подтвердить актуальную версию на {host} (без {cve}) и повторить скан FOCA-rs для фиксации статуса «Исправлено»."
+      ]
+    },
+    "ports-infra": {
+      "key": "ports-infra",
+      "title": "Закрытие открытых служебных портов / origin IP за CDN на {host}",
+      "summary": "Узел {host} (порт {port}) открыт наружу: обнаружены админ-/БД-порты, обход CDN по прямому IP или внутренние имена/серийники/роли в публичном доступе.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Закрыть прямой доступ на фаерволе (только VPN / белый список CDN IP)",
+          "action": "Настройте Security Group / `nftables` на {host}: разрешите {port} только с корпоративного VPN или подтверждённых подсетей CDN.",
+          "command": null,
+          "owner": "NetOps / SRE"
+        },
+        {
+          "title": "Если реальный origin IP раскрыт, сменить адрес и включить mTLS с CDN",
+          "action": "При подтверждении утечки origin IP выделите новый IP за CDN после закрытия фаервола и включите mTLS (Authenticated Origin Pulls).",
+          "command": null,
+          "owner": "NetOps / Cloud"
+        }
+      ],
+      "verify": [
+        "Прямая проверка порта {host}:{port} из внешней сети возвращает timeout/connection refused."
+      ]
+    },
+    "internal-recon": {
+      "key": "internal-recon",
+      "title": "Снижение утечки внутренней топологии (IP, UNC-пути, ПК, шаблоны логинов)",
+      "summary": "Анализ документов ({docs}) выявил внутренние IP, имена ПК/принтеров, сетевые пути (UNC, `.lnk` MAC/Volume), сервисные логины или шаблон корпоративной почты.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Очистить файлы для внешней публикации от авторов, UNC-путей и внешних связей",
+          "action": "Удаляйте имена авторов, сетевые пути `\\\\server\\share`, внешние подключения Excel и файлы `.lnk` перед публикацией (через FOCA-rs Preflight).",
+          "command": null,
+          "owner": "IT / Content Owner"
+        },
+        {
+          "title": "Включить MFA, extranet lockout и ограничить права сервисных учёток",
+          "action": "Учитывайте, что шаблон корпоративных логинов легко вычисляется: включите MFA на VPN/порталах, extranet lockout и запретите интерактивный вход сервисным учёткам.",
+          "command": null,
+          "owner": "IAM / SecOps"
+        }
+      ],
+      "verify": [
+        "Проверить очищенные публичные документы в FOCA-rs и аудит MFA / блокировки на внешних точках входа."
+      ]
+    },
+    "general": {
+      "key": "general",
+      "title": "Проверка и устранение находки безопасности на {host}",
+      "summary": "Выявлена находка на {host} (источники: {docs}). Подтвердите контекст в среде заказчика и примените принцип минимизации экспозиции.",
+      "effort": "medium",
+      "steps": [
+        {
+          "title": "Проверить принадлежность ресурса и воспроизвести контекст",
+          "action": "Сверьте {host} ({url}) с реестром активов и при необходимости переведите статус находки в «Подтверждена» или «Ложная».",
+          "command": null,
+          "owner": "SecOps"
+        },
+        {
+          "title": "Применить рекомендацию и зафиксировать исправление",
+          "action": "Устраните первопричину на {host} или в исходных файлах ({docs}) согласно рекомендации в карточке находки.",
+          "command": null,
+          "owner": "IT / DevOps"
+        }
+      ],
+      "verify": [
+        "Повторить сканирование или импорт в FOCA-rs и убедиться, что находка перешла в статус «Исправлено»."
+      ]
+    }
+  },
+  "labels": {
+    "effort": {
+      "quick": "Быстрое исправление",
+      "medium": "Средняя трудоёмкость",
+      "planned": "Плановая работа"
+    },
+    "keys": {
+      "dns-mail": "DNS и почта",
+      "doc-sanitize": "Очистка документов",
+      "doc-signature": "Подписи документов",
+      "general": "Общий план",
+      "internal-recon": "Внутренняя разведка",
+      "pii": "Персональные данные",
+      "ports-infra": "Порты и инфраструктура",
+      "secrets": "Секреты",
+      "sw-cve": "ПО и уязвимости",
+      "tls-cert": "TLS-сертификаты",
+      "tls-crypto": "Настройки TLS",
+      "web-exposure": "Открытые веб-ресурсы",
+      "web-headers": "Заголовки безопасности",
+      "web-methods": "HTTP-методы"
+    }
+  }
+}

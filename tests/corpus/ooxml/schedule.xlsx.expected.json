@@ -1,0 +1,105 @@
+{
+  "application": "Microsoft Excel",
+  "author": "s.lysenko",
+  "comments": [
+    {
+      "author": "Віктор Ткаченко",
+      "source": "xl/comments1.xml",
+      "text": "Ключ AWS тимчасовий"
+    },
+    {
+      "author": "s.lysenko",
+      "source": "xl/comments1.xml",
+      "text": "ok"
+    }
+  ],
+  "company": "ТОВ «Контосо Енерджі»",
+  "created": "2023-10-01T07:00:00Z",
+  "description": "Внутрішній документ",
+  "edit_time_secs": 0,
+  "emails": [
+    "s.lysenko@contoso.example"
+  ],
+  "fields": {
+    "app:AppVersion": "14.0300",
+    "app:DocSecurity": "0",
+    "app:LinksUpToDate": "false",
+    "persons:Сергій Лисенко": "s.lysenko@contoso.example",
+    "xl:connection:billing:command": "SELECT * FROM tariffs",
+    "xl:connection:billing:connection": "Provider=SQLOLEDB.1;Password=Bill!ng2023;User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing",
+    "xl:connection:billing:database": "billing",
+    "xl:connection:billing:user": "billing_ro",
+    "xl:veryHidden:Паролі": "true"
+  },
+  "format": "xlsx",
+  "has_macros": true,
+  "hidden_sheets": [
+    "Зарплати",
+    "Паролі"
+  ],
+  "language": "uk-UA",
+  "last_modified_by": "Віктор Ткаченко",
+  "links": [
+    "file:///\\\\NAS02\\finance\\Бюджет_2024.xlsx"
+  ],
+  "macro_modules": [
+    "Module1",
+    "ThisWorkbook"
+  ],
+  "manager": "Бондар А.",
+  "modified": "2023-11-02T15:20:00Z",
+  "paths": [
+    {
+      "host": "NAS02",
+      "kind": "file_url",
+      "path": "file:///\\\\NAS02\\finance\\Бюджет_2024.xlsx",
+      "source": "link"
+    }
+  ],
+  "people": [
+    {
+      "name": "s.lysenko",
+      "role": "author",
+      "source": "core.xml:dc:creator"
+    },
+    {
+      "name": "Віктор Ткаченко",
+      "role": "last_modified_by",
+      "source": "core.xml:cp:lastModifiedBy"
+    },
+    {
+      "name": "Віктор Ткаченко",
+      "role": "comment",
+      "source": "xl/comments1.xml"
+    },
+    {
+      "name": "s.lysenko",
+      "role": "comment",
+      "source": "xl/comments1.xml"
+    },
+    {
+      "name": "Сергій Лисенко",
+      "role": "comment",
+      "source": "xl/persons/person.xml"
+    }
+  ],
+  "printers": [
+    "HP LaserJet Pro M404 (BUH)"
+  ],
+  "revision": "3",
+  "servers": [
+    {
+      "name": "SRV-SQL02",
+      "source": "xl/connections.xml:billing"
+    },
+    {
+      "name": "NAS02",
+      "source": "path"
+    }
+  ],
+  "software": [
+    "Microsoft Excel 14.0300"
+  ],
+  "subject": "Тендер ТЕС-2",
+  "title": "Графік відключень"
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "default",
+  "description": "UI: одна команда ядра `foca` и подписка на события scan://event и net. Плагин foca-native из JS недоступен.",
+  "windows": ["main"],
+  "permissions": [
+    "allow-foca",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
+}

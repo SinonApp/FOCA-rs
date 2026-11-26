@@ -1,0 +1,58 @@
+{
+  "fields": {
+    "rdp:alternate shell": "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+    "rdp:domain": "CONTOSO",
+    "rdp:full address": "SRV-TS01.corp.contoso.example:3389",
+    "rdp:gatewayhostname": "rdgw.contoso.example",
+    "rdp:screen mode id": "2",
+    "rdp:shell working directory": "C:\\Users\\i.petrenko\\Documents",
+    "rdp:username": "CONTOSO\\i.petrenko",
+    "rdp:username:domain": "CONTOSO"
+  },
+  "format": "rdp",
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+      "source": "rdp:alternate shell"
+    },
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\i.petrenko\\Documents",
+      "source": "rdp:shell working directory",
+      "user": "i.petrenko"
+    }
+  ],
+  "people": [
+    {
+      "name": "i.petrenko",
+      "role": "account",
+      "source": "rdp:username"
+    },
+    {
+      "name": "i.petrenko",
+      "role": "path_user",
+      "source": "C:\\Users\\i.petrenko\\Documents"
+    }
+  ],
+  "secrets": [
+    {
+      "kind": "rdp_password_51",
+      "source": "rdp:password 51",
+      "value": "01000000D08C9DDF0115D1118C7A00C04FC297EB0100000052A9E191EA75A948B359790578C9371A0000000008000000"
+    }
+  ],
+  "servers": [
+    {
+      "name": "SRV-TS01.corp.contoso.example",
+      "source": "rdp:full address"
+    },
+    {
+      "name": "rdgw.contoso.example",
+      "source": "rdp:gatewayhostname"
+    }
+  ],
+  "software": [
+    "1cestart.exe"
+  ]
+}

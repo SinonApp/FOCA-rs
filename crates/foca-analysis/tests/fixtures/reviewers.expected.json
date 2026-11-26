@@ -1,0 +1,44 @@
+{
+  "people": [
+    {
+      "emails": [],
+      "login": "i.petrenko",
+      "name": "Петренко Ігор",
+      "role": ""
+    },
+    {
+      "emails": [
+        "isd-0420@contoso.example"
+      ],
+      "login": "isd-0420",
+      "name": "Сидоренко Ігор",
+      "role": "Рецензент"
+    },
+    {
+      "emails": [],
+      "login": "m.andrii",
+      "name": "Андрій Мельник",
+      "role": "Рецензент"
+    },
+    {
+      "emails": [],
+      "login": "m.shevchenko",
+      "name": "Марія Шевченко",
+      "role": ""
+    },
+    {
+      "emails": [
+        "olena.koval@contoso.example"
+      ],
+      "login": "olena.koval",
+      "name": "Олена Коваль",
+      "role": "Рецензент"
+    },
+    {
+      "emails": [],
+      "login": "t.bondar",
+      "name": "Тарас Бондар",
+      "role": "Рецензент"
+    }
+  ]
+}

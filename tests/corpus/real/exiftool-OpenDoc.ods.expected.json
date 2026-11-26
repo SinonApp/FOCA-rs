@@ -1,0 +1,37 @@
+{
+  "application": "OpenOffice.org/3.2$Win32 OpenOffice.org_project/320m12$Build-9483",
+  "author": "IDHW IDHW Informatica",
+  "created": "2010-04-19T11:16:49.13",
+  "custom": {
+    "License": "test"
+  },
+  "description": "test",
+  "edit_time_secs": 77,
+  "format": "ods",
+  "keywords": "test",
+  "last_modified_by": "IDHW IDHW Informatica",
+  "modified": "2010-04-19T11:18:04.30",
+  "people": [
+    {
+      "name": "IDHW IDHW Informatica",
+      "role": "author",
+      "source": "meta.xml:meta:initial-creator"
+    },
+    {
+      "name": "IDHW IDHW Informatica",
+      "role": "last_modified_by",
+      "source": "meta.xml:dc:creator"
+    }
+  ],
+  "revision": "1",
+  "software": [
+    "OpenOffice.org/3.2$Win32 OpenOffice.org_project/320m12$Build-9483"
+  ],
+  "stats": {
+    "cells": 0,
+    "objects": 0,
+    "tables": 3
+  },
+  "subject": "test",
+  "title": "test"
+}

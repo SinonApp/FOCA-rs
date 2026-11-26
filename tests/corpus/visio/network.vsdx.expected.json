@@ -1,0 +1,82 @@
+{
+  "application": "Microsoft Visio",
+  "author": "Іван Петренко",
+  "comments": [
+    {
+      "author": "Іван Петренко",
+      "date": "2024-03-14T18:00:00",
+      "initials": "ІП",
+      "source": "visio/comments.xml",
+      "text": "Пароль адміна на стікері, прибрати"
+    }
+  ],
+  "company": "Contoso Energy (fictional)",
+  "created": "2024-03-10T08:00:00Z",
+  "fields": {
+    "visio:data.01.command": "SELECT * FROM hosts",
+    "visio:data.01.connection": "Provider=SQLOLEDB;Data Source=SQL01.corp.example.test;Initial Catalog=Assets;Integrated Security=SSPI",
+    "visio:data.01.file": "C:\\Users\\i.petrenko\\Documents\\assets.xlsx",
+    "visio:masters": "Сервер; Firewall",
+    "visio:pages": "Мережа офісу; Серверна"
+  },
+  "format": "vsdx",
+  "last_modified_by": "John Doe",
+  "links": [
+    "file:///\\\\FS01.corp.example.test\\it\\network.vsdx"
+  ],
+  "manager": "John Doe",
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\i.petrenko\\Documents\\assets.xlsx",
+      "source": "visio:data.01.file",
+      "user": "i.petrenko"
+    },
+    {
+      "host": "FS01.corp.example.test",
+      "kind": "file_url",
+      "path": "file:///\\\\FS01.corp.example.test\\it\\network.vsdx",
+      "source": "link"
+    }
+  ],
+  "people": [
+    {
+      "name": "Іван Петренко",
+      "role": "author",
+      "source": "core.xml:dc:creator"
+    },
+    {
+      "name": "John Doe",
+      "role": "last_modified_by",
+      "source": "core.xml:cp:lastModifiedBy"
+    },
+    {
+      "name": "Іван Петренко",
+      "role": "comment",
+      "source": "visio/comments.xml"
+    },
+    {
+      "name": "i.petrenko",
+      "role": "path_user",
+      "source": "C:\\Users\\i.petrenko\\Documents\\assets.xlsx"
+    }
+  ],
+  "servers": [
+    {
+      "name": "SQL01.corp.example.test",
+      "source": "visio:connection"
+    },
+    {
+      "name": "FS01.corp.example.test",
+      "source": "path"
+    }
+  ],
+  "software": [
+    "Microsoft Visio"
+  ],
+  "stats": {
+    "masters": 2,
+    "pages": 2
+  },
+  "title": "Кошторис 2024"
+}

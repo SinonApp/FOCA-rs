@@ -1,0 +1,59 @@
+%PDF-1.7
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>
+endobj
+4 0 obj
+<< /Length 116 >>
+stream
+BT /F1 12 Tf 72 700 Td (Salary of Ivan Petrenko: 1000 UAH) Tj ET
+BT /F1 12 Tf 72 680 Td (Approved by John Doe) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Author (John Doe) /Creator (Writer) /Producer (FOCA-rs fixture) /ModDate (D:20240101100000Z) >>
+endobj
+xref
+0 1
+0000000000 65535 f 
+1 1
+0000000015 00000 n 
+2 1
+0000000064 00000 n 
+3 1
+0000000121 00000 n 
+4 1
+0000000296 00000 n 
+5 1
+0000000463 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R /Info 5 0 R >>
+startxref
+578
+%%EOF
+4 0 obj
+<< /Length 96 >>
+stream
+BT /F1 12 Tf 72 680 Td (Approved by John Doe) Tj ET
+BT /F1 12 Tf 72 660 Td (Final version) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Author (Jane Roe) /Creator (Writer) /Producer (Other Producer 2.0) /ModDate (D:20240201100000Z) >>
+endobj
+xref
+4 1
+0000000793 00000 n 
+5 1
+0000000939 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R /Info 5 0 R /Prev 578 >>
+startxref
+1057
+%%EOF

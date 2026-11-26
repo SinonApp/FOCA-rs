@@ -1,0 +1,32 @@
+[package]
+name = "foca-net"
+description = "FOCA-rs network layer: scoped HTTP client (rate limit, cancel, request log), DNS, CT subdomains, SPF/DMARC, takeover, RDAP, TCP liveness, AXFR"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+tracing.workspace = true
+foca-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
+url.workspace = true
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+reqwest = { workspace = true }
+hickory-resolver = { workspace = true }
+bytes.workspace = true
+regex.workspace = true
+flate2.workspace = true
+# X.509/TLS inspector: certificate parsing, fingerprints, chain checks against Mozilla roots
+x509-parser.workspace = true
+webpki-roots.workspace = true
+sha2.workspace = true
+# port scan: TLS detection and certificate names (same rustls + ring as reqwest)
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "tls12"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

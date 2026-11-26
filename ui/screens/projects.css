@@ -1,0 +1,266 @@
+/* Projects screen. Prefix pj- */
+.pj-new {
+  margin-bottom: 6px;
+}
+.pj-new .flabel {
+  margin-top: 2px;
+}
+.pj-newrow {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.pj-newrow .field {
+  flex: 1;
+  min-width: 0;
+}
+/* One line until a list is pasted, then it grows to show it (up to about six lines). */
+.pj-qf {
+  align-items: flex-start;
+}
+.pj-qf > svg.i {
+  margin-top: 15px;
+}
+.pj-qf textarea {
+  field-sizing: content;
+  min-height: 52px;
+  max-height: 10.5em;
+  line-height: 1.4;
+  overflow-y: auto;
+}
+.pj-go {
+  flex: none;
+  width: 52px;
+  min-height: 52px;
+  border: 0;
+  border-radius: var(--r);
+  background: var(--accent-strong);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.pj-go svg.i {
+  width: 22px;
+  height: 22px;
+}
+.pj-go:active {
+  filter: brightness(1.1);
+}
+
+.pj-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pj-list .card + .card {
+  margin-top: 0;
+}
+.pj-card {
+  padding: 12px 4px 12px 12px;
+  transition:
+    transform 0.15s,
+    background 0.15s;
+}
+.pj-card.pressing {
+  transform: scale(0.985);
+  background: var(--hover);
+}
+.pj-card {
+  container: pj / inline-size;
+}
+.pj-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+.pj-risk {
+  flex: none;
+  /* Grows with its label ("нет данных", larger fonts) instead of wrapping it. */
+  min-width: 5.8rem;
+  max-width: 8rem;
+  padding: 6px 4px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+}
+.pj-risk b {
+  white-space: nowrap;
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.pj-risk span {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  max-width: 100%;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.pj-risk span svg.i {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+.pj-risk.crit {
+  color: var(--crit);
+  background: var(--crit-soft);
+}
+.pj-risk.warn {
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.pj-risk.ok {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+.pj-risk.none {
+  color: var(--text-3);
+  background: var(--layer-2);
+}
+.pj-body {
+  flex: 1;
+  min-width: 0;
+  padding-top: 1px;
+}
+.pj-name {
+  font-weight: 600;
+  font-size: 1.02rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pj-client {
+  color: var(--text-2);
+  font-size: 0.88rem;
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.pj-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 6px;
+  color: var(--text-3);
+  font-size: 0.82rem;
+}
+.pj-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.pj-meta svg.i {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.pj-more {
+  margin: -8px 0 -8px -4px;
+  color: var(--text-3);
+}
+.pj-scan {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 8px 2px 0;
+}
+.pj-scan .pill {
+  align-self: flex-start;
+}
+.pj-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+  font-size: 0.82rem;
+  margin: 12px 2px 0;
+}
+.pj-arch {
+  margin-top: 14px;
+}
+.pj-sh-sub {
+  color: var(--text-3);
+  font-size: 0.9rem;
+  margin: -2px 4px 10px;
+}
+.srow.pj-danger,
+.srow.pj-danger svg.i {
+  color: var(--crit);
+}
+@container pj (max-width: 18rem) {
+  .pj-top {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 6px;
+  }
+  .pj-risk {
+    grid-column: 1;
+    grid-row: 1;
+    width: auto;
+    justify-self: start;
+    align-self: center;
+    flex-direction: row;
+    gap: 8px;
+    padding: 4px 12px;
+  }
+  .pj-risk b {
+    font-size: 1.2rem;
+  }
+  .pj-more {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .pj-body {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+/* New project draft, project properties */
+.pj-draft {
+  margin: 12px 0 4px;
+}
+.pp-ta textarea {
+  min-height: 72px;
+}
+
+/* One-time beta note (beta.js). */
+.beta-note {
+  margin: 0 0 12px;
+  border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+}
+.beta-note-h {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.beta-note-h > svg.i {
+  flex: none;
+  margin-top: 2px;
+  color: var(--warn);
+}
+.beta-note-h p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: break-word;
+}
+.beta-note-h .ib {
+  flex: none;
+  margin: -8px -8px 0 0;
+}
+.beta-note-a {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.beta-note-a .btn {
+  min-height: 44px;
+}

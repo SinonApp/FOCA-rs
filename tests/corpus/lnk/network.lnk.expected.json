@@ -1,0 +1,61 @@
+{
+  "created": "2024-03-01T09:15:00Z",
+  "description": "Звіт за квартал (чернетка)",
+  "fields": {
+    "lnk:access_time": "2024-03-14T18:40:00Z",
+    "lnk:arguments": "/p",
+    "lnk:birth_droid_file_id": "0b974000-cfc6-11ee-9f21-00155d010203",
+    "lnk:description": "Звіт за квартал (чернетка)",
+    "lnk:droid_file_id": "0b974000-cfc6-11ee-9f21-00155d010203",
+    "lnk:droid_time": "2024-02-20T08:00:00Z",
+    "lnk:droid_volume_id": "2e211407-483b-4255-6f7c-8996a3b0bdca",
+    "lnk:env_target": "%USERPROFILE%\\Documents\\Звіт.docx",
+    "lnk:file_attributes": "0x00000020",
+    "lnk:mac": "00:15:5d:01:02:03",
+    "lnk:machine_id": "buh-pc-07",
+    "lnk:network_path": "\\\\FS01.corp.example.test\\buh$\\Звіти\\2024\\Q1.xlsx",
+    "lnk:network_share": "\\\\FS01.corp.example.test\\buh$",
+    "lnk:relative_path": "..\\..\\Documents\\Звіт.docx",
+    "lnk:target_size": "48213",
+    "lnk:working_dir": "C:\\Users\\i.petrenko\\Documents"
+  },
+  "format": "lnk",
+  "modified": "2024-03-12T16:05:30Z",
+  "paths": [
+    {
+      "host": "FS01.corp.example.test",
+      "kind": "unc",
+      "path": "\\\\FS01.corp.example.test\\buh$\\Звіти\\2024\\Q1.xlsx",
+      "source": "lnk:network_path"
+    },
+    {
+      "host": "FS01.corp.example.test",
+      "kind": "unc",
+      "path": "\\\\FS01.corp.example.test\\buh$",
+      "source": "lnk:network_share"
+    },
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\i.petrenko\\Documents",
+      "source": "lnk:working_dir",
+      "user": "i.petrenko"
+    }
+  ],
+  "people": [
+    {
+      "name": "i.petrenko",
+      "role": "path_user",
+      "source": "C:\\Users\\i.petrenko\\Documents"
+    }
+  ],
+  "servers": [
+    {
+      "name": "buh-pc-07",
+      "source": "lnk:machine_id"
+    },
+    {
+      "name": "FS01.corp.example.test",
+      "source": "path"
+    }
+  ]
+}

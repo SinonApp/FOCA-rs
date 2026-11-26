@@ -1,0 +1,129 @@
+{
+  "application": "Microsoft Office Word",
+  "attachments": [
+    {
+      "name": "ObjectPool/_1234567890",
+      "size": 0
+    }
+  ],
+  "author": "Олена Коваленко",
+  "category": "Legal",
+  "company": "Contoso Energy LLC",
+  "created": "2019-02-11T09:30:00Z",
+  "custom": {
+    "Версія": "7",
+    "Конфіденційно": "true",
+    "Проєкт": "ТЕС-2"
+  },
+  "description": "Чернетка для юристів",
+  "edit_time_secs": 3600,
+  "fields": {
+    "ole:AppVersion": "14.0000",
+    "ole:Security": "0"
+  },
+  "format": "doc",
+  "has_macros": true,
+  "keywords": "статут, ТЕС-2",
+  "last_modified_by": "Administrator",
+  "macro_modules": [
+    "AutoOpen",
+    "ThisDocument"
+  ],
+  "manager": "Bondar A.",
+  "modified": "2019-03-01T17:45:10Z",
+  "old_versions": [
+    {
+      "fields": {
+        "author": "o.kovalenko",
+        "path": "C:\\Users\\o.kovalenko\\Documents\\Звіти\\2019\\Статут.doc"
+      },
+      "revision": 1
+    },
+    {
+      "fields": {
+        "author": "Administrator",
+        "path": "\\\\SRV-FILE01\\public\\Шаблони\\Статут.doc"
+      },
+      "revision": 2
+    }
+  ],
+  "os": "Windows 7/Server 2008 R2",
+  "paths": [
+    {
+      "host": "SRV-FILE01",
+      "kind": "unc",
+      "path": "\\\\SRV-FILE01\\public\\Шаблони\\Юридичний.dot",
+      "source": "template"
+    },
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\o.kovalenko\\Documents\\Звіти\\2019\\Статут.doc",
+      "source": "old_version.1.path",
+      "user": "o.kovalenko"
+    },
+    {
+      "host": "SRV-FILE01",
+      "kind": "unc",
+      "path": "\\\\SRV-FILE01\\public\\Шаблони\\Статут.doc",
+      "source": "old_version.2.path"
+    }
+  ],
+  "people": [
+    {
+      "name": "Олена Коваленко",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "Administrator",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    },
+    {
+      "name": "o.kovalenko",
+      "role": "last_modified_by",
+      "source": "doc:SttbSavedBy"
+    },
+    {
+      "name": "Андрій Бондар",
+      "role": "revision",
+      "source": "doc:SttbfRMark"
+    },
+    {
+      "name": "Тетяна Мельник",
+      "role": "comment",
+      "source": "doc:GrpXstAtnOwners"
+    },
+    {
+      "name": "i.petrenko",
+      "role": "comment",
+      "source": "doc:GrpXstAtnOwners"
+    },
+    {
+      "name": "o.kovalenko",
+      "role": "path_user",
+      "source": "C:\\Users\\o.kovalenko\\Documents\\Звіти\\2019\\Статут.doc"
+    }
+  ],
+  "printed": "2019-03-01T17:50:00Z",
+  "revision": "12",
+  "servers": [
+    {
+      "name": "SRV-FILE01",
+      "source": "path"
+    }
+  ],
+  "software": [
+    "Microsoft Office Word"
+  ],
+  "stats": {
+    "characters": 7034,
+    "lines": 80,
+    "pages": 4,
+    "paragraphs": 20,
+    "words": 1234
+  },
+  "subject": "Установчі документи",
+  "template": "\\\\SRV-FILE01\\public\\Шаблони\\Юридичний.dot",
+  "title": "Статут підприємства"
+}

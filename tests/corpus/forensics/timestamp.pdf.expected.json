@@ -1,0 +1,31 @@
+{
+  "fields": {
+    "pdf:version": "1.7"
+  },
+  "format": "pdf",
+  "incremental_updates": 0,
+  "signatures": [
+    {
+      "byte_range": [
+        0,
+        503,
+        12505,
+        216
+      ],
+      "bytes_after": 0,
+      "certificates": 0,
+      "kind": "pdf",
+      "source": "pdf:obj 5",
+      "sub_filter": "ETSI.RFC3161",
+      "timestamp": {
+        "gen_time": "2026-11-22T01:06:56Z",
+        "policy": "1.2.3.4.1",
+        "serial": "2C",
+        "tsa": "C=UA, O=Example Trust Services, CN=Example Test TSA"
+      }
+    }
+  ],
+  "stats": {
+    "pages": 1
+  }
+}

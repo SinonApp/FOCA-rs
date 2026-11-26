@@ -1,0 +1,28 @@
+{
+  "application": "Microsoft Visio",
+  "author": "Іван Петренко",
+  "created": "2024-03-01T09:00:00Z",
+  "fields": {
+    "visio:file_version": "11"
+  },
+  "format": "vsd",
+  "last_modified_by": "John Doe",
+  "modified": "2024-03-14T16:42:00Z",
+  "os": "Windows 10/11",
+  "people": [
+    {
+      "name": "Іван Петренко",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "John Doe",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "software": [
+    "Microsoft Visio"
+  ],
+  "title": "Схема мережі"
+}

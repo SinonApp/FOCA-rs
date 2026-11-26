@@ -1,0 +1,804 @@
+/* Reports and export. Prefix rp- */
+
+/* ---------- export sheet ---------- */
+.rp-exh {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: var(--r);
+  background: var(--layer-2);
+}
+.rp-exh-b {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.rp-exh-b b {
+  overflow-wrap: anywhere;
+}
+.rp-exh-b span {
+  color: var(--text-3);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.rp-sheet .srow .chev {
+  color: var(--text-3);
+  width: max(18px, 1.1rem);
+  height: max(18px, 1.1rem);
+}
+.rp-fmt .lbl {
+  font-weight: 600;
+}
+.rp-fmt .lbl small {
+  font-weight: 400;
+}
+.rp-del,
+.rp-del svg.i {
+  color: var(--bad) !important;
+}
+.rp-sheet .list,
+.rp-sheet .list .row {
+  background: var(--layer-2);
+}
+.rp-sheet .chip {
+  background: var(--layer-2);
+}
+.rp-sheet .chip.on {
+  background: var(--accent-soft);
+}
+.rp-sheet .seg button.on {
+  background: var(--layer);
+}
+.rp-radio {
+  margin-bottom: 8px;
+}
+.rp-cols .checkrow,
+.rp-opts .checkrow,
+.rp-secs .checkrow {
+  border-top: 1px solid var(--stroke);
+}
+.rp-cols .checkrow:first-child,
+.rp-opts .checkrow:first-child,
+.rp-secs .checkrow:first-child {
+  border-top: 0;
+}
+.rp-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+}
+.rp-cols .checkrow {
+  border-top: 0;
+  border-bottom: 1px solid var(--stroke);
+}
+.rp-tg {
+  min-height: 60px;
+  padding-right: 10px;
+}
+.rp-tg .tail {
+  justify-content: center;
+}
+.rp-tg.rp-danger .t {
+  color: var(--crit);
+}
+.rp-opts + .rp-opts {
+  margin-top: 8px;
+}
+.rp-secw {
+  margin: 10px 0 0;
+}
+.rp-hint {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.rp-hint svg.i {
+  margin-top: 2px;
+}
+.rp-sheet .rp-hint {
+  margin-top: 8px;
+}
+.rp-pre {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--layer-2);
+  border-radius: var(--r-s);
+  font: 0.85rem/1.6 var(--mono);
+  color: var(--text-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.rp-file {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px dashed var(--stroke-2);
+  border-radius: var(--r);
+}
+.rp-file .mono {
+  flex: 1 1 10rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.rp-file .muted {
+  font-size: 0.85rem;
+}
+.rp-file > svg.i {
+  color: var(--text-3);
+}
+
+/* Demo Android Share sheet */
+.rp-shh {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 4px 12px;
+  border-bottom: 1px solid var(--stroke);
+  margin-bottom: 10px;
+}
+.rp-shh-b {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+.rp-shh-b b {
+  overflow-wrap: anywhere;
+}
+.rp-shh-b span {
+  color: var(--text-3);
+  font-size: 0.85rem;
+}
+.rp-apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.rp-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 8px 2px;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+  color: var(--text);
+}
+.rp-app:active {
+  background: var(--hover);
+}
+.rp-app-ic {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.3px;
+}
+.rp-app-l {
+  font-size: 0.78rem;
+  text-align: center;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Reports tab ---------- */
+.rp-tpls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rp-tpls .card + .card {
+  margin-top: 0;
+}
+.rp-tpl {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+}
+.rp-tpl-ic {
+  flex: none;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.rp-tpl-ic svg.i {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+.rp-tpl-b {
+  flex: 1;
+  min-width: 0;
+}
+.rp-tpl-t b {
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+.rp-tpl-f {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+.rp-tpl-f .muted {
+  font-size: 0.82rem;
+}
+.rp-tpl-d {
+  overflow-wrap: anywhere;
+  color: var(--text-2);
+  font-size: 0.88rem;
+  margin-top: 6px;
+}
+.rp-tpl > .chev {
+  color: var(--text-3);
+  align-self: center;
+}
+
+.rp-quick {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr));
+}
+.rp-qt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  min-height: 64px;
+  text-align: left;
+  color: var(--text);
+  width: 100%;
+  margin: 0;
+}
+.rp-quick .card + .card {
+  margin-top: 0;
+}
+.rp-qt-b {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.rp-qt-b b {
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.rp-qt-b small {
+  color: var(--text-3);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.rp-hrow {
+  padding-right: 2px;
+  align-items: flex-start;
+}
+.rp-hrow .ext {
+  margin-top: 3px;
+}
+.rp-hrow .s + .s {
+  margin-top: 0;
+}
+.rp-hmore {
+  margin: -6px 0;
+  color: var(--text-3);
+}
+.rp-hempty {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--text-3);
+  font-size: 0.9rem;
+}
+.rp-pg > .rp-hint {
+  margin-top: 10px;
+}
+
+/* ---------- builder ---------- */
+.rp-tpl-hint {
+  margin: -4px 2px 0;
+}
+.rp-tplc {
+  gap: 8px;
+}
+.rp-tpl-desc {
+  margin-top: 10px;
+}
+.rp-tpl-desc .rp-tpl-hint {
+  margin: 4px 0 0;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.rp-tpl-desc small {
+  display: block;
+  margin-top: 6px;
+}
+ul.rp-fixed.card {
+  margin: 0;
+  padding-left: 34px;
+  line-height: 1.5;
+}
+.rp-fixed li {
+  overflow-wrap: anywhere;
+}
+.rp-fixedp ol {
+  padding-left: 20px;
+}
+.rp-pg .flabel {
+  margin-top: 12px;
+}
+.rp-logo {
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--layer-2);
+  color: var(--text-3);
+}
+.rp-logo span {
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.rp-secx {
+  margin: -2px 2px 12px;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+.rp-secx .mono {
+  color: var(--text);
+}
+
+/* Building */
+.rp-pb {
+  margin: 6px 0 14px;
+}
+.rp-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.rp-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  color: var(--text-3);
+}
+.rp-step.ok {
+  color: var(--text-2);
+}
+.rp-step.ok svg.i {
+  color: var(--ok);
+}
+.rp-step.now {
+  color: var(--text);
+  font-weight: 600;
+}
+.rp-step.now svg.i {
+  color: var(--accent);
+}
+.rp-step svg.i {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+.rp-step:not(.ok):not(.now) svg.i {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin: 0 0.28rem;
+  opacity: 0.6;
+}
+.rp-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 0 4px;
+}
+.rp-done-ic {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--ok-soft);
+  color: var(--ok);
+  margin-bottom: 10px;
+}
+.rp-done-ic svg.i {
+  width: 32px;
+  height: 32px;
+  stroke-width: 2;
+}
+.rp-done h3 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+.rp-done .rp-file {
+  width: 100%;
+  text-align: left;
+}
+
+/* ---------- A4 preview ---------- */
+.rp-pvpg {
+  padding-left: 0;
+  padding-right: 0;
+}
+.rp-ptools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 0 14px 10px;
+}
+.rp-pinfo {
+  flex: 1 1 10rem;
+  min-width: 0;
+  color: var(--text-3);
+  font-size: 0.85rem;
+}
+.rp-zoom {
+  display: flex;
+  align-items: center;
+  background: var(--layer);
+  border: 1px solid var(--stroke);
+  border-radius: 24px;
+  margin-left: auto;
+}
+.rp-zoom .ib[disabled] {
+  opacity: 0.35;
+}
+.rp-zv {
+  min-width: 4rem;
+  min-height: 48px;
+  border: 0;
+  background: none;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.rp-scroll {
+  overflow: auto;
+  padding: 0 14px 8px;
+}
+.rp-paperw {
+  width: calc(100% * var(--z, 1));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* The "paper" is always a white sheet, regardless of the app theme. */
+.rp-paper {
+  --paper: #ffffff;
+  --ink: #1b1f24;
+  --ink-2: #4b5563;
+  --ink-3: #8a919c;
+  --rule: #e3e6ea;
+  --brand: #0f4c81;
+  --p-crit: #be123c;
+  --p-high: #dc2626;
+  --p-warn: #b45309;
+  --p-low: #2563eb;
+  --p-info: #6b7280;
+  container-type: inline-size;
+  position: relative;
+  /* A4 proportions as the minimum: a page with more content grows instead of clipping it. */
+  aspect-ratio: 1 / 1.4142;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 3px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  overflow: visible;
+  flex: none;
+}
+.rp-pi {
+  /* Static on purpose: header, footer and title blocks stay anchored to the sheet (.rp-paper). */
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 12cqw 8cqw 9cqw;
+  font-size: 2.6cqw;
+  line-height: 1.45;
+  user-select: text;
+}
+html[data-theme="light"] .rp-paper {
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.14);
+  outline: 1px solid var(--rule);
+}
+.rp-ph,
+.rp-pf {
+  position: absolute;
+  left: 8cqw;
+  right: 8cqw;
+  display: flex;
+  justify-content: space-between;
+  gap: 2cqw;
+  font-size: 2cqw;
+  color: var(--ink-3);
+}
+.rp-ph {
+  top: 4.5cqw;
+  padding-bottom: 1.2cqw;
+  border-bottom: 0.25cqw solid var(--rule);
+}
+.rp-pf {
+  bottom: 4cqw;
+}
+.rp-ph span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 1.2cqw;
+}
+.rp-plogo {
+  display: inline-grid;
+  place-items: center;
+  width: 3.2cqw;
+  height: 3.2cqw;
+  border-radius: 0.8cqw;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
+  font-style: normal;
+  font-size: 1.4cqw;
+  font-weight: 600;
+}
+.rp-paper h1 {
+  font-size: 6.4cqw;
+  line-height: 1.15;
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+.rp-paper h2 {
+  font-size: 4cqw;
+  margin: 0 0 3cqw;
+  color: var(--brand);
+  font-weight: 600;
+}
+.rp-paper p {
+  margin: 0 0 3cqw;
+  color: var(--ink-2);
+}
+.rp-tmain {
+  position: absolute;
+  left: 8cqw;
+  right: 8cqw;
+  top: 32%;
+}
+.rp-tlogo {
+  width: 12cqw;
+  height: 12cqw;
+  border-radius: 3cqw;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  color: #fff;
+  font-weight: 600;
+  font-size: 4.4cqw;
+  margin-bottom: 6cqw;
+}
+.rp-tkind {
+  font-size: 2.2cqw;
+  letter-spacing: 0.5cqw;
+  color: var(--p-crit);
+  font-weight: 600;
+  margin-bottom: 2cqw;
+}
+.rp-tline {
+  width: 18cqw;
+  height: 0.8cqw;
+  background: var(--brand);
+  margin: 4cqw 0 5cqw;
+}
+.rp-paper dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1.6cqw 4cqw;
+  margin: 0;
+  font-size: 2.8cqw;
+}
+.rp-paper dt {
+  color: var(--ink-3);
+}
+.rp-paper dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+}
+.rp-risk {
+  display: flex;
+  align-items: center;
+  gap: 4cqw;
+  padding: 3.5cqw 4cqw;
+  margin-bottom: 4cqw;
+  border-radius: 2cqw;
+  background: #fff1f3;
+  border-left: 1.2cqw solid var(--p-crit);
+}
+.rp-rv {
+  font-size: 9cqw;
+  font-weight: 600;
+  color: var(--p-crit);
+  line-height: 1;
+}
+.rp-rv small {
+  font-size: 3cqw;
+  color: var(--ink-3);
+  font-weight: 400;
+}
+.rp-risk b {
+  display: block;
+  font-size: 3cqw;
+}
+.rp-risk span {
+  color: var(--p-crit);
+  font-weight: 600;
+  font-size: 3cqw;
+}
+.rp-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 2cqw;
+  margin-top: 2cqw;
+}
+.rp-bar {
+  display: grid;
+  grid-template-columns: 18cqw 1fr 5cqw;
+  align-items: center;
+  gap: 2cqw;
+  font-size: 2.6cqw;
+}
+.rp-bl {
+  color: var(--ink-2);
+}
+.rp-bt {
+  height: 2.6cqw;
+  background: #f1f3f5;
+  border-radius: 1.3cqw;
+  overflow: hidden;
+}
+.rp-bt i {
+  display: block;
+  height: 100%;
+  border-radius: 1.3cqw;
+}
+.rp-bar b {
+  text-align: right;
+}
+.s-crit {
+  --c: var(--p-crit);
+}
+.s-high {
+  --c: var(--p-high);
+}
+.s-warn {
+  --c: var(--p-warn);
+}
+.s-low {
+  --c: var(--p-low);
+}
+.s-info {
+  --c: var(--p-info);
+}
+.rp-bt i {
+  background: var(--c);
+}
+.rp-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 2.15cqw;
+  table-layout: fixed;
+}
+.rp-tbl th {
+  text-align: left;
+  color: #fff;
+  background: var(--brand);
+  font-weight: 600;
+  padding: 1.4cqw 1.4cqw;
+}
+.rp-tbl th:nth-child(1) {
+  width: 6cqw;
+}
+.rp-tbl th:nth-child(3) {
+  width: 24cqw;
+}
+.rp-tbl th:nth-child(4) {
+  width: 17cqw;
+}
+.rp-tbl td {
+  padding: 1.3cqw 1.4cqw;
+  border-bottom: 0.2cqw solid var(--rule);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
+.rp-tbl tr:nth-child(even) td {
+  background: #f8f9fb;
+}
+.rp-sev {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 1.9cqw;
+  padding: 0.2cqw 1cqw;
+  border-radius: 1cqw;
+  color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, #fff);
+  font-weight: 600;
+}
+.rp-sec {
+  margin-top: 0.6cqw;
+  font-family: var(--mono);
+  font-size: 1.9cqw;
+  color: var(--ink-2);
+}
+.rp-more {
+  margin-top: 2cqw;
+  font-size: 2.2cqw;
+  color: var(--ink-3);
+}
+.rp-sevf {
+  margin-bottom: 4px;
+}
+.rp-sheet .sh-f .btn.rp-back {
+  flex: 0 0 auto;
+  width: 48px;
+  padding: 0;
+}
+/* Large font: hide lead icons in narrow lists. */
+.rp-tpls,
+.rp-quick {
+  container: rplist / inline-size;
+}
+@container rplist (max-width: 13rem) {
+  .rp-tpl-ic,
+  .rp-qt .lead-ic {
+    display: none;
+  }
+}
+@container list (max-width: 13rem) {
+  .rp-logo {
+    display: none;
+  }
+}
+.rp-pg .row .t,
+.rp-sheet .row .t {
+  -webkit-line-clamp: 4;
+}
+/* Report risk is computed over the included findings. */
+.rp-rnote {
+  display: block;
+  font-size: 2.4cqw;
+  color: #64748b;
+  margin-top: 0.6cqw;
+}
+
+/* Note above the preview pages (non-RU report language). */
+.rp-tnote {
+  margin: 0 14px 10px;
+}

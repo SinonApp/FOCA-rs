@@ -1,0 +1,527 @@
+//! Secrets in document text and fields: gitleaks-style rules (`signatures/secrets.toml`),
+//! Shannon entropy and checks against false positives.
+
+use std::sync::OnceLock;
+
+use foca_core::{api::SecretValue, Severity};
+use regex::Regex;
+use serde::{Deserialize, Serialize};
+
+pub const BUILTIN_TOML: &str = include_str!("../../signatures/secrets.toml");
+
+#[derive(Debug, Clone, Deserialize)]
+struct RuleDef {
+    id: String,
+    title: String,
+    #[serde(rename = "type")]
+    kind: String,
+    sev: Severity,
+    re: String,
+    #[serde(default)]
+    keywords: Vec<String>,
+    #[serde(default)]
+    entropy: f64,
+    #[serde(default)]
+    validate: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RuleFile {
+    rule: Vec<RuleDef>,
+}
+
+#[derive(Debug, Clone)]
+struct Rule {
+    def: RuleDef,
+    re: Regex,
+}
+
+/// A detected secret. `value` and the `{{s:…}}` part of `context` are masked in `Debug` output.
+#[derive(Clone, PartialEq, Serialize)]
+pub struct SecretHit {
+    pub rule: String,
+    pub title: String,
+    /// `conn` | `pass` | `api` | `host`
+    pub kind: String,
+    pub sev: Severity,
+    pub value: SecretValue,
+    /// Match context used as evidence: the line with the secret, the secret itself masked.
+    pub context: String,
+    /// Where it was found, e.g. a text line number or a custom metadata field.
+    pub location: String,
+    pub host: Option<String>,
+    pub entropy: f64,
+}
+
+/// Replaces every `{{s:value}}` with `{{s:mask}}`.
+pub fn mask_markers(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut rest = s;
+    while let Some(i) = rest.find("{{s:") {
+        out.push_str(&rest[..i]);
+        let tail = &rest[i + 4..];
+        match foca_core::api::find_secret_marker_end(tail) {
+            Some(j) => {
+                let raw = foca_core::api::unescape_secret_marker(&tail[..j]);
+                out.push_str("{{s:");
+                out.push_str(&foca_core::api::escape_secret_marker(
+                    &foca_core::api::mask(&raw),
+                ));
+                out.push_str("}}");
+                rest = &tail[j + 2..];
+            }
+            None => {
+                out.push_str("{{s:••••}}");
+                rest = "";
+            }
+        }
+    }
+    out.push_str(rest);
+    out
+}
+
+impl std::fmt::Debug for SecretHit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SecretHit")
+            .field("rule", &self.rule)
+            .field("kind", &self.kind)
+            .field("sev", &self.sev)
+            .field("value", &self.value)
+            .field("context", &mask_markers(&self.context))
+            .field("location", &self.location)
+            .field("host", &self.host)
+            .field("entropy", &self.entropy)
+            .finish()
+    }
+}
+
+/// A compiled rule set.
+#[derive(Debug, Clone)]
+pub struct Rules(Vec<Rule>);
+
+impl Rules {
+    pub fn parse(text: &str) -> Result<Rules, String> {
+        let f: RuleFile = toml::from_str(text).map_err(|e| e.to_string())?;
+        let mut out = Vec::new();
+        for d in f.rule {
+            let re = Regex::new(&d.re).map_err(|e| format!("{}: {e}", d.id))?;
+            out.push(Rule { def: d, re });
+        }
+        Ok(Rules(out))
+    }
+
+    pub fn builtin() -> &'static Rules {
+        static R: OnceLock<Rules> = OnceLock::new();
+        R.get_or_init(|| Rules::parse(BUILTIN_TOML).unwrap_or(Rules(Vec::new())))
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Finds secrets in text. `place` names the location (text, a custom field); for multi-line
+    /// text the line number is appended.
+    pub fn scan(&self, text: &str, place: &str) -> Vec<SecretHit> {
+        let mut out: Vec<SecretHit> = Vec::new();
+        if text.len() < 4 {
+            return out;
+        }
+        let lower = text.to_lowercase();
+        let multiline = text.contains('\n');
+        for r in &self.0 {
+            if !r.def.keywords.is_empty() && !r.def.keywords.iter().any(|k| lower.contains(k)) {
+                continue;
+            }
+            for c in r.re.captures_iter(text) {
+                let Some(m) = c.name("s").or_else(|| c.get(0)) else {
+                    continue;
+                };
+                let value = m
+                    .as_str()
+                    .trim()
+                    .trim_end_matches(['.', ')', ']'])
+                    .to_string();
+                if value.is_empty() || allowlisted(&value) {
+                    continue;
+                }
+                let ent = entropy(&value);
+                if r.def.entropy > 0.0 && ent < r.def.entropy {
+                    continue;
+                }
+                let ok = match r.def.validate.as_deref() {
+                    Some("password") => valid_password(&value),
+                    Some("private_ip") => valid_private_ip(text, m.start(), m.end(), &value),
+                    Some("internal_host") => valid_internal_host(text, m.end()),
+                    Some("key") => valid_key(&value),
+                    _ => true,
+                };
+                if !ok {
+                    continue;
+                }
+                // One value, one hit: the first rule in file order wins.
+                if out.iter().any(|h| h.value.expose() == value) {
+                    continue;
+                }
+                let host = c
+                    .name("h")
+                    .map(|h| h.as_str().trim().to_string())
+                    .or_else(|| (r.def.kind == "host").then(|| value.clone()));
+                let location = if multiline {
+                    let line = text[..m.start()].matches('\n').count() + 1;
+                    format!("{place}, строка {line}")
+                } else {
+                    place.to_string()
+                };
+                out.push(SecretHit {
+                    rule: r.def.id.clone(),
+                    title: r.def.title.clone(),
+                    kind: r.def.kind.clone(),
+                    sev: r.def.sev,
+                    context: context(text, m.start(), m.end()),
+                    value: SecretValue::new(value),
+                    location,
+                    host,
+                    entropy: (ent * 100.0).round() / 100.0,
+                });
+            }
+        }
+        out
+    }
+}
+
+/// Returns the line around the match with the secret wrapped as `{{s:…}}` (the UI masks it).
+fn context(text: &str, start: usize, end: usize) -> String {
+    let ls = text[..start].rfind('\n').map(|i| i + 1).unwrap_or(0);
+    let le = text[end..]
+        .find('\n')
+        .map(|i| end + i)
+        .unwrap_or(text.len());
+    let mut before = &text[ls..start];
+    let mut after = &text[end..le];
+    // Keep the context short on very long lines.
+    if before.chars().count() > 80 {
+        let skip = before
+            .char_indices()
+            .rev()
+            .nth(79)
+            .map(|(i, _)| i)
+            .unwrap_or(0);
+        before = &before[skip..];
+    }
+    if after.chars().count() > 80 {
+        let cut = after
+            .char_indices()
+            .nth(80)
+            .map(|(i, _)| i)
+            .unwrap_or(after.len());
+        after = &after[..cut];
+    }
+    format!(
+        "{}{{{{s:{}}}}}{}",
+        before.trim_start(),
+        foca_core::api::escape_secret_marker(&text[start..end]),
+        after.trim_end()
+    )
+}
+
+/// Returns the Shannon entropy in bits per character.
+pub fn entropy(s: &str) -> f64 {
+    let mut counts = std::collections::HashMap::new();
+    let mut n = 0usize;
+    for c in s.chars() {
+        *counts.entry(c).or_insert(0usize) += 1;
+        n += 1;
+    }
+    if n == 0 {
+        return 0.0;
+    }
+    counts
+        .values()
+        .map(|&k| {
+            let p = k as f64 / n as f64;
+            -p * p.log2()
+        })
+        .sum()
+}
+
+fn allowlisted(v: &str) -> bool {
+    let l = v.to_lowercase();
+    const BAD: &[&str] = &[
+        "example",
+        "xxxx",
+        "placeholder",
+        "your_",
+        "your-",
+        "yourpassword",
+        "changeme",
+        "change_me",
+        "<",
+        "${",
+        "{{",
+        "%s",
+        "****",
+        "••",
+        "…",
+        "redacted",
+    ];
+    BAD.iter().any(|b| l.contains(b))
+}
+
+const NOT_PASSWORDS: &[&str] = &[
+    "password",
+    "passwd",
+    "пароль",
+    "secret",
+    "required",
+    "optional",
+    "none",
+    "null",
+    "empty",
+    "default",
+    "hidden",
+    "string",
+    "value",
+    "true",
+    "false",
+    "test",
+    "admin",
+    "user",
+    "username",
+    "unknown",
+    "n/a",
+    "changeit",
+];
+
+fn valid_password(v: &str) -> bool {
+    let n = v.chars().count();
+    if !(6..=128).contains(&n) {
+        return false;
+    }
+    let l = v.to_lowercase();
+    if NOT_PASSWORDS.contains(&l.as_str()) || l.contains("://") {
+        return false;
+    }
+    let first = v.chars().next().unwrap_or(' ');
+    if matches!(first, '<' | '{' | '[' | '$' | '%' | '/' | '\\' | '(' | '#') {
+        return false;
+    }
+    // All characters identical (******, ......).
+    if v.chars().all(|c| c == first) {
+        return false;
+    }
+    let digit = v.chars().any(|c| c.is_ascii_digit());
+    let special = v.chars().any(|c| !c.is_alphanumeric());
+    let inner_upper =
+        v.chars().skip(1).any(char::is_uppercase) && v.chars().skip(1).any(char::is_lowercase);
+    // An ordinary word from the text (e.g. "Reset") is not a password.
+    digit || special || inner_upper
+}
+
+fn valid_key(v: &str) -> bool {
+    let l = v.to_lowercase();
+    if [
+        "sample",
+        "dummy",
+        "test",
+        "fake",
+        "00000000",
+        "abcdefgh",
+        "1234567890abc",
+    ]
+    .iter()
+    .any(|b| l.contains(b))
+    {
+        return false;
+    }
+    // A key is not an ordinary word: it has digits or mixed case.
+    v.chars().any(|c| c.is_ascii_digit())
+        || (v.chars().any(char::is_uppercase) && v.chars().any(char::is_lowercase))
+}
+
+fn valid_private_ip(text: &str, start: usize, end: usize, v: &str) -> bool {
+    if !v
+        .split('.')
+        .all(|o| o.parse::<u16>().is_ok_and(|n| n <= 255))
+    {
+        return false;
+    }
+    let before = &text[..start];
+    let after = &text[end..];
+    // Part of a longer chain (10.1.2.3.4, 1.10.1.2.3) or a version number.
+    if before.ends_with(|c: char| c.is_ascii_digit() || c == '.')
+        || (after.starts_with('.') && after[1..].starts_with(|c: char| c.is_ascii_digit()))
+    {
+        return false;
+    }
+    let last_word = before
+        .split_whitespace()
+        .next_back()
+        .unwrap_or("")
+        .to_lowercase();
+    ![
+        "version",
+        "ver",
+        "ver.",
+        "v",
+        "v.",
+        "версия",
+        "версія",
+        "п.",
+        "пп.",
+        "§",
+        "rev",
+        "rev.",
+        "build",
+        "пункт",
+        "розділ",
+        "раздел",
+        "разд.",
+        "section",
+        "oid",
+        "№",
+    ]
+    .contains(&last_word.as_str())
+}
+
+fn valid_internal_host(text: &str, end: usize) -> bool {
+    let after = &text[end..];
+    // In `srv.corp.contoso.ua` the suffix is part of a public name, not an internal one.
+    !(after.starts_with('.') && after[1..].starts_with(|c: char| c.is_ascii_alphanumeric()))
+        && !after.starts_with(|c: char| c == '-' || c.is_ascii_alphanumeric())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn scan(t: &str) -> Vec<SecretHit> {
+        Rules::builtin().scan(t, "текст")
+    }
+
+    fn rules(t: &str) -> Vec<String> {
+        scan(t).into_iter().map(|h| h.rule).collect()
+    }
+
+    #[test]
+    fn rules_compile() {
+        assert!(Rules::builtin().len() >= 20);
+    }
+
+    #[test]
+    fn true_positives() {
+        let h = scan(
+            "Data Source=SRV-SQL02;Initial Catalog=Billing;User ID=sa;Password=Kont0so#2024!;",
+        );
+        assert_eq!(h[0].rule, "conn-string");
+        assert_eq!(h[0].value.expose(), "Kont0so#2024!");
+        assert_eq!(h[0].host.as_deref(), Some("SRV-SQL02"));
+        assert_eq!(h[0].kind, "conn");
+        assert!(h[0].context.contains("{{s:Kont0so#2024!}}"));
+        assert_eq!(
+            rules("postgres://app:S3cr3tPass@db.internal.example.org:5432/x"),
+            vec!["uri-credentials"]
+        );
+        assert_eq!(
+            rules("key AKIAZ3MHQW7XK2PLNB4D here"),
+            vec!["aws-access-key"]
+        );
+        assert_eq!(
+            rules("aws_secret_access_key = wJx9Fq2+Lr8kZ0aT3vYpQe7mNc5bHs1uKd4oGi6E"),
+            vec!["aws-secret-key"]
+        );
+        assert_eq!(
+            rules("maps key AIzaSyD4kQ9vT2mXpL7wRz3nB8cF1hJ6sY0uE5a ok"),
+            vec!["gcp-api-key"]
+        );
+        assert_eq!(
+            rules("token ghp_aB3dE6gH9jK2mN5pQ8sT1vW4yZ7bC0eF3hJ6 end"),
+            vec!["github-token"]
+        );
+        assert_eq!(
+            rules("xoxb-284752093141-3856391027465-Zq8LmR4tYw2N"),
+            vec!["slack-token"]
+        );
+        assert_eq!(
+            rules("bot 6412093355:AAF3kX9qL2mN8pR4sT6vW1yZ5bC7dE0fG2h done"),
+            vec!["telegram-bot-token"]
+        );
+        assert_eq!(
+            rules("Authorization eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"),
+            vec!["jwt"]
+        );
+        assert_eq!(
+            rules("-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA1x2y3z4w5v6u7t8s9r0q\n"),
+            vec!["private-key"]
+        );
+        assert_eq!(rules("Пароль від порталу: KYI-2024!q"), vec!["password"]);
+        assert_eq!(rules("password: Buh2023!"), vec!["password"]);
+        assert_eq!(rules("Сервер БД 10.10.1.12, порт 1433"), vec!["private-ip"]);
+        assert_eq!(
+            rules("подключение к sql02.corp.contoso.local"),
+            vec!["internal-host"]
+        );
+        assert_eq!(
+            rules("api_key = 9fK2mQ7xL4pR8sT1vW3yZ6bC"),
+            vec!["generic-api-key"]
+        );
+        assert_eq!(
+            rules("sk_live_51Hx7Kq2mN8pR4sT6vW1yZ5b"),
+            vec!["stripe-key"]
+        );
+    }
+
+    #[test]
+    fn false_positives_suppressed() {
+        for t in [
+            "Пароль: должен содержать не менее 8 символов",
+            "Password: ********",
+            "password = <your password here>",
+            "Введите пароль \u{2014} обязательно",
+            "Password: required",
+            "password: ${DB_PASSWORD}",
+            "Версия 10.2.3.4 от 2024 года",
+            "п. 10.1.2.3 договора",
+            "OID 1.3.6.1.4.1.311.10.3.4",
+            "IP 203.0.113.10 публичный, 8.8.8.8",
+            "сайт srv.corp.contoso.example",
+            "AKIAIOSFODNN7EXAMPLE",
+            "api_key = xxxxxxxxxxxxxxxxxxxx",
+            "access_token: abcdefghijklmnopqrstuvwxyz",
+            "token: the quick brown fox jumps",
+            "secret_key = 0000000000000000000000",
+            "Скидання пароля: https://portal.contoso.ua/reset",
+            "Номер договору 172.20.2024.15",
+            "Звіт про роботу за 2024 рік, розділ 10.1.1.2",
+        ] {
+            let h = scan(t);
+            assert!(h.is_empty(), "false positive on {t:?}: {h:?}");
+        }
+    }
+
+    #[test]
+    fn value_masked_in_debug() {
+        let h = scan("password: Buh2023!");
+        let dbg = format!("{h:?}");
+        assert!(!dbg.contains("Buh2023!") || dbg.contains("{{s:"), "{dbg}");
+        assert!(dbg.contains("SecretValue(••••)"));
+        assert!(entropy("aaaa") < 0.01);
+        assert!(entropy("wJx9Fq2+Lr8kZ0aT3vYpQe7mNc5bHs1uKd4oGi6E") > 4.5);
+    }
+
+    #[test]
+    fn secret_containing_double_brace_escapes_marker() {
+        let h = scan("password: Abc}}Z9!xYzQ12");
+        assert_eq!(h.len(), 1);
+        let ctx = &h[0].context;
+        let after = ctx.split("{{s:").nth(1).unwrap();
+        let end = foca_core::api::find_secret_marker_end(after).unwrap();
+        assert_eq!(
+            foca_core::api::unescape_secret_marker(&after[..end]),
+            "Abc}}Z9!xYzQ12"
+        );
+    }
+}

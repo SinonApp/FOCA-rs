@@ -1,0 +1,734 @@
+/* Scan screen. Prefix scn- */
+.scn-gap {
+  margin-top: 10px;
+}
+
+/* Header card */
+.scn-head.is-active {
+  border-color: color-mix(in srgb, var(--active) 55%, var(--stroke));
+}
+.scn-h1 {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.scn-h1b {
+  flex: 1;
+  min-width: 0;
+}
+.scn-tgt {
+  font-weight: 600;
+  font-size: 1.05rem;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  padding-top: 1px;
+}
+.scn-h1s {
+  color: var(--text-3);
+  font-size: 0.85rem;
+  margin-top: 1px;
+}
+.scn-h1 > .pill {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+.scn-big {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px 12px;
+  margin: 14px 0 8px;
+}
+.scn-big b {
+  font-size: 2.3rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.scn-big b small {
+  font-size: 1.1rem;
+  color: var(--text-3);
+  margin-left: 2px;
+  font-weight: 600;
+}
+.scn-big span {
+  flex: 1 1 9em;
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.25;
+  padding-bottom: 2px;
+  overflow-wrap: break-word;
+}
+.scn-big span small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: var(--text-3);
+}
+.scn-hpb {
+  height: 8px;
+  border-radius: 4px;
+}
+.scn-hpb i {
+  border-radius: 4px;
+}
+.scn-hpb.paused i {
+  background: var(--warn);
+}
+.scn-head.is-active .scn-hpb i {
+  background: var(--active);
+}
+.scn-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  color: var(--text-3);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.scn-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.scn-ctl {
+  margin-top: 14px;
+}
+.scn-rf {
+  margin-top: 10px;
+  color: var(--warn);
+}
+.scn-stopc .pbar {
+  margin: 12px 0 14px;
+}
+
+/* Active mode */
+.scn-active {
+  border-color: var(--active);
+  background: color-mix(in srgb, var(--active) 9%, var(--layer));
+}
+.scn-ah {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.scn-ah > svg.i {
+  width: 24px;
+  height: 24px;
+  color: var(--active);
+  margin-top: 1px;
+}
+html[data-theme="dark"] .scn-ah > svg.i {
+  color: #ff6b88;
+}
+.scn-ah b {
+  display: block;
+  font-size: 1.02rem;
+}
+.scn-ah span {
+  display: block;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+.scn-akv {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.scn-akv span {
+  display: block;
+  color: var(--text-3);
+  font-size: 0.8rem;
+}
+.scn-akv b {
+  display: block;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.scn-ks {
+  display: flex !important;
+  gap: 6px;
+  align-items: flex-start;
+  font-weight: 400 !important;
+  font-size: 0.92rem;
+}
+.scn-ks svg.i {
+  color: var(--ok);
+  margin-top: 2px;
+}
+.scn-a2 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--active) 25%, var(--stroke));
+}
+
+/* Stage stepper */
+.scn-steps {
+  padding: 6px 14px;
+}
+.scn-step {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+}
+.scn-step:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 15px;
+  top: 44px;
+  bottom: -8px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--stroke-2);
+}
+.scn-step.is-done:not(:last-child)::before,
+.scn-step.is-error:not(:last-child)::before {
+  background: var(--ok);
+  opacity: 0.55;
+}
+.scn-mk {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--layer-2);
+  color: var(--text-3);
+  border: 2px solid var(--stroke-2);
+  font-size: 0.85rem;
+  z-index: 1;
+}
+.scn-mk svg.i {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+.scn-mk b {
+  font-weight: 600;
+}
+.is-run .scn-mk {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.is-run.is-paused .scn-mk,
+.is-cut .scn-mk {
+  border-color: var(--warn);
+  color: var(--warn);
+  background: var(--warn-soft);
+}
+.is-done .scn-mk {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: var(--bg);
+}
+.is-error .scn-mk {
+  border-color: var(--bad);
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.scn-sb {
+  flex: 1;
+  min-width: 0;
+  padding-top: 4px;
+}
+.scn-st-h {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.scn-st-t {
+  flex: 1 1 8em;
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: break-word;
+}
+.is-wait .scn-st-t {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.scn-st-h .pill {
+  flex: none;
+}
+.scn-st-m {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  margin-top: 3px;
+  color: var(--text-3);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.scn-st-m span:first-child {
+  color: var(--text-2);
+}
+.scn-tm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.scn-tm svg.i {
+  width: 13px;
+  height: 13px;
+}
+.scn-pb {
+  margin-top: 8px;
+  height: 4px;
+}
+.is-paused .scn-pb i {
+  background: var(--warn);
+}
+.scn-stretry {
+  margin-top: 8px;
+}
+.scn-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--text-2);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.scn-sub span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.scn-sub svg.i {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+.scn-subhint {
+  margin: 2px 0 0 19px;
+  color: var(--text-2);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+.scn-ctlrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.scn-cbtn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  justify-content: center;
+}
+.scn-cbtn svg.i {
+  margin: 0;
+}
+.scn-cbtn.lbl {
+  gap: 6px;
+  padding: 0 12px;
+}
+.scn-cl {
+  font-size: 0.85rem;
+}
+.scn-ctlin {
+  display: inline-flex;
+  flex: none;
+  margin: -10px -6px -10px 0;
+}
+.scn-ctlin .scn-cbtn {
+  background: transparent;
+}
+.scn-fup {
+  margin-top: 12px;
+}
+.scn-slow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--warn);
+  font-size: 0.85rem;
+}
+.scn-slow span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.scn-slow svg.i {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+
+/* Feed */
+.scn-fs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.scn-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+}
+.scn-at svg.i {
+  width: 13px;
+  height: 13px;
+}
+.row .s.scn-fsub {
+  overflow-wrap: break-word;
+  margin-top: 3px;
+}
+.scn-sh {
+  flex-wrap: wrap;
+}
+.scn-new {
+  animation: scnIn 2.6s ease-out both;
+}
+@keyframes scnIn {
+  0% {
+    background: var(--accent-soft);
+    transform: translateY(-6px);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+    transform: none;
+  }
+  30% {
+    background: var(--accent-soft);
+  }
+  100% {
+    background: var(--layer);
+  }
+}
+.scn-new .lead-ic {
+  animation: scnPulse 1.2s ease-out 2;
+}
+@keyframes scnPulse {
+  50% {
+    transform: scale(1.12);
+  }
+}
+.scn-fr {
+  align-items: flex-start;
+}
+.scn-fr .lead-ic {
+  margin-top: 2px;
+}
+.scn-fr .chev {
+  align-self: center;
+}
+.scn-fe {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 14px;
+  color: var(--text-3);
+  font-size: 0.9rem;
+}
+.scn-fe svg.i {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+/* Sources */
+.scn-src {
+  align-items: flex-start;
+}
+.scn-src .lead-ic {
+  margin-top: 2px;
+}
+.scn-src .s {
+  overflow-wrap: break-word;
+}
+.scn-srh {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.scn-srh .t {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.scn-oosl {
+  margin-top: 10px;
+}
+.scn-oosl .row .tail .pill {
+  min-width: 26px;
+  justify-content: center;
+}
+
+/* Empty state / history */
+.scn-hero {
+  text-align: center;
+  padding: 22px 16px 14px;
+}
+.scn-hero-ic {
+  width: 64px;
+  height: 64px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  margin: 0 auto 12px;
+}
+.scn-hero-ic svg.i {
+  width: 30px;
+  height: 30px;
+}
+.scn-hero h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+.scn-hero p {
+  margin: 0 auto 16px;
+  color: var(--text-3);
+  font-size: 0.92rem;
+  max-width: 330px;
+}
+.scn-hero-b {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scn-hp {
+  margin-top: 6px;
+}
+.scn-g {
+  margin: 14px 0;
+}
+.scn-g .stat {
+  padding: 10px;
+  background: var(--layer-2);
+  border-radius: var(--r-s);
+}
+.scn-g .card.stat {
+  background: var(--layer);
+}
+
+/* Sheets */
+.scn-shp {
+  margin: 0 2px 12px;
+  color: var(--text-2);
+}
+
+/* Stop screen */
+.scn-demo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.scn-demo > .muted {
+  font-size: 0.82rem;
+  margin-left: 2px;
+}
+.scn-why {
+  text-align: center;
+  padding: 20px 16px 14px;
+}
+.scn-why-ic {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  color: var(--why);
+  background: color-mix(in srgb, var(--why) 15%, transparent);
+}
+.scn-why-ic svg.i {
+  width: 30px;
+  height: 30px;
+}
+.scn-why h3 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+.scn-why p {
+  margin: 0 0 12px;
+  color: var(--text-2);
+  font-size: 0.92rem;
+}
+.scn-code {
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: var(--r-s);
+  background: var(--layer-2);
+  color: var(--text-2);
+  margin-bottom: 12px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.scn-vb {
+  text-align: left;
+}
+.scn-when {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  text-align: left;
+  color: var(--text-3);
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  border-radius: var(--r-s);
+  background: var(--layer-2);
+}
+.scn-when svg.i {
+  margin-top: 2px;
+}
+.scn-acts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+.scn-acts .btnrow {
+  gap: 8px;
+}
+
+/* Out of scope */
+.scn-bulk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.scn-bulk-t,
+.scn-bulk-s {
+  font-weight: 600;
+}
+.scn-bulk-s {
+  margin: 12px 0 6px;
+}
+.scn-bulk .btnrow {
+  flex-wrap: wrap;
+}
+.scn-opick .checkrow {
+  min-height: 44px;
+}
+.scn-oos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.scn-oh {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.scn-ob {
+  flex: 1;
+  min-width: 0;
+}
+.scn-ohost {
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+.scn-okind {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.scn-owhy {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--text-2);
+}
+.scn-owhy > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.scn-owhy svg.i {
+  margin-top: 2px;
+  color: var(--text-3);
+}
+.scn-ohint {
+  font-size: 0.85rem;
+  color: var(--text-3);
+}
+
+/* Core events: pause with a reason, another project, result, blocked candidate */
+.scn-pbn {
+  margin-bottom: 12px;
+}
+.scn-pbn b {
+  display: block;
+}
+.scn-other {
+  margin-bottom: 10px;
+}
+.scn-other .btnrow {
+  margin-top: 8px;
+}
+.scn-ks.bad svg.i {
+  color: var(--bad);
+}
+.scn-fnew {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 12px;
+  color: var(--text-2);
+  font-size: 0.9rem;
+}
+.scn-fnew svg.i {
+  flex: none;
+}
+.scn-nohist {
+  margin: 4px 2px 0;
+}
+.scn-oblk {
+  margin: 0;
+}
+.scn-oblk .btn.text {
+  min-height: 44px;
+  padding: 0 6px;
+  margin-left: -6px;
+} /* Tap target ≥ 44 */
+.scn-sbtn {
+  margin-top: 8px;
+}
+.scn-fg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 12px 0 0;
+  color: var(--text-3);
+  font-size: 0.82rem;
+}
+.scn-fg svg.i {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+}
+/* Infrastructure candidates: long source / "not checked" pills wrap at a large font. */
+.scn-okind .scn-osrc,
+.scn-okind .scn-ounchk {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+}

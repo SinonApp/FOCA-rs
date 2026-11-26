@@ -1,0 +1,68 @@
+{
+  "application": "Writer",
+  "author": "Jane Roe",
+  "fields": {
+    "pdf:version": "1.7"
+  },
+  "format": "pdf",
+  "incremental_updates": 1,
+  "modified": "2024-02-01T10:00:00Z",
+  "old_versions": [
+    {
+      "fields": {
+        "Author": "John Doe",
+        "Creator": "Writer",
+        "ModDate": "D:20240101100000Z",
+        "Producer": "FOCA-rs fixture"
+      },
+      "revision": 1
+    }
+  ],
+  "pdf_revisions": [
+    {
+      "author": "John Doe",
+      "creator": "Writer",
+      "end_offset": 792,
+      "modified": "2024-01-01T10:00:00Z",
+      "objects": 5,
+      "producer": "FOCA-rs fixture",
+      "revision": 1
+    },
+    {
+      "added_text": [
+        "Final version"
+      ],
+      "author": "Jane Roe",
+      "creator": "Writer",
+      "end_offset": 1186,
+      "modified": "2024-02-01T10:00:00Z",
+      "objects": 2,
+      "producer": "Other Producer 2.0",
+      "removed_text": [
+        "Salary of Ivan Petrenko: 1000 UAH"
+      ],
+      "revision": 2
+    }
+  ],
+  "people": [
+    {
+      "name": "Jane Roe",
+      "role": "author",
+      "source": "pdf:Info:Author"
+    },
+    {
+      "name": "John Doe",
+      "role": "author",
+      "source": "pdf:Info:rev1"
+    }
+  ],
+  "producer": "Other Producer 2.0",
+  "software": [
+    "Writer",
+    "Other Producer 2.0",
+    "FOCA-rs fixture"
+  ],
+  "stats": {
+    "pages": 1
+  }
+}

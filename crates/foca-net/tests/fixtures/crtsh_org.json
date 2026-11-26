@@ -1,0 +1,62 @@
+[
+ {
+  "issuer_ca_id": 3,
+  "issuer_name": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+  "common_name": "acme.test",
+  "name_value": "acme.test\nwww.acme.test",
+  "id": 201,
+  "entry_timestamp": "2025-05-01T00:00:00.000",
+  "not_before": "2025-05-01T00:00:00",
+  "not_after": "2026-05-01T23:59:59",
+  "serial_number": "d1",
+  "result_count": 2
+ },
+ {
+  "issuer_ca_id": 3,
+  "issuer_name": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+  "common_name": "acme-holding.test",
+  "name_value": "acme-holding.test\n*.acme-holding.test\nportal.acme-holding.test",
+  "id": 202,
+  "entry_timestamp": "2025-06-01T00:00:00.000",
+  "not_before": "2025-06-01T00:00:00",
+  "not_after": "2026-06-01T23:59:59",
+  "serial_number": "d2",
+  "result_count": 3
+ },
+ {
+  "issuer_ca_id": 3,
+  "issuer_name": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+  "common_name": "shop.acmegroup.com.ua",
+  "name_value": "shop.acmegroup.com.ua\nacmegroup.com.ua",
+  "id": 203,
+  "entry_timestamp": "2024-03-01T00:00:00.000",
+  "not_before": "2024-03-01T00:00:00",
+  "not_after": "2025-03-01T23:59:59",
+  "serial_number": "d3",
+  "result_count": 2
+ },
+ {
+  "issuer_ca_id": 3,
+  "issuer_name": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+  "common_name": "portal.acme-holding.test",
+  "name_value": "portal.acme-holding.test",
+  "id": 204,
+  "entry_timestamp": "2026-06-01T00:00:00.000",
+  "not_before": "2026-06-01T00:00:00",
+  "not_after": "2027-06-01T23:59:59",
+  "serial_number": "d4",
+  "result_count": 1
+ },
+ {
+  "issuer_ca_id": 3,
+  "issuer_name": "C=US, O=DigiCert Inc, CN=DigiCert Global G2 TLS RSA SHA256 2020 CA1",
+  "common_name": "mail.acme.test",
+  "name_value": "mail.acme.test",
+  "id": 205,
+  "entry_timestamp": "2026-01-01T00:00:00.000",
+  "not_before": "2026-01-01T00:00:00",
+  "not_after": "2027-01-01T23:59:59",
+  "serial_number": "d5",
+  "result_count": 1
+ }
+]

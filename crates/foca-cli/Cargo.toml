@@ -1,0 +1,38 @@
+[package]
+name = "foca-cli"
+description = "FOCA-rs command line (for testing the core on a PC)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "foca"
+path = "src/main.rs"
+
+[dependencies]
+foca-core.workspace = true
+foca-meta.workspace = true
+foca-analysis.workspace = true
+foca-store.workspace = true
+foca-report.workspace = true
+foca-engine.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+clap.workspace = true
+anyhow.workspace = true
+foca-net.workspace = true
+foca-fuzz.workspace = true
+foca-recon.workspace = true
+url.workspace = true
+regex.workspace = true
+sha2.workspace = true
+foca-search = { workspace = true, features = ["store"] }
+tokio = { workspace = true, features = ["signal", "rt-multi-thread"] }
+time.workspace = true
+tracing.workspace = true
+tempfile.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

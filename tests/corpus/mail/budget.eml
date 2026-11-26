@@ -1,0 +1,81 @@
+Return-Path: <i.petrenko@example.com>
+Received: from mx1.example.org (mx1.example.org [198.51.100.25])
+	by mail.example.org (Postfix) with ESMTPS id 4F2A1; Thu, 14 Mar 2024 16:42:10 +0000
+Received: from EXCH01.corp.example.test (unknown [203.0.113.10])
+	by mx1.example.org (Postfix) with ESMTPS; Thu, 14 Mar 2024 16:42:09 +0000
+Received: from ws-042.corp.example.test (10.20.30.42) by EXCH01.corp.example.test
+	(10.20.0.15) with Microsoft SMTP Server id 15.2.1118.40; Thu, 14 Mar 2024 18:42:07 +0200
+From: "Петренко Іван" <i.petrenko@example.com>
+To: John Doe <john.doe@example.org>, o.kovalenko@example.com (Olena Kovalenko)
+Cc: buh@example.com
+Reply-To: i.petrenko.private@example.net
+Subject: =?UTF-8?B?0JrQvtGI0YLQvtGA0LjRgSDQvdCwIDIwMjQg0YDRltC6?=
+Date: Thu, 14 Mar 2024 18:42:07 +0200
+Message-ID: <a1b2c3d4e5@EXCH01.corp.example.test>
+X-Mailer: Microsoft Outlook 16.0
+X-Originating-IP: [10.20.30.42]
+Organization: Contoso Energy (fictional)
+X-MS-Exchange-CrossTenant-Id: 00000000-1111-2222-3333-444444444444
+DKIM-Signature: v=1; a=rsa-sha256; d=example.com; s=selector1; h=from:to; bh=x; b=y
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="outer-b"
+
+This is a multi-part message in MIME format.
+--outer-b
+Content-Type: multipart/alternative; boundary="alt-b"
+
+--alt-b
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+=D0=94=D0=BE=D0=B1=D1=80=D0=B8=D0=B9 =D0=B4=D0=B5=D0=BD=D1=8C!
+=D0=94=D0=B8=D0=B2. https://intranet.example.test/finance/budget?id=3D42 =
+=D1=82=D0=B0 =D1=82=D0=B0=D0=B1=D0=BB=D0=B8=D1=86=D1=8E.
+--=20
+=D0=86=D0=B2=D0=B0=D0=BD =D0=9F=D0=B5=D1=82=D1=80=D0=B5=D0=BD=D0=BA=D0=BE
+=D1=82=D0=B5=D0=BB. +380 44 000 00 00
+
+--alt-b
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: base64
+
+PGh0bWw+PGJvZHk+PHA+0JTQvtCx0YDQuNC5INC00LXQvdGMITwvcD48YSBocmVmPSJodHRwczov
+L2NvbnRvc28tbXkuc2hhcmVwb2ludC5leGFtcGxlLnRlc3QvcGVyc29uYWwvaV9wZXRyZW5rby9E
+b2N1bWVudHMvYnVkZ2V0Lnhsc3giPmJ1ZGdldDwvYT48L2JvZHk+PC9odG1sPg==
+--alt-b--
+--outer-b
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename*=utf-8''%D0%9A%D0%BE%D1%88%D1%82%D0%BE%D1%80%D0%B8%D1%81.docx
+
+UEsDBBQAAAAIAECVbljHHBc8CgAAAAgAAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbLMJqSxILda3
+AwBQSwMEFAAAAAgAQJVuWN1ahg0PAAAADQAAABEAAAB3b3JkL2RvY3VtZW50LnhtbLMpt0rJTy7N
+Tc0r0bcDAFBLAwQUAAAACABAlW5Y7XMwZEsBAAAIAgAAEQAAAGRvY1Byb3BzL2NvcmUueG1sbZHf
+SsMwGMVfpeS+TbqJjNJloGMX4kBwongX0m9bsU1KEu12p7sQn8EbX0GEgQjbM6RvZFq3ylAIgXB+
+53x/Eg8WeeY9gNKpFH0UBgR5ILhMUjHro6vJyO+hAY15EXGp4ELJApRJQXvOJnTEiz6aG1NEGGs+
+h5zpwBHCiVOpcmbcU81wwfgdmwHuEHKMczAsYYbhOtAv2kS0i0x4G1ncq6wJSDiGDHIQRuMwCPEv
+a0Dl+l9Do7TkQqctVZZlUHYbznUU4pvx+WXTvJ8KbZjggGic8MikJgNqX+22eqlW7n60n9WT1yGd
+oxi3ek1yBcxIRe2z/bDvduPZN7uuVs6wthv7ZbcNv6fqbWZMm7Hb8jSF5GRJz+RceEMJMf6rxbsp
+f/yQeG6WyCwL6KO9ct09HU5GiNat+aTrh2RCehEh7tzWpQ/8tCly+J30G1BLAQIUAxQAAAAIAECV
+bljHHBc8CgAAAAgAAAATAAAAAAAAAAAAAACAAQAAAABbQ29udGVudF9UeXBlc10ueG1sUEsBAhQD
+FAAAAAgAQJVuWN1ahg0PAAAADQAAABEAAAAAAAAAAAAAAIABOwAAAHdvcmQvZG9jdW1lbnQueG1s
+UEsBAhQDFAAAAAgAQJVuWO1zMGRLAQAACAIAABEAAAAAAAAAAAAAAIABeQAAAGRvY1Byb3BzL2Nv
+cmUueG1sUEsFBgAAAAADAAMAvwAAAPMBAAAAAA==
+--outer-b
+Content-Type: message/rfc822
+Content-Disposition: attachment; filename="Draft budget.eml"
+
+Received: from ws-017.corp.example.test (ws-017.corp.example.test [192.168.10.17])
+	by EXCH02.corp.example.test (10.20.0.16) with Microsoft SMTP Server; Mon, 11 Mar 2024 09:00:00 +0200
+From: Olena Kovalenko <o.kovalenko@example.com>
+To: Іван Петренко <i.petrenko@example.com>
+Subject: Draft budget
+Date: Mon, 11 Mar 2024 09:00:00 +0200
+Message-ID: <inner-0001@EXCH02.corp.example.test>
+X-Mailer: Microsoft Outlook 16.0
+Content-Type: text/plain; charset=utf-8
+
+See \\FS01.corp.example.test\finance$\2024\budget.xlsx
+
+--outer-b--

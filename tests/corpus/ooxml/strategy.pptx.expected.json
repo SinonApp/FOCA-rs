@@ -1,0 +1,122 @@
+{
+  "application": "Microsoft Office PowerPoint",
+  "author": "Марина Шевчук",
+  "comments": [
+    {
+      "author": "Марина Шевчук",
+      "date": "2024-02-10T12:00:00.000",
+      "initials": "МШ",
+      "source": "ppt/comments/comment1.xml",
+      "text": "Прибрати цифри EBITDA до публікації"
+    }
+  ],
+  "company": "Contoso Energy",
+  "created": "2024-01-20T09:00:00Z",
+  "description": "Внутрішній документ",
+  "edit_time_secs": 22800,
+  "embedded": [
+    {
+      "metadata": {
+        "application": "Greenshot 1.2.10",
+        "author": "Марина Шевчук",
+        "camera": {
+          "make": "Samsung",
+          "model": "SM-G991B"
+        },
+        "created": "2024-08-02T11:05:33+03:00",
+        "fields": {
+          "exif:Make": "Samsung",
+          "exif:Model": "SM-G991B",
+          "png:Author": "Марина Шевчук",
+          "png:Comment": "C:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png",
+          "png:Software": "Greenshot 1.2.10"
+        },
+        "format": "png",
+        "paths": [
+          {
+            "kind": "windows",
+            "path": "C:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png",
+            "source": "png:Comment",
+            "user": "m.shevchuk"
+          }
+        ],
+        "people": [
+          {
+            "name": "Марина Шевчук",
+            "role": "author",
+            "source": "png:Author"
+          },
+          {
+            "name": "Марина Шевчук",
+            "role": "creator",
+            "source": "xmp:dc:creator"
+          },
+          {
+            "name": "m.shevchuk",
+            "role": "path_user",
+            "source": "C:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png"
+          }
+        ],
+        "software": [
+          "Greenshot 1.2.10",
+          "Adobe Photoshop CC 2019 (Windows)"
+        ],
+        "xmp": {
+          "dc:creator": "Марина Шевчук",
+          "xmp:CreateDate": "2024-08-02T11:05:33+03:00",
+          "xmp:CreatorTool": "Adobe Photoshop CC 2019 (Windows)",
+          "xmpMM:History/stEvt:action": "saved",
+          "xmpMM:History/stEvt:softwareAgent": "Adobe Photoshop CC 2019 (Windows)"
+        },
+        "xmp_history": [
+          {
+            "action": "saved",
+            "software_agent": "Adobe Photoshop CC 2019 (Windows)"
+          }
+        ]
+      },
+      "name": "ppt/media/image1.png"
+    }
+  ],
+  "fields": {
+    "app:AppVersion": "16.0000",
+    "app:DocSecurity": "0",
+    "app:LinksUpToDate": "false"
+  },
+  "format": "pptx",
+  "language": "uk-UA",
+  "last_modified_by": "m.shevchuk",
+  "manager": "Бондар А.",
+  "modified": "2024-02-11T19:30:00Z",
+  "people": [
+    {
+      "name": "Марина Шевчук",
+      "role": "author",
+      "source": "core.xml:dc:creator"
+    },
+    {
+      "name": "m.shevchuk",
+      "role": "last_modified_by",
+      "source": "core.xml:cp:lastModifiedBy"
+    },
+    {
+      "name": "Марина Шевчук",
+      "role": "comment",
+      "source": "ppt/commentAuthors.xml"
+    }
+  ],
+  "revision": "15",
+  "software": [
+    "Microsoft Office PowerPoint 16.0000"
+  ],
+  "stats": {
+    "hidden_slides": 1,
+    "notes": 1,
+    "paragraphs": 18,
+    "slides": 2,
+    "words": 120
+  },
+  "subject": "Тендер ТЕС-2",
+  "template": "Office Theme",
+  "title": "Стратегія 2026"
+}

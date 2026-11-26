@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 386" width="400" height="386" role="img" aria-label="Схема внутрішньої мережі" font-family="sans-serif">
+<title>Схема внутрішньої мережі</title>
+<rect x="0" y="28" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="72" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="116" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="160" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="204" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="248" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="292" width="400" height="22" fill="#f8fafc"/>
+<rect x="0" y="336" width="400" height="22" fill="#f8fafc"/>
+<g fill="none" stroke="#94a3b8" stroke-width="1">
+<path d="M15 25 V39 H26"/>
+<path d="M15 25 V61 H26"/>
+<path d="M15 25 V83 H26"/>
+<path d="M35 91 V105 H46"/>
+<path d="M35 91 V127 H46"/>
+<path d="M15 25 V149 H26"/>
+<path d="M15 25 V171 H26"/>
+<path d="M35 179 V193 H46"/>
+<path d="M15 25 V215 H26"/>
+<path d="M35 223 V237 H46"/>
+<path d="M35 223 V259 H46"/>
+<path d="M15 25 V281 H26"/>
+<path d="M35 289 V303 H46"/>
+<path d="M15 25 V325 H26"/>
+<path d="M35 333 V347 H46"/>
+<path d="M35 333 V369 H46"/>
+</g>
+<g>
+<title>Домен: corp.example.test (CORP)</title>
+<circle cx="15" cy="17" r="6.3" fill="#fff" stroke="#1e3a8a" stroke-width="1.2"/>
+<ellipse cx="15" cy="17" rx="2.5" ry="6.3" fill="none" stroke="#1e3a8a" stroke-width="1"/>
+<path d="M8.7 17 H21.3" stroke="#1e3a8a" stroke-width="1"/>
+<text x="27" y="21" font-size="11" fill="#0f172a" font-weight="700">corp.example.test (CORP)</text>
+</g>
+<g>
+<title>Сервер: DC01 · Контролер домену</title>
+<rect x="30.8" y="32.7" width="8.4" height="12.6" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M30.8 36.9 H39.2 M30.8 41.1 H39.2" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="36.7" cy="43.2" r="0.8" fill="#5b21b6"/>
+<text x="47" y="43" font-size="11" fill="#0f172a" font-weight="700">DC01<tspan fill="#475569" font-weight="400" font-size="9.5"> · Контролер домену</tspan>
+</text>
+</g>
+<g>
+<title>Сервер: Example-Issuing-CA-01 · PKI</title>
+<path d="M35 54.4 L40.6 56.8 V61 Q40.6 65.5 35 67.7 Q29.4 65.5 29.4 61 V56.8 Z" fill="#5b21b6" fill-opacity="0.25" stroke="#5b21b6" stroke-width="1.2"/>
+<text x="47" y="65" font-size="11" fill="#b91c1c" font-weight="700">Example-Issuing-CA-01<tspan fill="#475569" font-weight="400" font-size="9.5"> · PKI</tspan>
+</text>
+</g>
+<g>
+<title>Сервер: FS01 · Файловий</title>
+<rect x="30.8" y="76.7" width="8.4" height="12.6" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M30.8 80.9 H39.2 M30.8 85.1 H39.2" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="36.7" cy="87.2" r="0.8" fill="#5b21b6"/>
+<text x="47" y="87" font-size="11" fill="#0f172a" font-weight="700">FS01<tspan fill="#475569" font-weight="400" font-size="9.5"> · Файловий</tspan>
+</text>
+</g>
+<g>
+<title>Спільна тека: \\FS01\Buh$</title>
+<path d="M48.7 110.3 V99.7 H53.6 L55.3 101.5 H61.3 V110.3 Z" fill="#166534" fill-opacity="0.25" stroke="#166534" stroke-width="1.2"/>
+<text x="67" y="109" font-size="11" fill="#0f172a">\\FS01\Buh$</text>
+</g>
+<g>
+<title>Спільна тека: \\FS01\HR</title>
+<path d="M48.7 132.3 V121.7 H53.6 L55.3 123.5 H61.3 V132.3 Z" fill="#166534" fill-opacity="0.25" stroke="#166534" stroke-width="1.2"/>
+<text x="67" y="131" font-size="11" fill="#0f172a">\\FS01\HR</text>
+</g>
+<g>
+<title>Сервер: mail.example.test · Пошта</title>
+<rect x="30.8" y="142.7" width="8.4" height="12.6" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M30.8 146.9 H39.2 M30.8 151.1 H39.2" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="36.7" cy="153.2" r="0.8" fill="#5b21b6"/>
+<text x="47" y="153" font-size="11" fill="#0f172a" font-weight="700">mail.example.test<tspan fill="#475569" font-weight="400" font-size="9.5"> · Пошта</tspan>
+</text>
+</g>
+<g>
+<title>Сервер: PRINTSRV · Друк</title>
+<rect x="30.8" y="164.7" width="8.4" height="12.6" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M30.8 168.9 H39.2 M30.8 173.1 H39.2" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="36.7" cy="175.2" r="0.8" fill="#5b21b6"/>
+<text x="47" y="175" font-size="11" fill="#0f172a" font-weight="700">PRINTSRV<tspan fill="#475569" font-weight="400" font-size="9.5"> · Друк</tspan>
+</text>
+</g>
+<g>
+<title>Принтер: HP LaserJet M507 (2 поверх)</title>
+<rect x="51.5" y="186.7" width="7" height="4.2" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<rect x="48.7" y="190.9" width="12.6" height="5.6" rx="1" fill="#9a3412"/>
+<rect x="51.5" y="195.1" width="7" height="4.2" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<text x="67" y="197" font-size="11" fill="#0f172a">HP LaserJet M507 (2 поверх)</text>
+</g>
+<g>
+<title>Робоча станція: BUH-PC01</title>
+<rect x="28.7" y="209.1" width="12.6" height="8.4" rx="1" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<path d="M35 217.5 V220.9 M31.5 220.9 H38.5" stroke="#9a3412" stroke-width="1.2"/>
+<text x="47" y="219" font-size="11" fill="#0f172a">BUH-PC01</text>
+</g>
+<g>
+<title>Користувач: CORP\o.koval</title>
+<circle cx="55" cy="234.2" r="2.8" fill="#3730a3"/>
+<path d="M49.7 243.3 A5.3 5.3 0 0 1 60.3 243.3 Z" fill="#3730a3"/>
+<text x="67" y="241" font-size="11" fill="#0f172a">CORP\o.koval</text>
+</g>
+<g>
+<title>Користувач: CORP\s.melnyk</title>
+<circle cx="55" cy="256.2" r="2.8" fill="#3730a3"/>
+<path d="M49.7 265.3 A5.3 5.3 0 0 1 60.3 265.3 Z" fill="#3730a3"/>
+<text x="67" y="263" font-size="11" fill="#0f172a">CORP\s.melnyk</text>
+</g>
+<g>
+<title>Робоча станція: HR-NB02</title>
+<rect x="28.7" y="275.1" width="12.6" height="8.4" rx="1" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<path d="M35 283.5 V286.9 M31.5 286.9 H38.5" stroke="#9a3412" stroke-width="1.2"/>
+<text x="47" y="285" font-size="11" fill="#0f172a">HR-NB02</text>
+</g>
+<g>
+<title>Користувач: CORP\m.bondar</title>
+<circle cx="55" cy="300.2" r="2.8" fill="#3730a3"/>
+<path d="M49.7 309.3 A5.3 5.3 0 0 1 60.3 309.3 Z" fill="#3730a3"/>
+<text x="67" y="307" font-size="11" fill="#0f172a">CORP\m.bondar</text>
+</g>
+<g>
+<title>Робоча станція: IT-WS03</title>
+<rect x="28.7" y="319.1" width="12.6" height="8.4" rx="1" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<path d="M35 327.5 V330.9 M31.5 330.9 H38.5" stroke="#9a3412" stroke-width="1.2"/>
+<text x="47" y="329" font-size="11" fill="#0f172a">IT-WS03</text>
+</g>
+<g>
+<title>Користувач: CORP\a.shevchuk</title>
+<circle cx="55" cy="344.2" r="2.8" fill="#3730a3"/>
+<path d="M49.7 353.3 A5.3 5.3 0 0 1 60.3 353.3 Z" fill="#3730a3"/>
+<text x="67" y="351" font-size="11" fill="#0f172a">CORP\a.shevchuk</text>
+</g>
+<g>
+<title>Користувач: CORP\administrator</title>
+<circle cx="55" cy="366.2" r="2.8" fill="#3730a3"/>
+<path d="M49.7 375.3 A5.3 5.3 0 0 1 60.3 375.3 Z" fill="#3730a3"/>
+<text x="67" y="373" font-size="11" fill="#0f172a">CORP\administrator</text>
+</g>
+</svg>

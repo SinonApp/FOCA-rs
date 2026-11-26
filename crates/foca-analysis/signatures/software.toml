@@ -1,0 +1,653 @@
+# Software and OS signatures (counterpart of FOCA's ApplicationAnalysis).
+#
+# Each [[software]] / [[os]] entry matches its `re` regex against metadata strings:
+# Application/Creator, Producer, xmp:CreatorTool, EXIF Software, app.xml AppVersion
+# (already joined with Application in `software`), OLE OS, and for photos the string
+# "<Make> <Model> | <Software>". The first matching entry wins, so order matters:
+# specific patterns go above generic ones.
+#
+# Named groups: `v` is the version, `app` the application (Word/Excel/…).
+# `versions` refines by version: key `v` matches the captured version as a whole or as a
+# component prefix ("7.2" ⊂ "7.2.5.2", but not "7.25"); the longest key wins.
+# Substitutions in id/name: {app} as captured, {app_id} word/excel/ppt/outlook/visio…,
+# {version} the captured version, {ver_id} the version without dots, {key} the version key without dots.
+# A version without `id` gets id = <entry id> + {key}.
+#
+# eol is the vendor end-of-support date (ISO); legacy = true means the product is out of
+# support with no published date. A document is "outdated" if eol < today or legacy.
+# Date sources: Microsoft Lifecycle, Adobe Support Lifecycle, LibreOffice Release Plan,
+# Oracle (OpenOffice.org, 15.04.2011). iOS dates are the release of iOS N+2 (when security
+# updates stop in practice; Apple does not publish dates).
+
+# ---------------- Microsoft Office ----------------
+
+[[software]]
+id = "{app_id}365"
+name = "Microsoft {app} для Microsoft 365"
+kind = "office"
+re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|OneNote)(?:®)?\s+(?:for|für|pour|para|per|для)\s+(?:Microsoft|Office)\s*365'
+
+[[software]]
+id = "{app_id}"
+name = "Microsoft Office {app}"
+kind = "office"
+re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|OneNote|Access)(?:®)?\s+(?P<v>20\d\d)\b'
+versions = [
+  { v = "2003", id = "{app_id}2003", name = "Microsoft Office {app} 2003", released = 2003, eol = "2014-04-08" },
+  { v = "2007", id = "{app_id}2007", name = "Microsoft Office {app} 2007", released = 2007, eol = "2017-10-10" },
+  { v = "2010", id = "{app_id}2010", name = "Microsoft {app} 2010", released = 2010, eol = "2020-10-13" },
+  { v = "2013", id = "{app_id}2013", name = "Microsoft Office {app} 2013", released = 2013, eol = "2023-04-11" },
+  { v = "2016", id = "{app_id}2016", name = "Microsoft Office {app} 2016", released = 2016, eol = "2025-10-14" },
+  { v = "2019", id = "{app_id}2019", name = "Microsoft Office {app} 2019", released = 2019, eol = "2025-10-14" },
+  { v = "2021", id = "{app_id}2021", name = "Microsoft Office {app} LTSC 2021", released = 2021, eol = "2026-10-13" },
+  { v = "2024", id = "{app_id}2024", name = "Microsoft Office {app} LTSC 2024", released = 2024, eol = "2029-10-09" },
+]
+
+[[software]]
+id = "mac{app_id}"
+name = "Microsoft {app} для Mac"
+kind = "office"
+re = '(?i)^Microsoft\s+Macintosh\s+(?P<app>Word|Excel|PowerPoint|Outlook)(?:\s+(?P<v>\d+)\.\d+)?'
+versions = [
+  { v = "11", id = "mac{app_id}2004", name = "Microsoft {app} 2004 для Mac", released = 2004, eol = "2012-01-10" },
+  { v = "12", id = "mac{app_id}2008", name = "Microsoft {app} 2008 для Mac", released = 2008, eol = "2013-04-09" },
+  { v = "14", id = "mac{app_id}2011", name = "Microsoft {app} 2011 для Mac", released = 2010, eol = "2017-10-10" },
+  { v = "15", id = "mac{app_id}2016", name = "Microsoft {app} 2016 для Mac", released = 2015, eol = "2020-10-13" },
+  { v = "16", id = "mac{app_id}2019", name = "Microsoft {app} 2019+ / 365 для Mac", released = 2018 },
+]
+
+# app.xml: Application + AppVersion ("Microsoft Office Word 15.0000")
+[[software]]
+id = "{app_id}"
+name = "Microsoft Office {app}"
+kind = "office"
+re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|Access)(?:®)?\s+(?P<v>\d{1,2})\.\d+'
+versions = [
+  { v = "8", id = "{app_id}97", name = "Microsoft {app} 97", released = 1997, eol = "2004-01-16" },
+  { v = "9", id = "{app_id}2000", name = "Microsoft {app} 2000", released = 1999, eol = "2009-07-14" },
+  { v = "10", id = "{app_id}2002", name = "Microsoft {app} 2002 (XP)", released = 2001, eol = "2011-07-12" },
+  { v = "11", id = "{app_id}2003", name = "Microsoft Office {app} 2003", released = 2003, eol = "2014-04-08" },
+  { v = "12", id = "{app_id}2007", name = "Microsoft Office {app} 2007", released = 2007, eol = "2017-10-10" },
+  { v = "14", id = "{app_id}2010", name = "Microsoft {app} 2010", released = 2010, eol = "2020-10-13" },
+  { v = "15", id = "{app_id}2013", name = "Microsoft Office {app} 2013", released = 2013, eol = "2023-04-11" },
+  { v = "16", id = "{app_id}2016", name = "Microsoft Office {app} 2016-2024 / 365", released = 2016 },
+]
+
+# OLE2 / app.xml without a version
+[[software]]
+id = "{app_id}"
+name = "Microsoft Office {app}"
+kind = "office"
+re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|Access)(?:®)?\s*$'
+
+[[software]]
+id = "msprint2pdf"
+name = "Microsoft Print to PDF"
+kind = "pdf"
+re = '(?i)Microsoft:?\s*Print\s+To\s+PDF'
+
+[[software]]
+id = "msreporting"
+name = "Microsoft SQL Server Reporting Services"
+kind = "pdf"
+re = '(?i)Microsoft\s+Reporting\s+Services(?:\s+(?P<v>\d+(?:\.\d+)*))?'
+
+# ---------------- LibreOffice / OpenOffice ----------------
+
+[[software]]
+id = "lo"
+name = "LibreOffice"
+kind = "office"
+re = '(?i)^LibreOffice(?:/|\s+)(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "3", released = 2011, legacy = true },
+  { v = "4", released = 2013, legacy = true },
+  { v = "5", released = 2015, legacy = true },
+  { v = "6.0", released = 2018, eol = "2018-11-26" },
+  { v = "6.1", released = 2018, eol = "2019-05-29" },
+  { v = "6.2", released = 2019, eol = "2019-11-29" },
+  { v = "6.3", released = 2019, eol = "2020-05-29" },
+  { v = "6.4", released = 2020, eol = "2020-11-30" },
+  { v = "7.0", released = 2020, eol = "2021-06-01" },
+  { v = "7.1", released = 2021, eol = "2021-11-30" },
+  { v = "7.2", released = 2021, eol = "2022-06-12" },
+  { v = "7.3", released = 2022, eol = "2022-11-30" },
+  { v = "7.4", released = 2022, eol = "2023-06-12" },
+  { v = "7.5", released = 2023, eol = "2023-11-30" },
+  { v = "7.6", released = 2023, eol = "2024-06-12" },
+  { v = "24.2", released = 2024, eol = "2024-11-30" },
+  { v = "24.8", released = 2024, eol = "2025-06-12" },
+  { v = "25.2", released = 2025, eol = "2025-11-30" },
+  { v = "25.8", released = 2025, eol = "2026-06-12" },
+  { v = "26.2", released = 2026 },
+]
+
+[[software]]
+id = "ooo"
+name = "OpenOffice.org"
+kind = "office"
+re = '(?i)^OpenOffice\.org(?:/|\s+)(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "1", released = 2002, eol = "2011-04-15" },
+  { v = "2", released = 2005, eol = "2011-04-15" },
+  { v = "3", released = 2008, eol = "2011-04-15" },
+]
+
+[[software]]
+id = "aoo"
+name = "Apache OpenOffice"
+kind = "office"
+re = '(?i)^(?:Apache[_ ])?OpenOffice(?:/|\s+)(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "3", released = 2012, legacy = true },
+  { v = "4.0", released = 2013, legacy = true },
+  { v = "4.1", released = 2014 },
+]
+
+[[software]]
+id = "staroffice"
+name = "StarOffice"
+kind = "office"
+re = '(?i)^StarOffice(?:/|\s+)?(?P<v>\d+(?:\.\d+)*)?'
+legacy = true
+
+# ---------------- PDF ----------------
+
+[[software]]
+id = "acro"
+name = "Adobe Acrobat"
+kind = "pdf"
+re = '(?i)^Adobe\s+Acrobat(?:\s+(?:Pro|Standard|Professional))?(?:\s+(?:DC|XI|X|IX|VIII|9|8|2017|2020))?\s+(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "5", name = "Adobe Acrobat 5", released = 2001, legacy = true },
+  { v = "6", name = "Adobe Acrobat 6", released = 2003, eol = "2008-09-30" },
+  { v = "7", name = "Adobe Acrobat 7", released = 2005, eol = "2009-12-28" },
+  { v = "8", name = "Adobe Acrobat 8", released = 2006, eol = "2011-11-03" },
+  { v = "9", name = "Adobe Acrobat 9", released = 2008, eol = "2013-06-26" },
+  { v = "10", name = "Adobe Acrobat X", released = 2010, eol = "2015-11-18" },
+  { v = "11", name = "Adobe Acrobat Pro XI", released = 2012, eol = "2017-10-15" },
+]
+
+[[software]]
+id = "distiller"
+name = "Acrobat Distiller"
+kind = "pdf"
+re = '(?i)Acrobat\s+Distiller\s+(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "5", released = 2001, legacy = true },
+  { v = "6", released = 2003, eol = "2008-09-30" },
+  { v = "7", released = 2005, eol = "2009-12-28" },
+  { v = "8", released = 2006, eol = "2011-11-03" },
+  { v = "9", released = 2008, eol = "2013-06-26" },
+  { v = "10", released = 2010, eol = "2015-11-18" },
+  { v = "11", released = 2012, eol = "2017-10-15" },
+]
+
+[[software]]
+id = "pdfmaker"
+name = "Acrobat PDFMaker"
+kind = "pdf"
+re = '(?i)Acrobat\s+PDFMaker\s+(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "9", released = 2008, eol = "2013-06-26" },
+  { v = "10", released = 2010, eol = "2015-11-18" },
+  { v = "11", released = 2012, eol = "2017-10-15" },
+]
+
+[[software]]
+id = "pdflib"
+name = "Adobe PDF Library"
+kind = "pdf"
+re = '(?i)Adobe\s+PDF\s+Library\s+(?P<v>\d+(?:\.\d+)*)'
+# versions below 15 (Acrobat DC, 2015): Acrobat 5-XI lines, out of support
+legacy_below = 15
+
+[[software]]
+id = "gs"
+name = "Ghostscript"
+kind = "pdf"
+re = '(?i)(?:GPL\s+|AFPL\s+|Artifex\s+|ESP\s+)?Ghostscript\s+(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "7", released = 2001, legacy = true },
+  { v = "8", released = 2002, legacy = true },
+]
+
+[[software]]
+id = "pdftex"
+name = "pdfTeX"
+kind = "pdf"
+re = '(?i)pdfTeX-(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
+id = "luatex"
+name = "LuaTeX"
+kind = "pdf"
+re = '(?i)LuaTeX-(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
+id = "xetex"
+name = "XeTeX (xdvipdfmx)"
+kind = "pdf"
+re = '(?i)xdvipdfmx\s*\(?(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "itext"
+name = "iText"
+kind = "pdf"
+re = '(?i)\biText(?:Sharp|®)?\s*®?\s*(?:Core\s+)?(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "1", released = 2005, legacy = true },
+  { v = "2", name = "iText 2 (заброшен, LGPL-форк)", released = 2007, legacy = true },
+  { v = "4", released = 2009, legacy = true },
+]
+
+[[software]]
+id = "quartz"
+name = "macOS Quartz PDFContext"
+kind = "pdf"
+re = '(?i)(?:Mac\s+OS\s+X|macOS)\s*(?:Version\s*)?(?P<v>\d+(?:\.\d+)*).*Quartz\s+PDFContext'
+
+[[software]]
+id = "quartz"
+name = "macOS Quartz PDFContext"
+kind = "pdf"
+re = '(?i)Quartz\s+PDFContext'
+
+[[software]]
+id = "pdfcreator"
+name = "PDFCreator"
+kind = "pdf"
+re = '(?i)^PDFCreator\s+(?:Free\s+)?(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
+id = "pdf24"
+name = "PDF24 Creator"
+kind = "pdf"
+re = '(?i)PDF24\s+Creator(?:\s+(?P<v>\d+(?:\.\d+)*))?'
+
+[[software]]
+id = "nitro"
+name = "Nitro PDF"
+kind = "pdf"
+re = '(?i)Nitro\s+(?:PDF\s+)?Pro(?:fessional)?\s*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "foxit"
+name = "Foxit PDF"
+kind = "pdf"
+re = '(?i)Foxit\s+(?:PhantomPDF|PDF\s+Editor|Reader|Software)[^\d]*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "pdfxchange"
+name = "PDF-XChange"
+kind = "pdf"
+re = '(?i)PDF-XChange(?:\s+\w+)*?\s*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "skia"
+name = "Chromium (Skia/PDF)"
+kind = "pdf"
+re = '(?i)Skia/PDF\s*(?P<v>m\d+)?'
+# Chromium before m120 (December 2023): no security updates
+legacy_below = 120
+
+[[software]]
+id = "wkhtmltopdf"
+name = "wkhtmltopdf"
+kind = "pdf"
+re = '(?i)wkhtmltopdf\s*(?P<v>\d+(?:\.\d+)*)?'
+legacy = true
+
+[[software]]
+id = "abbyy"
+name = "ABBYY FineReader"
+kind = "pdf"
+re = '(?i)ABBYY\s+FineReader(?:\s+PDF)?\s*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "crystal"
+name = "Crystal Reports"
+kind = "pdf"
+re = '(?i)Crystal\s+Reports?(?:\s+(?P<v>\d+(?:\.\d+)*))?'
+
+[[software]]
+id = "1c"
+name = "1С:Предприятие"
+kind = "office"
+re = '(?i)(?:1C|1С)[:\s]*(?:Enterprise|Предприятие|Підприємство)\s*(?P<v>\d+(?:\.\d+)*)?'
+
+# ---------------- Scanners and MFPs ----------------
+
+[[software]]
+id = "canon-ir"
+name = "Canon imageRUNNER"
+kind = "scanner"
+re = '(?i)^Canon\s+(?:Canon\s+)?(?P<model>iR[- ]?\S+|imageRUNNER\S*|MF\d+\S*)(?:.*?\s(?P<v>\d+\.\d+(?:\.\d+)*))?'
+
+[[software]]
+id = "mfp"
+name = "МФУ / сканер"
+kind = "scanner"
+re = '(?i)^(?:KONICA\s+MINOLTA|bizhub|Xerox|RICOH|KYOCERA|SHARP\s+MX|Brother\s+(?:MFC|DCP)|HP\s+(?:Digital\s+Sending|Scan|LaserJet\s+MFP)|EPSON\s+Scan|Lexmark|TASKalfa|ECOSYS)'
+
+# ---------------- Cameras and phones ("<Make> <Model> | <Software>") ----------------
+
+[[software]]
+id = "ios{ver_id}"
+name = "iOS {version}"
+kind = "camera"
+re = '^Apple\s+(?:iPhone|iPad|iPod)[^|]*\|\s*(?P<v>\d+(?:\.\d+)*)\s*$'
+versions = [
+  { v = "7", released = 2013, eol = "2015-09-16" },
+  { v = "8", released = 2014, eol = "2016-09-13" },
+  { v = "9", released = 2015, eol = "2017-09-19" },
+  { v = "10", released = 2016, eol = "2018-09-17" },
+  { v = "11", released = 2017, eol = "2019-09-19" },
+  { v = "12", released = 2018, eol = "2020-09-16" },
+  { v = "13", released = 2019, eol = "2021-09-20" },
+  { v = "14", released = 2020, eol = "2022-09-12" },
+  { v = "15", released = 2021, eol = "2023-09-18" },
+  { v = "16", released = 2022, eol = "2024-09-16" },
+  { v = "17", released = 2023, eol = "2025-09-15" },
+  { v = "18", released = 2024 },
+  { v = "26", released = 2025 },
+]
+
+[[software]]
+id = "iphone"
+name = "Apple iPhone"
+kind = "camera"
+re = '^Apple\s+(?:iPhone|iPad|iPod)'
+
+[[software]]
+id = "android-samsung"
+name = "Samsung Galaxy (Android)"
+kind = "camera"
+re = '(?i)^samsung\s+(?:SM-|GT-|Galaxy)'
+
+[[software]]
+id = "android"
+name = "Android-смартфон"
+kind = "camera"
+re = '(?i)^(?:Google\s+Pixel|Xiaomi|Redmi|POCO|HUAWEI|HONOR|OnePlus|OPPO|vivo|motorola|realme|Nokia\s+\d|HMD|Meizu|ZTE|Sony\s+(?:Xperia|[A-Z]\d{4}|XQ-))'
+
+[[software]]
+id = "canon-camera"
+name = "Canon (камера)"
+kind = "camera"
+re = '(?i)^Canon\s+(?:Canon\s+)?(?:EOS|PowerShot|IXUS|IXY|DIGITAL\s+IXUS)'
+
+[[software]]
+id = "nikon"
+name = "Nikon (камера)"
+kind = "camera"
+re = '(?i)^NIKON(?:\s+CORPORATION)?\s+'
+
+[[software]]
+id = "sony-camera"
+name = "Sony (камера)"
+kind = "camera"
+re = '(?i)^SONY\s+(?:ILCE|ILCA|DSC|NEX|SLT|DSLR|ZV)-?'
+
+[[software]]
+id = "fujifilm"
+name = "Fujifilm (камера)"
+kind = "camera"
+re = '(?i)^FUJIFILM\s+'
+
+[[software]]
+id = "camera"
+name = "Цифровая камера"
+kind = "camera"
+re = '(?i)^(?:OLYMPUS|Panasonic|PENTAX|RICOH\s+IMAGING|LEICA|GoPro|DJI|KODAK|CASIO|SIGMA|Hasselblad)\b'
+
+# ---------------- Graphics ----------------
+
+[[software]]
+id = "ps"
+name = "Adobe Photoshop"
+kind = "image"
+re = '(?i)^Adobe\s+Photoshop\s+(?:Lightroom\s+)?(?P<v>CS\d?|CC(?:\s+20\d\d)?|20\d\d|\d+(?:\.\d+)*)'
+versions = [
+  { v = "5", id = "ps5", name = "Adobe Photoshop 5", released = 1998, legacy = true },
+  { v = "6", id = "ps6", name = "Adobe Photoshop 6", released = 2000, legacy = true },
+  { v = "7", id = "ps7", name = "Adobe Photoshop 7.0", released = 2002, legacy = true },
+  { v = "CS", id = "pscs", name = "Adobe Photoshop CS", released = 2003, legacy = true },
+  { v = "CS2", id = "pscs2", name = "Adobe Photoshop CS2", released = 2005, legacy = true },
+  { v = "CS3", id = "pscs3", name = "Adobe Photoshop CS3", released = 2007, legacy = true },
+  { v = "CS4", id = "pscs4", name = "Adobe Photoshop CS4", released = 2008, legacy = true },
+  { v = "CS5", id = "pscs5", name = "Adobe Photoshop CS5", released = 2010, legacy = true },
+  { v = "CS6", id = "pscs6", name = "Adobe Photoshop CS6", released = 2012, legacy = true },
+  { v = "CC 2014", id = "ps2014", name = "Adobe Photoshop CC 2014", released = 2014, legacy = true },
+  { v = "CC 2015", id = "ps2015", name = "Adobe Photoshop CC 2015", released = 2015, legacy = true },
+  { v = "CC 2017", id = "ps2017", name = "Adobe Photoshop CC 2017", released = 2016, legacy = true },
+  { v = "CC 2018", id = "ps2018", name = "Adobe Photoshop CC 2018", released = 2017, legacy = true },
+  { v = "CC 2019", id = "ps2019", name = "Adobe Photoshop CC 2019", released = 2018, legacy = true },
+  { v = "CC", id = "pscc", name = "Adobe Photoshop CC", released = 2013 },
+]
+
+[[software]]
+id = "lightroom"
+name = "Adobe Lightroom"
+kind = "image"
+re = '(?i)Adobe\s+(?:Photoshop\s+)?Lightroom(?:\s+Classic)?\s*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "illustrator"
+name = "Adobe Illustrator"
+kind = "image"
+re = '(?i)Adobe\s+Illustrator\s*(?P<v>CS\d?|CC(?:\s+20\d\d)?|\d+(?:\.\d+)*)?'
+# CS-CS6 (= 11-16) out of support; CC = 17+
+legacy_below = 17
+versions = [
+  { v = "CS", released = 2003, legacy = true },
+  { v = "CS2", released = 2005, legacy = true },
+  { v = "CS3", released = 2007, legacy = true },
+  { v = "CS4", released = 2008, legacy = true },
+  { v = "CS5", released = 2010, legacy = true },
+  { v = "CS6", released = 2012, legacy = true },
+]
+
+[[software]]
+id = "indesign"
+name = "Adobe InDesign"
+kind = "image"
+re = '(?i)Adobe\s+InDesign\s*(?P<v>CS\d?|CC(?:\s+20\d\d)?|\d+(?:\.\d+)*)?'
+# CS-CS6 (= 3-8) out of support; CC = 9+
+legacy_below = 9
+versions = [
+  { v = "CS", released = 2003, legacy = true },
+  { v = "CS2", released = 2005, legacy = true },
+  { v = "CS3", released = 2007, legacy = true },
+  { v = "CS4", released = 2008, legacy = true },
+  { v = "CS5", released = 2010, legacy = true },
+  { v = "CS6", released = 2012, legacy = true },
+]
+
+[[software]]
+id = "gimp"
+name = "GIMP"
+kind = "image"
+re = '(?i)^GIMP\s+(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "2.8", released = 2012, legacy = true },
+  { v = "2.6", released = 2008, legacy = true },
+]
+
+[[software]]
+id = "inkscape"
+name = "Inkscape"
+kind = "image"
+re = '(?i)^Inkscape\s+(?P<v>\d+(?:\.\d+)*)'
+versions = [
+  { v = "0", released = 2004, legacy = true },
+]
+
+[[software]]
+id = "coreldraw"
+name = "CorelDRAW"
+kind = "image"
+re = '(?i)Corel(?:DRAW|\s+PDF\s+Engine)\s*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "greenshot"
+name = "Greenshot"
+kind = "image"
+re = '(?i)^Greenshot\s+(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
+id = "paintnet"
+name = "Paint.NET"
+kind = "image"
+re = '(?i)Paint\.NET\s*v?(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "graphicconverter"
+name = "GraphicConverter"
+kind = "image"
+re = '(?i)^GraphicConverter\s*(?P<v>\d+(?:\.\d+)*)?'
+
+[[software]]
+id = "picasa"
+name = "Picasa"
+kind = "image"
+re = '(?i)^Picasa\s*(?P<v>\d+(?:\.\d+)*)?'
+legacy = true
+
+# ================= OS =================
+
+[[os]]
+id = "win16"
+name = "Windows 3.x"
+re = '(?i)^Windows\s+3\.x'
+legacy = true
+
+[[os]]
+id = "winnt4"
+name = "Windows NT 4.0 / 95"
+re = '(?i)^Windows\s+NT\s+4\.0/95'
+released = 1996
+eol = "2004-12-31"
+
+[[os]]
+id = "win98"
+name = "Windows 98"
+re = '(?i)^Windows\s+98'
+released = 1998
+eol = "2006-07-11"
+
+[[os]]
+id = "winme"
+name = "Windows Me"
+re = '(?i)^Windows\s+Me\b'
+released = 2000
+eol = "2006-07-11"
+
+[[os]]
+id = "win2000"
+name = "Windows 2000"
+re = '(?i)^Windows\s+2000'
+released = 2000
+eol = "2010-07-13"
+
+[[os]]
+id = "winxp64"
+name = "Windows XP x64 / Server 2003"
+re = '(?i)^Windows\s+XP\s+x64'
+released = 2003
+eol = "2015-07-14"
+
+[[os]]
+id = "winxp"
+name = "Windows XP"
+re = '(?i)^Windows\s+XP\b'
+released = 2001
+eol = "2014-04-08"
+
+[[os]]
+id = "winvista"
+name = "Windows Vista / Server 2008"
+re = '(?i)^Windows\s+Vista'
+released = 2007
+eol = "2020-01-14"
+
+[[os]]
+id = "win7"
+name = "Windows 7 / Server 2008 R2"
+re = '(?i)^Windows\s+7\b'
+released = 2009
+eol = "2020-01-14"
+
+[[os]]
+id = "win81"
+name = "Windows 8.1 / Server 2012 R2"
+re = '(?i)^Windows\s+8\.1'
+released = 2013
+eol = "2023-10-10"
+
+[[os]]
+id = "win8"
+name = "Windows 8 / Server 2012"
+re = '(?i)^Windows\s+8\b'
+released = 2012
+eol = "2023-10-10"
+
+[[os]]
+id = "win10"
+name = "Windows 10/11"
+re = '(?i)^Windows\s+10'
+released = 2015
+
+[[os]]
+id = "ios{ver_id}"
+name = "iOS {version}"
+re = '^Apple\s+(?:iPhone|iPad|iPod)[^|]*\|\s*(?P<v>\d+(?:\.\d+)*)\s*$'
+versions = [
+  { v = "9", released = 2015, eol = "2017-09-19" },
+  { v = "10", released = 2016, eol = "2018-09-17" },
+  { v = "11", released = 2017, eol = "2019-09-19" },
+  { v = "12", released = 2018, eol = "2020-09-16" },
+  { v = "13", released = 2019, eol = "2021-09-20" },
+  { v = "14", released = 2020, eol = "2022-09-12" },
+  { v = "15", released = 2021, eol = "2023-09-18" },
+  { v = "16", released = 2022, eol = "2024-09-16" },
+  { v = "17", released = 2023, eol = "2025-09-15" },
+]
+
+[[os]]
+id = "ios"
+name = "iOS"
+re = '^Apple\s+(?:iPhone|iPad|iPod)'
+
+[[os]]
+id = "android"
+name = "Android"
+re = '(?i)^(?:samsung\s+(?:SM-|GT-|Galaxy)|Google\s+Pixel|Xiaomi|Redmi|POCO|HUAWEI|HONOR|OnePlus|OPPO|vivo|motorola|realme)'
+
+[[os]]
+id = "macos{key}"
+name = "macOS {version}"
+re = '(?i)(?:Mac\s+OS\s+X|macOS)\s*(?:Version\s*)?(?P<v>\d+(?:\.\d+)?)'
+versions = [
+  { v = "10", name = "Mac OS X {version}", legacy = true },
+  { v = "11", name = "macOS 11 Big Sur", released = 2020, legacy = true },
+  { v = "12", name = "macOS 12 Monterey", released = 2021, legacy = true },
+  { v = "13", name = "macOS 13 Ventura", released = 2022 },
+  { v = "14", name = "macOS 14 Sonoma", released = 2023 },
+  { v = "15", name = "macOS 15 Sequoia", released = 2024 },
+]
+
+[[os]]
+id = "macos"
+name = "macOS"
+re = '(?i)(?:\bMacintosh\b|\(Macintosh\)|\$MacOSX|Mac\s+OS)'
+
+[[os]]
+id = "linux"
+name = "Linux"
+re = '(?i)(?:\$Linux|\bLinux\b|\(X11\)|Ubuntu)'
+
+[[os]]
+id = "windows"
+name = "Windows"
+re = '(?i)(?:\$Win(?:32|64|dows)|\(Windows\)|\bWindows\b)'

@@ -1,0 +1,77 @@
+{
+  "application": "-//Apple Inc.//iPhone OS 17.4//EN",
+  "attachments": [
+    {
+      "mime": "image/jpeg",
+      "name": "card-01-photo.jpeg",
+      "size": 829
+    }
+  ],
+  "company": "Contoso Energy (fictional), Фінансовий відділ",
+  "emails": [
+    "i.petrenko@example.com",
+    "john.doe@example.org"
+  ],
+  "embedded": [
+    {
+      "metadata": {
+        "camera": {
+          "make": "ExampleCam",
+          "model": "Phone X1"
+        },
+        "fields": {
+          "exif:GPSLatitude": "50 deg 27 min 0 sec N",
+          "exif:GPSLatitudeRef": "N",
+          "exif:GPSLongitude": "30 deg 31 min 0 sec E",
+          "exif:GPSLongitudeRef": "E",
+          "exif:GPSVersionID": "2.3.0.0",
+          "exif:Make": "ExampleCam",
+          "exif:Model": "Phone X1"
+        },
+        "format": "jpeg",
+        "gps": {
+          "lat": 50.45,
+          "lon": 30.516667
+        }
+      },
+      "name": "card-01-photo.jpeg"
+    }
+  ],
+  "fields": {
+    "vcf:01.adr": "вул. Прикладна, 1, Київ, 01001, Україна",
+    "vcf:01.bday": "1985-01-01",
+    "vcf:01.fn": "Іван Петренко",
+    "vcf:01.note": "VPN: vpn.corp.example.test\nПК: WS-042",
+    "vcf:01.org": "Contoso Energy (fictional), Фінансовий відділ",
+    "vcf:01.tel": "+380 67 000 00 00; +380 44 000 00 01",
+    "vcf:01.title": "Головний бухгалтер",
+    "vcf:02.fn": "John Doe • IT"
+  },
+  "format": "vcf",
+  "gps": {
+    "lat": 50.4501,
+    "lon": 30.5234
+  },
+  "links": [
+    "https://intranet.example.test/people/i.petrenko"
+  ],
+  "modified": "2024-03-14T18:00:00Z",
+  "people": [
+    {
+      "name": "Іван Петренко",
+      "role": "other",
+      "source": "vcf:fn"
+    },
+    {
+      "name": "John Doe • IT",
+      "role": "other",
+      "source": "vcf:fn"
+    }
+  ],
+  "software": [
+    "-//Apple Inc.//iPhone OS 17.4//EN"
+  ],
+  "stats": {
+    "cards": 2
+  }
+}

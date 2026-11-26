@@ -1,0 +1,17 @@
+[package]
+name = "foca-core"
+description = "FOCA-rs core model: projects, targets, scope, documents, entities, findings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+time.workspace = true
+ipnet.workspace = true
+idna.workspace = true
+url.workspace = true
+serde_json.workspace = true
+

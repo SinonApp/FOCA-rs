@@ -1,0 +1,552 @@
+/* Analytics: layered graph, link chain, network map, year lanes, heat map, org chart, web audit. */
+
+.ins-mode {
+  margin-bottom: 10px;
+}
+.ins-mode button {
+  min-height: 44px;
+  gap: 6px;
+}
+.ins-layers {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.ins-lchip .ins-lc {
+  font-size: 0.8em;
+  color: var(--text-3);
+}
+.ins-lchip.on .ins-lc {
+  color: inherit;
+}
+.ins-hidden {
+  margin: 0 0 8px;
+}
+
+/* graph */
+.ins-gwrap {
+  overflow: auto;
+  max-height: 70vh;
+  padding: 6px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.ins-svg {
+  display: block;
+  font-family: var(--font);
+}
+.ins-col {
+  fill: var(--text-3);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.ins-e {
+  fill: none;
+  stroke: var(--stroke-2);
+  opacity: 0.9;
+}
+.ins-e.dash {
+  stroke-dasharray: 4 3;
+}
+.ins-e.hl {
+  stroke: var(--accent);
+  opacity: 1;
+  stroke-width: 3px;
+}
+#ins-arr path {
+  fill: var(--text-3);
+}
+.ins-n {
+  cursor: pointer;
+}
+.ins-n rect {
+  fill: var(--layer-2);
+  stroke: var(--stroke-2);
+  stroke-width: 1;
+}
+.ins-n text {
+  fill: var(--text);
+  font-size: 12px;
+}
+.ins-n .ins-ni {
+  stroke: var(--text-2);
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.ins-n.grp rect {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-dasharray: 3 2;
+}
+.ins-n .ins-plus {
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--accent);
+}
+.ins-n.crit rect {
+  stroke: var(--crit);
+  stroke-width: 2;
+}
+.ins-n.hl rect {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.ins-n:focus-visible rect {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.ins-gtools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+.ins-gtools .btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+.ins-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.8em;
+  color: var(--text-2);
+  margin-bottom: 10px;
+}
+.ins-legend i {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: middle;
+  border: 2px solid var(--crit);
+}
+.ins-legend i.grp {
+  border: 1px dashed var(--accent);
+  background: var(--accent-soft);
+}
+.ins-legend i.dash {
+  border: 0;
+  border-top: 2px dashed var(--text-3);
+  height: 0;
+}
+.ins-crit {
+  margin-bottom: 10px;
+}
+
+/* link chain */
+.ins-chain {
+  padding: 12px;
+  margin-bottom: 10px;
+}
+.ins-chain-h {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px 8px;
+  margin-bottom: 8px;
+}
+.ins-chain-h .muted {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+.ins-chain-h .ins-chain-x {
+  grid-column: 2;
+  grid-row: 1;
+}
+.ins-chain-h b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ins-chain-h .muted {
+  min-width: 0;
+  font-size: 0.85em;
+  overflow-wrap: anywhere;
+}
+.ins-chain-x {
+  min-width: 44px;
+  min-height: 44px;
+}
+.ins-chain-tabs {
+  margin-bottom: 8px;
+}
+.ins-chain-tabs button {
+  min-height: 44px;
+}
+.ins-chain-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 8px;
+  border-radius: var(--r-s);
+  background: var(--layer-2);
+  border: 1px solid var(--stroke);
+}
+.ins-chain-step.last {
+  border-color: var(--accent);
+}
+.ins-chain-step .body {
+  flex: 1;
+  min-width: 0;
+}
+.ins-chain-step .t {
+  overflow-wrap: anywhere;
+}
+.ins-chain-step .s {
+  font-size: 0.8em;
+  color: var(--text-2);
+}
+.ins-chain-via {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 4px 22px;
+  font-size: 0.82em;
+  color: var(--text-2);
+  border-left: 2px solid var(--accent);
+  margin-left: 18px;
+}
+.ins-chain-ar {
+  color: var(--accent);
+  font-weight: 700;
+}
+.ins-chain-none {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ins-chain-none span {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* network map */
+.ins-nm-st {
+  margin-bottom: 8px;
+}
+.ins-nm-f {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 6px;
+}
+.ins-nm-d {
+  padding: 8px;
+  margin-bottom: 10px;
+}
+.ins-nm-d .ins-nm-d {
+  margin: 8px 0 0;
+  border-left: 3px solid var(--accent);
+}
+.ins-nm-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 4px;
+}
+.ins-nm-h .body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.ins-nm-h .s {
+  font-size: 0.8em;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+.ins-nm-k {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 4px 4px;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ins-nm-r.d2 {
+  padding-left: 34px;
+}
+.ins-nm-r .t,
+.ins-src-v {
+  overflow-wrap: anywhere;
+}
+
+/* year lanes */
+.ins-lanes {
+  padding: 4px 8px;
+  margin-bottom: 12px;
+  container-type: inline-size;
+}
+.ins-ln-r {
+  display: grid;
+  /* The year column grows with the font so four digits never run into the first lane. */
+  grid-template-columns: minmax(46px, max-content) repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 1px solid var(--stroke);
+}
+.ins-ln-r:last-child {
+  border-bottom: 0;
+}
+.ins-ln-r.head {
+  font-size: 0.75em;
+  color: var(--text-3);
+  font-weight: 600;
+}
+.ins-ln-r.head > span {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  min-width: 0;
+  overflow-wrap: normal;
+  hyphens: auto;
+}
+.ins-ln-s {
+  display: none;
+}
+/* Narrow card for its font size (large font scale on a phone): lane names switch to short forms. */
+@container (max-width: 16em) {
+  .ins-ln-r.head .ins-ln-l {
+    display: none;
+  }
+  .ins-ln-r.head .ins-ln-s {
+    display: inline;
+  }
+}
+.ins-ln-r.tap {
+  cursor: pointer;
+}
+.ins-ln-y {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ins-ln-c {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+.ins-ln-c small {
+  color: var(--text-2);
+  font-size: 0.72em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ins-ln-c.none {
+  color: var(--text-3);
+}
+
+/* heat map: working hours outlined, out-of-hours cells marked */
+.ins-hg {
+  position: relative;
+}
+.ins-hg i.ooh {
+  outline: 1.5px solid var(--warn);
+  outline-offset: -1.5px;
+}
+/* Absolutely positioned grid child: the grid area is its containing block, auto-placed cells ignore it. */
+.ins-wk {
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+  pointer-events: none;
+}
+.ins-wk-l,
+.ins-ooh-l {
+  display: inline-block;
+  width: 12px;
+  height: 10px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 4px;
+  border: 2px solid var(--accent);
+}
+.ins-ooh-l {
+  border: 1.5px solid var(--warn);
+}
+
+/* org chart */
+.ins-org-d {
+  margin-bottom: 8px;
+}
+.ins-org-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.ins-org-m small {
+  color: var(--text-3);
+}
+.ins-org-m.maybe {
+  border-style: dashed;
+}
+.ins-org-c summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text-2);
+}
+.ins-ov-s {
+  display: block;
+  font-size: 0.78em;
+  color: var(--text-2);
+}
+
+/* KEV, anomalies, web audit */
+.ins-kev {
+  margin: 10px 0;
+}
+.ins-cves {
+  margin: 6px 0 10px;
+}
+.ins-anom {
+  align-items: flex-start;
+}
+.ins-kev-d .fhint {
+  margin: 6px 0;
+}
+.ins-wa-s {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 0.86em;
+  margin-bottom: 8px;
+}
+.ins-wa-s span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.ins-wa-sev {
+  margin-bottom: 4px;
+}
+.ins-wa-r .body {
+  min-width: 0;
+}
+.ins-wa-r .t {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.chip.ins-oos {
+  border-style: dashed;
+  color: var(--text-2);
+}
+.chip.mono {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Document names without spaces (Технічні_умови_підключення_v2.pdf) must wrap at large font sizes. */
+.ins-dr .body {
+  min-width: 0;
+}
+.ins-dr .t,
+.ins-dr .s,
+.ins-kev-d .fhint,
+.ins-anom span,
+.ins-lin span {
+  overflow-wrap: anywhere;
+}
+
+/* Attack paths & choke points */
+.ins-ap-sum {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ins-ap-stats {
+  display: grid;
+  /* Four counters in a row while they fit, two by two with a large font. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr));
+  gap: 8px;
+  flex: 1;
+}
+.ins-ap-stats > div {
+  display: flex;
+  flex-direction: column;
+}
+.ins-ap-stats b {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+.ins-ap-stats small {
+  overflow-wrap: anywhere;
+  font-size: 0.72em;
+  color: var(--text-2);
+}
+.ins-ap-cp,
+.ins-ap-card {
+  margin-bottom: 10px;
+}
+.ins-ap-cph,
+.ins-ap-hd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ins-ap-cph b {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ins-ap-rec {
+  margin: 6px 0 0;
+  font-size: 0.85em;
+  color: var(--text-2);
+}
+.ins-ap-t {
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+  font-size: 0.98rem;
+}
+.ins-ap-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ins-ap-ar {
+  text-align: center;
+  font-size: 0.85em;
+  color: var(--text-3);
+}
+.ins-ap-st {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--layer-2);
+}
+.ins-ap-st .body {
+  flex: 1;
+  min-width: 0;
+}
+.ins-ap-st .t,
+.ins-ap-st .s {
+  overflow-wrap: anywhere;
+}
+.ins-ap-st .s {
+  font-size: 0.78em;
+  color: var(--text-2);
+}

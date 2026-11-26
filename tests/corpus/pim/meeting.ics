@@ -1,0 +1,38 @@
+BEGIN:VCALENDAR
+METHOD:REQUEST
+PRODID:Microsoft Exchange Server 2010
+VERSION:2.0
+X-WR-CALNAME:Фінансовий відділ
+BEGIN:VTIMEZONE
+TZID:FLE Standard Time
+BEGIN:STANDARD
+DTSTART:16010101T040000
+TZOFFSETFROM:+0300
+TZOFFSETTO:+0200
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+ORGANIZER;CN=Іван Петренко:mailto:i.petrenko@example.com
+ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN="Doe, John
+ ":mailto:john.doe@example.org
+ATTENDEE;ROLE=OPT-PARTICIPANT;CN=Olena Kovalenko:mailto:o.kovalenko@example
+ .com
+DESCRIPTION;LANGUAGE=uk-UA:Обговорення кошторису\n\nП
+ риєднатися до наради Microsoft Teams\nhttps://teams.micro
+ soft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d\n
+ Резерв: https://example.zoom.us/j/1234567890?pwd=EXAMPLE
+UID:040000008200E00074C5B7101A82E0080000000012345@exchange.corp.example.tes
+ t
+SUMMARY;LANGUAGE=uk-UA:Кошторис 2024: нарада
+DTSTART;TZID=FLE Standard Time:20240318T100000
+DTEND;TZID=FLE Standard Time:20240318T110000
+CLASS:PUBLIC
+LOCATION;LANGUAGE=uk-UA:Переговорна 3 (корпус А)\, \\\\FS
+ 01\\rooms
+CREATED:20240314T164500Z
+LAST-MODIFIED:20240315T081000Z
+DTSTAMP:20240314T164500Z
+X-MICROSOFT-SKYPETEAMSMEETINGURL:https://teams.microsoft.com/l/meetup-join/
+ 19%3ameeting_EXAMPLE%40thread.v2/0
+END:VEVENT
+END:VCALENDAR

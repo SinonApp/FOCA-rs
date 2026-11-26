@@ -1,0 +1,18 @@
+# Passive OSINT Scenario (ADR-0009: zero packets to target hosts)
+name = "Passive OSINT Audit"
+client = "Target Organization"
+mode = "scan"
+profile = "passive"
+targets = ["example.com"]
+excludes = []
+limit = 200
+
+[report]
+enabled = true
+format = "html"
+template = "full"
+lang = "en"
+custody = true
+
+[gate]
+fail_on_severity = "crit"

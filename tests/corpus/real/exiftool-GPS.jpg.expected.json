@@ -1,0 +1,90 @@
+{
+  "application": "Adobe Photoshop 7.0",
+  "author": "Ian Britton",
+  "camera": {
+    "make": "FUJIFILM",
+    "model": "FinePixS1Pro"
+  },
+  "created": "2002-07-13T15:58:28",
+  "description": "Communications",
+  "fields": {
+    "exif:ApertureValue": "8 EV",
+    "exif:Artist": "Ian Britton",
+    "exif:BrightnessValue": "0.26015625 EV",
+    "exif:ColorSpace": "sRGB",
+    "exif:ComponentsConfiguration": "YCbCr_",
+    "exif:Copyright": "ian Britton - FreeFoto.com",
+    "exif:DateTime": "2002:07:19 13:28:10",
+    "exif:DateTimeDigitized": "2002:07:13 15:58:28",
+    "exif:DateTimeOriginal": "2002:07:13 15:58:28",
+    "exif:ExifVersion": "2.0",
+    "exif:ExposureBiasValue": "-0.6500000005960465 EV",
+    "exif:ExposureProgram": "shutter priority",
+    "exif:FNumber": "f/0.640234375",
+    "exif:FileSource": "others",
+    "exif:Flash": "not fired, no return light detection function, auto mode 0 (unknown)",
+    "exif:FlashpixVersion": "1.0",
+    "exif:FocalLength": "0 mm",
+    "exif:FocalPlaneResolutionUnit": "inch",
+    "exif:FocalPlaneXResolution": "12.05078125 pixels per inch",
+    "exif:FocalPlaneYResolution": "12.05078125 pixels per inch",
+    "exif:GPSLatitude": "54 deg 59.38 min 0 sec N",
+    "exif:GPSLatitudeRef": "N",
+    "exif:GPSLongitude": "1 deg 54.85 min 0 sec W",
+    "exif:GPSLongitudeRef": "W",
+    "exif:GPSMapDatum": "WGS84",
+    "exif:GPSTimeStamp": "14:58:24",
+    "exif:GPSVersionID": "2.0.0.0",
+    "exif:ImageDescription": "Communications",
+    "exif:Make": "FUJIFILM",
+    "exif:MeteringMode": "pattern",
+    "exif:Model": "FinePixS1Pro",
+    "exif:Orientation": "row 0 at top and column 0 at left",
+    "exif:PhotographicSensitivity": "0",
+    "exif:PixelXDimension": "2400 pixels",
+    "exif:PixelYDimension": "1600 pixels",
+    "exif:ReferenceBlackWhite": "0, 255, 128, 255, 128, 255",
+    "exif:ResolutionUnit": "inch",
+    "exif:SceneType": "[reserved scene type 0x00]",
+    "exif:SensingMethod": "one-chip color area sensor",
+    "exif:ShutterSpeedValue": "9.5 EV",
+    "exif:Software": "Adobe Photoshop 7.0",
+    "exif:XResolution": "300 pixels per inch",
+    "exif:YCbCrPositioning": "co-sited",
+    "exif:YResolution": "300 pixels per inch",
+    "iptc:By-line": "Ian Britton",
+    "iptc:By-lineTitle": "Photographer",
+    "iptc:Caption-Abstract": "Communications",
+    "iptc:CopyrightNotice": "ian Britton - FreeFoto.com",
+    "iptc:Country": "United Kingdom",
+    "iptc:Credit": "Ian Britton",
+    "iptc:Headline": "Communications",
+    "iptc:Keywords": "Communications",
+    "iptc:ObjectName": "Communications",
+    "iptc:Source": "FreeFoto.com",
+    "iptc:Writer-Editor": "Ian Britton"
+  },
+  "format": "jpeg",
+  "gps": {
+    "lat": 54.989667,
+    "lon": -1.914167
+  },
+  "keywords": "Communications",
+  "modified": "2002-07-19T13:28:10",
+  "people": [
+    {
+      "name": "Ian Britton",
+      "role": "author",
+      "source": "exif:Artist"
+    },
+    {
+      "name": "Ian Britton",
+      "role": "other",
+      "source": "iptc:Writer-Editor"
+    }
+  ],
+  "software": [
+    "Adobe Photoshop 7.0"
+  ],
+  "title": "Communications"
+}

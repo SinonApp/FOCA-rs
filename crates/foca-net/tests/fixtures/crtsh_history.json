@@ -1,0 +1,110 @@
+[
+ {
+  "issuer_ca_id": 2,
+  "issuer_name": "C=GB, ST=Greater Manchester, L=Salford, O=Sectigo Limited, CN=Sectigo RSA Domain Validation Secure Server CA",
+  "common_name": "www.acme.test",
+  "name_value": "www.acme.test\nacme.test",
+  "id": 101,
+  "entry_timestamp": "2023-02-01T00:00:00.000",
+  "not_before": "2023-02-01T00:00:00",
+  "not_after": "2024-02-01T23:59:59",
+  "serial_number": "5ec0001",
+  "result_count": 2
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "www.acme.test",
+  "name_value": "www.acme.test\nacme.test",
+  "id": 102,
+  "entry_timestamp": "2024-01-20T10:00:00.000",
+  "not_before": "2024-01-20T10:00:00",
+  "not_after": "2024-04-19T10:00:00",
+  "serial_number": "1e0001",
+  "result_count": 2
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "www.acme.test",
+  "name_value": "www.acme.test\nacme.test",
+  "id": 103,
+  "entry_timestamp": "2024-01-20T10:00:00.000",
+  "not_before": "2024-01-20T10:00:00",
+  "not_after": "2024-04-19T10:00:00",
+  "serial_number": "1e0001",
+  "result_count": 2
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "www.acme.test",
+  "name_value": "www.acme.test\nacme.test",
+  "id": 104,
+  "entry_timestamp": "2026-09-15T08:00:00.000",
+  "not_before": "2026-09-15T08:00:00",
+  "not_after": "2026-12-14T08:00:00",
+  "serial_number": "1e0002",
+  "result_count": 2
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "old.acme.test",
+  "name_value": "old.acme.test",
+  "id": 105,
+  "entry_timestamp": "2024-12-01T00:00:00.000",
+  "not_before": "2024-12-01T00:00:00",
+  "not_after": "2025-03-01T00:00:00",
+  "serial_number": "1e0003",
+  "result_count": 1
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "*.cdn.acme.test",
+  "name_value": "*.cdn.acme.test",
+  "id": 106,
+  "entry_timestamp": "2026-10-01T00:00:00.000",
+  "not_before": "2026-10-01T00:00:00",
+  "not_after": "2026-12-30T00:00:00",
+  "serial_number": "1e0004",
+  "result_count": 1
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "edge.cdn.acme.test",
+  "name_value": "edge.cdn.acme.test",
+  "id": 107,
+  "entry_timestamp": "2024-05-01T00:00:00.000",
+  "not_before": "2024-05-01T00:00:00",
+  "not_after": "2024-07-30T00:00:00",
+  "serial_number": "1e0005",
+  "result_count": 1
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "shop.acme.test",
+  "name_value": "shop.acme.test",
+  "id": 108,
+  "entry_timestamp": "2026-07-31T00:00:00.000",
+  "not_before": "2026-07-31T00:00:00",
+  "not_after": "2026-10-29T00:00:00",
+  "serial_number": "1e0006",
+  "result_count": 1
+ },
+ {
+  "issuer_ca_id": 1,
+  "issuer_name": "C=US, O=Let's Encrypt, CN=R11",
+  "common_name": "vpn.acme.test",
+  "name_value": "vpn.acme.test\nx@acme.test",
+  "id": 109,
+  "entry_timestamp": "2023-06-01T00:00:00.000",
+  "not_before": "2023-06-01T00:00:00",
+  "not_after": "2023-08-30T00:00:00",
+  "serial_number": "1e0007",
+  "result_count": 2
+ }
+]

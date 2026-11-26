@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">"FOCA-rs"</string>
+    <string name="main_activity_title">"FOCA-rs"</string>
+    <string name="share_target_label">Check in FOCA-rs</string>
+    <string name="scan_service_description">Keeps FOCA-rs scan running in the background and shows progress</string>
+    <string name="scan_channel_name">Scan</string>
+    <string name="scan_channel_description">Scan progress and stop action</string>
+    <string name="scan_title_default">Scanning</string>
+    <string name="scan_stopping">Stopping…</string>
+    <string name="scan_action_open">Open</string>
+    <string name="scan_action_stop">Stop</string>
+    <string name="scan_interrupted_title">Scan interrupted by system</string>
+    <string name="scan_interrupted_text">Tap to open FOCA-rs and resume the scan</string>
+    <string name="monitor_channel_name">Scan results &amp; monitoring</string>
+    <string name="monitor_channel_description">Scan completed notifications and rescan reminders</string>
+    <string name="monitor_done_default">Scan completed</string>
+    <string name="monitor_done_project">Scheduled scan completed · %1$s</string>
+    <string name="monitor_paused_project">Scheduled scan paused · %1$s</string>
+    <string name="monitor_budget_text">Background time limit reached. Open the project to continue.</string>
+    <string name="monitor_profile_std">Standard</string>
+    <string name="monitor_profile_passive">Passive</string>
+    <string name="monitor_error_text">Background scan (%1$s) failed: %2$s.</string>
+    <string name="monitor_error_fallback">open project to start</string>
+    <string name="verify_hint">Complete the check, then tap Done</string>
+    <string name="verify_done">Done</string>
+    <string name="monitor_reminder_title">Time to rescan project «%1$s»</string>
+    <string name="scan_interrupted_body">The system unloaded FOCA-rs during a scan. Everything downloaded so far is saved. Tap to open the app and continue the scan from where it stopped.</string>
+    <string name="scan_tip_recents_lock">To prevent this, pin FOCA-rs in Recents (long-press the card → lock); otherwise swiping it away stops the scan.</string>
+    <string name="scan_tip_battery_unrestricted">To prevent this: Settings → Battery → “No restrictions”, and turn on autostart.</string>
+    <string name="scan_hidden_hint">FOCA-rs is hidden from Recents while the scan runs. Tap to open</string>
+    <string name="scan_action_continue">Continue</string>
+</resources>

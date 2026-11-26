@@ -1,0 +1,150 @@
+{
+  "application": "Microsoft Outlook 16.0",
+  "attachments": [
+    {
+      "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "name": "Кошторис.docx",
+      "size": 513
+    },
+    {
+      "mime": "message/rfc822",
+      "name": "Re: budget.msg"
+    }
+  ],
+  "author": "Іван Петренко",
+  "created": "2024-03-14T16:42:07Z",
+  "emails": [
+    "i.petrenko@example.com",
+    "john.doe@example.org",
+    "o.kovalenko@example.com"
+  ],
+  "embedded": [
+    {
+      "metadata": {
+        "author": "Olena Kovalenko",
+        "format": "docx",
+        "people": [
+          {
+            "name": "Olena Kovalenko",
+            "role": "author",
+            "source": "core.xml:dc:creator"
+          }
+        ]
+      },
+      "name": "attachment:Кошторис.docx"
+    },
+    {
+      "metadata": {
+        "author": "Olena Kovalenko",
+        "created": "2024-03-13T08:00:00Z",
+        "emails": [
+          "o.kovalenko@example.com"
+        ],
+        "fields": {
+          "msg:internal_hosts": "buh-pc-07.corp.example.test, EXCH02.corp.example.test",
+          "msg:internal_ips": "192.168.10.7, 10.20.0.16",
+          "msg:received.01": "from buh-pc-07.corp.example.test (192.168.10.7) by EXCH02.corp.example.test (10.20.0.16); Wed, 13 Mar 2024 10:00:00 +0200"
+        },
+        "format": "msg",
+        "people": [
+          {
+            "name": "Olena Kovalenko <o.kovalenko@example.com>",
+            "role": "author",
+            "source": "msg:from"
+          }
+        ],
+        "servers": [
+          {
+            "name": "buh-pc-07.corp.example.test",
+            "source": "msg:received"
+          },
+          {
+            "name": "EXCH02.corp.example.test",
+            "source": "msg:received"
+          },
+          {
+            "name": "192.168.10.7",
+            "source": "msg:received"
+          },
+          {
+            "name": "10.20.0.16",
+            "source": "msg:received"
+          }
+        ],
+        "stats": {
+          "received_hops": 1,
+          "transport_header_bytes": 131
+        },
+        "title": "Re: budget"
+      },
+      "name": "attachment:Re: budget.msg"
+    }
+  ],
+  "fields": {
+    "msg:creation_time": "2024-03-14T16:30:00Z",
+    "msg:display_cc": "Olena Kovalenko",
+    "msg:display_to": "John Doe",
+    "msg:internal_hosts": "ws-042.corp.example.test, EXCH01.corp.example.test",
+    "msg:internal_ips": "10.20.30.42, 10.20.0.15",
+    "msg:message-id": "<b2c3d4e5f6@EXCH01.corp.example.test>",
+    "msg:message_class": "IPM.Note",
+    "msg:message_id_domain": "exch01.corp.example.test",
+    "msg:originating_ips": "10.20.30.42",
+    "msg:received.01": "from ws-042.corp.example.test (10.20.30.42) by EXCH01.corp.example.test (10.20.0.15) with Microsoft SMTP Server id 15.2.1118.40; Thu, 14 Mar 2024 18:42:07 +0200",
+    "msg:sender_x500": "/O=EXCHANGELABS/OU=EXCHANGE ADMINISTRATIVE GROUP (FYDIBOHF23SPDLT)/CN=RECIPIENTS/CN=I.PETRENKO",
+    "msg:x-mailer": "Microsoft Outlook 16.0",
+    "msg:x-ms-exchange-organization-authas": "Internal",
+    "msg:x-originating-ip": "[10.20.30.42]"
+  },
+  "format": "msg",
+  "last_modified_by": "John Doe",
+  "links": [
+    "https://intranet.example.test/finance/2024"
+  ],
+  "modified": "2024-03-14T16:42:09Z",
+  "people": [
+    {
+      "name": "Іван Петренко <i.petrenko@example.com>",
+      "role": "author",
+      "source": "msg:from"
+    },
+    {
+      "name": "John Doe <john.doe@example.org>",
+      "role": "other",
+      "source": "msg:to"
+    },
+    {
+      "name": "Olena Kovalenko <o.kovalenko@example.com>",
+      "role": "other",
+      "source": "msg:cc"
+    }
+  ],
+  "servers": [
+    {
+      "name": "exch01.corp.example.test",
+      "source": "msg:message-id"
+    },
+    {
+      "name": "10.20.30.42",
+      "source": "msg:x-originating-ip"
+    },
+    {
+      "name": "ws-042.corp.example.test",
+      "source": "msg:received"
+    },
+    {
+      "name": "10.20.0.15",
+      "source": "msg:received"
+    }
+  ],
+  "software": [
+    "Microsoft Outlook 16.0"
+  ],
+  "stats": {
+    "attachments": 2,
+    "received_hops": 1,
+    "recipients": 2,
+    "transport_header_bytes": 368
+  },
+  "title": "Кошторис на 2024 рік (фінал)"
+}

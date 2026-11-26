@@ -1,0 +1,22 @@
+# KSZI / Compliance Audit Scenario (offline documents or authorized scope)
+name = "KSZI Compliance Audit"
+client = "Organization"
+mode = "offline"
+demo_case = false
+targets = ["example.com"]
+excludes = []
+inputs = []
+
+[rules]
+presets = ["credentials", "pii_ua"]
+
+[report]
+enabled = true
+format = "html"
+template = "compliance"
+lang = "uk"
+custody = true
+
+[gate]
+fail_on_severity = "high"
+max_risk = 70

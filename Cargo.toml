@@ -1,0 +1,78 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "src-tauri"]
+# src-tauri (Tauri/WebView) does not build on a host without webkit2gtk, so `cargo build/test`
+# without `-p` covers only the core. Build the app with
+# `cargo check -p foca-rs --target aarch64-linux-android` or `npx tauri android build`.
+default-members = ["crates/*"]
+
+# Release (CLI and libfoca_rs_lib.so in the APK). panic = "unwind", see docs/adr/0005-panic-strategy.md:
+# foca-meta catches parser panics on corrupted files with catch_unwind, which "abort" would turn into a crash.
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true
+panic = "unwind"
+opt-level = "s"
+
+# Dev/test: every integration test is its own binary that statically links the whole dependency
+# tree; with full DWARF each foca-engine test binary was ~340 MB (23 of them per build hash).
+# Line tables keep file:line in panics and backtraces of our code; dependencies carry no debug info.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[workspace.package]
+version = "2.0.0-beta.2"
+edition = "2021"
+license = "GPL-3.0"
+authors = ["FOCA-rs contributors"]
+
+[workspace.dependencies]
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+jpeg-decoder = { version = "0.3", default-features = false }
+foca-core = { path = "crates/foca-core" }
+foca-meta = { path = "crates/foca-meta" }
+foca-analysis = { path = "crates/foca-analysis" }
+foca-store = { path = "crates/foca-store" }
+foca-net = { path = "crates/foca-net" }
+foca-search = { path = "crates/foca-search" }
+foca-report = { path = "crates/foca-report" }
+foca-engine = { path = "crates/foca-engine" }
+foca-fuzz = { path = "crates/foca-fuzz" }
+foca-recon = { path = "crates/foca-recon" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+# Engine log (ring buffer + <data>/logs/foca.log, logs_get command): only the tracing facade; foca-engine has its own subscriber.
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+tracing-core = { version = "0.1", default-features = false, features = ["std"] }
+time = { version = "0.3", features = ["serde", "formatting", "parsing", "macros"] }
+ipnet = { version = "2", features = ["serde"] }
+idna = "1"
+url = "2"
+zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
+flate2 = "1"
+quick-xml = "0.42"
+kamadak-exif = "0.6"
+cfb = "0.16"
+clap = { version = "4", features = ["derive", "env"] }
+anyhow = "1"
+regex = "1"
+toml = "0.8"
+sha2 = "0.10"
+ring = "0.17"
+strsim = "0.11"
+rusqlite = { version = "0.37", features = ["bundled"] }
+tempfile = "3"
+# Networking (foca-net / foca-search): rustls + ring + webpki-roots only (no OpenSSL, no JNI on Android).
+tokio = { version = "1", default-features = false, features = ["rt", "net", "time", "sync", "io-util", "fs", "macros"] }
+tokio-util = { version = "0.7", default-features = false }
+reqwest = { version = "0.12.28", default-features = false, features = ["rustls-tls", "gzip", "socks", "json"] }
+hickory-resolver = { version = "0.26", default-features = false, features = ["tokio"] }
+bytes = "1"
+# X.509/TLS inspector (foca-net::tls): pure-Rust DER parsing, Mozilla roots for chain checks.
+x509-parser = { version = "0.18", default-features = false }
+webpki-roots = "1"

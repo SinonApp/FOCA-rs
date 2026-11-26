@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#1d1d1d">
+<title>FOCA-rs</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="screens/projects.css">
+<link rel="stylesheet" href="screens/launch.css">
+<link rel="stylesheet" href="screens/scan.css">
+<link rel="stylesheet" href="screens/findings.css">
+<link rel="stylesheet" href="screens/data.css">
+<link rel="stylesheet" href="screens/docs.css">
+<link rel="stylesheet" href="screens/forensics.css">
+<link rel="stylesheet" href="screens/insights.css">
+<link rel="stylesheet" href="screens/hygiene.css">
+<link rel="stylesheet" href="screens/reports.css">
+<link rel="stylesheet" href="screens/settings.css">
+<link rel="stylesheet" href="screens/v2.css">
+<link rel="stylesheet" href="screens/toolbox.css">
+<link rel="stylesheet" href="screens/help.css">
+<link rel="stylesheet" href="screens/onboard.css">
+</head>
+<body>
+<div id="app">
+  <div class="statusfill"></div>
+  <div class="activebar" id="activebar" role="status"><svg class="i"><use href="#i-alert"/></svg>АКТИВНЫЙ РЕЖИМ<span class="ip" id="ab-ip"></span></div>
+  <header class="topbar">
+    <button class="ib tb-back" id="tb-back" data-act="back" aria-label="Назад" hidden><svg class="i"><use href="#i-back"/></svg></button>
+    <img class="tb-logo" id="tb-logo" src="icon.png" alt="">
+    <div class="tb-title"><b id="tb-t"></b><span id="tb-s"></span></div>
+    <div id="tb-acts" style="display:flex"></div>
+  </header>
+  <div class="offline" id="offline" role="status"><svg class="i"><use href="#i-wifi-off"/></svg>Нет сети: показаны сохранённые данные</div>
+  <div class="bioind" id="bioind" role="status" aria-live="polite"><svg class="i" aria-hidden="true"><use href="#i-eye"/></svg><span id="bi-t">Секреты открыты</span><button class="btn text sm" data-act="bio-close" aria-label="Закрыть доступ к секретам">Закрыть</button></div>
+  <main id="viewport">
+    <button class="fab" id="fab"></button>
+    <div id="overlay-slot"></div>
+  </main>
+  <div class="mini" id="mini" data-act="mini-open" role="button" aria-label="Открыть экран скана">
+    <div class="mi-txt"><div class="mi-t" id="mi-t"></div><div class="mi-s" id="mi-s"></div></div>
+    <button class="ib" id="mi-pp" data-act="mini-pp"></button>
+    <div class="mi-pb" id="mi-pb"></div>
+  </div>
+  <div class="searchpill" id="searchpill" data-act="search" role="button"><svg class="i"><use href="#i-search"/></svg><span>Поиск</span></div>
+  <nav class="nav" id="nav" aria-label="Разделы проекта"></nav>
+  <div class="navpad" id="navpad"></div>
+</div>
+<div class="snack" id="snack" role="status" aria-live="polite"></div>
+<script src="js/icons.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ftext.js"></script>
+<script src="js/demo-backend.js"></script>
+<script src="js/api.js"></script>
+<script src="js/sel.js"></script>
+<script src="js/main.js"></script>
+<script src="screens/projects.js"></script>
+<script src="screens/launch.js"></script>
+<script src="screens/scan.js"></script>
+<script src="screens/findings.js"></script>
+<script src="screens/data.js"></script>
+<script src="screens/infra.js"></script>
+<script src="screens/forensics.js"></script>
+<script src="screens/insights.js"></script>
+<script src="screens/hygiene.js"></script>
+<script src="screens/docs.js"></script>
+<script src="screens/reports.js"></script>
+<script src="screens/settings.js"></script>
+<script src="screens/sources.js"></script>
+<script src="screens/wordlists.js"></script>
+<script src="screens/help.js"></script>
+<script src="screens/v2.js"></script>
+<script src="screens/toolbox.js"></script>
+<script src="screens/onboard.js"></script>
+<script src="screens/debug.js"></script>
+<script src="screens/beta.js"></script>
+<script>FOCA.start();</script>
+</body>
+</html>

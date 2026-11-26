@@ -1,0 +1,6 @@
+<?php
+// Contoso portal (old copy)
+$db_host = "db.internal";
+$db_password = "S3cr3tPassw0rd!";
+echo "<h1>Portal</h1>";
+?>

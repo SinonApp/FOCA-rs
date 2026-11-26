@@ -1,0 +1,11 @@
+{
+  "application": "WordPerfect 6+ (2.1)",
+  "fields": {
+    "wpd:file_type": "document",
+    "wpd:product_type": "1"
+  },
+  "format": "wpd",
+  "software": [
+    "WordPerfect 6+ (2.1)"
+  ]
+}

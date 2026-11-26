@@ -1,0 +1,262 @@
+/* First run: terms of use and permissions (onboard.js). Prefix ob- */
+.ob-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 6px 0 14px;
+}
+.ob-head > div {
+  min-width: 0;
+  flex: 1;
+}
+.ob-head h1 {
+  font-size: 1.45rem;
+  line-height: 1.25;
+  margin: 0;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.ob-head p {
+  margin: 4px 0 0;
+  font-size: 0.92rem;
+}
+.ob-logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  flex: none;
+}
+.ob-text {
+  margin-top: 12px;
+}
+.ob-points {
+  margin: 0;
+  padding-left: 1.4em;
+  display: grid;
+  gap: 10px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+.ob-points li {
+  overflow-wrap: anywhere;
+}
+.ob-points b {
+  color: var(--text);
+}
+.ob-ver {
+  margin: 14px 0 0;
+}
+.ob-checks {
+  margin-top: 14px;
+}
+.ob-checks .checkrow {
+  min-height: 56px;
+}
+.ob-foot .ob-btns {
+  flex-wrap: wrap-reverse;
+}
+/*
+ * First-run footer buttons are always full width, primary on top. Side by side at 50% each, "Accept
+ * and continue" was clipped on phones: the system font size (WebView textZoom) and wide OEM fonts (MiSans)
+ * enlarge the text but not the button, so the non-breaking label overflowed.
+ */
+.ob-foot .ob-btns .btn {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ob-pg .ob-foot {
+  padding-bottom: calc(14px + var(--inset-bottom));
+}
+.ob-foot > .btn.block {
+  margin-top: 8px;
+}
+.ob-perm {
+  margin-bottom: 10px;
+}
+.ob-ph {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ob-pt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+}
+.ob-pt b {
+  font-size: 1.02rem;
+}
+.ob-pw {
+  margin: 10px 0 12px;
+  color: var(--text-2);
+  line-height: 1.45;
+  font-size: 0.93rem;
+  overflow-wrap: anywhere;
+}
+.ob-perm .btnrow {
+  flex-wrap: wrap;
+}
+.ob-sep {
+  color: var(--text-3);
+}
+.ob-declined {
+  padding-top: 12vh;
+}
+
+/* Debug tab (debug.js). Prefix dbg- */
+.dbg-seg {
+  margin-bottom: 12px;
+}
+.dbg-chips {
+  margin-bottom: 10px;
+}
+.dbg-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.dbg-src {
+  flex: 1 1 14rem;
+}
+.dbg-q {
+  flex: 1 1 12rem;
+  margin: 0;
+  min-width: 0;
+}
+.dbg-q input {
+  min-width: 0;
+  width: 100%;
+}
+.dbg-auto {
+  margin-top: 6px;
+  align-items: center;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+.dbg-auto .lbl {
+  flex: 1;
+  min-width: 0;
+}
+.dbg-n {
+  margin: 4px 0 8px;
+}
+.dbg-log {
+  padding: 4px 0;
+  font-family: ui-monospace, "JetBrains Mono", "Roboto Mono", monospace;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+.dbg-l {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 2px 8px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--stroke);
+  cursor: pointer;
+  min-height: 40px;
+  align-items: baseline;
+}
+.dbg-l:last-child {
+  border-bottom: 0;
+}
+.dbg-l:active {
+  background: var(--hover);
+}
+.dbg-t {
+  color: var(--text-3);
+}
+.dbg-lv {
+  font-weight: 700;
+}
+.dbg-lv.bad {
+  color: var(--bad);
+}
+.dbg-lv.warn {
+  color: var(--warn);
+}
+.dbg-lv.info {
+  color: var(--info);
+}
+.dbg-lv.mute {
+  color: var(--text-3);
+}
+.dbg-tg {
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.dbg-m {
+  grid-column: 1 / -1;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dbg-l.open .dbg-m,
+.dbg-l.open .dbg-tg {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.dbg-more {
+  margin-top: 10px;
+}
+.dbg-r .body {
+  min-width: 0;
+}
+.dbg-rt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.dbg-meth {
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+.dbg-host {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.dbg-url {
+  font-size: 0.76rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  margin-top: 2px;
+}
+.dbg-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+.dbg-ct {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+.dbg-kv .v {
+  overflow-wrap: anywhere;
+}
+.dbg-level {
+  margin-bottom: 4px;
+}
+.dbg-pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, monospace;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  background: var(--layer-2);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 0;
+}
+.ob-lt {
+  font-size: 1.15rem;
+}

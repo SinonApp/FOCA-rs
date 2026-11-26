@@ -1,0 +1,17 @@
+{
+  "author": "Phil Harvey",
+  "fields": {
+    "png:comment": "test comment"
+  },
+  "format": "png",
+  "people": [
+    {
+      "name": "Phil Harvey",
+      "role": "creator",
+      "source": "xmp:dc:creator"
+    }
+  ],
+  "xmp": {
+    "dc:creator": "Phil Harvey"
+  }
+}

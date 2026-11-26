@@ -1,0 +1,296 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "foca-report/v1",
+  "title": "FOCA-rs report (JSON)",
+  "description": "Stable, versioned JSON report. Breaking changes bump schema_version. Strings are already masked according to report.secrets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "schema", "generator", "generated_at", "report", "project", "scope", "summary", "overview", "findings", "fixed", "people", "emails", "hosts", "pcs", "software", "paths", "documents", "secrets", "request_log"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "schema": { "type": "string", "const": "foca-report/v1" },
+    "generator": { "type": "string" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template", "lang", "sections", "filters", "secrets", "company"],
+      "properties": {
+        "template": { "type": "string", "enum": ["full", "summary", "data"] },
+        "lang": { "type": "string", "enum": ["ru", "uk", "en"] },
+        "sections": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "scope", "findings", "fixed", "people", "infra", "docs", "log", "appx"],
+          "properties": {
+            "summary": { "type": "boolean" }, "scope": { "type": "boolean" }, "findings": { "type": "boolean" },
+            "fixed": { "type": "boolean" }, "people": { "type": "boolean" }, "infra": { "type": "boolean" },
+            "docs": { "type": "boolean" }, "log": { "type": "boolean" }, "appx": { "type": "boolean" }
+          }
+        },
+        "filters": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["confirmed", "min_sev", "picked_only", "picked"],
+          "properties": {
+            "confirmed": { "type": "boolean" },
+            "min_sev": { "type": ["string", "null"], "enum": ["crit", "high", "warn", "low", "info", null] },
+            "picked_only": { "type": "boolean" },
+            "picked": { "type": "array", "items": { "type": "integer" } }
+          }
+        },
+        "secrets": { "type": "string", "enum": ["hide", "partial", "full"] },
+        "company": { "type": "string" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "client", "domain"],
+      "properties": {
+        "id": { "type": "string" }, "name": { "type": "string" }, "client": { "type": "string" }, "domain": { "type": "string" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["client", "contact", "basis", "targets", "exclusions"],
+      "properties": {
+        "client": { "type": "string" },
+        "contact": { "type": "string" }, "basis": { "type": "string" },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["value", "type"],
+            "properties": { "value": { "type": "string" }, "type": { "type": "string" } }
+          }
+        },
+        "exclusions": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk", "risk_level", "project_risk", "counts", "total", "fixed", "pages"],
+      "properties": {
+        "risk": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "Risk over findings included in this report" },
+        "risk_level": { "type": "string", "enum": ["crit", "high", "mid", "low", "none"] },
+        "project_risk": { "type": ["integer", "null"], "minimum": 0, "maximum": 100 },
+        "counts": { "$ref": "#/$defs/counts" },
+        "total": { "type": "integer" },
+        "fixed": { "type": "integer" },
+        "pages": { "type": ["integer", "null"] }
+      }
+    },
+    "overview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["docs_total", "docs_analyzed", "docs_by_type", "top_people", "top_software", "eol_software", "people", "emails", "hosts", "hosts_internal", "pcs", "servers", "printers", "paths", "software", "secrets"],
+      "properties": {
+        "docs_total": { "type": "integer" },
+        "docs_analyzed": { "type": "integer" },
+        "docs_by_type": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["type", "count"], "properties": { "type": { "type": "string" }, "count": { "type": "integer" } } }
+        },
+        "top_people": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["login", "name", "docs"], "properties": { "login": { "type": "string" }, "name": { "type": "string" }, "docs": { "type": "integer" } } }
+        },
+        "top_software": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["name", "count"], "properties": { "name": { "type": "string" }, "count": { "type": "integer" } } }
+        },
+        "eol_software": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["name", "eol_date", "cve"], "properties": { "name": { "type": "string" }, "eol_date": { "type": "string" }, "cve": { "type": ["integer", "null"], "description": "null: CVE data not checked" } } }
+        },
+        "people": { "type": "integer" }, "emails": { "type": "integer" }, "hosts": { "type": "integer" }, "hosts_internal": { "type": "integer" },
+        "pcs": { "type": "integer" }, "servers": { "type": "integer" }, "printers": { "type": "integer" }, "paths": { "type": "integer" },
+        "software": { "type": "integer" }, "secrets": { "type": "integer" }
+      }
+    },
+    "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "fixed": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+    "people": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["login", "name", "role", "pc", "emails", "aliases", "docs", "service"],
+        "properties": {
+          "login": { "type": "string" }, "name": { "type": "string" }, "role": { "type": "string" }, "pc": { "type": ["string", "null"] },
+          "emails": { "type": "array", "items": { "type": "string" } }, "aliases": { "type": "array", "items": { "type": "string" } },
+          "docs": { "type": "integer" }, "service": { "type": "boolean" }
+        }
+      }
+    },
+    "emails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["addr", "name", "login", "found", "source"],
+        "properties": {
+          "addr": { "type": "string" }, "name": { "type": ["string", "null"] }, "login": { "type": ["string", "null"] },
+          "found": { "type": "boolean" }, "source": { "type": "string" }
+        }
+      }
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "ip", "role", "tech", "internal", "scope", "source"],
+        "properties": {
+          "name": { "type": "string" }, "ip": { "type": "string" }, "role": { "type": "string" }, "tech": { "type": "string" },
+          "internal": { "type": "boolean" }, "scope": { "type": "string" }, "source": { "type": "string" }
+        }
+      }
+    },
+    "pcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "type", "users", "ip", "docs"],
+        "properties": {
+          "name": { "type": "string" }, "type": { "type": "string" }, "users": { "type": "array", "items": { "type": "string" } },
+          "ip": { "type": ["string", "null"] }, "docs": { "type": "integer" }
+        }
+      }
+    },
+    "software": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "version", "eol", "eol_date", "cve", "docs"],
+        "properties": {
+          "id": { "type": "string" }, "name": { "type": "string" }, "version": { "type": "string" }, "eol": { "type": "boolean" },
+          "eol_date": { "type": ["string", "null"] }, "cve": { "type": "integer" }, "docs": { "type": "integer" }
+        }
+      }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "user", "host", "docs"],
+        "properties": {
+          "path": { "type": "string" }, "user": { "type": ["string", "null"] }, "host": { "type": ["string", "null"] }, "docs": { "type": "integer" }
+        }
+      }
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "ext", "url", "title", "author", "software", "created", "modified", "size", "status", "flags"],
+        "properties": {
+          "id": { "type": "integer" }, "name": { "type": "string" }, "ext": { "type": "string" }, "url": { "type": "string" },
+          "title": { "type": "string" }, "author": { "type": ["string", "null"] }, "software": { "type": ["string", "null"] },
+          "created": { "type": ["string", "null"] }, "modified": { "type": ["string", "null"] }, "size": { "type": "integer" },
+          "status": { "type": "string" }, "flags": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "secrets": {
+      "type": "array",
+      "description": "value is masked per report.secrets (hide → placeholder)",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type", "doc", "location", "severity", "value", "finding"],
+        "properties": {
+          "id": { "type": "integer" }, "type": { "type": "string" }, "doc": { "type": "integer" }, "location": { "type": "string" },
+          "severity": { "$ref": "#/$defs/severity" }, "value": { "type": "string" }, "finding": { "type": ["integer", "null"] }
+        }
+      }
+    },
+    "request_log": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passive", "active", "blocked", "errors", "hosts", "hosts_target", "hosts_third", "first", "last", "by_module", "requests"],
+      "properties": {
+        "total": { "type": "integer" }, "passive": { "type": "integer" }, "active": { "type": "integer" }, "blocked": { "type": "integer" },
+        "errors": { "type": "integer" }, "hosts": { "type": "integer" }, "hosts_target": { "type": "integer" }, "hosts_third": { "type": "integer" }, "first": { "type": ["string", "null"] }, "last": { "type": ["string", "null"] },
+        "by_module": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["module", "count"], "properties": { "module": { "type": "string" }, "count": { "type": "integer" } } }
+        },
+        "requests": {
+          "type": "array",
+          "description": "Active requests to targets and requests blocked by scope (passive third-party requests are only counted)",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["time", "scan_id", "module", "method", "url", "host", "status", "bytes", "active", "blocked", "error", "note", "ctype"],
+            "properties": {
+              "time": { "type": "string" }, "scan_id": { "type": ["string", "null"] }, "module": { "type": "string" }, "method": { "type": "string" },
+              "url": { "type": "string" }, "host": { "type": "string" }, "status": { "type": ["integer", "null"] }, "bytes": { "type": "integer" },
+              "active": { "type": "boolean" }, "blocked": { "type": "boolean" }, "error": { "type": ["string", "null"] },
+              "note": { "type": ["string", "null"], "description": "fuzz: soft404 | calibration | filtered | rate_limited" }, "ctype": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "severity": { "type": "string", "enum": ["crit", "high", "warn", "low", "info"] },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crit", "high", "warn", "low", "info"],
+      "properties": { "crit": { "type": "integer" }, "high": { "type": "integer" }, "warn": { "type": "integer" }, "low": { "type": "integer" }, "info": { "type": "integer" } }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "severity", "severity_label", "status", "host", "category", "source", "module", "active", "time", "first_scan", "fixed_scan", "tags", "cve", "cvss", "mitre", "description", "evidence", "recommendation", "url", "documents", "provenance", "notes"],
+      "properties": {
+        "id": { "type": "integer" },
+        "title": { "type": "string" },
+        "severity": { "$ref": "#/$defs/severity" },
+        "severity_label": { "type": "string" },
+        "status": { "type": "string", "enum": ["new", "confirmed", "false", "accepted", "fixed"] },
+        "host": { "type": "string" },
+        "category": { "type": "string" },
+        "source": { "type": "string" },
+        "module": { "type": "string" },
+        "active": { "type": "boolean" },
+        "time": { "type": "string" },
+        "first_scan": { "type": ["string", "null"] },
+        "fixed_scan": { "type": ["string", "null"] },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "cve": { "type": "array", "items": { "type": "string" } },
+        "cvss": { "type": ["number", "null"] },
+        "mitre": { "type": "string" },
+        "description": { "type": "string" },
+        "evidence": { "type": "string", "description": "Secrets masked per report.secrets" },
+        "recommendation": { "type": "string" },
+        "url": { "type": ["string", "null"] },
+        "documents": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["id", "name"], "properties": { "id": { "type": "integer" }, "name": { "type": "string" } } }
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rule", "fields"],
+          "properties": { "rule": { "type": "string" }, "fields": { "type": "array", "items": { "type": "string" } } }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "object", "additionalProperties": false, "required": ["who", "time", "text"], "properties": { "who": { "type": "string" }, "time": { "type": "string" }, "text": { "type": "string" } } }
+        }
+      }
+    }
+  }
+}

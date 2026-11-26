@@ -1,0 +1,20 @@
+* text=auto eol=lf
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.odt binary
+*.ods binary
+*.odp binary
+*.lnk binary
+*.msg binary
+*.mp4 binary
+*.mov binary
+*.heic binary
+*.gz binary
+tests/corpus/** binary
+crates/foca-meta/tests/fixtures/** binary

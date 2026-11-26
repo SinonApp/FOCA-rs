@@ -1,0 +1,14 @@
+{
+  "fields": {
+    "media:handler": "pict",
+    "media:major_brand": "heic"
+  },
+  "format": "heic",
+  "stats": {
+    "items": 3
+  },
+  "warnings": [
+    "HEIF: item 2 out of bounds",
+    "HEIF: item 3 out of bounds"
+  ]
+}

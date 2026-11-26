@@ -1,0 +1,15 @@
+From: John Doe <john.doe@example.org>
+To: =?UTF-8?B?broken?= <x@example.com>
+Subject: =?unknown-charset?Q?=FF=FE?=
+Date: Thu, 99 Foo 2024 25:61:00 +9999
+Received: from [999.1.1.1] by (((( with ;
+Content-Type: multipart/mixed; boundary="nb"
+
+--nb
+Content-Type: multipart/mixed; boundary="nb"
+
+--nb
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename=x.bin
+
+!!!!@@@@====AAAA

@@ -1,0 +1,27 @@
+{
+  "author": "John Doe",
+  "emails": [
+    "john.doe@example.org",
+    "x@example.com"
+  ],
+  "fields": {
+    "eml:received.01": "from [999.1.1.1] by (((( with ;"
+  },
+  "format": "eml",
+  "people": [
+    {
+      "name": "John Doe <john.doe@example.org>",
+      "role": "author",
+      "source": "eml:from"
+    },
+    {
+      "name": "n�$z <x@example.com>",
+      "role": "other",
+      "source": "eml:to"
+    }
+  ],
+  "stats": {
+    "received_hops": 1
+  },
+  "title": "��"
+}

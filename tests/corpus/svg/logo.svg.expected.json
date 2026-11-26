@@ -1,0 +1,56 @@
+{
+  "application": "Inkscape 1.1.2",
+  "author": "Марина Шевчук",
+  "fields": {
+    "svg:docname": "logo_contoso.svg",
+    "svg:export-filename": "C:\\Users\\m.shevchuk\\Desktop\\Презентації\\logo.png",
+    "svg:path:inkscape:export-filename": "C:\\Users\\m.shevchuk\\Desktop\\Презентації\\logo.png",
+    "svg:path:xlink:href": "/home/mshevchuk/brand/texture.png"
+  },
+  "format": "svg",
+  "links": [
+    "https://contoso.example/"
+  ],
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\m.shevchuk\\Desktop\\Презентації\\logo.png",
+      "source": "svg:export-filename",
+      "user": "m.shevchuk"
+    },
+    {
+      "kind": "unix",
+      "path": "/home/mshevchuk/brand/texture.png",
+      "source": "svg:path:xlink:href",
+      "user": "mshevchuk"
+    }
+  ],
+  "people": [
+    {
+      "name": "Марина Шевчук",
+      "role": "creator",
+      "source": "svg:metadata:dc:creator/cc:Agent/dc:title"
+    },
+    {
+      "name": "m.shevchuk",
+      "role": "path_user",
+      "source": "C:\\Users\\m.shevchuk\\Desktop\\Презентації\\logo.png"
+    },
+    {
+      "name": "mshevchuk",
+      "role": "path_user",
+      "source": "/home/mshevchuk/brand/texture.png"
+    }
+  ],
+  "software": [
+    "Inkscape 1.1.2",
+    "Inkscape (http://www.inkscape.org/"
+  ],
+  "title": "Логотип Контосо",
+  "xmp": {
+    "dc:creator/cc:Agent/dc:title": "Марина Шевчук",
+    "dc:date": "2021-06-01",
+    "dc:format": "image/svg+xml",
+    "dc:publisher/cc:Agent/dc:title": "Contoso Energy"
+  }
+}

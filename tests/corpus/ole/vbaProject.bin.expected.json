@@ -1,0 +1,8 @@
+{
+  "format": "ole",
+  "has_macros": true,
+  "macro_modules": [
+    "Module1",
+    "ThisWorkbook"
+  ]
+}

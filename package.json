@@ -1,0 +1,22 @@
+{
+  "name": "foca-rs-ui",
+  "version": "2.0.0-beta.2",
+  "description": "FOCA-rs: document metadata OSINT for Android",
+  "scripts": {
+    "format": "prettier --write \"ui/**/*.{js,css,html}\"",
+    "format:check": "prettier --check \"ui/**/*.{js,css,html}\"",
+    "lint": "eslint ui eslint.config.js",
+    "tauri": "tauri"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GPL-3.0-only",
+  "type": "commonjs",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@tauri-apps/cli": "^2.12.6",
+    "eslint": "^10.15.0",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1"
+  }
+}

@@ -1,0 +1,1386 @@
+{
+ "_license": "GPL-3.0 (часть FOCA-rs). Правила составлены вручную в формате, вдохновлённом Wappalyzer/webappanalyzer (ключи headers/meta/cookies/html/scripts/implies); паттерны не скопированы. Версия: первая группа захвата регекса.",
+ "technologies": [
+  {
+   "name": "WordPress",
+   "cat": "CMS",
+   "meta": {
+    "generator": "WordPress ?([\\d.]+)?"
+   },
+   "html": [
+    "/wp-content/",
+    "/wp-includes/"
+   ],
+   "scripts": [
+    "/wp-(?:content|includes)/.*?ver=([\\d.]+)"
+   ],
+   "headers": {
+    "link": "rel=.https://api\\.w\\.org/",
+    "x-pingback": "/xmlrpc\\.php"
+   },
+   "implies": [
+    "PHP",
+    "MySQL"
+   ],
+   "outdated_below": "6.4",
+   "website": "https://wordpress.org"
+  },
+  {
+   "name": "Joomla",
+   "cat": "CMS",
+   "meta": {
+    "generator": "Joomla!? ?([\\d.]+)?"
+   },
+   "html": [
+    "/media/jui/",
+    "/components/com_",
+    "Joomla!"
+   ],
+   "headers": {
+    "x-content-encoded-by": "Joomla! ?([\\d.]+)?"
+   },
+   "implies": [
+    "PHP"
+   ],
+   "outdated_below": "4.0"
+  },
+  {
+   "name": "Drupal",
+   "cat": "CMS",
+   "meta": {
+    "generator": "Drupal ?([\\d.]+)?"
+   },
+   "headers": {
+    "x-generator": "Drupal ?([\\d.]+)?",
+    "x-drupal-cache": "",
+    "x-drupal-dynamic-cache": ""
+   },
+   "html": [
+    "/sites/(?:default|all)/(?:themes|modules|files)/",
+    "drupal-settings-json",
+    "Drupal\\.settings"
+   ],
+   "implies": [
+    "PHP"
+   ],
+   "outdated_below": "10.0"
+  },
+  {
+   "name": "1C-Bitrix",
+   "cat": "CMS",
+   "headers": {
+    "x-powered-cms": "Bitrix",
+    "set-cookie": "BITRIX_SM_"
+   },
+   "cookies": {
+    "BITRIX_SM_GUEST_ID": "",
+    "BITRIX_SM_LAST_IP": "",
+    "BX_USER_ID": ""
+   },
+   "html": [
+    "/bitrix/(?:js|templates|cache|components)/",
+    "BX\\.setCSSList"
+   ],
+   "scripts": [
+    "/bitrix/js/"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Tilda",
+   "cat": "Конструктор сайтов",
+   "meta": {
+    "generator": "Tilda"
+   },
+   "html": [
+    "tilda(?:cdn)?\\.(?:ws|com)",
+    "t-records"
+   ],
+   "scripts": [
+    "static\\.tildacdn\\."
+   ]
+  },
+  {
+   "name": "Wix",
+   "cat": "Конструктор сайтов",
+   "meta": {
+    "generator": "Wix\\.com"
+   },
+   "headers": {
+    "x-wix-request-id": ""
+   },
+   "html": [
+    "static\\.wixstatic\\.com",
+    "static\\.parastorage\\.com"
+   ]
+  },
+  {
+   "name": "Shopify",
+   "cat": "E-commerce",
+   "headers": {
+    "x-shopid": "",
+    "x-shopify-stage": ""
+   },
+   "html": [
+    "cdn\\.shopify\\.com",
+    "Shopify\\.theme"
+   ],
+   "cookies": {
+    "_shopify_y": ""
+   }
+  },
+  {
+   "name": "MODX",
+   "cat": "CMS",
+   "meta": {
+    "generator": "MODX"
+   },
+   "headers": {
+    "x-powered-by": "MODX"
+   },
+   "html": [
+    "/assets/components/",
+    "modx"
+   ],
+   "cookies": {
+    "modx_session": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "OpenCart",
+   "cat": "E-commerce",
+   "html": [
+    "catalog/view/(?:theme|javascript)/",
+    "index\\.php\\?route=(?:common|product)/"
+   ],
+   "cookies": {
+    "OCSESSID": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Magento",
+   "cat": "E-commerce",
+   "cookies": {
+    "frontend": "",
+    "X-Magento-Vary": ""
+   },
+   "html": [
+    "Mage\\.Cookies",
+    "/static/version\\d+/frontend/",
+    "/skin/frontend/"
+   ],
+   "headers": {
+    "x-magento-cache-debug": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "PrestaShop",
+   "cat": "E-commerce",
+   "meta": {
+    "generator": "PrestaShop"
+   },
+   "headers": {
+    "powered-by": "PrestaShop"
+   },
+   "html": [
+    "var prestashop ="
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "WooCommerce",
+   "cat": "E-commerce",
+   "html": [
+    "/wp-content/plugins/woocommerce/",
+    "woocommerce-no-js"
+   ],
+   "scripts": [
+    "woocommerce.*?ver=([\\d.]+)"
+   ],
+   "implies": [
+    "WordPress"
+   ]
+  },
+  {
+   "name": "Ghost",
+   "cat": "CMS",
+   "meta": {
+    "generator": "Ghost ?([\\d.]+)?"
+   },
+   "headers": {
+    "x-ghost-cache-status": ""
+   }
+  },
+  {
+   "name": "Squarespace",
+   "cat": "Конструктор сайтов",
+   "headers": {
+    "server": "Squarespace"
+   },
+   "html": [
+    "static1?\\.squarespace\\.com"
+   ]
+  },
+  {
+   "name": "Webflow",
+   "cat": "Конструктор сайтов",
+   "meta": {
+    "generator": "Webflow"
+   },
+   "html": [
+    "data-wf-page",
+    "assets\\.website-files\\.com"
+   ]
+  },
+  {
+   "name": "Blogger",
+   "cat": "CMS",
+   "meta": {
+    "generator": "Blogger"
+   }
+  },
+  {
+   "name": "TYPO3",
+   "cat": "CMS",
+   "meta": {
+    "generator": "TYPO3 ?(?:CMS)? ?([\\d.]+)?"
+   },
+   "html": [
+    "/typo3(?:conf|temp)/"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "UMI.CMS",
+   "cat": "CMS",
+   "headers": {
+    "x-generated-by": "UMI\\.CMS"
+   },
+   "html": [
+    "umi\\.?cms"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "NetCat",
+   "cat": "CMS",
+   "html": [
+    "/netcat(?:_files|_template)?/"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "HostCMS",
+   "cat": "CMS",
+   "headers": {
+    "x-powered-by": "HostCMS"
+   },
+   "html": [
+    "/hostcmsfiles/"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "DataLife Engine",
+   "cat": "CMS",
+   "meta": {
+    "generator": "DataLife Engine"
+   },
+   "html": [
+    "/engine/classes/js/"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "InSales",
+   "cat": "E-commerce",
+   "html": [
+    "static\\.insales\\.ru",
+    "insales"
+   ],
+   "headers": {
+    "x-insales": ""
+   }
+  },
+  {
+   "name": "Confluence",
+   "cat": "Wiki",
+   "headers": {
+    "x-confluence-request-time": ""
+   },
+   "meta": {
+    "confluence-request-time": "",
+    "ajs-version-number": "([\\d.]+)"
+   },
+   "html": [
+    "com-atlassian-confluence"
+   ]
+  },
+  {
+   "name": "MediaWiki",
+   "cat": "Wiki",
+   "meta": {
+    "generator": "MediaWiki ?([\\d.]+)?"
+   },
+   "html": [
+    "/load\\.php\\?.*?modules=",
+    "mw-head"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Moodle",
+   "cat": "LMS",
+   "cookies": {
+    "MoodleSession": ""
+   },
+   "html": [
+    "M\\.cfg = ",
+    "/theme/styles\\.php"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Jira",
+   "cat": "Трекер",
+   "meta": {
+    "ajs-version-number": "([\\d.]+)",
+    "application-name": "JIRA"
+   },
+   "headers": {
+    "x-arequestid": ""
+   },
+   "cookies": {
+    "atlassian.xsrf.token": ""
+   }
+  },
+  {
+   "name": "GitLab",
+   "cat": "DevOps",
+   "meta": {
+    "og:site_name": "GitLab"
+   },
+   "cookies": {
+    "_gitlab_session": ""
+   },
+   "html": [
+    "gon\\.gitlab_url"
+   ]
+  },
+  {
+   "name": "Grafana",
+   "cat": "DevOps",
+   "html": [
+    "grafana_session",
+    "window\\.grafanaBootData"
+   ],
+   "cookies": {
+    "grafana_session": ""
+   }
+  },
+  {
+   "name": "Jenkins",
+   "cat": "DevOps",
+   "headers": {
+    "x-jenkins": "([\\d.]+)",
+    "x-hudson": ""
+   }
+  },
+  {
+   "name": "phpMyAdmin",
+   "cat": "Администрирование",
+   "html": [
+    "phpMyAdmin",
+    "pma_navigation"
+   ],
+   "cookies": {
+    "phpMyAdmin": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Roundcube",
+   "cat": "Веб-почта",
+   "html": [
+    "rcmail",
+    "roundcube_sessid"
+   ],
+   "cookies": {
+    "roundcube_sessid": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Outlook Web App",
+   "cat": "Веб-почта",
+   "html": [
+    "/owa/auth/",
+    "OwaPage"
+   ],
+   "headers": {
+    "x-owa-version": "([\\d.]+)"
+   },
+   "implies": [
+    "Microsoft IIS"
+   ]
+  },
+  {
+   "name": "Nginx",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "nginx(?:/([\\d.]+))?"
+   },
+   "outdated_below": "1.20",
+   "eol_branches": [
+    { "upto": "1.19", "date": "2021-04-20" }
+   ]
+  },
+  {
+   "name": "Apache HTTP Server",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "^Apache(?:$|/([\\d.]+)|[^/-])"
+   },
+   "outdated_below": "2.4.58",
+   "eol_branches": [
+    { "upto": "2.2", "date": "2017-07-11" }
+   ]
+  },
+  {
+   "name": "Microsoft IIS",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "Microsoft-IIS(?:/([\\d.]+))?"
+   },
+   "implies": [
+    "Windows Server"
+   ],
+   "outdated_below": "10.0"
+  },
+  {
+   "name": "LiteSpeed",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "LiteSpeed",
+    "x-litespeed-cache": ""
+   }
+  },
+  {
+   "name": "OpenResty",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "openresty(?:/([\\d.]+))?"
+   },
+   "implies": [
+    "Nginx"
+   ]
+  },
+  {
+   "name": "Caddy",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "Caddy"
+   }
+  },
+  {
+   "name": "Apache Tomcat",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "Apache-Coyote"
+   },
+   "html": [
+    "Apache Tomcat(?:/([\\d.]+))?"
+   ],
+   "implies": [
+    "Java"
+   ]
+  },
+  {
+   "name": "Jetty",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "Jetty\\(?([\\d.]+)?"
+   },
+   "implies": [
+    "Java"
+   ]
+  },
+  {
+   "name": "Gunicorn",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "gunicorn(?:/([\\d.]+))?"
+   },
+   "implies": [
+    "Python"
+   ]
+  },
+  {
+   "name": "Envoy",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "envoy",
+    "x-envoy-upstream-service-time": ""
+   }
+  },
+  {
+   "name": "Kestrel",
+   "cat": "Веб-сервер",
+   "headers": {
+    "server": "Kestrel"
+   },
+   "implies": [
+    "ASP.NET"
+   ]
+  },
+  {
+   "name": "Varnish",
+   "cat": "Кэш",
+   "headers": {
+    "via": "varnish",
+    "x-varnish": ""
+   }
+  },
+  {
+   "name": "Windows Server",
+   "cat": "ОС"
+  },
+  {
+   "name": "Ubuntu",
+   "cat": "ОС",
+   "headers": {
+    "server": "Ubuntu"
+   }
+  },
+  {
+   "name": "Debian",
+   "cat": "ОС",
+   "headers": {
+    "server": "Debian"
+   }
+  },
+  {
+   "name": "CentOS",
+   "cat": "ОС",
+   "headers": {
+    "server": "CentOS"
+   }
+  },
+  {
+   "name": "PHP",
+   "cat": "Язык",
+   "headers": {
+    "x-powered-by": "PHP(?:/([\\d.]+))?",
+    "server": "PHP/([\\d.]+)"
+   },
+   "cookies": {
+    "PHPSESSID": ""
+   },
+   "outdated_below": "8.1",
+   "eol_branches": [
+    { "upto": "5.6", "date": "2018-12-31" },
+    { "upto": "7.0", "date": "2019-01-10" },
+    { "upto": "7.1", "date": "2019-12-01" },
+    { "upto": "7.2", "date": "2020-11-30" },
+    { "upto": "7.3", "date": "2021-12-06" },
+    { "upto": "7.4", "date": "2022-11-28" },
+    { "upto": "8.0", "date": "2023-11-26" },
+    { "upto": "8.1", "date": "2025-12-31" }
+   ]
+  },
+  {
+   "name": "ASP.NET",
+   "cat": "Фреймворк",
+   "headers": {
+    "x-powered-by": "ASP\\.NET",
+    "x-aspnet-version": "([\\d.]+)",
+    "x-aspnetmvc-version": "([\\d.]+)"
+   },
+   "cookies": {
+    "ASP.NET_SessionId": "",
+    "ASPSESSION": "",
+    ".AspNetCore.Antiforgery": ""
+   },
+   "html": [
+    "<input[^>]+name=\"__VIEWSTATE\""
+   ],
+   "implies": [
+    "Microsoft IIS"
+   ]
+  },
+  {
+   "name": "Java",
+   "cat": "Язык",
+   "cookies": {
+    "JSESSIONID": ""
+   }
+  },
+  {
+   "name": "Python",
+   "cat": "Язык",
+   "headers": {
+    "server": "Python(?:/([\\d.]+))?"
+   }
+  },
+  {
+   "name": "Ruby on Rails",
+   "cat": "Фреймворк",
+   "headers": {
+    "x-powered-by": "Phusion Passenger"
+   },
+   "meta": {
+    "csrf-param": "authenticity_token"
+   },
+   "cookies": {
+    "_rails_session": ""
+   }
+  },
+  {
+   "name": "Laravel",
+   "cat": "Фреймворк",
+   "cookies": {
+    "laravel_session": "",
+    "XSRF-TOKEN": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Symfony",
+   "cat": "Фреймворк",
+   "headers": {
+    "x-debug-token": ""
+   },
+   "cookies": {
+    "sf_redirect": ""
+   },
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Yii",
+   "cat": "Фреймворк",
+   "cookies": {
+    "YII_CSRF_TOKEN": "",
+    "_csrf-frontend": ""
+   },
+   "html": [
+    "yii\\.(?:min\\.)?js"
+   ],
+   "implies": [
+    "PHP"
+   ]
+  },
+  {
+   "name": "Django",
+   "cat": "Фреймворк",
+   "cookies": {
+    "csrftoken": "",
+    "django_language": ""
+   },
+   "html": [
+    "name=\"csrfmiddlewaretoken\""
+   ],
+   "implies": [
+    "Python"
+   ]
+  },
+  {
+   "name": "Flask",
+   "cat": "Фреймворк",
+   "headers": {
+    "server": "Werkzeug(?:/([\\d.]+))?"
+   },
+   "implies": [
+    "Python"
+   ]
+  },
+  {
+   "name": "Express",
+   "cat": "Фреймворк",
+   "headers": {
+    "x-powered-by": "^Express$"
+   },
+   "implies": [
+    "Node.js"
+   ]
+  },
+  {
+   "name": "Node.js",
+   "cat": "Язык"
+  },
+  {
+   "name": "Next.js",
+   "cat": "JS-фреймворк",
+   "headers": {
+    "x-powered-by": "Next\\.js ?([\\d.]+)?"
+   },
+   "html": [
+    "<script[^>]+id=\"__NEXT_DATA__\"",
+    "/_next/static/"
+   ],
+   "implies": [
+    "React",
+    "Node.js"
+   ]
+  },
+  {
+   "name": "Nuxt.js",
+   "cat": "JS-фреймворк",
+   "html": [
+    "window\\.__NUXT__",
+    "/_nuxt/"
+   ],
+   "implies": [
+    "Vue.js",
+    "Node.js"
+   ]
+  },
+  {
+   "name": "Gatsby",
+   "cat": "JS-фреймворк",
+   "meta": {
+    "generator": "Gatsby ?([\\d.]+)?"
+   },
+   "html": [
+    "id=\"___gatsby\""
+   ],
+   "implies": [
+    "React"
+   ]
+  },
+  {
+   "name": "React",
+   "cat": "JS-библиотека",
+   "html": [
+    "data-reactroot",
+    "data-reactid"
+   ],
+   "scripts": [
+    "react(?:-dom)?(?:\\.production)?(?:\\.min)?\\.js",
+    "/react@([\\d.]+)/"
+   ]
+  },
+  {
+   "name": "Vue.js",
+   "cat": "JS-библиотека",
+   "html": [
+    "data-v-[0-9a-f]{8}",
+    "\\bdata-server-rendered\\b"
+   ],
+   "scripts": [
+    "vue(?:\\.runtime)?(?:\\.min)?\\.js",
+    "/vue@([\\d.]+)"
+   ]
+  },
+  {
+   "name": "Angular",
+   "cat": "JS-фреймворк",
+   "html": [
+    "ng-version=\\\"([\\d.]+)\\\"",
+    "<app-root"
+   ]
+  },
+  {
+   "name": "AngularJS",
+   "cat": "JS-фреймворк",
+   "html": [
+    "\\bng-app\\b",
+    "\\bng-controller\\b"
+   ],
+   "scripts": [
+    "angular(?:js)?/([\\d.]+)/angular(?:\\.min)?\\.js",
+    "angular(?:\\.min)?\\.js"
+   ],
+   "eol": "AngularJS 1.x не поддерживается с января 2022"
+  },
+  {
+   "name": "Svelte",
+   "cat": "JS-фреймворк",
+   "html": [
+    "class=\\\"[^\\\"]*svelte-[a-z0-9]{6}"
+   ]
+  },
+  {
+   "name": "jQuery",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "jquery[.-]([\\d.]+)(?:\\.min|\\.slim)*\\.js",
+    "/jquery/([\\d.]+)/jquery",
+    "jquery(?:\\.min)?\\.js(?:\\?ver=([\\d.]+))?"
+   ],
+   "outdated_below": "3.5.0",
+   "eol_branches": [
+    { "upto": "2.2", "date": "2016-06-09" }
+   ]
+  },
+  {
+   "name": "jQuery UI",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "jquery-ui[.-]?([\\d.]+)?(?:\\.min)?\\.js",
+    "/jqueryui/([\\d.]+)/"
+   ],
+   "implies": [
+    "jQuery"
+   ],
+   "outdated_below": "1.13.2"
+  },
+  {
+   "name": "jQuery Migrate",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "jquery-migrate(?:-([\\d.]+))?(?:\\.min)?\\.js"
+   ],
+   "implies": [
+    "jQuery"
+   ]
+  },
+  {
+   "name": "Bootstrap",
+   "cat": "UI-фреймворк",
+   "scripts": [
+    "bootstrap[.-]?([\\d.]+)?(?:\\.bundle)?(?:\\.min)?\\.js",
+    "/bootstrap/([\\d.]+)/"
+   ],
+   "html": [
+    "bootstrap(?:\\.min)?\\.css",
+    "/bootstrap@([\\d.]+)/"
+   ],
+   "outdated_below": "3.4.1"
+  },
+  {
+   "name": "Font Awesome",
+   "cat": "Шрифты",
+   "html": [
+    "font-?awesome(?:/([\\d.]+))?",
+    "use\\.fontawesome\\.com",
+    "kit\\.fontawesome\\.com"
+   ]
+  },
+  {
+   "name": "Google Fonts",
+   "cat": "Шрифты",
+   "html": [
+    "fonts\\.googleapis\\.com"
+   ]
+  },
+  {
+   "name": "Lodash",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "lodash(?:\\.min)?\\.js",
+    "/lodash(?:\\.js)?/([\\d.]+)/"
+   ],
+   "outdated_below": "4.17.21"
+  },
+  {
+   "name": "Moment.js",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "moment(?:\\.min)?\\.js",
+    "/moment\\.js/([\\d.]+)/"
+   ],
+   "outdated_below": "2.29.4"
+  },
+  {
+   "name": "Modernizr",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "modernizr(?:[.-]([\\d.]+))?(?:\\.min)?\\.js"
+   ]
+  },
+  {
+   "name": "Swiper",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "swiper(?:-bundle)?(?:\\.min)?\\.js"
+   ]
+  },
+  {
+   "name": "Slick",
+   "cat": "JS-библиотека",
+   "scripts": [
+    "slick(?:\\.min)?\\.js"
+   ],
+   "implies": [
+    "jQuery"
+   ]
+  },
+  {
+   "name": "core-js",
+   "cat": "JS-библиотека",
+   "html": [
+    "core-js"
+   ]
+  },
+  {
+   "name": "Alpine.js",
+   "cat": "JS-библиотека",
+   "html": [
+    "\\bx-data=\\\""
+   ],
+   "scripts": [
+    "alpinejs"
+   ]
+  },
+  {
+   "name": "Tailwind CSS",
+   "cat": "UI-фреймворк",
+   "html": [
+    "tailwind(?:css)?(?:\\.min)?\\.css",
+    "cdn\\.tailwindcss\\.com"
+   ]
+  },
+  {
+   "name": "Webpack",
+   "cat": "Сборщик",
+   "html": [
+    "webpackJsonp",
+    "__webpack_require__"
+   ]
+  },
+  {
+   "name": "Vite",
+   "cat": "Сборщик",
+   "html": [
+    "/@vite/client",
+    "type=\\\"module\\\"[^>]+/assets/index-[\\w-]+\\.js"
+   ]
+  },
+  {
+   "name": "Google Analytics",
+   "cat": "Аналитика",
+   "html": [
+    "google-analytics\\.com/(?:ga|analytics|urchin)\\.js",
+    "\\bUA-\\d{4,10}-\\d{1,4}\\b",
+    "googletagmanager\\.com/gtag/js\\?id=G-"
+   ],
+   "cookies": {
+    "_ga": "",
+    "__utma": ""
+   }
+  },
+  {
+   "name": "Google Tag Manager",
+   "cat": "Аналитика",
+   "html": [
+    "googletagmanager\\.com/gtm\\.js",
+    "\\bGTM-[A-Z0-9]{4,8}\\b"
+   ]
+  },
+  {
+   "name": "Yandex.Metrika",
+   "cat": "Аналитика",
+   "html": [
+    "mc\\.yandex\\.ru/(?:metrika|watch)",
+    "\\bym\\(\\d{5,10},"
+   ],
+   "cookies": {
+    "_ym_uid": "",
+    "_ym_d": ""
+   }
+  },
+  {
+   "name": "Facebook Pixel",
+   "cat": "Аналитика",
+   "html": [
+    "connect\\.facebook\\.net/[\\w_]+/fbevents\\.js",
+    "fbq\\(['\\\"]init"
+   ]
+  },
+  {
+   "name": "Hotjar",
+   "cat": "Аналитика",
+   "html": [
+    "static\\.hotjar\\.com",
+    "hjid:\\s*\\d+"
+   ]
+  },
+  {
+   "name": "Matomo",
+   "cat": "Аналитика",
+   "html": [
+    "matomo\\.(?:js|php)",
+    "piwik\\.(?:js|php)",
+    "_paq\\.push"
+   ],
+   "cookies": {
+    "_pk_id": ""
+   }
+  },
+  {
+   "name": "Top.Mail.Ru",
+   "cat": "Аналитика",
+   "html": [
+    "top-fwz1\\.mail\\.ru",
+    "top\\.mail\\.ru/counter"
+   ]
+  },
+  {
+   "name": "LiveInternet",
+   "cat": "Аналитика",
+   "html": [
+    "counter\\.yadro\\.ru",
+    "liveinternet\\.ru/click"
+   ]
+  },
+  {
+   "name": "VK Pixel",
+   "cat": "Аналитика",
+   "html": [
+    "vk\\.com/js/api/openapi\\.js",
+    "VK\\.Retargeting"
+   ]
+  },
+  {
+   "name": "Google AdSense",
+   "cat": "Реклама",
+   "html": [
+    "pagead2\\.googlesyndication\\.com",
+    "ca-pub-\\d{10,20}"
+   ]
+  },
+  {
+   "name": "Yandex.Direct",
+   "cat": "Реклама",
+   "html": [
+    "an\\.yandex\\.ru/system/context\\.js",
+    "yandex_rtb_"
+   ]
+  },
+  {
+   "name": "Jivo",
+   "cat": "Чат",
+   "html": [
+    "code\\.jivo(?:site)?\\.(?:ru|com)"
+   ]
+  },
+  {
+   "name": "Intercom",
+   "cat": "Чат",
+   "html": [
+    "widget\\.intercom\\.io",
+    "intercomSettings"
+   ]
+  },
+  {
+   "name": "Bitrix24",
+   "cat": "CRM",
+   "html": [
+    "cdn-ru\\.bitrix24\\.ru",
+    "bitrix24\\.(?:ru|com)/b\\d+/crm/"
+   ]
+  },
+  {
+   "name": "amoCRM",
+   "cat": "CRM",
+   "html": [
+    "amocrm\\.(?:ru|com)"
+   ]
+  },
+  {
+   "name": "reCAPTCHA",
+   "cat": "Безопасность",
+   "html": [
+    "google\\.com/recaptcha/",
+    "g-recaptcha"
+   ]
+  },
+  {
+   "name": "hCaptcha",
+   "cat": "Безопасность",
+   "html": [
+    "hcaptcha\\.com/1/api\\.js",
+    "h-captcha"
+   ]
+  },
+  {
+   "name": "Yandex SmartCaptcha",
+   "cat": "Безопасность",
+   "html": [
+    "smartcaptcha\\.yandexcloud\\.net"
+   ]
+  },
+  {
+   "name": "Cookiebot",
+   "cat": "Cookie-согласие",
+   "html": [
+    "consent\\.cookiebot\\.com"
+   ]
+  },
+  {
+   "name": "OneTrust",
+   "cat": "Cookie-согласие",
+   "html": [
+    "cdn\\.cookielaw\\.org",
+    "optanon"
+   ]
+  },
+  {
+   "name": "Cloudflare",
+   "cat": "CDN/WAF",
+   "headers": {
+    "server": "^cloudflare$",
+    "cf-ray": "",
+    "cf-cache-status": ""
+   },
+   "cookies": {
+    "__cf_bm": "",
+    "__cfduid": "",
+    "cf_clearance": ""
+   }
+  },
+  {
+   "name": "Akamai",
+   "cat": "CDN",
+   "headers": {
+    "x-akamai-transformed": "",
+    "akamai-grn": "",
+    "server": "AkamaiGHost"
+   }
+  },
+  {
+   "name": "Fastly",
+   "cat": "CDN",
+   "headers": {
+    "x-served-by": "cache-\\w+",
+    "fastly-debug-digest": "",
+    "x-fastly-request-id": ""
+   }
+  },
+  {
+   "name": "Amazon CloudFront",
+   "cat": "CDN",
+   "headers": {
+    "x-amz-cf-id": "",
+    "via": "CloudFront"
+   }
+  },
+  {
+   "name": "Amazon S3",
+   "cat": "Хранилище",
+   "headers": {
+    "server": "AmazonS3",
+    "x-amz-request-id": ""
+   }
+  },
+  {
+   "name": "Amazon Web Services",
+   "cat": "Хостинг",
+   "headers": {
+    "x-amz-id-2": ""
+   },
+   "cookies": {
+    "AWSALB": "",
+    "AWSALBCORS": ""
+   }
+  },
+  {
+   "name": "Microsoft Azure",
+   "cat": "Хостинг",
+   "headers": {
+    "x-ms-request-id": "",
+    "x-azure-ref": ""
+   },
+   "cookies": {
+    "ARRAffinity": ""
+   }
+  },
+  {
+   "name": "Google Cloud",
+   "cat": "Хостинг",
+   "headers": {
+    "via": "1\\.1 google",
+    "server": "^(?:gws|Google Frontend|GSE)$"
+   }
+  },
+  {
+   "name": "Vercel",
+   "cat": "Хостинг",
+   "headers": {
+    "x-vercel-id": "",
+    "server": "^Vercel$"
+   }
+  },
+  {
+   "name": "Netlify",
+   "cat": "Хостинг",
+   "headers": {
+    "x-nf-request-id": "",
+    "server": "^Netlify$"
+   }
+  },
+  {
+   "name": "GitHub Pages",
+   "cat": "Хостинг",
+   "headers": {
+    "server": "^GitHub\\.com$",
+    "x-github-request-id": ""
+   }
+  },
+  {
+   "name": "Heroku",
+   "cat": "Хостинг",
+   "headers": {
+    "via": "vegur"
+   }
+  },
+  {
+   "name": "DDoS-Guard",
+   "cat": "CDN/WAF",
+   "headers": {
+    "server": "ddos-guard"
+   },
+   "cookies": {
+    "__ddg1_": "",
+    "__ddg2_": "",
+    "__ddgid_": ""
+   }
+  },
+  {
+   "name": "Qrator",
+   "cat": "CDN/WAF",
+   "headers": {
+    "server": "QRATOR",
+    "x-qrator-request-id": ""
+   }
+  },
+  {
+   "name": "StormWall",
+   "cat": "CDN/WAF",
+   "headers": {
+    "server": "StormWall"
+   },
+   "cookies": {
+    "swp_token": ""
+   }
+  },
+  {
+   "name": "Variti",
+   "cat": "CDN/WAF",
+   "headers": {
+    "server": "Variti"
+   }
+  },
+  {
+   "name": "Sucuri",
+   "cat": "CDN/WAF",
+   "headers": {
+    "x-sucuri-id": "",
+    "server": "Sucuri"
+   }
+  },
+  {
+   "name": "Imperva Incapsula",
+   "cat": "CDN/WAF",
+   "headers": {
+    "x-iinfo": "",
+    "x-cdn": "Incapsula"
+   },
+   "cookies": {
+    "incap_ses_": "",
+    "visid_incap_": ""
+   }
+  },
+  {
+   "name": "F5 BIG-IP",
+   "cat": "Балансировщик",
+   "cookies": {
+    "BIGipServer": "",
+    "TS01": ""
+   },
+   "headers": {
+    "server": "BigIP"
+   }
+  },
+  {
+   "name": "ngenix",
+   "cat": "CDN",
+   "headers": {
+    "server": "ngenix",
+    "x-ngenix-cache": ""
+   }
+  },
+  {
+   "name": "CDNvideo",
+   "cat": "CDN",
+   "headers": {
+    "server": "CDNvideo"
+   }
+  },
+  {
+   "name": "Yandex Cloud CDN",
+   "cat": "CDN",
+   "headers": {
+    "server": "Yandex",
+    "x-yandex-req-id": ""
+   }
+  },
+  {
+   "name": "jsDelivr",
+   "cat": "CDN",
+   "html": [
+    "cdn\\.jsdelivr\\.net"
+   ]
+  },
+  {
+   "name": "cdnjs",
+   "cat": "CDN",
+   "html": [
+    "cdnjs\\.cloudflare\\.com"
+   ]
+  },
+  {
+   "name": "unpkg",
+   "cat": "CDN",
+   "html": [
+    "unpkg\\.com/"
+   ]
+  },
+  {
+   "name": "HSTS",
+   "cat": "Безопасность",
+   "headers": {
+    "strict-transport-security": ""
+   }
+  },
+  {
+   "name": "MySQL",
+   "cat": "СУБД"
+  }
+ ]
+}

@@ -1,0 +1,92 @@
+{
+  "author": "John Doe",
+  "company": "Example LLC",
+  "emails": [
+    "ivan.petrenko@example.com"
+  ],
+  "format": "docx",
+  "hidden_content": [
+    {
+      "kind": "vanish",
+      "location": "word/document.xml",
+      "text": "Internal note: budget 2M UAH, contact Ivan Petrenko."
+    }
+  ],
+  "people": [
+    {
+      "name": "John Doe",
+      "role": "author",
+      "source": "core.xml:dc:creator"
+    },
+    {
+      "name": "John Doe",
+      "role": "other",
+      "source": "signature:ooxml"
+    },
+    {
+      "name": "Іван Петренко",
+      "role": "other",
+      "source": "signature:ooxml"
+    }
+  ],
+  "signatures": [
+    {
+      "certificates": 1,
+      "contact": "Chief Accountant",
+      "digest_algorithm": "sha256",
+      "kind": "ooxml",
+      "reason": "Approved for release",
+      "signer": {
+        "common_name": "John Doe",
+        "country": "UA",
+        "edrpou": "87654321",
+        "issuer": "C=UA, O=Example Trust Services, organizationIdentifier=NTRUA-00000001, CN=Example Test QTSP CA",
+        "issuer_cn": "Example Test QTSP CA",
+        "locality": "Lviv",
+        "not_after": "2031-11-21T01:06:56Z",
+        "not_before": "2026-11-22T01:06:56Z",
+        "organization": "Example LLC",
+        "rnokpp_masked": "********99",
+        "rnokpp_valid": true,
+        "serial": "009B33046ED39D182E",
+        "subject": "C=UA, O=Example LLC, T=Accountant, CN=John Doe, L=Lviv",
+        "title": "Accountant"
+      },
+      "signing_time": "2024-03-01T08:00:01Z",
+      "source": "_xmlsignatures/sig1.xml",
+      "timestamp": {
+        "gen_time": "2026-11-22T01:06:57Z",
+        "policy": "1.2.3.4.1",
+        "serial": "2D",
+        "tsa": "C=UA, O=Example Trust Services, CN=Example Test TSA"
+      }
+    },
+    {
+      "certificates": 2,
+      "digest_algorithm": "sha256",
+      "kind": "vba",
+      "signer": {
+        "common_name": "Іван Петренко",
+        "country": "UA",
+        "edrpou": "12345678",
+        "email": "ivan.petrenko@example.com",
+        "given_name": "Іван",
+        "issuer": "C=UA, O=Example Trust Services, organizationIdentifier=NTRUA-00000001, CN=Example Test QTSP CA",
+        "issuer_cn": "Example Test QTSP CA",
+        "locality": "Київ",
+        "not_after": "2031-11-21T01:06:56Z",
+        "not_before": "2026-11-22T01:06:56Z",
+        "org_unit": "Відділ ІТ",
+        "organization": "ТОВ Приклад",
+        "rnokpp_masked": "********99",
+        "rnokpp_valid": true,
+        "serial": "00B9DC7FAEEA7B0E5C",
+        "subject": "C=UA, L=Київ, O=ТОВ Приклад, OU=Відділ ІТ, T=Директор, SN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-********99, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@example.com",
+        "surname": "Петренко",
+        "title": "Директор"
+      },
+      "signing_time": "2026-11-22T01:06:57Z",
+      "source": "word/vbaProjectSignature.bin"
+    }
+  ]
+}

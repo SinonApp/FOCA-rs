@@ -1,0 +1,200 @@
+{
+  "application": "Microsoft Outlook 16.0",
+  "attachments": [
+    {
+      "mime": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "name": "Кошторис.docx",
+      "size": 712
+    },
+    {
+      "mime": "message/rfc822",
+      "name": "Draft budget.eml",
+      "size": 538
+    }
+  ],
+  "author": "Петренко Іван",
+  "company": "Contoso Energy (fictional)",
+  "created": "2024-03-14T18:42:07+02:00",
+  "emails": [
+    "i.petrenko@example.com",
+    "i.petrenko.private@example.net",
+    "john.doe@example.org",
+    "o.kovalenko@example.com",
+    "buh@example.com"
+  ],
+  "embedded": [
+    {
+      "metadata": {
+        "author": "Іван Петренко",
+        "created": "2024-03-10T08:00:00Z",
+        "format": "docx",
+        "last_modified_by": "John Doe",
+        "people": [
+          {
+            "name": "Іван Петренко",
+            "role": "author",
+            "source": "core.xml:dc:creator"
+          },
+          {
+            "name": "John Doe",
+            "role": "last_modified_by",
+            "source": "core.xml:cp:lastModifiedBy"
+          }
+        ],
+        "title": "Кошторис 2024"
+      },
+      "name": "attachment:Кошторис.docx"
+    },
+    {
+      "metadata": {
+        "application": "Microsoft Outlook 16.0",
+        "author": "Olena Kovalenko",
+        "created": "2024-03-11T09:00:00+02:00",
+        "emails": [
+          "o.kovalenko@example.com",
+          "i.petrenko@example.com"
+        ],
+        "fields": {
+          "eml:internal_hosts": "ws-017.corp.example.test, EXCH02.corp.example.test",
+          "eml:internal_ips": "192.168.10.17, 10.20.0.16",
+          "eml:message-id": "<inner-0001@EXCH02.corp.example.test>",
+          "eml:message_id_domain": "exch02.corp.example.test",
+          "eml:received.01": "from ws-017.corp.example.test (ws-017.corp.example.test [192.168.10.17]) by EXCH02.corp.example.test (10.20.0.16) with Microsoft SMTP Server; Mon, 11 Mar 2024 09:00:00 +0200",
+          "eml:x-mailer": "Microsoft Outlook 16.0"
+        },
+        "format": "eml",
+        "people": [
+          {
+            "name": "Olena Kovalenko <o.kovalenko@example.com>",
+            "role": "author",
+            "source": "eml:from"
+          },
+          {
+            "name": "Іван Петренко <i.petrenko@example.com>",
+            "role": "other",
+            "source": "eml:to"
+          }
+        ],
+        "servers": [
+          {
+            "name": "exch02.corp.example.test",
+            "source": "eml:message-id"
+          },
+          {
+            "name": "ws-017.corp.example.test",
+            "source": "eml:received"
+          },
+          {
+            "name": "192.168.10.17",
+            "source": "eml:received"
+          },
+          {
+            "name": "10.20.0.16",
+            "source": "eml:received"
+          }
+        ],
+        "software": [
+          "Microsoft Outlook 16.0"
+        ],
+        "stats": {
+          "received_hops": 1
+        },
+        "title": "Draft budget"
+      },
+      "name": "attachment:Draft budget.eml"
+    }
+  ],
+  "fields": {
+    "eml:dkim_domain": "example.com",
+    "eml:dkim_selector": "selector1",
+    "eml:internal_hosts": "EXCH01.corp.example.test, ws-042.corp.example.test",
+    "eml:internal_ips": "10.20.30.42, 10.20.0.15",
+    "eml:message-id": "<a1b2c3d4e5@EXCH01.corp.example.test>",
+    "eml:message_id_domain": "exch01.corp.example.test",
+    "eml:organization": "Contoso Energy (fictional)",
+    "eml:originating_ips": "10.20.30.42",
+    "eml:received.01": "from mx1.example.org (mx1.example.org [198.51.100.25]) by mail.example.org (Postfix) with ESMTPS id 4F2A1; Thu, 14 Mar 2024 16:42:10 +0000",
+    "eml:received.02": "from EXCH01.corp.example.test (unknown [203.0.113.10]) by mx1.example.org (Postfix) with ESMTPS; Thu, 14 Mar 2024 16:42:09 +0000",
+    "eml:received.03": "from ws-042.corp.example.test (10.20.30.42) by EXCH01.corp.example.test (10.20.0.15) with Microsoft SMTP Server id 15.2.1118.40; Thu, 14 Mar 2024 18:42:07 +0200",
+    "eml:reply-to": "i.petrenko.private@example.net",
+    "eml:reply_to_differs": "true",
+    "eml:return-path": "<i.petrenko@example.com>",
+    "eml:x-mailer": "Microsoft Outlook 16.0",
+    "eml:x-ms-exchange-crosstenant-id": "00000000-1111-2222-3333-444444444444",
+    "eml:x-originating-ip": "[10.20.30.42]"
+  },
+  "format": "eml",
+  "links": [
+    "https://intranet.example.test/finance/budget?id=42",
+    "https://contoso-my.sharepoint.example.test/personal/i_petrenko/Documents/budget.xlsx"
+  ],
+  "people": [
+    {
+      "name": "Петренко Іван <i.petrenko@example.com>",
+      "role": "author",
+      "source": "eml:from"
+    },
+    {
+      "name": "i.petrenko.private@example.net",
+      "role": "other",
+      "source": "eml:reply-to"
+    },
+    {
+      "name": "John Doe <john.doe@example.org>",
+      "role": "other",
+      "source": "eml:to"
+    },
+    {
+      "name": "Olena Kovalenko <o.kovalenko@example.com>",
+      "role": "other",
+      "source": "eml:to"
+    },
+    {
+      "name": "buh@example.com",
+      "role": "other",
+      "source": "eml:cc"
+    }
+  ],
+  "servers": [
+    {
+      "name": "exch01.corp.example.test",
+      "source": "eml:message-id"
+    },
+    {
+      "name": "10.20.30.42",
+      "source": "eml:x-originating-ip"
+    },
+    {
+      "name": "mx1.example.org",
+      "source": "eml:received"
+    },
+    {
+      "name": "mail.example.org",
+      "source": "eml:received"
+    },
+    {
+      "name": "198.51.100.25",
+      "source": "eml:received"
+    },
+    {
+      "name": "203.0.113.10",
+      "source": "eml:received"
+    },
+    {
+      "name": "ws-042.corp.example.test",
+      "source": "eml:received"
+    },
+    {
+      "name": "10.20.0.15",
+      "source": "eml:received"
+    }
+  ],
+  "software": [
+    "Microsoft Outlook 16.0"
+  ],
+  "stats": {
+    "attachments": 2,
+    "received_hops": 3
+  },
+  "title": "Кошторис на 2024 рік"
+}

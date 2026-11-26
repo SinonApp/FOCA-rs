@@ -1,0 +1,52 @@
+{
+  "application": "Microsoft PowerPoint",
+  "author": "author",
+  "category": "category",
+  "company": "company",
+  "created": "2007-02-09T16:23:23Z",
+  "custom": {
+    "Custom Boolean": "true",
+    "Custom Date": "2007-01-09T05:00:00Z",
+    "Custom Number": "42",
+    "Custom Text": "customtext"
+  },
+  "description": "comments",
+  "edit_time_secs": 266,
+  "fields": {
+    "ole:AppVersion": "10.2418",
+    "ole:TitlesOfParts": "Times",
+    "ppt:CurrentUser": "user name"
+  },
+  "format": "ppt",
+  "keywords": "keywords",
+  "last_modified_by": "user name",
+  "manager": "manager",
+  "modified": "2007-02-09T16:27:49Z",
+  "os": "Macintosh",
+  "people": [
+    {
+      "name": "author",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "user name",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    }
+  ],
+  "revision": "1",
+  "software": [
+    "Microsoft PowerPoint"
+  ],
+  "stats": {
+    "hidden_slides": 0,
+    "mm_clips": 0,
+    "notes": 0,
+    "paragraphs": 4,
+    "slides": 1,
+    "words": 4
+  },
+  "subject": "subject",
+  "title": "title"
+}

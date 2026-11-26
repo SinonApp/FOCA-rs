@@ -1,0 +1,35 @@
+{
+  "application": "GraphicConverter",
+  "camera": {
+    "make": "Canon",
+    "model": "Canon EOS DIGITAL REBEL"
+  },
+  "description": "The picture caption",
+  "fields": {
+    "exif:BitsPerSample": "8, 8, 8",
+    "exif:Compression": "[reserved compression 5]",
+    "exif:DateTime": "2004:02:20 08:07:49",
+    "exif:ImageDescription": "The picture caption",
+    "exif:ImageLength": "120 pixels",
+    "exif:ImageWidth": "160 pixels",
+    "exif:Make": "Canon",
+    "exif:Model": "Canon EOS DIGITAL REBEL",
+    "exif:PhotometricInterpretation": "RGB",
+    "exif:PlanarConfiguration": "chunky",
+    "exif:ResolutionUnit": "inch",
+    "exif:RowsPerStrip": "120",
+    "exif:SamplesPerPixel": "3",
+    "exif:Software": "GraphicConverter",
+    "exif:StripByteCounts": "1048",
+    "exif:StripOffsets": "3816",
+    "exif:Tag(Tiff, 254)": "0",
+    "exif:Tag(Tiff, 317)": "1",
+    "exif:XResolution": "180 pixels per inch",
+    "exif:YResolution": "180 pixels per inch"
+  },
+  "format": "tiff",
+  "modified": "2004-02-20T08:07:49",
+  "software": [
+    "GraphicConverter"
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "application": "Canon iR-ADV C5535 PDF 1.2",
+  "author": "scan",
+  "camera": {
+    "make": "Canon",
+    "model": "iR-ADV C5535"
+  },
+  "description": "Scan to \\\\SRV-FILE01\\scan$\\2023-11",
+  "fields": {
+    "exif:Artist": "scan",
+    "exif:BitsPerSample": "8",
+    "exif:Compression": "uncompressed",
+    "exif:DateTime": "2023:11:20 09:12:44",
+    "exif:ImageDescription": "Scan to \\\\SRV-FILE01\\scan$\\2023-11",
+    "exif:ImageLength": "16 pixels",
+    "exif:ImageWidth": "16 pixels",
+    "exif:Make": "Canon",
+    "exif:Model": "iR-ADV C5535",
+    "exif:PhotometricInterpretation": "black is zero",
+    "exif:PlanarConfiguration": "chunky",
+    "exif:RowsPerStrip": "16",
+    "exif:Software": "Canon iR-ADV C5535 PDF 1.2",
+    "exif:StripByteCounts": "256",
+    "exif:StripOffsets": "324",
+    "exif:Tag(Tiff, 316)": "MFP-2F"
+  },
+  "format": "tiff",
+  "modified": "2023-11-20T09:12:44",
+  "paths": [
+    {
+      "host": "SRV-FILE01",
+      "kind": "unc",
+      "path": "\\\\SRV-FILE01\\scan$\\2023-11",
+      "source": "description"
+    }
+  ],
+  "people": [
+    {
+      "name": "scan",
+      "role": "author",
+      "source": "exif:Artist"
+    }
+  ],
+  "servers": [
+    {
+      "name": "MFP-2F",
+      "source": "exif:HostComputer"
+    },
+    {
+      "name": "SRV-FILE01",
+      "source": "path"
+    }
+  ],
+  "software": [
+    "Canon iR-ADV C5535 PDF 1.2"
+  ]
+}

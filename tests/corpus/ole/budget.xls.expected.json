@@ -1,0 +1,42 @@
+{
+  "application": "Microsoft Excel",
+  "author": "s.lysenko",
+  "company": "ТОВ «Контосо Енерджі»",
+  "created": "2018-12-20T08:00:00Z",
+  "fields": {
+    "xls:WriteAccess": "s.lysenko"
+  },
+  "format": "xls",
+  "has_macros": true,
+  "hidden_sheets": [
+    "Зарплати",
+    "Службовий"
+  ],
+  "last_modified_by": "v.tkachenko",
+  "macro_modules": [
+    "Module1"
+  ],
+  "modified": "2019-01-15T12:00:00Z",
+  "os": "Windows 10/11",
+  "people": [
+    {
+      "name": "s.lysenko",
+      "role": "author",
+      "source": "SummaryInformation:Author"
+    },
+    {
+      "name": "v.tkachenko",
+      "role": "last_modified_by",
+      "source": "SummaryInformation:LastAuthor"
+    },
+    {
+      "name": "s.lysenko",
+      "role": "last_modified_by",
+      "source": "xls:WRITEACCESS"
+    }
+  ],
+  "software": [
+    "Microsoft Excel"
+  ],
+  "title": "Budget 2019"
+}

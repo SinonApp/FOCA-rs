@@ -1,0 +1,24 @@
+[package]
+name = "foca-meta"
+description = "FOCA-rs document metadata extraction and cleaning (OOXML, ODF, PDF, EXIF, OLE2, SVG, RDP/ICA)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+foca-core.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+time.workspace = true
+zip.workspace = true
+flate2.workspace = true
+quick-xml.workspace = true
+kamadak-exif.workspace = true
+cfb.workspace = true
+jpeg-decoder.workspace = true
+x509-parser.workspace = true
+sha2.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="generator" content="FOCA-rs 2.0.0-beta.2">
+<meta name="referrer" content="no-referrer">
+<title>Отчёт о тестировании на проникновение - contoso.example</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 18mm; @bottom-right { content: counter(page); font: 8pt sans-serif; color: #64748b; } }
+:root { --ink: #0f172a; --muted: #475569; --line: #e2e8f0; --soft: #f8fafc; --accent: #1d4ed8;
+  --crit: #b91c1c; --high: #c2410c; --warn: #a16207; --low: #1d4ed8; --info: #475569; }
+* { box-sizing: border-box; }
+html { background: #fff; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; color-scheme: light; }
+body { margin: 0 auto; max-width: 190mm; padding: 10mm 0 16mm; font: 10.5pt/1.5 "Segoe UI", "Noto Sans", Roboto, Arial, sans-serif; overflow-wrap: anywhere; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 0 0 .5em; break-after: avoid; }
+h1 { font-size: 22pt; }
+h2 { font-size: 15pt; margin-top: 1.6em; padding-bottom: 4px; border-bottom: 2px solid var(--ink); }
+h3 { font-size: 12pt; margin-top: 1.2em; }
+h4 { font-size: 10.5pt; margin: 1em 0 .3em; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+p { margin: .4em 0 .7em; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.small { font-size: 9pt; }
+.cover { min-height: 250mm; display: flex; flex-direction: column; break-after: page; }
+.cover .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cover .conf { border: 1.5px solid var(--crit); color: var(--crit); padding: 2px 10px; border-radius: 4px; font-weight: 700; font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; }
+.cover .logo img { max-height: 18mm; max-width: 60mm; }
+.cover .initials { width: 16mm; height: 16mm; border-radius: 50%; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14pt; }
+.cover .title { margin-top: 55mm; }
+.cover .title .kicker { color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 10pt; }
+.cover .title h1 { font-size: 26pt; margin: 6px 0 4px; }
+.cover .title .proj { font-size: 15pt; color: var(--muted); }
+.cover dl { margin-top: auto; display: grid; grid-template-columns: 45mm 1fr; gap: 4px 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+.cover dt { color: var(--muted); }
+.cover dd { margin: 0; font-weight: 600; }
+.head-data { border-bottom: 2px solid var(--ink); margin-bottom: 1em; padding-bottom: 6px; }
+.toc ol { padding-left: 1.2em; columns: 2; }
+.toc a { color: inherit; text-decoration: none; }
+section { break-inside: auto; }
+p.warn { border-left: 4px solid var(--warn); background: #fef9c3; color: #713f12; padding: 8px 12px; border-radius: 4px; break-inside: avoid; }
+.riskbox { display: flex; gap: 16px; align-items: stretch; margin: .6em 0 1em; }
+.risk { min-width: 46mm; border-radius: 8px; padding: 10px 14px; color: #fff; background: var(--info); }
+.risk.crit { background: #7f1d1d; } .risk.high { background: var(--crit); } .risk.mid { background: var(--warn); } .risk.low { background: #15803d; }
+.risk .n { font-size: 26pt; font-weight: 800; line-height: 1; }
+.risk .n small { font-size: 11pt; font-weight: 600; opacity: .85; }
+.risk .l { font-weight: 700; margin-top: 4px; }
+.risk .s { font-size: 8.5pt; opacity: .9; }
+.chart { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+table { width: 100%; border-collapse: collapse; margin: .3em 0 .9em; font-size: 9pt; }
+th, td { text-align: left; vertical-align: top; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+th { background: var(--soft); font-weight: 600; color: var(--muted); }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+dl.kv { display: grid; grid-template-columns: 42mm 1fr; gap: 3px 12px; margin: .4em 0 .9em; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 8.5pt; font-weight: 700; color: #fff; white-space: nowrap; }
+.badge.crit { background: var(--crit); } .badge.high { background: var(--high); } .badge.warn { background: var(--warn); }
+.badge.low { background: var(--low); } .badge.info { background: var(--info); }
+.tag { display: inline-block; padding: 0 6px; border: 1px solid var(--line); border-radius: 4px; font-size: 8.5pt; margin: 0 3px 2px 0; }
+.finding { border: 1px solid var(--line); border-left: 4px solid var(--info); border-radius: 6px; padding: 10px 12px; margin: 0 0 12px; break-inside: avoid-page; }
+.finding.crit { border-left-color: var(--crit); } .finding.high { border-left-color: var(--high); } .finding.warn { border-left-color: var(--warn); } .finding.low { border-left-color: var(--low); }
+.finding h3 { margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
+.finding h3 .id { color: var(--muted); font-weight: 600; font-size: 10pt; white-space: nowrap; }
+.finding .meta { font-size: 9pt; color: var(--muted); margin-bottom: 6px; }
+.finding .meta span + span::before { content: " · "; }
+.txt { white-space: pre-wrap; }
+pre.ev { white-space: pre-wrap; background: var(--soft); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font: 8.5pt/1.45 ui-monospace, "Cascadia Mono", Consolas, monospace; margin: .2em 0 .6em; }
+.prov { font-size: 8.5pt; color: var(--muted); }
+.note { font-size: 9pt; border-left: 3px solid var(--line); padding-left: 8px; margin: 4px 0; }
+.empty { color: var(--muted); font-style: italic; }
+.mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 8.5pt; }
+.viz { margin: .4em 0 .3em; border: 1px solid var(--line); border-radius: 8px; padding: 6px; break-inside: avoid; }
+.viz svg { display: block; width: 100%; height: auto; max-width: 150mm; margin: 0 auto; }
+.viz.wide svg { max-width: 175mm; }
+@media screen and (max-width: 520px) { .viz.wide { overflow-x: auto; } .viz.wide svg { min-width: 450px; } }
+footer.gen { margin-top: 2em; border-top: 1px solid var(--line); padding-top: 6px; font-size: 8.5pt; color: var(--muted); display: flex; justify-content: space-between; }
+@media print { html, body { background: #fff !important; color: var(--ink); } body { padding: 0; max-width: none; } a { color: inherit; text-decoration: none; } section#findings, section#infra, section#docs, section#appx, section#graph, section#netmap, section#timeline { break-before: page; } table { page-break-inside: auto; } thead { display: table-header-group; } pre.ev { break-inside: auto; } }
+</style>
+</head>
+<body>
+<header class="cover">
+<div class="top"><div class="logo"><div class="initials" aria-hidden="true">КА</div></div><div class="conf">Конфиденциально</div></div>
+<div class="title"><div class="kicker">Полный отчёт пентеста</div><h1>Отчёт о тестировании на проникновение</h1><div class="proj">contoso.example</div></div>
+<dl>
+<dt>Заказчик</dt><dd>ТОВ «Контосо Енерджі»</dd>
+<dt>Исполнитель</dt><dd>ТОВ «Кібер Аудит»</dd>
+<dt>Дата отчёта</dt><dd>20.11.2026</dd>
+<dt>Часовой пояс (время устройства)</dt><dd>UTC</dd>
+</dl>
+</header>
+<nav class="toc"><h2>Содержание</h2><ol><li><a href="#summary">Резюме для руководства</a></li><li><a href="#scope">Скоуп</a></li><li><a href="#findings">Находки</a></li><li><a href="#fixed">Исправленные находки</a></li><li><a href="#people">Люди</a></li><li><a href="#infra">Инфраструктура</a></li><li><a href="#docs">Документы</a></li><li><a href="#log">Журнал запросов</a></li><li><a href="#appx">Приложения</a></li></ol></nav>
+<section id="summary">
+<h2>Резюме для руководства</h2>
+<div class="riskbox"><div class="risk crit"><div class="s">Общий уровень риска</div><div class="n">100<small>/100</small></div><div class="l">Критический</div><div class="s">по находкам отчёта</div></div><div class="chart"><h4>Находки по важности</h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 124" role="img" aria-label="Находки по важности"><text x="0" y="14" font-size="11" fill="#334155">Критический</text><rect x="96" y="3" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="3" width="21.0" height="14" rx="3" fill="#b91c1c"/><text x="324" y="14" font-size="11" font-weight="700" fill="#0f172a">4</text><text x="0" y="38" font-size="11" fill="#334155">Высокий</text><rect x="96" y="27" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="27" width="131.0" height="14" rx="3" fill="#c2410c"/><text x="324" y="38" font-size="11" font-weight="700" fill="#0f172a">25</text><text x="0" y="62" font-size="11" fill="#334155">Средний</text><rect x="96" y="51" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="51" width="220.0" height="14" rx="3" fill="#a16207"/><text x="324" y="62" font-size="11" font-weight="700" fill="#0f172a">42</text><text x="0" y="86" font-size="11" fill="#334155">Низкий</text><rect x="96" y="75" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="75" width="146.7" height="14" rx="3" fill="#1d4ed8"/><text x="324" y="86" font-size="11" font-weight="700" fill="#0f172a">28</text><text x="0" y="110" font-size="11" fill="#334155">Инфо</text><rect x="96" y="99" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="99" width="15.7" height="14" rx="3" fill="#475569"/><text x="324" y="110" font-size="11" font-weight="700" fill="#0f172a">3</text></svg></div></div>
+<p>В ходе работ выявлено находок: <b>102</b>; из них критических: 4, высоких: 25. Исправлено к моменту отчёта: <b>1</b>.</p>
+<h4>Наиболее значимые</h4><ul><li><span class="badge crit">Критический</span> Плохое замазывание: текст под закраской читается (redacted.pdf) <span class="muted">(files.contoso.example)</span></li><li><span class="badge crit">Критический</span> Ссылки на облачные пространства и URL с токенами в personal.docx <span class="muted">(files.contoso.example)</span></li><li><span class="badge crit">Критический</span> Пароль в строке подключения <span class="muted">(files.contoso.example)</span></li><li><span class="badge crit">Критический</span> ICA-файл с паролем в открытом виде (buh.ica) <span class="muted">(files.contoso.example)</span></li><li><span class="badge high">Высокий</span> Внутренние почтовые серверы и адреса в заголовках письма (budget.msg) <span class="muted">(files.contoso.example)</span></li></ul>
+<p><b>Рекомендуется устранить критические находки в течение 7 дней.</b></p>
+<div class="grid2"><div><h4>Документы по типам</h4><table><thead><tr><th>Тип</th><th class="num">Число</th></tr></thead><tbody>
+<tr><td>pdf</td><td class="num">10</td></tr>
+<tr><td>docx</td><td class="num">4</td></tr>
+<tr><td>lnk</td><td class="num">4</td></tr>
+<tr><td>jpg</td><td class="num">3</td></tr>
+<tr><td>ppt</td><td class="num">3</td></tr>
+<tr><td>doc</td><td class="num">2</td></tr>
+<tr><td>eml</td><td class="num">2</td></tr>
+<tr><td>heic</td><td class="num">2</td></tr>
+<tr><td>ics</td><td class="num">2</td></tr>
+<tr><td>indd</td><td class="num">2</td></tr>
+<tr><td>mp4</td><td class="num">2</td></tr>
+<tr><td>msg</td><td class="num">2</td></tr>
+<tr><td>ods</td><td class="num">2</td></tr>
+<tr><td>png</td><td class="num">2</td></tr>
+<tr><td>svg</td><td class="num">2</td></tr>
+<tr><td>vcf</td><td class="num">2</td></tr>
+<tr><td>wpd</td><td class="num">2</td></tr>
+<tr><td>xls</td><td class="num">2</td></tr>
+<tr><td>xlsx</td><td class="num">2</td></tr>
+<tr><td>zip</td><td class="num">2</td></tr>
+<tr><td>bin</td><td class="num">1</td></tr>
+<tr><td>ica</td><td class="num">1</td></tr>
+<tr><td>mov</td><td class="num">1</td></tr>
+<tr><td>odt</td><td class="num">1</td></tr>
+<tr><td>pptx</td><td class="num">1</td></tr>
+<tr><td>pub</td><td class="num">1</td></tr>
+<tr><td>rdp</td><td class="num">1</td></tr>
+<tr><td>tif</td><td class="num">1</td></tr>
+<tr><td>tiff</td><td class="num">1</td></tr>
+<tr><td>vsd</td><td class="num">1</td></tr>
+<tr><td>vsdx</td><td class="num">1</td></tr>
+<tr><td>wks</td><td class="num">1</td></tr>
+<tr><td>wps</td><td class="num">1</td></tr>
+</tbody></table>
+<h4>Найденная инфраструктура</h4><table><thead><tr><th>Тип</th><th class="num">Число</th></tr></thead><tbody>
+<tr><td>Хосты</td><td class="num">27</td></tr>
+<tr><td>Внутренний</td><td class="num">18</td></tr>
+<tr><td>Компьютеры и серверы</td><td class="num">9</td></tr>
+<tr><td>Принтеры</td><td class="num">2</td></tr>
+<tr><td>Пути</td><td class="num">27</td></tr>
+<tr><td>E-mail</td><td class="num">25</td></tr>
+</tbody></table>
+</div><div><h4>Топ пользователей</h4><table><thead><tr><th>Логин</th><th>Имя</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td>john.doe</td><td>John Doe</td><td class="num">14</td></tr>
+<tr><td>i.petrenko</td><td>i.petrenko</td><td class="num">13</td></tr>
+<tr><td>ivan.petrenko</td><td>Іван Петренко</td><td class="num">12</td></tr>
+<tr><td>o.kovalenko</td><td>Olena Kovalenko</td><td class="num">9</td></tr>
+<tr><td>m.shevchuk</td><td>Марина Шевчук</td><td class="num">5</td></tr>
+<tr><td>a.bondar</td><td>Андрій Бондар</td><td class="num">3</td></tr>
+<tr><td>p.harvey</td><td>Phil Harvey</td><td class="num">3</td></tr>
+<tr><td>t.melnyk</td><td>Тетяна Мельник</td><td class="num">3</td></tr>
+<tr><td>v.tkachenko</td><td>Віктор Ткаченко</td><td class="num">3</td></tr>
+<tr><td>n.burch</td><td>Nick Burch</td><td class="num">2</td></tr>
+</tbody></table>
+<h4>Топ ПО</h4><table><thead><tr><th>Программное обеспечение</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td>Microsoft Office Word (версия неизвестна)</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Word 2013 (15)</td><td class="num">2</td></tr>
+<tr><td>Adobe Photoshop 7.0</td><td class="num">3</td></tr>
+<tr><td>iOS 17.4</td><td class="num">2</td></tr>
+<tr><td>iOS 16.6</td><td class="num">1</td></tr>
+<tr><td>Adobe Photoshop CC 2019</td><td class="num">2</td></tr>
+<tr><td>Fujifilm (камера)</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Excel (версия неизвестна)</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Outlook 2016-2024 / 365</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office PowerPoint (версия неизвестна)</td><td class="num">2</td></tr>
+</tbody></table>
+</div></div>
+<h4>Устаревшее ПО</h4><table><thead><tr><th>Программное обеспечение</th><th>EOL</th><th class="num">CVE</th></tr></thead><tbody>
+<tr><td>Adobe Photoshop 7.0</td><td>дата неизвестна</td><td class="num">-</td></tr>
+<tr><td>iOS 17.4</td><td>15.09.2025</td><td class="num">-</td></tr>
+<tr><td>Adobe Photoshop CC 2019</td><td>дата неизвестна</td><td class="num">-</td></tr>
+<tr><td>Microsoft Office Word 2013 (15)</td><td>11.04.2023</td><td class="num">-</td></tr>
+<tr><td>Adobe Acrobat Pro XI (11.0.23)</td><td>15.10.2017</td><td class="num">-</td></tr>
+<tr><td>Microsoft Excel 2010 (14)</td><td>13.10.2020</td><td class="num">-</td></tr>
+<tr><td>iOS 16.6</td><td>16.09.2024</td><td class="num">-</td></tr>
+<tr><td>LibreOffice 7.2.5.2</td><td>12.06.2022</td><td class="num">-</td></tr>
+<tr><td>Microsoft Word 2008 для Mac (12)</td><td>09.04.2013</td><td class="num">-</td></tr>
+<tr><td>OpenOffice.org 3.2</td><td>15.04.2011</td><td class="num">-</td></tr>
+</tbody></table>
+</section>
+<section id="scope">
+<h2>Скоуп</h2>
+<dl class="kv"><dt>Заказчик</dt><dd>ТОВ «Контосо Енерджі»</dd><dt>Контакт заказчика</dt><dd>-</dd></dl>
+<h4>Основание проверки</h4><p>Письменное разрешение владельца от 01.11.2026</p>
+<h4>Цели</h4><table><thead><tr><th>Цели</th><th>Тип</th></tr></thead><tbody>
+<tr><td><span class="mono">contoso.example</span></td><td>domain</td></tr>
+<tr><td><span class="mono">*.contoso-group.example</span></td><td>wild</td></tr>
+<tr><td><span class="mono">203.0.113.0/24</span></td><td>cidr</td></tr>
+</tbody></table>
+<h4>Исключения</h4><p><span class="tag">mail.contoso.example</span><span class="tag">10.10.1.0/24</span></p>
+</section>
+<section id="findings">
+<h2>Находки</h2>
+<article class="finding crit" id="f-2430466378776419">
+<h3><span class="id">F-1</span><span>Плохое замазывание: текст под закраской читается (redacted.pdf)</span> <span class="badge crit">Критический</span></h3>
+<div class="meta"><span>Статус: Подтверждена</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Конфиденциальный фрагмент закрыт чёрным или белым прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.</p>
+<h4>Доказательство</h4><pre class="ev">стр. 1 (black): «Passport AB123456 Ivan Petrenko»
+стр. 1 (white): «Phone +380 44 000 00 00»
+стр. 2 (black): «Account UA00 0000 0000 secret»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/redacted.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/redacted.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.bad_redaction</span>; Поля: bad_redactions; Документы: redacted.pdf</div>
+</article>
+<article class="finding crit" id="f-5008557300353841">
+<h3><span class="id">F-2</span><span>Ссылки на облачные пространства и URL с токенами в personal.docx</span> <span class="badge crit">Критический</span></h3>
+<div class="meta"><span>Статус: Подтверждена</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).</p>
+<h4>Доказательство</h4><pre class="ev">Google Drive: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing
+Azure Storage: https://contoso.blob.core.windows.net/backup/db.bak?sv=2022-11-02&amp;sp=r&amp;sig=Ab…3D</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213.003 · Data from Information Repositories: Code Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.links</span>; Поля: links; Документы: personal.docx</div>
+</article>
+<article class="finding crit" id="f-7110897685884810">
+<h3><span class="id">F-3</span><span>Пароль в строке подключения</span> <span class="badge crit">Критический</span></h3>
+<div class="meta"><span>Статус: Подтверждена</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 9.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «contract.docx» найден секрет (Пароль в строке подключения): текст, строка 6.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 6:
+Доступ до порталу: Server=10.10.1.5;Database=tender;User Id=sa;Password=Te••••••24!</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/contract.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/contract.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 6; Документы: contract.docx</div>
+</article>
+<article class="finding crit" id="f-8996430790230423">
+<h3><span class="id">F-4</span><span>ICA-файл с паролем в открытом виде (buh.ica)</span> <span class="badge crit">Критический</span></h3>
+<div class="meta"><span>Статус: Подтверждена</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 9.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «buh.ica» найден секрет (Пароль в открытом виде в .ica-файле): поле ica:1C Бухгалтерія.ClearPassword.</p>
+<h4>Доказательство</h4><pre class="ev">поле ica:1C Бухгалтерія.ClearPassword:
+ica:1C Бухгалтерія.ClearPassword: Bu••••••23!</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/remote/buh.ica" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/buh.ica</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить пароль, удалить файл с сайта, запретить ClearPassword в конфигурации Citrix StoreFront.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">ica-password</span>; Поля: поле ica:1C Бухгалтерія.ClearPassword; Документы: buh.ica</div>
+</article>
+<article class="finding high" id="f-281709973433743">
+<h3><span class="id">F-5</span><span>Внутренние почтовые серверы и адреса в заголовках письма (budget.msg)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Подтверждена</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Цепочка Received раскрывает внутренние почтовые релеи, рабочие станции и их частные IP-адреса.</p>
+<h4>Доказательство</h4><pre class="ev">ws-042.corp.example.test, EXCH01.corp.example.test, 10.20.30.42, 10.20.0.15, buh-pc-07.corp.example.test, EXCH02.corp.example.test, 192.168.10.7, 10.20.0.16</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.msg</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять внутренние заголовки Received на пограничном почтовом шлюзе; не публиковать исходные письма.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_relay</span>; Поля: received; Документы: budget.msg</div>
+</article>
+<article class="finding high" id="f-1504836486316170">
+<h3><span class="id">F-6</span><span>Ярлык LNK раскрывает имя компьютера и MAC-адрес (report.lnk)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ярлык Windows хранит NetBIOS-имя компьютера, MAC-адрес сетевой карты и серийный номер тома, на котором он создан.</p>
+<h4>Доказательство</h4><pre class="ev">Компьютер: ws-042
+MAC: 0a:00:27:00:00:2a
+Серийный номер тома: 1A2B-3C4D
+Путь: C:\Users\i.petrenko\Documents\Звіт.docx</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/lnk/report.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/report.lnk</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать ярлыки .lnk; удалить файл с сайта.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.001 · Gather Victim Host Information: Hardware</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_host_mac</span>; Поля: lnk; Документы: report.lnk</div>
+</article>
+<article class="finding high" id="f-1842398878746617">
+<h3><span class="id">F-7</span><span>Ярлык LNK раскрывает имя компьютера и MAC-адрес (network.lnk)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ярлык Windows хранит NetBIOS-имя компьютера, MAC-адрес сетевой карты и серийный номер тома, на котором он создан.</p>
+<h4>Доказательство</h4><pre class="ev">Компьютер: buh-pc-07
+MAC: 00:15:5d:01:02:03</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/lnk/network.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/network.lnk</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать ярлыки .lnk; удалить файл с сайта.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.001 · Gather Victim Host Information: Hardware</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_host_mac</span>; Поля: lnk; Документы: network.lnk</div>
+</article>
+<article class="finding high" id="f-1844032805376125">
+<h3><span class="id">F-8</span><span>Пароль в тексте документа · schedule.xlsx</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «schedule.xlsx» найден секрет (Пароль в тексте документа): текст, строка 4.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 4:
+Provider=SQLOLEDB.1;Password=Bi••••••023;User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 4; Документы: schedule.xlsx</div>
+</article>
+<article class="finding high" id="f-2327360552150180">
+<h3><span class="id">F-9</span><span>Ярлык LNK раскрывает имя компьютера и MAC-адрес (backup.zip)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ярлык Windows хранит NetBIOS-имя компьютера, MAC-адрес сетевой карты и серийный номер тома, на котором он создан.</p>
+<h4>Доказательство</h4><pre class="ev">Компьютер: ws-042
+MAC: 0a:00:27:00:00:2a
+Серийный номер тома: 1A2B-3C4D
+Путь: C:\Users\i.petrenko\Documents\Звіт.docx</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать ярлыки .lnk; удалить файл с сайта.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.001 · Gather Victim Host Information: Hardware</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_host_mac</span>; Поля: lnk; Документы: backup.zip</div>
+</article>
+<article class="finding high" id="f-2642145922110628">
+<h3><span class="id">F-10</span><span>Удалённый текст восстанавливается из старых ревизий PDF (revisions.pdf)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">PDF сохранён инкрементально: в предыдущих ревизиях остался текст, удалённый из последней версии.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 2: «Salary of Ivan Petrenko: 1000 UAH»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/revisions.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/revisions.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранить PDF полностью (без инкрементальных обновлений) и заменить опубликованный файл.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_removed_text</span>; Поля: pdf_revisions; Документы: revisions.pdf</div>
+</article>
+<article class="finding high" id="f-3797108615332530">
+<h3><span class="id">F-11</span><span>Номер банковской карты в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
+<h4>Доказательство</h4><pre class="ev">Картка ••••••••••11
+Visa</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 5; Документы: personal.docx</div>
+</article>
+<article class="finding high" id="f-4093912777283590">
+<h3><span class="id">F-12</span><span>РНОКПП (ІПН) физлица в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
+<h4>Доказательство</h4><pre class="ev">Отримувач: Іван Петренко, РНОКПП ••••••••70</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 3; Документы: personal.docx</div>
+</article>
+<article class="finding high" id="f-4395653510081468">
+<h3><span class="id">F-13</span><span>Миниатюра EXIF может отличаться от фото (photo.jpg)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 5.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Фото отредактировано в графическом редакторе, но встроенная миниатюра EXIF сохранена: она может показывать исходный (необрезанный, незамазанный) кадр.</p>
+<h4>Доказательство</h4><pre class="ev">Apple iPhone 13 Pro
+ПО: ios166, ps2019</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять EXIF и миниатюры перед публикацией; сравнить миниатюру с изображением.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1591 · Gather Victim Org Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">thumbnail</span>; Поля: thumbnail; Документы: photo.jpg</div>
+</article>
+<article class="finding high" id="f-4515652483894158">
+<h3><span class="id">F-14</span><span>RDP-файл с сохранённым паролем (SRV-TS01.rdp)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «SRV-TS01.rdp» найден секрет (Сохранённый пароль в .rdp-файле): поле rdp:password 51.</p>
+<h4>Доказательство</h4><pre class="ev">поле rdp:password 51:
+rdp:password 51: 01••••••000</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/remote/SRV-TS01.rdp" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/SRV-TS01.rdp</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить файл с сайта; сменить пароль учётной записи из файла; запретить сохранение паролей в RDP-клиенте групповой политикой.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">rdp-password</span>; Поля: поле rdp:password 51; Документы: SRV-TS01.rdp</div>
+</article>
+<article class="finding high" id="f-4521026984896936">
+<h3><span class="id">F-15</span><span>Удалённый текст восстанавливается из старых ревизий PDF (signed_modified.pdf)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">PDF сохранён инкрементально: в предыдущих ревизиях остался текст, удалённый из последней версии.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 2: «Contract No 42 between Example LLC and Ivan Petrenko»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_modified.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_modified.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранить PDF полностью (без инкрементальных обновлений) и заменить опубликованный файл.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_removed_text</span>; Поля: pdf_revisions; Документы: signed_modified.pdf</div>
+</article>
+<article class="finding high" id="f-4617155266903053">
+<h3><span class="id">F-16</span><span>Пароль в тексте документа · objstm.pdf</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «objstm.pdf» найден секрет (Пароль в тексте документа): текст, строка 1.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 1:
+Config: password=Wi••••••24! host=dev.contoso.example</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pdf/objstm.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/objstm.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 1; Документы: objstm.pdf</div>
+</article>
+<article class="finding high" id="f-4643423553488658">
+<h3><span class="id">F-17</span><span>Скрытый текст и скрытые строки/столбцы в hidden.xlsx</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ содержит скрытое форматирование (w:vanish) или скрытые строки и столбцы таблицы: при просмотре их не видно, но данные остаются в файле.</p>
+<h4>Доказательство</h4><pre class="ev">скрытые строки Payroll!3:4: «Ivan Petrenko | 12000 | Bonus fund»
+скрытые столбцы Payroll!C:D: «Salary | 5000»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/hidden.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/hidden.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять, а не скрывать служебные данные; проверять документ Инспектором документов перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.hidden_content</span>; Поля: hidden_content; Документы: hidden.xlsx</div>
+</article>
+<article class="finding high" id="f-5244044064978664">
+<h3><span class="id">F-18</span><span>Номер счёта IBAN в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
+<h4>Доказательство</h4><pre class="ev">IBAN ••••••••••01
+МФО 322313</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 4; Документы: personal.docx</div>
+</article>
+<article class="finding high" id="f-5470257240133855">
+<h3><span class="id">F-19</span><span>Документ изменён после подписания (signed_modified.pdf)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">После байтов, покрытых подписью (/ByteRange), в файл дописаны изменения: видимое содержимое может отличаться от подписанного.</p>
+<h4>Доказательство</h4><pre class="ev">Подписант: Іван Петренко
+Организация: ТОВ Приклад
+ЄДРПОУ: 12345678
+Должность: Директор
+E-mail: ivan.petrenko@example.com
+РНОКПП: ********99
+АЦСК: Example Test QTSP CA
+Время подписи: 2026-11-22T01:06:56Z
+Метка TSA: 2026-11-22T01:06:56Z</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_modified.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_modified.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Сверить документ с подписанным оригиналом; публиковать только неизменённую подписанную версию.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1565.001 · Data Manipulation: Stored Data Manipulation</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.modified_after_signing</span>; Поля: signatures; Документы: signed_modified.pdf</div>
+</article>
+<article class="finding high" id="f-5838019996286731">
+<h3><span class="id">F-20</span><span>Архив с опасными путями (Zip-Slip): backup.zip</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Имена файлов в архиве выходят за пределы папки распаковки (../, абсолютные пути): архив враждебен или повреждён.</p>
+<h4>Доказательство</h4><pre class="ev">../../evil.txt</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Не распаковывать архив; проверить источник файла.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1204.002 · User Execution: Malicious File</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">zip.path_traversal</span>; Поля: zip:unsafe_names; Документы: backup.zip</div>
+</article>
+<article class="finding high" id="f-6444728501797632">
+<h3><span class="id">F-21</span><span>Пароль в тексте документа · legacy.doc</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «legacy.doc» найден секрет (Пароль в тексте документа): текст, строка 1.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 1:
+Статут підприємства. Пароль адміністратора: P@••••••019</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/legacy.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/legacy.doc</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 1; Документы: legacy.doc</div>
+</article>
+<article class="finding high" id="f-6554625936330575">
+<h3><span class="id">F-22</span><span>IP-адрес отправителя в заголовках письма (budget.msg)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Заголовок X-Originating-IP раскрывает адрес рабочей станции отправителя.</p>
+<h4>Доказательство</h4><pre class="ev">10.20.30.42</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.msg</a></p>
+<h4>Рекомендация</h4><p class="txt">Отключить добавление X-Originating-IP на почтовом сервере.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.originating_ip</span>; Поля: x-originating-ip; Документы: budget.msg</div>
+</article>
+<article class="finding high" id="f-6775699612249800">
+<h3><span class="id">F-23</span><span>Внутренние почтовые серверы и адреса в заголовках письма (backup.zip)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Цепочка Received раскрывает внутренние почтовые релеи, рабочие станции и их частные IP-адреса.</p>
+<h4>Доказательство</h4><pre class="ev">EXCH01.corp.example.test, ws-042.corp.example.test, 10.20.30.42, 10.20.0.15, ws-017.corp.example.test, EXCH02.corp.example.test, 192.168.10.17, 10.20.0.16</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять внутренние заголовки Received на пограничном почтовом шлюзе; не публиковать исходные письма.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_relay</span>; Поля: received; Документы: backup.zip</div>
+</article>
+<article class="finding high" id="f-7248772110644103">
+<h3><span class="id">F-24</span><span>Скрытый текст и скрытые строки/столбцы в signed_hidden.docx</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ содержит скрытое форматирование (w:vanish) или скрытые строки и столбцы таблицы: при просмотре их не видно, но данные остаются в файле.</p>
+<h4>Доказательство</h4><pre class="ev">скрытый текст word/document.xml: «Internal note: budget 2M UAH, contact Ivan Petrenko.»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_hidden.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_hidden.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять, а не скрывать служебные данные; проверять документ Инспектором документов перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.hidden_content</span>; Поля: hidden_content; Документы: signed_hidden.docx</div>
+</article>
+<article class="finding high" id="f-7524900944238472">
+<h3><span class="id">F-25</span><span>IP-адрес отправителя в заголовках письма (backup.zip)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Заголовок X-Originating-IP раскрывает адрес рабочей станции отправителя.</p>
+<h4>Доказательство</h4><pre class="ev">10.20.30.42</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Отключить добавление X-Originating-IP на почтовом сервере.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.originating_ip</span>; Поля: x-originating-ip; Документы: backup.zip</div>
+</article>
+<article class="finding high" id="f-7535434955610667">
+<h3><span class="id">F-26</span><span>SAS-токен Azure</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «personal.docx» найден секрет (SAS-токен Azure): текст, строка 9.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 9:
+пія: https://contoso.blob.core.windows.net/backup/db.bak?sv=2022-11-02&amp;sp=r&amp;sig=Ab••••••%3D</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 9; Документы: personal.docx</div>
+</article>
+<article class="finding high" id="f-7762374077804913">
+<h3><span class="id">F-27</span><span>IP-адрес отправителя в заголовках письма (budget.eml)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Заголовок X-Originating-IP раскрывает адрес рабочей станции отправителя.</p>
+<h4>Доказательство</h4><pre class="ev">10.20.30.42</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.eml</a></p>
+<h4>Рекомендация</h4><p class="txt">Отключить добавление X-Originating-IP на почтовом сервере.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.originating_ip</span>; Поля: x-originating-ip; Документы: budget.eml</div>
+</article>
+<article class="finding high" id="f-7789053018638507">
+<h3><span class="id">F-28</span><span>Гриф ограничения доступа в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ с грифом ограничения доступа опубликован в открытом доступе.</p>
+<h4>Доказательство</h4><pre class="ev">ДСК
+ДСК</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 1; Документы: personal.docx</div>
+</article>
+<article class="finding high" id="f-8328876455711510">
+<h3><span class="id">F-29</span><span>Серия и номер паспорта в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
+<h4>Доказательство</h4><pre class="ev">Паспорт серія ••••••56</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 6; Документы: personal.docx</div>
+</article>
+<article class="finding warn" id="f-85183289290847">
+<h3><span class="id">F-30</span><span>Данные подписанта (КЕП) в документе signed.pdf: Іван Петренко</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).</p>
+<h4>Доказательство</h4><pre class="ev">Подписант: Іван Петренко
+Организация: ТОВ Приклад
+ЄДРПОУ: 12345678
+Должность: Директор
+E-mail: ivan.petrenko@example.com
+РНОКПП: ********99
+АЦСК: Example Test QTSP CA
+Время подписи: 2026-11-22T01:06:56Z
+Метка TSA: 2026-11-22T01:06:56Z</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1589.001 · Gather Victim Identity Information: Credentials</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.signer_identity</span>; Поля: signatures; Документы: signed.pdf</div>
+</article>
+<article class="finding warn" id="f-197987133671330">
+<h3><span class="id">F-31</span><span>Данные подписанта (КЕП) в документе signed_hidden.docx: John Doe</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).</p>
+<h4>Доказательство</h4><pre class="ev">Подписант: John Doe
+Организация: Example LLC
+ЄДРПОУ: 87654321
+Должность: Accountant
+РНОКПП: ********99
+АЦСК: Example Test QTSP CA
+Время подписи: 2024-03-01T08:00:01Z
+Метка TSA: 2026-11-22T01:06:57Z
+Подписант: Іван Петренко
+Организация: ТОВ Приклад
+ЄДРПОУ: 12345678
+Должность: Директор
+E-mail: ivan.petrenko@example.com
+РНОКПП: ********99
+АЦСК: Example Test QTSP CA
+Время подписи: 2026-11-22T01:06:57Z</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_hidden.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_hidden.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1589.001 · Gather Victim Identity Information: Credentials</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.signer_identity</span>; Поля: signatures; Документы: signed_hidden.docx</div>
+</article>
+<article class="finding warn" id="f-267007005377796">
+<h3><span class="id">F-32</span><span>Adobe Acrobat Pro XI (EOL) у 1 документа</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">1 документ создан в Adobe Acrobat Pro XI (11.0.23), поддержка завершена 2017-10-15. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: Adobe Acrobat Pro XI (11.0.23)
+Документов: 1</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pdf/report.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/report.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: report.pdf</div>
+</article>
+<article class="finding warn" id="f-734461552619590">
+<h3><span class="id">F-33</span><span>Скан без текстового слоя: exiftool-PDF.pdf</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.</p>
+<h4>Доказательство</h4><pre class="ev">exiftool-PDF.pdf</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/real/exiftool-PDF.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-PDF.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить скан вручную; не публиковать сканы личных документов.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.scan_without_text</span>; Поля: scan_without_text; Документы: exiftool-PDF.pdf</div>
+</article>
+<article class="finding warn" id="f-1002006954531649">
+<h3><span class="id">F-34</span><span>Документ с макросами VBA: legacy.doc</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
+<h4>Доказательство</h4><pre class="ev">Модули: AutoOpen, ThisDocument</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/legacy.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/legacy.doc</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать документы с макросами; проверить код макросов на секреты и пути.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1059.005 · Command and Scripting Interpreter: Visual Basic</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: legacy.doc</div>
+</article>
+<article class="finding warn" id="f-1579388999814052">
+<h3><span class="id">F-35</span><span>Скан без текстового слоя: scan.pdf</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.</p>
+<h4>Доказательство</h4><pre class="ev">scan.pdf</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/scan.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/scan.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить скан вручную; не публиковать сканы личных документов.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.scan_without_text</span>; Поля: scan_without_text; Документы: scan.pdf</div>
+</article>
+<article class="finding warn" id="f-1669500316956834">
+<h3><span class="id">F-36</span><span>Внутренний домен в Message-ID (budget.msg)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.</p>
+<h4>Доказательство</h4><pre class="ev">exch01.corp.example.test</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.msg</a></p>
+<h4>Рекомендация</h4><p class="txt">Настроить почтовый сервер на внешнее имя в Message-ID.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_domain</span>; Поля: message-id; Документы: budget.msg</div>
+</article>
+<article class="finding warn" id="f-2365130770357058">
+<h3><span class="id">F-37</span><span>Документ с макросами VBA: budget.xls</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
+<h4>Доказательство</h4><pre class="ev">Модули: Module1</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/budget.xls" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/budget.xls</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать документы с макросами; проверить код макросов на секреты и пути.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1059.005 · Command and Scripting Interpreter: Visual Basic</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: budget.xls</div>
+</article>
+<article class="finding warn" id="f-2530076048520018">
+<h3><span class="id">F-38</span><span>Скан без текстового слоя: exiftool-PDF2.pdf</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.</p>
+<h4>Доказательство</h4><pre class="ev">exiftool-PDF2.pdf</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/real/exiftool-PDF2.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-PDF2.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить скан вручную; не публиковать сканы личных документов.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.scan_without_text</span>; Поля: scan_without_text; Документы: exiftool-PDF2.pdf</div>
+</article>
+<article class="finding warn" id="f-2760886356798816">
+<h3><span class="id">F-39</span><span>Adobe Photoshop CC 2019 (EOL) у 2 документов</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">2 документа созданы в Adobe Photoshop CC 2019, снято с поддержки. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: Adobe Photoshop CC 2019
+Документов: 2</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: photo.jpg, screenshot.png</div>
+</article>
+<article class="finding warn" id="f-2851723822429832">
+<h3><span class="id">F-40</span><span>GPS-координаты в 6 фото</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованные фото содержат координаты съёмки и модель устройства: раскрываются расположение объектов и устройства сотрудников.</p>
+<h4>Доказательство</h4><pre class="ev">photo.jpg: 47.92000, 33.43000 · Apple iPhone 13 Pro
+iphone.mov: 46.48250, 30.72330 · Apple iPhone 15 Pro
+photo.heic: 46.48250, 30.72278 · Apple iPhone 15 Pro
+survey.mp4: 50.45010, 30.52340 · ExampleCam ActionCam 4
+contacts.vcf: 50.45010, 30.52340 · -</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять EXIF перед публикацией, настроить CMS на автоматическую очистку метаданных изображений.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1591.001 · Gather Victim Org Information: Determine Physical Locations</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">gps</span>; Поля: gps; Документы: photo.jpg, iphone.mov, photo.heic, survey.mp4, contacts.vcf, exiftool-GPS.jpg</div>
+</article>
+<article class="finding warn" id="f-3030740073630396">
+<h3><span class="id">F-41</span><span>Устаревшая ОС iOS 16.6 у 1 документа</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Метаданные 1 документа указывают, что он создан в iOS 16.6: ОС без обновлений безопасности.</p>
+<h4>Доказательство</h4><pre class="ev">ОС: iOS 16.6
+Документов: 1</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Вывести из эксплуатации или изолировать рабочие места с неподдерживаемой ОС.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.002 · Gather Victim Host Information: Software</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-os</span>; Поля: os; Документы: photo.jpg</div>
+</article>
+<article class="finding warn" id="f-3049935570249775">
+<h3><span class="id">F-42</span><span>Документ с макросами VBA: schedule.xlsx</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
+<h4>Доказательство</h4><pre class="ev">Модули: Module1, ThisWorkbook</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать документы с макросами; проверить код макросов на секреты и пути.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1059.005 · Command and Scripting Interpreter: Visual Basic</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: schedule.xlsx</div>
+</article>
+<article class="finding warn" id="f-3160105223994947">
+<h3><span class="id">F-43</span><span>Reply-To отличается от отправителя (budget.eml)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ответы на письмо уходят на другой адрес, чем адрес отправителя: типичный признак фишинга или личного ящика сотрудника.</p>
+<h4>Доказательство</h4><pre class="ev">i.petrenko.private@example.net</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.eml</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить адрес Reply-To; не использовать личные ящики для служебной переписки.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1566 · Phishing</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.reply_to_mismatch</span>; Поля: reply-to; Документы: budget.eml</div>
+</article>
+<article class="finding warn" id="f-3304329716141493">
+<h3><span class="id">F-44</span><span>Структура Exchange (X.500) в письме (budget.msg)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Адреса X.500 Exchange раскрывают название организации, административной группы и учётные записи.</p>
+<h4>Доказательство</h4><pre class="ev">/O=EXCHANGELABS/OU=EXCHANGE ADMINISTRATIVE GROUP (FYDIBOHF23SPDLT)/CN=RECIPIENTS/CN=I.PETRENKO</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.msg</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать исходные файлы .msg.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.exchange_x500</span>; Поля: x500; Документы: budget.msg</div>
+</article>
+<article class="finding warn" id="f-3363332903505234">
+<h3><span class="id">F-45</span><span>Личные контакты в визитных карточках (contacts.vcf)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).</p>
+<h4>Доказательство</h4><pre class="ev">adr: ••••••••••на
+bday: ••••••••01
+tel: ••••••••••00; ••••••••••01</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pim/contacts.vcf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/contacts.vcf</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать файлы контактов .vcf.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pim.contact_pii</span>; Поля: vcf; Документы: contacts.vcf</div>
+</article>
+<article class="finding warn" id="f-3424681174690463">
+<h3><span class="id">F-46</span><span>iOS 16.6 (EOL) у 1 документа</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">1 документ создан в iOS 16.6, поддержка завершена 2024-09-16. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: iOS 16.6
+Документов: 1</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: photo.jpg</div>
+</article>
+<article class="finding warn" id="f-3539139857020118">
+<h3><span class="id">F-47</span><span>Reply-To отличается от отправителя (backup.zip)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ответы на письмо уходят на другой адрес, чем адрес отправителя: типичный признак фишинга или личного ящика сотрудника.</p>
+<h4>Доказательство</h4><pre class="ev">i.petrenko.private@example.net</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить адрес Reply-To; не использовать личные ящики для служебной переписки.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1566 · Phishing</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.reply_to_mismatch</span>; Поля: reply-to; Документы: backup.zip</div>
+</article>
+<article class="finding warn" id="f-4041191195790325">
+<h3><span class="id">F-48</span><span>Устаревшая ОС iOS 17.4 у 2 документов</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Метаданные 2 документов указывают, что они созданы в iOS 17.4: ОС без обновлений безопасности.</p>
+<h4>Доказательство</h4><pre class="ev">ОС: iOS 17.4
+Документов: 2</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/media/iphone.mov" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/iphone.mov</a></p>
+<h4>Рекомендация</h4><p class="txt">Вывести из эксплуатации или изолировать рабочие места с неподдерживаемой ОС.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.002 · Gather Victim Host Information: Software</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-os</span>; Поля: os; Документы: iphone.mov, photo.heic</div>
+</article>
+<article class="finding warn" id="f-4192625953950789">
+<h3><span class="id">F-49</span><span>Ярлык LNK указывает на сетевой ресурс (network.lnk)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ярлык ссылается на файл на сетевом ресурсе: раскрываются имя файлового сервера и структура папок.</p>
+<h4>Доказательство</h4><pre class="ev">\\FS01.corp.example.test\buh$\Звіти\2024\Q1.xlsx
+\\FS01.corp.example.test\buh$</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/lnk/network.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/network.lnk</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать ярлыки .lnk.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1135 · Network Share Discovery</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_unc_path</span>; Поля: lnk; Документы: network.lnk</div>
+</article>
+<article class="finding warn" id="f-4322514331920272">
+<h3><span class="id">F-50</span><span>Внутренний домен в Message-ID (budget.eml)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.</p>
+<h4>Доказательство</h4><pre class="ev">exch01.corp.example.test</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.eml</a></p>
+<h4>Рекомендация</h4><p class="txt">Настроить почтовый сервер на внешнее имя в Message-ID.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_domain</span>; Поля: message-id; Документы: budget.eml</div>
+</article>
+<article class="finding warn" id="f-4438722874752781">
+<h3><span class="id">F-51</span><span>Внутренний домен в Message-ID (backup.zip)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.</p>
+<h4>Доказательство</h4><pre class="ev">exch01.corp.example.test</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Настроить почтовый сервер на внешнее имя в Message-ID.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_domain</span>; Поля: message-id; Документы: backup.zip</div>
+</article>
+<article class="finding warn" id="f-4455355463343130">
+<h3><span class="id">F-52</span><span>Ссылки на онлайн-встречи в календаре (meeting.ics)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Приглашение содержит ссылки подключения к Teams/Zoom (иногда с паролем): посторонний может войти на встречу.</p>
+<h4>Доказательство</h4><pre class="ev">https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d
+https://example.zoom.us/j/1234567890?pwd=EXAMPLE
+https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pim/meeting.ics" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/meeting.ics</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать приглашения; включить зал ожидания и пароли встреч.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">cal.meeting_link</span>; Поля: meeting_links; Документы: meeting.ics</div>
+</article>
+<article class="finding warn" id="f-4455696781164829">
+<h3><span class="id">F-53</span><span>Исправления и удалённый текст сохранены в contract.docx</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (2 исправления, из них 1 удаление) и 1 комментарий: видны прежние формулировки и внутренняя переписка.</p>
+<h4>Доказательство</h4><pre class="ev">удалено a.bondar, 2024-03-14T17:02:00: «1 250 000 грн»
+вставлено i.petrenko-2, 2024-03-14T17:05:00: «980 000 грн»
+комментарий o.kovalenko, 2024-03-14T16:40:00: «Перевірити реквізити, логін o.kovalenko@contoso.example»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/contract.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/contract.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: contract.docx</div>
+</article>
+<article class="finding warn" id="f-4805809646702033">
+<h3><span class="id">F-54</span><span>Серийный номер устройства в медиафайле (iphone.mov)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Видео или фото содержит серийный номер камеры/телефона: по нему связываются другие публикации с того же устройства.</p>
+<h4>Доказательство</h4><pre class="ev">EXAMPLE-SN-0042</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/media/iphone.mov" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/iphone.mov</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять метаданные медиафайлов перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.001 · Gather Victim Host Information: Hardware</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">media.device_serial</span>; Поля: camera; Документы: iphone.mov</div>
+</article>
+<article class="finding warn" id="f-4980204480961259">
+<h3><span class="id">F-55</span><span>Внешние источники данных в hidden.xlsx</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.</p>
+<h4>Доказательство</h4><pre class="ev">chart:xl/charts/chart1.xml:externalRef: &#39;C:\Users\ipetrenko\Desktop\[budget.xlsx]Sheet1&#39;!$A$1:$A$5
+xl:connection:srv-sql01 Payroll:database: Payroll
+xl:connection:srv-sql01 Payroll:odcFile: C:\Users\ipetrenko\Documents\My Data Sources\srv-sql01 Payroll.odc
+xl:connection:srv-sql01 Payroll:user: svc_report
+xl:pivotCache1:refreshedBy: Ivan Petrenko
+xl:pivotCache1:source: Payroll!A1:D10</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/hidden.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/hidden.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.data_connection</span>; Поля: connections; Документы: hidden.xlsx</div>
+</article>
+<article class="finding warn" id="f-5364394301822533">
+<h3><span class="id">F-56</span><span>Документ с макросами VBA: vbaProject.bin</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
+<h4>Доказательство</h4><pre class="ev">Модули: Module1, ThisWorkbook</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/vbaProject.bin" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/vbaProject.bin</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать документы с макросами; проверить код макросов на секреты и пути.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1059.005 · Command and Scripting Interpreter: Visual Basic</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: vbaProject.bin</div>
+</article>
+<article class="finding warn" id="f-6066455233748157">
+<h3><span class="id">F-57</span><span>Личные контакты в визитных карточках (backup.zip)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).</p>
+<h4>Доказательство</h4><pre class="ev">nested/inner.zip → contacts/i.petrenko.vcf: adr: ••••••••••на
+nested/inner.zip → contacts/i.petrenko.vcf: bday: ••••••••01
+nested/inner.zip → contacts/i.petrenko.vcf: tel: ••••••••••00; ••••••••••01</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Не публиковать файлы контактов .vcf.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pim.contact_pii</span>; Поля: vcf; Документы: backup.zip</div>
+</article>
+<article class="finding warn" id="f-6174048165863137">
+<h3><span class="id">F-58</span><span>Внешние источники данных в schedule.xlsx</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.</p>
+<h4>Доказательство</h4><pre class="ev">xl:connection:billing:database: billing
+xl:connection:billing:user: billing_ro</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.data_connection</span>; Поля: connections; Документы: schedule.xlsx</div>
+</article>
+<article class="finding warn" id="f-6261556990791460">
+<h3><span class="id">F-59</span><span>Разные авторы или программы в ревизиях PDF (signed_modified.pdf)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ревизии PDF сохранены разными людьми или программами: видна цепочка согласования и использованное ПО.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: Ivan Petrenko / FOCA-rs fixture
+ревизия 2: Mallory Example / FOCA-rs fixture</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_modified.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_modified.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять итоговый PDF полностью перед публикацией.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_revision_authors</span>; Поля: pdf_revisions; Документы: signed_modified.pdf</div>
+</article>
+<article class="finding warn" id="f-6412710517035594">
+<h3><span class="id">F-60</span><span>PDF содержит JavaScript: report.pdf</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В PDF есть действия JavaScript. В опубликованном документе компании это нетипично и может указывать на компрометацию или трекинг.</p>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pdf/report.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/report.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить сценарий, пересоздать документ без JavaScript.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1204.002 · User Execution: Malicious File</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pdf-javascript</span>; Поля: has_javascript; Документы: report.pdf</div>
+</article>
+<article class="finding warn" id="f-6463895083711798">
+<h3><span class="id">F-61</span><span>Скрытые листы в budget.xls: Зарплати, Службовий</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Книга содержит скрытые листы: они не видны при просмотре, но доступны любому, кто откроет файл.</p>
+<h4>Доказательство</h4><pre class="ev">Зарплати
+Службовий</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/budget.xls" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/budget.xls</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять служебные листы перед публикацией, а не скрывать их.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">hidden-sheets</span>; Поля: hidden_sheets; Документы: budget.xls</div>
+</article>
+<article class="finding warn" id="f-6483462286074331">
+<h3><span class="id">F-62</span><span>Скрытые листы в schedule.xlsx: Зарплати, Паролі</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Книга содержит скрытые листы: они не видны при просмотре, но доступны любому, кто откроет файл.</p>
+<h4>Доказательство</h4><pre class="ev">Зарплати
+Паролі</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять служебные листы перед публикацией, а не скрывать их.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">hidden-sheets</span>; Поля: hidden_sheets; Документы: schedule.xlsx</div>
+</article>
+<article class="finding warn" id="f-6663642043300725">
+<h3><span class="id">F-63</span><span>Исправления и удалённый текст сохранены в letter.odt</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (1 исправление, из них 1 удаление) и 1 комментарий: видны прежние формулировки и внутренняя переписка.</p>
+<h4>Доказательство</h4><pre class="ev">удалено a.bondar, 2022-05-17T15:00:00: «Строк: 10 днів»
+комментарий i.petrenko, 2022-05-17T16:00:00: «Додати телефон 0441234567»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/odf/letter.odt" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/odf/letter.odt</a></p>
+<h4>Рекомендация</h4><p class="txt">Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: letter.odt</div>
+</article>
+<article class="finding warn" id="f-7521503556473733">
+<h3><span class="id">F-64</span><span>Разные авторы или программы в ревизиях PDF (report.pdf)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ревизии PDF сохранены разными людьми или программами: видна цепочка согласования и использованное ПО.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: o.kovalenko / Microsoft® Word 2013 / Microsoft® Word 2013
+ревизия 2: Administrator / Microsoft® Word 2013 / Adobe Acrobat Pro XI 11.0.23</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pdf/report.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/report.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять итоговый PDF полностью перед публикацией.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_revision_authors</span>; Поля: pdf_revisions; Документы: report.pdf</div>
+</article>
+<article class="finding warn" id="f-7762254634253798">
+<h3><span class="id">F-65</span><span>iOS 17.4 (EOL) у 2 документов</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">2 документа созданы в iOS 17.4, поддержка завершена 2025-09-15. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: iOS 17.4
+Документов: 2</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/media/iphone.mov" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/iphone.mov</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: iphone.mov, photo.heic</div>
+</article>
+<article class="finding warn" id="f-7913953601757832">
+<h3><span class="id">F-66</span><span>Разные авторы или программы в ревизиях PDF (revisions.pdf)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Ревизии PDF сохранены разными людьми или программами: видна цепочка согласования и использованное ПО.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: John Doe / Writer / FOCA-rs fixture
+ревизия 2: Jane Roe / Writer / Other Producer 2.0</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/revisions.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/revisions.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять итоговый PDF полностью перед публикацией.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_revision_authors</span>; Поля: pdf_revisions; Документы: revisions.pdf</div>
+</article>
+<article class="finding warn" id="f-8014228715956310">
+<h3><span class="id">F-67</span><span>Данные подписанта (КЕП) в документе signed_modified.pdf: Іван Петренко</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).</p>
+<h4>Доказательство</h4><pre class="ev">Подписант: Іван Петренко
+Организация: ТОВ Приклад
+ЄДРПОУ: 12345678
+Должность: Директор
+E-mail: ivan.petrenko@example.com
+РНОКПП: ********99
+АЦСК: Example Test QTSP CA
+Время подписи: 2026-11-22T01:06:56Z
+Метка TSA: 2026-11-22T01:06:56Z</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_modified.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_modified.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1589.001 · Gather Victim Identity Information: Credentials</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.signer_identity</span>; Поля: signatures; Документы: signed_modified.pdf</div>
+</article>
+<article class="finding warn" id="f-8317727059673887">
+<h3><span class="id">F-68</span><span>Внешние источники данных в network.vsdx</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.</p>
+<h4>Доказательство</h4><pre class="ev">visio:data.01.connection: Provider=SQLOLEDB;Data Source=SQL01.corp.example.test;Initial Catalog=Assets;Integrated Security=SSPI
+visio:data.01.file: C:\Users\i.petrenko\Documents\assets.xlsx</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/visio/network.vsdx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/visio/network.vsdx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.data_connection</span>; Поля: connections; Документы: network.vsdx</div>
+</article>
+<article class="finding warn" id="f-8408687877458873">
+<h3><span class="id">F-69</span><span>Серийный номер устройства в медиафайле (photo.heic)</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Видео или фото содержит серийный номер камеры/телефона: по нему связываются другие публикации с того же устройства.</p>
+<h4>Доказательство</h4><pre class="ev">EXAMPLE-BODY-0042</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/media/photo.heic" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/photo.heic</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять метаданные медиафайлов перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.001 · Gather Victim Host Information: Hardware</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">media.device_serial</span>; Поля: camera; Документы: photo.heic</div>
+</article>
+<article class="finding warn" id="f-8414048656935777">
+<h3><span class="id">F-70</span><span>Microsoft Office Word 2013 (EOL) у 2 документов</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">2 документа созданы в Microsoft Office Word 2013 (15), поддержка завершена 2023-04-11. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: Microsoft Office Word 2013 (15)
+Документов: 2</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/contract.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/contract.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: contract.docx, report.pdf</div>
+</article>
+<article class="finding warn" id="f-8482479149507769">
+<h3><span class="id">F-71</span><span>Раскрыты имена и логины 20 сотрудников</span> <span class="badge warn">Средний</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: -</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Метаданные документов раскрывают 20 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.</p>
+<h4>Доказательство</h4><pre class="ev">john.doe - John Doe
+i.petrenko - i.petrenko
+ivan.petrenko - Іван Петренко
+o.kovalenko - Olena Kovalenko
+m.shevchuk - Марина Шевчук
+a.bondar - Андрій Бондар
+p.harvey - Phil Harvey
+t.melnyk - Тетяна Мельник</pre>
+<h4>Рекомендация</h4><p class="txt">Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1589.003 · Gather Victim Identity Information: Employee Names</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mass-names</span></div>
+</article>
+<article class="finding low" id="f-491807216422307">
+<h3><span class="id">F-72</span><span>Microsoft Excel 2010 (EOL) у 1 документа</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">1 документ создан в Microsoft Excel 2010 (14), поддержка завершена 2020-10-13. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: Microsoft Excel 2010 (14)
+Документов: 1
+Исторические данные (2023): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: schedule.xlsx</div>
+</article>
+<article class="finding low" id="f-960253395914834">
+<h3><span class="id">F-73</span><span>Комментарии рецензентов сохранены в schedule.xlsx</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 2 комментария: видны прежние формулировки и внутренняя переписка.</p>
+<h4>Доказательство</h4><pre class="ev">комментарий v.tkachenko: «Ключ AWS тимчасовий»
+комментарий s.lysenko: «ok»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: schedule.xlsx</div>
+</article>
+<article class="finding low" id="f-1144861040108677">
+<h3><span class="id">F-74</span><span>Adobe Photoshop 7.0 (EOL) у 3 документов</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">3 документа созданы в Adobe Photoshop 7.0, снято с поддержки. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: Adobe Photoshop 7.0
+Документов: 3
+Исторические данные (2005): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/real/exiftool-ExifTool.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-ExifTool.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: exiftool-ExifTool.jpg, exiftool-GPS.jpg, exiftool-PDF.pdf</div>
+</article>
+<article class="finding low" id="f-1267958494278441">
+<h3><span class="id">F-75</span><span>Внутренние адреса и имена хостов в документе (2) · budget.msg</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Текст или поля документа «budget.msg» раскрывают внутреннюю адресацию сети: 10.20.30.42, 10.20.0.15.</p>
+<h4>Доказательство</h4><pre class="ev">поле msg:internal_ips: 10••••••.42, 10.20.0.15
+поле msg:internal_ips: 10.20.30.42, 10••••••.15</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.msg</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: поле msg:internal_ips; Документы: budget.msg</div>
+</article>
+<article class="finding low" id="f-1386862779219416">
+<h3><span class="id">F-76</span><span>Комментарии рецензентов сохранены в report.pdf</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 1 комментарий: видны прежние формулировки и внутренняя переписка.</p>
+<h4>Доказательство</h4><pre class="ev">комментарий t.melnyk, 2024-03-15T09:00:00: «Перевірити суму»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pdf/report.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/report.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: report.pdf</div>
+</article>
+<article class="finding low" id="f-1392982882343407">
+<h3><span class="id">F-77</span><span>Старые ревизии PDF сохранены в report.pdf</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">PDF сохранён инкрементально (1 обновл.), предыдущие версии метаданных и содержимого можно восстановить.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: Author: o.kovalenko; Company: Contoso Energy; Creator: Microsoft® Word 2013; Producer: Microsoft® Word 2013; Title: Річний звіт 2024</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pdf/report.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/report.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять PDF полностью («Сохранить как» с оптимизацией) или очищать скрытые данные перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pdf-revisions</span>; Поля: incremental_updates, old_versions; Документы: report.pdf</div>
+</article>
+<article class="finding low" id="f-2276403847130614">
+<h3><span class="id">F-78</span><span>Старые ревизии PDF сохранены в signed_modified.pdf</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">PDF сохранён инкрементально (1 обновл.), предыдущие версии метаданных и содержимого можно восстановить.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: Author: Ivan Petrenko; Producer: FOCA-rs fixture</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_modified.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_modified.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять PDF полностью («Сохранить как» с оптимизацией) или очищать скрытые данные перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pdf-revisions</span>; Поля: incremental_updates, old_versions; Документы: signed_modified.pdf</div>
+</article>
+<article class="finding low" id="f-2465772954533659">
+<h3><span class="id">F-79</span><span>Комментарии рецензентов сохранены в strategy.pptx</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 1 комментарий: видны прежние формулировки и внутренняя переписка.</p>
+<h4>Доказательство</h4><pre class="ev">комментарий m.shevchuk, 2024-02-10T12:00:00: «Прибрати цифри EBITDA до публікації»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/strategy.pptx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/strategy.pptx</a></p>
+<h4>Рекомендация</h4><p class="txt">Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: strategy.pptx</div>
+</article>
+<article class="finding low" id="f-2726413060381269">
+<h3><span class="id">F-80</span><span>Внутренние адреса и имена хостов в документе (1) · contract.docx</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Текст или поля документа «contract.docx» раскрывают внутреннюю адресацию сети: 10.10.1.5.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 6: Доступ до порталу: Server=10••••••1.5;Database=tender;User Id=sa;Password=Te••••••24!</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/contract.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/contract.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: текст, строка 6; Документы: contract.docx</div>
+</article>
+<article class="finding low" id="f-2927818928279470">
+<h3><span class="id">F-81</span><span>Внутренние пути и логины в метаданных 17 документов</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Пути шаблонов, вложений и ссылок в 17 документах раскрывают логины сотрудников и структуру файловых ресурсов.</p>
+<h4>Доказательство</h4><pre class="ev">\\FS01.corp.example.test\finance$ by i.petrenko
+C:\Users\ipetrenko\Desktop\[budget.xlsx]Sheet1
+C:\Users\ipetrenko\Documents\My Data Sources\srv-sql01 Payroll.odc
+\\SRV-FILE01\photo\TES2
+\\SRV-FILE01\scan$\2023-11
+C:\Users\m.shevchuk\Pictures\Screenshots\portal.png</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Очищать метаданные перед публикацией (Инспектор документов, exiftool), внедрить проверку в процесс публикации.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592 · Gather Victim Host Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-paths</span>; Поля: paths; Документы: backup.zip, hidden.xlsx, photo.jpg, scan.tiff, screenshot.png, annual.indd, network.lnk, report.lnk, letter.odt, legacy.doc, contract.docx, schedule.xlsx, meeting.ics, SRV-TS01.rdp, buh.ica, logo.svg, network.vsdx</div>
+</article>
+<article class="finding low" id="f-2976529722315233">
+<h3><span class="id">F-82</span><span>Внутренние адреса и имена хостов в документе (1) · buh.ica</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Текст или поля документа «buh.ica» раскрывают внутреннюю адресацию сети: 10.10.1.40.</p>
+<h4>Доказательство</h4><pre class="ev">поле ica:1C Бухгалтерія.Address: 10••••••.40:1494</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/remote/buh.ica" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/buh.ica</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: поле ica:1C Бухгалтерія.Address; Документы: buh.ica</div>
+</article>
+<article class="finding low" id="f-3206754168169225">
+<h3><span class="id">F-83</span><span>Устаревшая ОС Windows 7 / Server 2008 R2 у 1 документа</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Метаданные 1 документа указывают, что он создан в Windows 7 / Server 2008 R2: ОС без обновлений безопасности.</p>
+<h4>Доказательство</h4><pre class="ev">ОС: Windows 7 / Server 2008 R2
+Документов: 1
+Исторические данные (2019): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/legacy.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/legacy.doc</a></p>
+<h4>Рекомендация</h4><p class="txt">Вывести из эксплуатации или изолировать рабочие места с неподдерживаемой ОС.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.002 · Gather Victim Host Information: Software</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-os</span>; Поля: os; Документы: legacy.doc</div>
+</article>
+<article class="finding low" id="f-3243320745739716">
+<h3><span class="id">F-84</span><span>Устаревшая ОС Windows XP у 2 документов</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Метаданные 2 документов указывают, что они созданы в Windows XP: ОС без обновлений безопасности.</p>
+<h4>Доказательство</h4><pre class="ev">ОС: Windows XP
+Документов: 2
+Исторические данные (2008): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/real/poi-SampleDoc.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/poi-SampleDoc.doc</a></p>
+<h4>Рекомендация</h4><p class="txt">Вывести из эксплуатации или изолировать рабочие места с неподдерживаемой ОС.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.002 · Gather Victim Host Information: Software</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-os</span>; Поля: os; Документы: poi-SampleDoc.doc, poi-SampleSS.xls</div>
+</article>
+<article class="finding low" id="f-3378053975663024">
+<h3><span class="id">F-85</span><span>Идентификатор арендатора Microsoft 365 в письме (budget.eml)</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Заголовки письма содержат идентификатор арендатора Microsoft 365 организации.</p>
+<h4>Доказательство</h4><pre class="ev">00000000-1111-2222-3333-444444444444</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.eml</a></p>
+<h4>Рекомендация</h4><p class="txt">Учитывать при оценке поверхности атаки облачной инфраструктуры.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.m365_tenant</span>; Поля: x-ms-exchange-crosstenant-id; Документы: budget.eml</div>
+</article>
+<article class="finding low" id="f-3507499325971348">
+<h3><span class="id">F-86</span><span>Комментарии рецензентов сохранены в network.vsdx</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 1 комментарий: видны прежние формулировки и внутренняя переписка.</p>
+<h4>Доказательство</h4><pre class="ev">комментарий ivan.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/visio/network.vsdx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/visio/network.vsdx</a></p>
+<h4>Рекомендация</h4><p class="txt">Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: network.vsdx</div>
+</article>
+<article class="finding low" id="f-3795182609131782">
+<h3><span class="id">F-87</span><span>Внутренние адреса и имена хостов в документе (4)</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Текст или поля документа «backup.zip» раскрывают внутреннюю адресацию сети: 10.20.30.42, 10.20.0.15, 192.168.10.17, 10.20.0.16.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 31: 10••••••.42, 10.20.0.15
+текст, строка 31: 10.20.30.42, 10••••••.15
+текст, строка 51: 19••••••.17, 10.20.0.16
+текст, строка 51: 192.168.10.17, 10••••••.16</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: текст, строка 31, текст, строка 51; Документы: backup.zip</div>
+</article>
+<article class="finding low" id="f-4410412564460717">
+<h3><span class="id">F-88</span><span>Идентификатор арендатора Microsoft 365 в письме (backup.zip)</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Заголовки письма содержат идентификатор арендатора Microsoft 365 организации.</p>
+<h4>Доказательство</h4><pre class="ev">00000000-1111-2222-3333-444444444444</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
+<h4>Рекомендация</h4><p class="txt">Учитывать при оценке поверхности атаки облачной инфраструктуры.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.m365_tenant</span>; Поля: x-ms-exchange-crosstenant-id; Документы: backup.zip</div>
+</article>
+<article class="finding low" id="f-5249677219352184">
+<h3><span class="id">F-89</span><span>Microsoft Word 2008 для Mac (EOL) у 1 документа</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">1 документ создан в Microsoft Word 2008 для Mac (12), поддержка завершена 2013-04-09. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: Microsoft Word 2008 для Mac (12)
+Документов: 1
+Исторические данные (2009): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/real/exiftool-OOXML.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-OOXML.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: exiftool-OOXML.docx</div>
+</article>
+<article class="finding low" id="f-5510625805432570">
+<h3><span class="id">F-90</span><span>Старые ревизии PDF сохранены в revisions.pdf</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">PDF сохранён инкрементально (1 обновл.), предыдущие версии метаданных и содержимого можно восстановить.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: Author: John Doe; Creator: Writer; Producer: FOCA-rs fixture</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/revisions.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/revisions.pdf</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять PDF полностью («Сохранить как» с оптимизацией) или очищать скрытые данные перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pdf-revisions</span>; Поля: incremental_updates, old_versions; Документы: revisions.pdf</div>
+</article>
+<article class="finding low" id="f-5980062679713447">
+<h3><span class="id">F-91</span><span>Предыдущие версии метаданных сохранены в legacy.doc</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ хранит историю сохранений (2 версии): прежние авторы и пути к файлам.</p>
+<h4>Доказательство</h4><pre class="ev">ревизия 1: 
+ревизия 2: </pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ole/legacy.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/legacy.doc</a></p>
+<h4>Рекомендация</h4><p class="txt">Пересохранять PDF полностью («Сохранить как» с оптимизацией) или очищать скрытые данные перед публикацией.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213 · Data from Information Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pdf-revisions</span>; Поля: incremental_updates, old_versions; Документы: legacy.doc</div>
+</article>
+<article class="finding low" id="f-7220663679796691">
+<h3><span class="id">F-92</span><span>LibreOffice 7.2.5.2 (EOL) у 1 документа</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">1 документ создан в LibreOffice 7.2.5.2, поддержка завершена 2022-06-12. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: LibreOffice 7.2.5.2
+Документов: 1
+Исторические данные (2022): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/odf/letter.odt" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/odf/letter.odt</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: letter.odt</div>
+</article>
+<article class="finding low" id="f-7316723105133939">
+<h3><span class="id">F-93</span><span>Внутренние адреса и имена хостов в документе (2) · budget.eml</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Текст или поля документа «budget.eml» раскрывают внутреннюю адресацию сети: 10.20.30.42, 10.20.0.15.</p>
+<h4>Доказательство</h4><pre class="ev">поле eml:internal_ips: 10••••••.42, 10.20.0.15
+поле eml:internal_ips: 10.20.30.42, 10••••••.15</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/mail/budget.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.eml</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: поле eml:internal_ips; Документы: budget.eml</div>
+</article>
+<article class="finding low" id="f-7452480379600896">
+<h3><span class="id">F-94</span><span>Имена 9 компьютеров и серверов внутренней сети</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.1</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Метаданные документов раскрывают NetBIOS-имена рабочих станций и серверов, что помогает спланировать атаку внутри сети.</p>
+<h4>Доказательство</h4><pre class="ev">ENG-WS11, SRV-FILE01, MFP-2F, BUH-PC-07, WS-042, NAS02, SRV-PRN01, SRV-SQL02, FS01</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></p>
+<h4>Рекомендация</h4><p class="txt">Очищать метаданные перед публикацией; не использовать в именах ПК отдел и ФИО сотрудника.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-pcs</span>; Документы: photo.jpg, scan.tiff, network.lnk, report.lnk, letter.odt, legacy.doc, contract.docx, schedule.xlsx, meeting.ics</div>
+</article>
+<article class="finding low" id="f-7607202701605053">
+<h3><span class="id">F-95</span><span>Время подписи и метка TSA расходятся более чем на сутки (signed_hidden.docx)</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Заявленное время подписания заметно отличается от времени метки доверенного сервиса (TSA): часы подписанта неверны или дата подписи указана задним числом.</p>
+<h4>Доказательство</h4><pre class="ev">Подписант: John Doe
+Организация: Example LLC
+ЄДРПОУ: 87654321
+Должность: Accountant
+РНОКПП: ********99
+АЦСК: Example Test QTSP CA
+Время подписи: 2024-03-01T08:00:01Z
+Метка TSA: 2026-11-22T01:06:57Z</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/signed_hidden.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_hidden.docx</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить дату подписания по метке времени TSA.</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.signature_tsa_gap</span>; Поля: signatures; Документы: signed_hidden.docx</div>
+</article>
+<article class="finding low" id="f-8137730478630618">
+<h3><span class="id">F-96</span><span>Параметры удалённого доступа раскрыты в файле SRV-TS01.rdp</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.</p>
+<h4>Доказательство</h4><pre class="ev">full address: SRV-TS01.corp.contoso.example:3389
+username: CONTOSO\i.petrenko
+gateway: rdgw.contoso.example</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/remote/SRV-TS01.rdp" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/SRV-TS01.rdp</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить файл с сайта, не публиковать служебные файлы конфигурации.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.002 · Gather Victim Network Information: DNS</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">remote-file</span>; Поля: full address, username, gatewayhostname; Документы: SRV-TS01.rdp</div>
+</article>
+<article class="finding low" id="f-8290697254337959">
+<h3><span class="id">F-97</span><span>OpenOffice.org 3.2 (EOL) у 1 документа</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">1 документ создан в OpenOffice.org 3.2, поддержка завершена 2011-04-15. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
+<h4>Доказательство</h4><pre class="ev">Сигнатура: OpenOffice.org 3.2
+Документов: 1
+Исторические данные (2010): документы из веб-архива или старше 3 лет, важность понижена</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/real/exiftool-OpenDoc.ods" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-OpenDoc.ods</a></p>
+<h4>Рекомендация</h4><p class="txt">Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1203 · Exploitation for Client Execution</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: exiftool-OpenDoc.ods</div>
+</article>
+<article class="finding low" id="f-8364734392160472">
+<h3><span class="id">F-98</span><span>Параметры удалённого доступа раскрыты в файле buh.ica</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.</p>
+<h4>Доказательство</h4><pre class="ev">full address: 10.10.1.40:1494
+username: o.kovalenko
+gateway: ctx.contoso.example:8080</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/remote/buh.ica" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/buh.ica</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалить файл с сайта, не публиковать служебные файлы конфигурации.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.002 · Gather Victim Network Information: DNS</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">remote-file</span>; Поля: full address, username, gatewayhostname; Документы: buh.ica</div>
+</article>
+<article class="finding low" id="f-8582214742420188">
+<h3><span class="id">F-99</span><span>Внутренние адреса и имена хостов в документе (1) · network.vsdx</span> <span class="badge low">Низкий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Текст или поля документа «network.vsdx» раскрывают внутреннюю адресацию сети: 10.20.0.10.</p>
+<h4>Доказательство</h4><pre class="ev">текст, строка 1: DC01 10••••••.10</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/visio/network.vsdx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/visio/network.vsdx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: текст, строка 1; Документы: network.vsdx</div>
+</article>
+<article class="finding info" id="f-663011791895959">
+<h3><span class="id">F-100</span><span>Определён шаблон корпоративных e-mail: {f}.{last}@contoso.example</span> <span class="badge info">Инфо</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">По 3 адресам из документов определён шаблон {f}.{last}@contoso.example (уверенность 100%). Это упрощает подготовку целевого фишинга.</p>
+<h4>Доказательство</h4><pre class="ev">Пример: i.petrenko@contoso.example</pre>
+<h4>Рекомендация</h4><p class="txt">Учесть в программе обучения сотрудников; включить DMARC p=reject и защиту от спуфинга.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1589.002 · Gather Victim Identity Information: Email Addresses</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">email-pattern</span></div>
+</article>
+<article class="finding info" id="f-7263869114989249">
+<h3><span class="id">F-101</span><span>Ссылки на облачные пространства и URL с токенами в meeting.ics</span> <span class="badge info">Инфо</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).</p>
+<h4>Доказательство</h4><pre class="ev">Онлайн-встреча: https://example.zoom.us/j/1234567890?pwd=EXAMPLE
+Онлайн-встреча: https://teams.microsoft.com/l/meetup-join/
+Онлайн-встреча: https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d
+Онлайн-встреча: https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/pim/meeting.ics" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/meeting.ics</a></p>
+<h4>Рекомендация</h4><p class="txt">Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1213.003 · Data from Information Repositories: Code Repositories</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.links</span>; Поля: links; Документы: meeting.ics</div>
+</article>
+<article class="finding info" id="f-8874840866280652">
+<h3><span class="id">F-102</span><span>Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name</span> <span class="badge info">Инфо</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: -</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Документы созданы под общими учётными записями (Administrator, User…): возможна работа с правами администратора и общие пароли.</p>
+<h4>Доказательство</h4><pre class="ev">Administrator · документов: 2
+admin · документов: 1
+author · документов: 1
+scan · документов: 1
+user name · документов: 1</pre>
+<h4>Рекомендация</h4><p class="txt">Работать под персональными учётными записями без прав администратора.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1087 · Account Discovery</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">service-accounts</span></div>
+</article>
+</section>
+<section id="fixed">
+<h2>Исправленные находки</h2>
+<table><thead><tr><th>ID</th><th>Важность</th><th>Находка</th><th>Хост</th><th>Исправлено в скане</th></tr></thead><tbody>
+<tr><td>F-103</td><td><span class="badge high">Высокий</span></td><td>Внутренние почтовые серверы и адреса в заголовках письма (budget.eml)</td><td>files.contoso.example</td><td>-</td></tr>
+</tbody></table>
+</section>
+<section id="people">
+<h2>Люди</h2>
+<table><thead><tr><th>Логин</th><th>Имя</th><th>Роль</th><th>Компьютер</th><th>E-mail</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td><span class="mono">john.doe</span></td><td>John Doe</td><td></td><td></td><td>john.doe@example.org</td><td class="num">14</td></tr>
+<tr><td><span class="mono">i.petrenko</span></td><td>i.petrenko</td><td></td><td></td><td>i.petrenko@contoso.example, i.petrenko@example.com</td><td class="num">13</td></tr>
+<tr><td><span class="mono">ivan.petrenko</span></td><td>Іван Петренко</td><td></td><td></td><td>ivan.petrenko@example.com</td><td class="num">12</td></tr>
+<tr><td><span class="mono">o.kovalenko</span></td><td>Olena Kovalenko</td><td></td><td></td><td>o.kovalenko@contoso.example, o.kovalenko@example.com</td><td class="num">9</td></tr>
+<tr><td><span class="mono">m.shevchuk</span></td><td>Марина Шевчук</td><td></td><td></td><td></td><td class="num">5</td></tr>
+<tr><td><span class="mono">a.bondar</span></td><td>Андрій Бондар</td><td></td><td></td><td></td><td class="num">3</td></tr>
+<tr><td><span class="mono">p.harvey</span></td><td>Phil Harvey</td><td></td><td></td><td></td><td class="num">3</td></tr>
+<tr><td><span class="mono">t.melnyk</span></td><td>Тетяна Мельник</td><td></td><td></td><td></td><td class="num">3</td></tr>
+<tr><td><span class="mono">v.tkachenko</span></td><td>Віктор Ткаченко</td><td></td><td>ENG-WS11</td><td></td><td class="num">3</td></tr>
+<tr><td><span class="mono">n.burch</span></td><td>Nick Burch</td><td></td><td></td><td></td><td class="num">2</td></tr>
+<tr><td><span class="mono">s.lysenko</span></td><td>Сергій Лисенко</td><td></td><td></td><td>s.lysenko@contoso.example</td><td class="num">2</td></tr>
+<tr><td><span class="mono">administrator</span> <span class="tag">служебная</span></td><td>Administrator</td><td>Служебная учётная запись</td><td></td><td></td><td class="num">2</td></tr>
+<tr><td><span class="mono">hogwarts</span></td><td>Hogwarts</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">i.bird</span></td><td>Irving Bird</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">i.britton</span></td><td>Ian Britton</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">i.informatica</span></td><td>IDHW IDHW Informatica</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">i.petrenko-2</span></td><td>Ігор Петренко</td><td>Рецензент</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">j.roe</span></td><td>Jane Roe</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">jeff</span></td><td>Jeff</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">m.example</span></td><td>Mallory Example</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">m.lambert</span></td><td>Mary Lambert</td><td></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">admin</span> <span class="tag">служебная</span></td><td>admin</td><td>Служебная учётная запись</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">author</span> <span class="tag">служебная</span></td><td>author</td><td>Служебная учётная запись</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">scan</span> <span class="tag">служебная</span></td><td>scan</td><td>Служебная учётная запись</td><td>MFP-2F</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">user.name</span> <span class="tag">служебная</span></td><td>user name</td><td>Служебная учётная запись</td><td></td><td></td><td class="num">1</td></tr>
+</tbody></table>
+<h4>Шаблон адресов</h4><table><thead><tr><th>Шаблон адресов</th><th>E-mail</th><th class="num">%</th><th class="num">Число</th></tr></thead><tbody>
+<tr><td><span class="mono">{f}.{last}@contoso.example</span></td><td>i.petrenko@contoso.example</td><td class="num">100%</td><td class="num">3</td></tr>
+</tbody></table>
+<h4>E-mail</h4><table><thead><tr><th>Адрес</th><th>Имя</th><th>Найден в документах</th><th>Происхождение</th></tr></thead><tbody>
+<tr><td><span class="mono">040000008200e00074c5b7101a82e0080000000012345@exchange.corp.example.tes</span></td><td></td><td>да</td><td>Текст документа</td></tr>
+<tr><td><span class="mono">a1b2c3d4e5@exch01.corp.example.test</span></td><td></td><td>да</td><td>Текст документа</td></tr>
+<tr><td><span class="mono">i.petrenko.private@example.net</span></td><td></td><td>да</td><td>Текст документа</td></tr>
+<tr><td><span class="mono">i.petrenko@contoso.example</span></td><td>i.petrenko</td><td>да</td><td>Текст документа</td></tr>
+<tr><td><span class="mono">i.petrenko@example.com</span></td><td>i.petrenko</td><td>да</td><td>Текст документа</td></tr>
+<tr><td><span class="mono">inner-0001@exch02.corp.example.test</span></td><td></td><td>да</td><td>Текст документа</td></tr>
+<tr><td><span class="mono">ivan.petrenko@example.com</span></td><td>Іван Петренко</td><td>да</td><td>Метаданные документа</td></tr>
+<tr><td><span class="mono">john.doe@example.org</span></td><td>John Doe</td><td>да</td><td>Метаданные документа</td></tr>
+<tr><td><span class="mono">o.kovalenko@contoso.example</span></td><td>Olena Kovalenko</td><td>да</td><td>Метаданные документа</td></tr>
+<tr><td><span class="mono">o.kovalenko@example.com</span></td><td>Olena Kovalenko</td><td>да</td><td>Метаданные документа</td></tr>
+<tr><td><span class="mono">s.lysenko@contoso.example</span></td><td>Сергій Лисенко</td><td>да</td><td>Метаданные документа</td></tr>
+<tr><td><span class="mono">x@example.com</span></td><td></td><td>да</td><td>Метаданные документа</td></tr>
+<tr><td><span class="mono">a.bondar@contoso.example</span></td><td>Андрій Бондар</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">i.bird@contoso.example</span></td><td>Irving Bird</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">i.britton@contoso.example</span></td><td>Ian Britton</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">i.informatica@contoso.example</span></td><td>IDHW IDHW Informatica</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">j.roe@contoso.example</span></td><td>Jane Roe</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">m.example@contoso.example</span></td><td>Mallory Example</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">m.lambert@contoso.example</span></td><td>Mary Lambert</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">m.shevchuk@contoso.example</span></td><td>Марина Шевчук</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">n.burch@contoso.example</span></td><td>Nick Burch</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">p.harvey@contoso.example</span></td><td>Phil Harvey</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">t.melnyk@contoso.example</span></td><td>Тетяна Мельник</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">v.tkachenko@contoso.example</span></td><td>Віктор Ткаченко</td><td>нет</td><td>Шаблон {f}.{last} (100%)</td></tr>
+<tr><td><span class="mono">buh@example.com</span></td><td></td><td>да</td><td>Метаданные документа</td></tr>
+</tbody></table>
+</section>
+<section id="infra">
+<h2>Инфраструктура</h2>
+<h3>Хосты</h3><table><thead><tr><th>Хост</th><th>IP</th><th>Роль</th><th>Технологии</th><th>Внутренний</th><th>Скоуп</th></tr></thead><tbody>
+<tr><td><span class="mono">198.51.100.25</span></td><td>198.51.100.25</td><td>-</td><td>-</td><td>нет</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">203.0.113.10</span></td><td>203.0.113.10</td><td>-</td><td>-</td><td>нет</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">contoso.example</span></td><td>-</td><td>-</td><td>-</td><td>нет</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">ctx.contoso.example</span></td><td>-</td><td>Citrix</td><td>Citrix ICA</td><td>нет</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">files.contoso.example</span></td><td>-</td><td>Веб-сервер</td><td>-</td><td>нет</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">mail.example.org</span></td><td>-</td><td>Почта</td><td>-</td><td>нет</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">mx1.example.org</span></td><td>-</td><td>Почта</td><td>-</td><td>нет</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">portal.contoso.example</span></td><td>-</td><td>-</td><td>-</td><td>нет</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">rdgw.contoso.example</span></td><td>-</td><td>Терминальный</td><td>RDP</td><td>нет</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">10.10.1.40</span></td><td>10.10.1.40</td><td>Citrix</td><td>Citrix ICA</td><td>да</td><td>исключён</td></tr>
+<tr><td><span class="mono">10.10.1.5</span></td><td>10.10.1.5</td><td>Внутренний</td><td>-</td><td>да</td><td>исключён</td></tr>
+<tr><td><span class="mono">10.20.0.10</span></td><td>10.20.0.10</td><td>Внутренний</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">10.20.0.15</span></td><td>10.20.0.15</td><td>Внутренний</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">10.20.0.16</span></td><td>10.20.0.16</td><td>Внутренний</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">10.20.30.42</span></td><td>10.20.30.42</td><td>Внутренний</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">192.168.10.17</span></td><td>192.168.10.17</td><td>Внутренний</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">MFP-2F</span></td><td>-</td><td>МФУ</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">NAS02</span></td><td>-</td><td>Хранилище</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">SRV-FILE01</span></td><td>-</td><td>Файловый (внутр.)</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">SRV-PRN01</span></td><td>-</td><td>Принт-сервер</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">SRV-SQL02</span></td><td>-</td><td>СУБД</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">exch01.corp.example.test</span></td><td>-</td><td>Почта</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">fs01.corp.example.test</span></td><td>-</td><td>Файловый (внутр.)</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">sql01.corp.example.test</span></td><td>-</td><td>СУБД</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">srv-sql01.corp.example.com</span></td><td>-</td><td>СУБД</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+<tr><td><span class="mono">srv-ts01.corp.contoso.example</span></td><td>-</td><td>Терминальный</td><td>RDP</td><td>да</td><td>в скоупе</td></tr>
+<tr><td><span class="mono">ws-042.corp.example.test</span></td><td>-</td><td>Внутренний</td><td>-</td><td>да</td><td>вне скоупа</td></tr>
+</tbody></table>
+<h3>Компьютеры и серверы</h3><table><thead><tr><th>Компьютер</th><th>Тип</th><th>Пользователи</th><th>IP</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td><span class="mono">SRV-FILE01</span></td><td>server</td><td></td><td></td><td class="num">4</td></tr>
+<tr><td><span class="mono">NAS02</span></td><td>server</td><td></td><td></td><td class="num">2</td></tr>
+<tr><td><span class="mono">BUH-PC-07</span></td><td>ws</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">ENG-WS11</span></td><td>ws</td><td>v.tkachenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">FS01</span></td><td>server</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">MFP-2F</span></td><td>server</td><td>scan</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">SRV-PRN01</span></td><td>server</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">SRV-SQL02</span></td><td>server</td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">WS-042</span></td><td>ws</td><td></td><td></td><td class="num">1</td></tr>
+</tbody></table>
+<h3>Программное обеспечение</h3><table><thead><tr><th>Программное обеспечение</th><th>Версия</th><th>EOL</th><th class="num">CVE</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td>Adobe Photoshop 7.0</td><td>7.0</td><td><span class="badge high">EOL</span> дата неизвестна</td><td class="num">-</td><td class="num">3</td></tr>
+<tr><td>Microsoft Office Excel</td><td></td><td></td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Fujifilm (камера)</td><td></td><td></td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>iOS 17.4</td><td>17.4</td><td><span class="badge high">EOL</span> 15.09.2025</td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Outlook 2016-2024 / 365</td><td>16</td><td></td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office PowerPoint</td><td></td><td></td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Adobe Photoshop CC 2019</td><td>CC 2019</td><td><span class="badge high">EOL</span> дата неизвестна</td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Visio</td><td></td><td></td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Word</td><td></td><td></td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Microsoft Office Word 2013</td><td>15</td><td><span class="badge high">EOL</span> 11.04.2023</td><td class="num">-</td><td class="num">2</td></tr>
+<tr><td>Adobe Acrobat Pro XI</td><td>11.0.23</td><td><span class="badge high">EOL</span> 15.10.2017</td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Samsung Galaxy (Android)</td><td></td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Apache OpenOffice 4.1.14</td><td>4.1.14</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Canon (камера)</td><td></td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Canon imageRUNNER 1.2</td><td>1.2</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Microsoft Excel 2010</td><td>14</td><td><span class="badge high">EOL</span> 13.10.2020</td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>GraphicConverter</td><td></td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Greenshot 1.2.10</td><td>1.2.10</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Ghostscript 9.50</td><td>9.50</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Adobe InDesign 19.2</td><td>19.2</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Inkscape 1.1.2</td><td>1.1.2</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>iOS 16.6</td><td>16.6</td><td><span class="badge high">EOL</span> 16.09.2024</td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Adobe Lightroom 13.2</td><td>13.2</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>LibreOffice 7.2.5.2</td><td>7.2.5.2</td><td><span class="badge high">EOL</span> 12.06.2022</td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Microsoft PowerPoint для Mac</td><td></td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Microsoft Word 2008 для Mac</td><td>12</td><td><span class="badge high">EOL</span> 09.04.2013</td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>OpenOffice.org 3.2</td><td>3.2</td><td><span class="badge high">EOL</span> 15.04.2011</td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>PDFCreator 3.2.0</td><td>3.2.0</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Microsoft Office PowerPoint 2016-2024 / 365</td><td>16</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+<tr><td>Microsoft Office Publisher 2016-2024 / 365</td><td>16</td><td></td><td class="num">-</td><td class="num">1</td></tr>
+</tbody></table>
+<h3>Пути</h3><table><thead><tr><th>Путь</th><th>Логин</th><th>Хост</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td><span class="mono">C:\Users\i.petrenko\Documents</span></td><td>i.petrenko</td><td></td><td class="num">3</td></tr>
+<tr><td><span class="mono">/home/mshevchuk/brand/texture.png</span></td><td>m.shevchuk</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Program Files\1cv8\common\1cestart.exe</span></td><td></td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\i.petrenko\Documents\assets.xlsx</span></td><td>i.petrenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\i.petrenko\Documents\Звіт.docx</span></td><td>i.petrenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\ipetrenko\Desktop\[budget.xlsx]Sheet1</span></td><td>i.petrenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\ipetrenko\Documents\My Data Sources\srv-sql01 Payroll.odc</span></td><td>i.petrenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\m.shevchuk\Desktop\Презентації\logo.png</span></td><td>m.shevchuk</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\m.shevchuk\Pictures\Screenshots\portal.png</span></td><td>m.shevchuk</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\o.kovalenko\AppData\Local\1C</span></td><td>o.kovalenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">C:\Users\o.kovalenko\Documents\Звіти\2019\Статут.doc</span></td><td>o.kovalenko</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\FS01.corp.example.test\buh$</span></td><td></td><td>FS01.corp.example.test</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\FS01.corp.example.test\buh$\Звіти\2024\Q1.xlsx</span></td><td></td><td>FS01.corp.example.test</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\FS01.corp.example.test\design\annual-2023\report.indd</span></td><td></td><td>FS01.corp.example.test</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\FS01.corp.example.test\finance$ by i.petrenko</span></td><td></td><td>FS01.corp.example.test</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\FS01\rooms</span></td><td></td><td>FS01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\SRV-FILE01\photo\TES2</span></td><td></td><td>SRV-FILE01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\SRV-FILE01\public\Шаблони\Статут.doc</span></td><td></td><td>SRV-FILE01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\SRV-FILE01\public\Шаблони\Юридичний.dot</span></td><td></td><td>SRV-FILE01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\SRV-FILE01\scan$\2023-11</span></td><td></td><td>SRV-FILE01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">\\SRV-PRN01\Canon C5535 2F</span></td><td></td><td>SRV-PRN01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">file:///C:\Users\a.bondar\Documents\Тендер\Специфікація_v2.xlsx</span></td><td>a.bondar</td><td></td><td class="num">1</td></tr>
+<tr><td><span class="mono">file:///\\FS01.corp.example.test\it\network.vsdx</span></td><td></td><td>FS01.corp.example.test</td><td class="num">1</td></tr>
+<tr><td><span class="mono">file:///\\NAS02\finance\Бюджет_2024.xlsx</span></td><td></td><td>NAS02</td><td class="num">1</td></tr>
+<tr><td><span class="mono">file:///\\NAS02\hr\Накази\2022</span></td><td></td><td>NAS02</td><td class="num">1</td></tr>
+<tr><td><span class="mono">file:///\\SRV-FILE01\public\Шаблони\Договір.dotx</span></td><td></td><td>SRV-FILE01</td><td class="num">1</td></tr>
+<tr><td><span class="mono">file:///home/tmelnyk/Шаблони/Бланк.ott</span></td><td>t.melnyk</td><td></td><td class="num">1</td></tr>
+</tbody></table>
+<h3>Принтеры</h3><table><thead><tr><th>Имя</th><th>Хост</th><th class="num">Документов</th></tr></thead><tbody>
+<tr><td>HP LaserJet Pro M404 (BUH)</td><td></td><td class="num">1</td></tr>
+<tr><td>\\SRV-PRN01\Canon C5535 2F</td><td>SRV-PRN01</td><td class="num">1</td></tr>
+</tbody></table>
+</section>
+<section id="docs">
+<h2>Документы</h2>
+<table><thead><tr><th class="num">#</th><th>Файл</th><th>Заголовок</th><th>Автор</th><th>Программное обеспечение</th><th class="num">Создан</th><th>Признаки</th></tr></thead><tbody>
+<tr><td class="num">1</td><td>backup.zip<br><span class="small"><a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></span></td><td>backup</td><td></td><td></td><td class="num">14.03.2024</td><td>path, secret</td></tr>
+<tr><td class="num">2</td><td>broken.zip<br><span class="small"><a href="https://files.contoso.example/corpus/archive/broken.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/broken.zip</a></span></td><td>broken</td><td></td><td></td><td class="num">14.03.2024</td><td></td></tr>
+<tr><td class="num">3</td><td>hidden.xlsx<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/hidden.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/hidden.xlsx</a></span></td><td>hidden</td><td>john.doe</td><td></td><td class="num"></td><td>path, forensic</td></tr>
+<tr><td class="num">4</td><td>personal.docx<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/personal.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/personal.docx</a></span></td><td>Довідка</td><td>o.kovalenko</td><td></td><td class="num">14.03.2024</td><td>secret, pii</td></tr>
+<tr><td class="num">5</td><td>redacted.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/redacted.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/redacted.pdf</a></span></td><td>redacted</td><td></td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">6</td><td>revisions.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/revisions.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/revisions.pdf</a></span></td><td>revisions</td><td>j.roe</td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">7</td><td>scan.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/scan.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/scan.pdf</a></span></td><td>scan</td><td></td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">8</td><td>signed.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/signed.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed.pdf</a></span></td><td>signed</td><td>ivan.petrenko</td><td></td><td class="num">01.03.2024</td><td>forensic</td></tr>
+<tr><td class="num">9</td><td>signed_hidden.docx<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/signed_hidden.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_hidden.docx</a></span></td><td>signed_hidden</td><td>john.doe</td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">10</td><td>signed_modified.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/signed_modified.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/signed_modified.pdf</a></span></td><td>signed_modified</td><td>m.example</td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">11</td><td>timestamp.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/forensics/timestamp.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/timestamp.pdf</a></span></td><td>timestamp</td><td></td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">12</td><td>photo.jpg<br><span class="small"><a href="https://files.contoso.example/corpus/images/photo.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/photo.jpg</a></span></td><td>photo</td><td>v.tkachenko</td><td>iOS 16.6</td><td class="num">02.08.2024</td><td>path, eol, gps</td></tr>
+<tr><td class="num">13</td><td>scan.tiff<br><span class="small"><a href="https://files.contoso.example/corpus/images/scan.tiff" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/scan.tiff</a></span></td><td>scan</td><td>scan</td><td>Canon imageRUNNER 1.2</td><td class="num"></td><td>path</td></tr>
+<tr><td class="num">14</td><td>screenshot.png<br><span class="small"><a href="https://files.contoso.example/corpus/images/screenshot.png" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/images/screenshot.png</a></span></td><td>screenshot</td><td>m.shevchuk</td><td>Samsung Galaxy (Android)</td><td class="num">02.08.2024</td><td>path, eol</td></tr>
+<tr><td class="num">15</td><td>annual.indd<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/annual.indd" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/annual.indd</a></span></td><td>Річний звіт 2023</td><td>o.kovalenko</td><td>Adobe InDesign 19.2</td><td class="num">01.03.2024</td><td>path</td></tr>
+<tr><td class="num">16</td><td>broken.indd<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/broken.indd" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/broken.indd</a></span></td><td>broken</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">17</td><td>broken.wpd<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/broken.wpd" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/broken.wpd</a></span></td><td>broken</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">18</td><td>budget.wks<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/budget.wks" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/budget.wks</a></span></td><td>budget</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">19</td><td>budget.wpd<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/budget.wpd" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/budget.wpd</a></span></td><td>budget</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">20</td><td>leaflet.pub<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/leaflet.pub" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/leaflet.pub</a></span></td><td>Буклет</td><td>ivan.petrenko</td><td>Microsoft Office Publisher 2016-2024 / 365</td><td class="num">01.03.2024</td><td></td></tr>
+<tr><td class="num">21</td><td>letter.wps<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/letter.wps" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/letter.wps</a></span></td><td>Лист</td><td>ivan.petrenko</td><td></td><td class="num">01.03.2024</td><td></td></tr>
+<tr><td class="num">22</td><td>network.vsd<br><span class="small"><a href="https://files.contoso.example/corpus/legacy/network.vsd" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/legacy/network.vsd</a></span></td><td>Схема мережі</td><td>ivan.petrenko</td><td>Microsoft Office Visio (версия неизвестна)</td><td class="num">01.03.2024</td><td></td></tr>
+<tr><td class="num">23</td><td>broken-linkinfo.lnk<br><span class="small"><a href="https://files.contoso.example/corpus/lnk/broken-linkinfo.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/broken-linkinfo.lnk</a></span></td><td>broken-linkinfo</td><td></td><td></td><td class="num">01.03.2024</td><td></td></tr>
+<tr><td class="num">24</td><td>broken-truncated.lnk<br><span class="small"><a href="https://files.contoso.example/corpus/lnk/broken-truncated.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/broken-truncated.lnk</a></span></td><td>broken-truncated</td><td></td><td></td><td class="num">01.03.2024</td><td></td></tr>
+<tr><td class="num">25</td><td>network.lnk<br><span class="small"><a href="https://files.contoso.example/corpus/lnk/network.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/network.lnk</a></span></td><td>network</td><td></td><td></td><td class="num">01.03.2024</td><td>path</td></tr>
+<tr><td class="num">26</td><td>report.lnk<br><span class="small"><a href="https://files.contoso.example/corpus/lnk/report.lnk" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/lnk/report.lnk</a></span></td><td>report</td><td></td><td></td><td class="num">01.03.2024</td><td>path</td></tr>
+<tr><td class="num">27</td><td>broken-mime.eml<br><span class="small"><a href="https://files.contoso.example/corpus/mail/broken-mime.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/broken-mime.eml</a></span></td><td>��</td><td>john.doe</td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">28</td><td>broken.msg<br><span class="small"><a href="https://files.contoso.example/corpus/mail/broken.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/broken.msg</a></span></td><td>A</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">29</td><td>budget.eml<br><span class="small"><a href="https://files.contoso.example/corpus/mail/budget.eml" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.eml</a></span></td><td>Кошторис на 2024 рік</td><td>ivan.petrenko</td><td>Microsoft Office Outlook 2016-2024 / 365</td><td class="num">14.03.2024</td><td>path, secret</td></tr>
+<tr><td class="num">30</td><td>budget.msg<br><span class="small"><a href="https://files.contoso.example/corpus/mail/budget.msg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/mail/budget.msg</a></span></td><td>Кошторис на 2024 рік (фінал)</td><td>ivan.petrenko</td><td>Microsoft Office Outlook 2016-2024 / 365</td><td class="num">14.03.2024</td><td>path, secret</td></tr>
+<tr><td class="num">31</td><td>broken-boxes.mp4<br><span class="small"><a href="https://files.contoso.example/corpus/media/broken-boxes.mp4" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/broken-boxes.mp4</a></span></td><td>broken-boxes</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">32</td><td>broken-iloc.heic<br><span class="small"><a href="https://files.contoso.example/corpus/media/broken-iloc.heic" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/broken-iloc.heic</a></span></td><td>broken-iloc</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">33</td><td>iphone.mov<br><span class="small"><a href="https://files.contoso.example/corpus/media/iphone.mov" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/iphone.mov</a></span></td><td>iphone</td><td></td><td>iOS 17.4</td><td class="num">14.03.2024</td><td>eol, gps</td></tr>
+<tr><td class="num">34</td><td>photo.heic<br><span class="small"><a href="https://files.contoso.example/corpus/media/photo.heic" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/photo.heic</a></span></td><td>photo</td><td>ivan.petrenko</td><td>iOS 17.4</td><td class="num">14.03.2024</td><td>eol, gps</td></tr>
+<tr><td class="num">35</td><td>survey.mp4<br><span class="small"><a href="https://files.contoso.example/corpus/media/survey.mp4" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/media/survey.mp4</a></span></td><td>Site survey TES-2</td><td>john.doe</td><td></td><td class="num">14.03.2024</td><td>gps</td></tr>
+<tr><td class="num">36</td><td>encrypted.ods<br><span class="small"><a href="https://files.contoso.example/corpus/odf/encrypted.ods" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/odf/encrypted.ods</a></span></td><td>encrypted</td><td>admin</td><td>Apache OpenOffice 4.1.14</td><td class="num">01.02.2017</td><td></td></tr>
+<tr><td class="num">37</td><td>letter.odt<br><span class="small"><a href="https://files.contoso.example/corpus/odf/letter.odt" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/odf/letter.odt</a></span></td><td>Лист-відповідь</td><td>t.melnyk</td><td>LibreOffice 7.2.5.2</td><td class="num">17.05.2022</td><td>path, eol, revisions</td></tr>
+<tr><td class="num">38</td><td>budget.xls<br><span class="small"><a href="https://files.contoso.example/corpus/ole/budget.xls" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/budget.xls</a></span></td><td>Budget 2019</td><td>s.lysenko</td><td>Microsoft Office Excel (версия неизвестна)</td><td class="num">20.12.2018</td><td></td></tr>
+<tr><td class="num">39</td><td>legacy.doc<br><span class="small"><a href="https://files.contoso.example/corpus/ole/legacy.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/legacy.doc</a></span></td><td>Статут підприємства</td><td>o.kovalenko</td><td>Microsoft Office Word (версия неизвестна)</td><td class="num">11.02.2019</td><td>path, secret, eol</td></tr>
+<tr><td class="num">40</td><td>slides.ppt<br><span class="small"><a href="https://files.contoso.example/corpus/ole/slides.ppt" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/slides.ppt</a></span></td><td>Strategy 2020</td><td>m.shevchuk</td><td>Microsoft PowerPoint для Mac (версия неизвестна)</td><td class="num">05.11.2019</td><td></td></tr>
+<tr><td class="num">41</td><td>vbaProject.bin<br><span class="small"><a href="https://files.contoso.example/corpus/ole/vbaProject.bin" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ole/vbaProject.bin</a></span></td><td>vbaProject</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">42</td><td>contract.docx<br><span class="small"><a href="https://files.contoso.example/corpus/ooxml/contract.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/contract.docx</a></span></td><td>Договір постачання ТЕС-2</td><td>a.bondar</td><td>Microsoft Office Word 2013 (15)</td><td class="num">01.03.2024</td><td>path, secret, eol, revisions</td></tr>
+<tr><td class="num">43</td><td>schedule.xlsx<br><span class="small"><a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></span></td><td>Графік відключень</td><td>s.lysenko</td><td>Microsoft Excel 2010 (14)</td><td class="num">01.10.2023</td><td>path, secret, eol, revisions</td></tr>
+<tr><td class="num">44</td><td>strategy.pptx<br><span class="small"><a href="https://files.contoso.example/corpus/ooxml/strategy.pptx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/strategy.pptx</a></span></td><td>Стратегія 2026</td><td>m.shevchuk</td><td>Microsoft Office PowerPoint 2016-2024 / 365</td><td class="num">20.01.2024</td><td>revisions</td></tr>
+<tr><td class="num">45</td><td>objstm.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/pdf/objstm.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/objstm.pdf</a></span></td><td>Presentation</td><td>m.shevchuk</td><td>PDFCreator 3.2.0</td><td class="num">05.01.2020</td><td>secret</td></tr>
+<tr><td class="num">46</td><td>report.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/pdf/report.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pdf/report.pdf</a></span></td><td>Річний звіт 2024</td><td>administrator</td><td>Microsoft Office Word 2013 (15)</td><td class="num">14.03.2024</td><td>eol, revisions</td></tr>
+<tr><td class="num">47</td><td>broken.ics<br><span class="small"><a href="https://files.contoso.example/corpus/pim/broken.ics" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/broken.ics</a></span></td><td>broken</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">48</td><td>broken.vcf<br><span class="small"><a href="https://files.contoso.example/corpus/pim/broken.vcf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/broken.vcf</a></span></td><td>broken</td><td></td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">49</td><td>contacts.vcf<br><span class="small"><a href="https://files.contoso.example/corpus/pim/contacts.vcf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/contacts.vcf</a></span></td><td>contacts</td><td></td><td></td><td class="num"></td><td>gps</td></tr>
+<tr><td class="num">50</td><td>meeting.ics<br><span class="small"><a href="https://files.contoso.example/corpus/pim/meeting.ics" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/pim/meeting.ics</a></span></td><td>Фінансовий відділ</td><td></td><td></td><td class="num">14.03.2024</td><td>path</td></tr>
+<tr><td class="num">51</td><td>exiftool-ExifTool.jpg<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-ExifTool.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-ExifTool.jpg</a></span></td><td>No headline</td><td>p.harvey</td><td>Fujifilm (камера)</td><td class="num">19.05.2001</td><td>eol</td></tr>
+<tr><td class="num">52</td><td>exiftool-ExifTool.tif<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-ExifTool.tif" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-ExifTool.tif</a></span></td><td>exiftool-ExifTool</td><td></td><td>Canon (камера)</td><td class="num"></td><td></td></tr>
+<tr><td class="num">53</td><td>exiftool-FlashPix.ppt<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-FlashPix.ppt" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-FlashPix.ppt</a></span></td><td>title</td><td>author</td><td>Microsoft Office PowerPoint (версия неизвестна)</td><td class="num">09.02.2007</td><td></td></tr>
+<tr><td class="num">54</td><td>exiftool-GPS.jpg<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-GPS.jpg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-GPS.jpg</a></span></td><td>Communications</td><td>i.britton</td><td>Fujifilm (камера)</td><td class="num">13.07.2002</td><td>eol, gps</td></tr>
+<tr><td class="num">55</td><td>exiftool-OOXML.docx<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-OOXML.docx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-OOXML.docx</a></span></td><td>The document title</td><td>jeff</td><td>Microsoft Word 2008 для Mac (12)</td><td class="num">24.10.2009</td><td>eol</td></tr>
+<tr><td class="num">56</td><td>exiftool-OpenDoc.ods<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-OpenDoc.ods" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-OpenDoc.ods</a></span></td><td>test</td><td>i.informatica</td><td>OpenOffice.org 3.2</td><td class="num">19.04.2010</td><td>eol</td></tr>
+<tr><td class="num">57</td><td>exiftool-PDF.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-PDF.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-PDF.pdf</a></span></td><td>Test IPTC picture</td><td>p.harvey</td><td>Adobe Photoshop 7.0</td><td class="num">18.07.2005</td><td>eol, forensic</td></tr>
+<tr><td class="num">58</td><td>exiftool-PDF2.pdf<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-PDF2.pdf" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-PDF2.pdf</a></span></td><td>exiftool-PDF2</td><td></td><td></td><td class="num"></td><td>forensic</td></tr>
+<tr><td class="num">59</td><td>exiftool-PNG.png<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-PNG.png" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-PNG.png</a></span></td><td>exiftool-PNG</td><td>p.harvey</td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">60</td><td>exiftool-XMP.svg<br><span class="small"><a href="https://files.contoso.example/corpus/real/exiftool-XMP.svg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/exiftool-XMP.svg</a></span></td><td>MyFoo Financial Report</td><td>i.bird</td><td></td><td class="num"></td><td></td></tr>
+<tr><td class="num">61</td><td>poi-SampleDoc.doc<br><span class="small"><a href="https://files.contoso.example/corpus/real/poi-SampleDoc.doc" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/poi-SampleDoc.doc</a></span></td><td>Test Document</td><td>n.burch</td><td>Microsoft Office Word (версия неизвестна)</td><td class="num">04.01.2008</td><td>eol</td></tr>
+<tr><td class="num">62</td><td>poi-SampleSS.xls<br><span class="small"><a href="https://files.contoso.example/corpus/real/poi-SampleSS.xls" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/poi-SampleSS.xls</a></span></td><td>Sample Spreadsheet</td><td>n.burch</td><td>Microsoft Office Excel (версия неизвестна)</td><td class="num">04.01.2008</td><td>eol</td></tr>
+<tr><td class="num">63</td><td>poi-basic_test_ppt_file.ppt<br><span class="small"><a href="https://files.contoso.example/corpus/real/poi-basic_test_ppt_file.ppt" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/real/poi-basic_test_ppt_file.ppt</a></span></td><td>This is a test title</td><td>hogwarts</td><td>Microsoft Office PowerPoint (версия неизвестна)</td><td class="num">13.05.2005</td><td>eol</td></tr>
+<tr><td class="num">64</td><td>SRV-TS01.rdp<br><span class="small"><a href="https://files.contoso.example/corpus/remote/SRV-TS01.rdp" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/SRV-TS01.rdp</a></span></td><td>SRV-TS01</td><td></td><td></td><td class="num"></td><td>path, secret</td></tr>
+<tr><td class="num">65</td><td>buh.ica<br><span class="small"><a href="https://files.contoso.example/corpus/remote/buh.ica" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/remote/buh.ica</a></span></td><td>buh</td><td></td><td></td><td class="num"></td><td>path, secret</td></tr>
+<tr><td class="num">66</td><td>logo.svg<br><span class="small"><a href="https://files.contoso.example/corpus/svg/logo.svg" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/svg/logo.svg</a></span></td><td>Логотип Контосо</td><td>m.shevchuk</td><td>Inkscape 1.1.2</td><td class="num"></td><td>path</td></tr>
+<tr><td class="num">67</td><td>network.vsdx<br><span class="small"><a href="https://files.contoso.example/corpus/visio/network.vsdx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/visio/network.vsdx</a></span></td><td>Кошторис 2024</td><td>ivan.petrenko</td><td>Microsoft Office Visio (версия неизвестна)</td><td class="num">10.03.2024</td><td>path, secret, revisions</td></tr>
+</tbody></table>
+<h3>Форензика документов</h3><h4>Подписи и КЕП</h4><table><thead><tr><th>Документ</th><th>Находка</th><th>Критичность</th></tr></thead><tbody>
+<tr><td>signed_modified.pdf</td><td>Документ изменён после подписания (signed_modified.pdf)</td><td><span class="badge high">Высокий</span></td></tr>
+<tr><td>signed.pdf</td><td>Данные подписанта (КЕП) в документе signed.pdf: Іван Петренко</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>signed_hidden.docx</td><td>Данные подписанта (КЕП) в документе signed_hidden.docx: John Doe</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>signed_modified.pdf</td><td>Данные подписанта (КЕП) в документе signed_modified.pdf: Іван Петренко</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>signed_hidden.docx</td><td>Время подписи и метка TSA расходятся более чем на сутки (signed_hidden.docx)</td><td><span class="badge low">Низкий</span></td></tr>
+</tbody></table>
+<h4>Скрытое содержимое, замазывание и ревизии</h4><table><thead><tr><th>Документ</th><th>Находка</th><th>Критичность</th></tr></thead><tbody>
+<tr><td>redacted.pdf</td><td>Плохое замазывание: текст под закраской читается (redacted.pdf)</td><td><span class="badge crit">Критический</span></td></tr>
+<tr><td>revisions.pdf</td><td>Удалённый текст восстанавливается из старых ревизий PDF (revisions.pdf)</td><td><span class="badge high">Высокий</span></td></tr>
+<tr><td>signed_modified.pdf</td><td>Удалённый текст восстанавливается из старых ревизий PDF (signed_modified.pdf)</td><td><span class="badge high">Высокий</span></td></tr>
+<tr><td>hidden.xlsx</td><td>Скрытый текст и скрытые строки/столбцы в hidden.xlsx</td><td><span class="badge high">Высокий</span></td></tr>
+<tr><td>signed_hidden.docx</td><td>Скрытый текст и скрытые строки/столбцы в signed_hidden.docx</td><td><span class="badge high">Высокий</span></td></tr>
+<tr><td>exiftool-PDF.pdf</td><td>Скан без текстового слоя: exiftool-PDF.pdf</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>scan.pdf</td><td>Скан без текстового слоя: scan.pdf</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>exiftool-PDF2.pdf</td><td>Скан без текстового слоя: exiftool-PDF2.pdf</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>signed_modified.pdf</td><td>Разные авторы или программы в ревизиях PDF (signed_modified.pdf)</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>report.pdf</td><td>Разные авторы или программы в ревизиях PDF (report.pdf)</td><td><span class="badge warn">Средний</span></td></tr>
+<tr><td>revisions.pdf</td><td>Разные авторы или программы в ревизиях PDF (revisions.pdf)</td><td><span class="badge warn">Средний</span></td></tr>
+</tbody></table>
+<h4>Ссылки на облачные пространства и токены</h4><table><thead><tr><th>Документ</th><th>Находка</th><th>Критичность</th></tr></thead><tbody>
+<tr><td>personal.docx</td><td>Ссылки на облачные пространства и URL с токенами в personal.docx</td><td><span class="badge crit">Критический</span></td></tr>
+<tr><td>meeting.ics</td><td>Ссылки на облачные пространства и URL с токенами в meeting.ics</td><td><span class="badge info">Инфо</span></td></tr>
+</tbody></table>
+<h4>Персональные данные (сводка)</h4><p class="small">Значения персональных данных в отчёт не включаются: только типы и количество.</p><table><thead><tr><th>Документ</th><th>Тип данных</th><th>Количество</th><th>Критичность</th></tr></thead><tbody>
+<tr><td>personal.docx</td><td>Банковская карта</td><td>1</td><td>Высокий</td></tr>
+<tr><td>personal.docx</td><td>РНОКПП (ІПН)</td><td>1</td><td>Высокий</td></tr>
+<tr><td>personal.docx</td><td>IBAN</td><td>1</td><td>Высокий</td></tr>
+<tr><td>personal.docx</td><td>Гриф ограничения доступа</td><td>1</td><td>Высокий</td></tr>
+<tr><td>personal.docx</td><td>Паспорт</td><td>1</td><td>Высокий</td></tr>
+</tbody></table>
+</section>
+<section id="log">
+<h2>Журнал запросов</h2>
+<dl class="kv"><dt>Всего запросов</dt><dd><b>5</b></dd><dt>Пассивные (сторонние сервисы)</dt><dd>2</dd><dt>К цели (активные)</dt><dd>2</dd><dt>Заблокировано скоупом</dt><dd>1</dd><dt>Хосты цели</dt><dd>3</dd><dt>Сторонние сервисы (хосты)</dt><dd>2</dd><dt>Период работ</dt><dd>20.11.2026 12:00: 20.11.2026 12:00 (UTC)</dd></dl>
+<h4>По модулям</h4><table><thead><tr><th>Модуль</th><th class="num">Число</th></tr></thead><tbody>
+<tr><td>httpmap</td><td class="num">2</td></tr>
+<tr><td>crawler</td><td class="num">1</td></tr>
+<tr><td>crtsh</td><td class="num">1</td></tr>
+<tr><td>wayback</td><td class="num">1</td></tr>
+</tbody></table>
+<h4>Запросы к цели</h4><table><thead><tr><th>Время</th><th>Метод</th><th>URL</th><th class="num">Код</th><th>Размер / тип</th><th>Модуль</th><th>Ошибка</th></tr></thead><tbody>
+<tr><td>20.11.2026 12:00</td><td>GET</td><td><span class="mono">https://www.contoso.example/docs/</span></td><td class="num">200</td><td>2 КБ</td><td>crawler</td><td></td></tr>
+<tr><td>20.11.2026 12:00</td><td>GET</td><td><span class="mono">https://portal.contoso.example/</span></td><td class="num">200</td><td>2 КБ</td><td>httpmap</td><td></td></tr>
+</tbody></table>
+<h4>Заблокированные скоупом</h4><table><thead><tr><th>Время</th><th>Метод</th><th>URL</th><th class="num">Код</th><th>Размер / тип</th><th>Модуль</th><th>Ошибка</th></tr></thead><tbody>
+<tr><td>20.11.2026 12:00</td><td>GET</td><td><span class="mono">https://mail.contoso.example/owa/</span></td><td class="num"></td><td></td><td>httpmap</td><td>out_of_scope</td></tr>
+</tbody></table>
+</section>
+<section id="appx">
+<h2>Приложения</h2>
+<h3>Методика</h3><p>Пассивная разведка по открытым источникам: поиск опубликованных документов (веб-архивы, поисковые системы, обход сайта), извлечение метаданных, анализ авторов, ПО, путей, хостов и секретов; активные проверки: только по целям скоупа и при включённых активных проверках и подтверждённом разрешении владельца.</p>
+<h3>Сканы</h3><table><thead><tr><th>ID</th><th>Профиль</th><th>Начало</th><th>Окончание</th><th>Выход</th><th>Статус</th></tr></thead><tbody>
+<tr><td><span class="mono">s1</span></td><td>Стандартный</td><td>20.11.2026 11:40</td><td>20.11.2026 12:00</td><td>Напрямую (реальный IP)</td><td>done</td></tr>
+</tbody></table>
+<h3>Секрет</h3><table><thead><tr><th>Тип</th><th>Файл</th><th>Путь</th><th>Важность</th><th>Секрет</th></tr></thead><tbody>
+<tr><td>conn</td><td>contract.docx</td><td>текст, строка 6</td><td><span class="badge crit">Критический</span></td><td><span class="mono">Te••••••24!</span></td></tr>
+<tr><td>pass</td><td>buh.ica</td><td>поле ica:1C Бухгалтерія.ClearPassword</td><td><span class="badge crit">Критический</span></td><td><span class="mono">Bu••••••23!</span></td></tr>
+<tr><td>api</td><td>personal.docx</td><td>текст, строка 9</td><td><span class="badge high">Высокий</span></td><td><span class="mono">Ab••••••%3D</span></td></tr>
+<tr><td>pass</td><td>legacy.doc</td><td>текст, строка 1</td><td><span class="badge high">Высокий</span></td><td><span class="mono">P@••••••019</span></td></tr>
+<tr><td>pass</td><td>schedule.xlsx</td><td>текст, строка 4</td><td><span class="badge high">Высокий</span></td><td><span class="mono">Bi••••••023</span></td></tr>
+<tr><td>pass</td><td>objstm.pdf</td><td>текст, строка 1</td><td><span class="badge high">Высокий</span></td><td><span class="mono">Wi••••••24!</span></td></tr>
+<tr><td>pass</td><td>SRV-TS01.rdp</td><td>поле rdp:password 51</td><td><span class="badge high">Высокий</span></td><td><span class="mono">01••••••000</span></td></tr>
+</tbody></table>
+<h3>Параметры отчёта</h3><dl class="kv"><dt>Только подтверждённые</dt><dd>нет</dd><dt>Важность от</dt><dd>все</dd><dt>Только выбранные</dt><dd>нет</dd><dt>Секреты</dt><dd>частично</dd></dl>
+</section>
+<footer class="gen"><span>Сформировано FOCA-rs 2.0.0-beta.2 · 20.11.2026</span><span>Конфиденциально</span></footer>
+</body>
+</html>

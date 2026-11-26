@@ -1,0 +1,32 @@
+[package]
+name = "foca-search"
+description = "FOCA-rs document sources (Wayback, Common Crawl, crt.sh, crawler, Brave, SearXNG, Startpage), URL filter/dedup/analysis, resumable downloader"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+# Download queue and request log adapters on top of foca-store (SQLite).
+store = ["dep:foca-store"]
+
+[dependencies]
+tracing.workspace = true
+foca-core.workspace = true
+foca-net.workspace = true
+foca-store = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
+url.workspace = true
+sha2.workspace = true
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+futures-util.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tempfile.workspace = true
+foca-store.workspace = true

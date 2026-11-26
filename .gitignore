@@ -1,0 +1,33 @@
+target/
+shots/
+dist/
+build.log
+node_modules/
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/.gradle/
+*.jks
+android-build.log
+progress/*.log
+# Local work notes; the tracked overview files stay in git.
+progress/*.md
+progress/*.json
+!progress/README.md
+!progress/ROADMAP.md
+.env
+qa/local.env
+
+# QA run output: screenshots, logs, JSON reports (generated)
+qa/out/
+qa/scenarios/**/*.png
+qa/scenarios/**/*.jpg
+qa/scenarios/security-poc/poc/target/
+progress/*.out
+progress/archive/
+__pycache__/
+progress/plan-img/*.jpg
+
+# local plan renders
+progress/plan-img/
+
+# local working notes
+progress/

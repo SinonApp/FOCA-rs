@@ -1,0 +1,169 @@
+{
+  "application": "Microsoft® Word 2013",
+  "attachments": [
+    {
+      "mime": "application/x-rdp",
+      "name": "creds.rdp",
+      "size": 382
+    }
+  ],
+  "author": "Administrator",
+  "comments": [
+    {
+      "author": "Тетяна Мельник",
+      "date": "2024-03-15T09:00:00Z",
+      "source": "pdf:annot",
+      "text": "Перевірити суму"
+    }
+  ],
+  "created": "2024-03-14T18:42:00+02:00",
+  "custom": {
+    "Company": "Contoso Energy"
+  },
+  "embedded": [
+    {
+      "metadata": {
+        "fields": {
+          "rdp:alternate shell": "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+          "rdp:domain": "CONTOSO",
+          "rdp:full address": "SRV-TS01.corp.contoso.example:3389",
+          "rdp:gatewayhostname": "rdgw.contoso.example",
+          "rdp:screen mode id": "2",
+          "rdp:shell working directory": "C:\\Users\\i.petrenko\\Documents",
+          "rdp:username": "CONTOSO\\i.petrenko",
+          "rdp:username:domain": "CONTOSO"
+        },
+        "format": "rdp",
+        "paths": [
+          {
+            "kind": "windows",
+            "path": "C:\\Program Files\\1cv8\\common\\1cestart.exe",
+            "source": "rdp:alternate shell"
+          },
+          {
+            "kind": "windows",
+            "path": "C:\\Users\\i.petrenko\\Documents",
+            "source": "rdp:shell working directory",
+            "user": "i.petrenko"
+          }
+        ],
+        "people": [
+          {
+            "name": "i.petrenko",
+            "role": "account",
+            "source": "rdp:username"
+          },
+          {
+            "name": "i.petrenko",
+            "role": "path_user",
+            "source": "C:\\Users\\i.petrenko\\Documents"
+          }
+        ],
+        "secrets": [
+          {
+            "kind": "rdp_password_51",
+            "source": "rdp:password 51",
+            "value": "01000000D08C9DDF0115D1118C7A00C04FC297EB0100000052A9E191EA75A948B359790578C9371A0000000008000000"
+          }
+        ],
+        "servers": [
+          {
+            "name": "SRV-TS01.corp.contoso.example",
+            "source": "rdp:full address"
+          },
+          {
+            "name": "rdgw.contoso.example",
+            "source": "rdp:gatewayhostname"
+          }
+        ],
+        "software": [
+          "1cestart.exe"
+        ]
+      },
+      "name": "creds.rdp"
+    }
+  ],
+  "fields": {
+    "pdf:version": "1.7"
+  },
+  "format": "pdf",
+  "has_javascript": true,
+  "incremental_updates": 1,
+  "modified": "2024-03-20T10:15:00+02:00",
+  "old_versions": [
+    {
+      "fields": {
+        "Author": "o.kovalenko",
+        "Company": "Contoso Energy",
+        "CreationDate": "D:20240314184200+02'00'",
+        "Creator": "Microsoft® Word 2013",
+        "ModDate": "D:20240314184200+02'00'",
+        "Producer": "Microsoft® Word 2013",
+        "Title": "Річний звіт 2024"
+      },
+      "revision": 1
+    }
+  ],
+  "pdf_revisions": [
+    {
+      "author": "o.kovalenko",
+      "creator": "Microsoft® Word 2013",
+      "end_offset": 2682,
+      "modified": "2024-03-14T18:42:00+02:00",
+      "objects": 12,
+      "producer": "Microsoft® Word 2013",
+      "revision": 1
+    },
+    {
+      "author": "Administrator",
+      "creator": "Microsoft® Word 2013",
+      "end_offset": 3114,
+      "modified": "2024-03-20T10:15:00+02:00",
+      "objects": 1,
+      "producer": "Adobe Acrobat Pro XI 11.0.23",
+      "revision": 2
+    }
+  ],
+  "people": [
+    {
+      "name": "Administrator",
+      "role": "author",
+      "source": "pdf:Info:Author"
+    },
+    {
+      "name": "o.kovalenko",
+      "role": "author",
+      "source": "pdf:Info:rev1"
+    },
+    {
+      "name": "o.kovalenko",
+      "role": "creator",
+      "source": "xmp:dc:creator"
+    },
+    {
+      "name": "Тетяна Мельник",
+      "role": "comment",
+      "source": "pdf:annot"
+    }
+  ],
+  "producer": "Adobe Acrobat Pro XI 11.0.23",
+  "software": [
+    "Microsoft® Word 2013",
+    "Adobe Acrobat Pro XI 11.0.23"
+  ],
+  "stats": {
+    "pages": 1
+  },
+  "title": "Річний звіт 2024",
+  "xmp": {
+    "dc:creator": "o.kovalenko",
+    "dc:title": "Річний звіт 2024",
+    "pdf:Producer": "Microsoft® Word 2013",
+    "xmp:CreateDate": "2024-03-14T18:42:00+02:00",
+    "xmp:CreatorTool": "Microsoft® Word 2013",
+    "xmpMM:DocumentID": "uuid:2B0C7F8E-1111-2222-3333-444455556666"
+  },
+  "xmp_ids": {
+    "document_id": "uuid:2B0C7F8E-1111-2222-3333-444455556666"
+  }
+}

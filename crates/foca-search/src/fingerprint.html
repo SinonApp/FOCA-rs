@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FOCA-rs: отпечаток браузера</title>
+<style>body{font:14px/1.4 system-ui,sans-serif;margin:16px;color:#111;background:#fff}table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #ddd;padding:6px 4px;vertical-align:top;word-break:break-all}td:first-child{color:#555;width:38%}.bad{color:#b00}pre{white-space:pre-wrap;font-size:11px;background:#f4f4f4;padding:8px}</style>
+</head><body>
+<h1>Отпечаток браузера</h1>
+<p>Страница FOCA-rs: что видит сайт-поисковик о браузере. Откройте её в обычном Chrome на этом же телефоне и сравните с «Отладка → Поисковики» в приложении. Ничего никуда не отправляется.</p>
+<table id="t"></table>
+<pre id="out"></pre>
+<script>
+(async function () {
+  var n = navigator, s = screen, r = {};
+  r.userAgent = n.userAgent;
+  r.platform = n.platform;
+  r.languages = (n.languages || []).join(",");
+  r.webdriver = n.webdriver === true;
+  r.visibilityState = document.visibilityState;
+  r.hidden = document.hidden;
+  r.hasFocus = document.hasFocus();
+  r.maxTouchPoints = n.maxTouchPoints || 0;
+  r.innerWidth = innerWidth; r.innerHeight = innerHeight;
+  r.screen = s.width + "x" + s.height;
+  r.devicePixelRatio = devicePixelRatio;
+  r.hardwareConcurrency = n.hardwareConcurrency || 0;
+  r.deviceMemory = n.deviceMemory || 0;
+  r.cookieEnabled = n.cookieEnabled;
+  r.timezone = (Intl.DateTimeFormat().resolvedOptions() || {}).timeZone || "";
+  r.secureContext = window.isSecureContext;
+  r.pdfViewerEnabled = n.pdfViewerEnabled === true;
+  try { r.webgl = (function () { var c = document.createElement("canvas").getContext("webgl"); if (!c) return ""; var d = c.getExtension("WEBGL_debug_renderer_info"); return d ? c.getParameter(d.UNMASKED_RENDERER_WEBGL) : "webgl"; })(); } catch (e) { r.webgl = "err"; }
+  if (n.userAgentData) {
+    r.uaMobile = n.userAgentData.mobile;
+    r.uaPlatform = n.userAgentData.platform;
+    r.uaBrands = (n.userAgentData.brands || []).map(function (b) { return b.brand + " " + b.version; }).join(", ");
+    try { var h = await n.userAgentData.getHighEntropyValues(["model", "platformVersion", "fullVersionList"]); r.uaModel = h.model || ""; r.uaPlatformVersion = h.platformVersion || ""; } catch (e) {}
+  } else { r.uaBrands = "(нет navigator.userAgentData)"; }
+  // requestAnimationFrame идёт? (у скрытой/неприкреплённой страницы: нет)
+  r.rafPerSecond = await new Promise(function (res) { var k = 0, t0 = performance.now(); function f() { k++; if (performance.now() - t0 < 1000) requestAnimationFrame(f); } requestAnimationFrame(f); setTimeout(function () { res(k); }, 1100); });
+  var issues = [];
+  if (/; wv\)/.test(r.userAgent)) issues.push("UA содержит маркер WebView «; wv»");
+  if (r.visibilityState !== "visible") issues.push("страница не видима (" + r.visibilityState + ")");
+  if (r.webdriver) issues.push("navigator.webdriver=true");
+  var mob = /Mobile/.test(r.userAgent);
+  if (mob && !r.maxTouchPoints) issues.push("мобильный UA без сенсора");
+  if (!mob && r.maxTouchPoints) issues.push("десктопный UA на сенсорном экране");
+  if (mob && r.innerWidth > 1000) issues.push("мобильный UA при ширине окна " + r.innerWidth);
+  if (typeof r.uaMobile === "boolean" && r.uaMobile !== mob) issues.push("Client Hints mobile=" + r.uaMobile + " не совпадает с UA");
+  if (r.rafPerSecond < 5) issues.push("requestAnimationFrame стоит (" + r.rafPerSecond + "/с)");
+  r.issues = issues;
+  var t = document.getElementById("t");
+  Object.keys(r).forEach(function (k) { var tr = document.createElement("tr"), a = document.createElement("td"), b = document.createElement("td"); a.textContent = k; b.textContent = Array.isArray(r[k]) ? (r[k].join("; ") || "нет") : String(r[k]); if (k === "issues" && r[k].length) b.className = "bad"; tr.appendChild(a); tr.appendChild(b); t.appendChild(tr); });
+  document.getElementById("out").textContent = JSON.stringify(r);
+  var d = document.createElement("i"); d.id = "done"; document.body.appendChild(d);
+})();
+</script>
+</body></html>

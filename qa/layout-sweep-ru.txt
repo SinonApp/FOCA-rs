@@ -1,0 +1,2 @@
+# Known Russian text on EN/UK screens (qa/layout-sweep.mjs --update-ru): demo-only data and developer logs.
+/settings/debug | скан завершён за 7 мин 2 с

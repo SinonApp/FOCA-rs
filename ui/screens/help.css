@@ -1,0 +1,305 @@
+/* Numeric input field (.nf), presets (.nf-pre), help icon (.hl-i) and the Help section (.hl-*). */
+.nf {
+  padding: 12px 14px;
+  border-top: 1px solid var(--stroke);
+  container-type: inline-size;
+}
+.nf:first-child {
+  border-top: 0;
+}
+.nf-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.nf-l {
+  /* The label wraps inside its own box; the ⓘ button stays beside its last line, never on a line of its own. */
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 7rem;
+  font-weight: 600;
+}
+.nf-l label {
+  cursor: text;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.nf-l .hl-i {
+  margin-bottom: max(-14px, calc(0.725rem - 22px));
+}
+.nf-l small {
+  display: block;
+  font-weight: 400;
+  color: var(--text-3);
+  font-size: 0.85rem;
+}
+.nf-ctl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  margin-left: auto;
+}
+.nf-b {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--layer-2);
+  border: 1px solid var(--stroke);
+}
+.nf-b:disabled {
+  opacity: 0.4;
+}
+.nf-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 5.6rem;
+  height: 48px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1.5px solid var(--stroke-2);
+  background: var(--layer);
+}
+.nf-box:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.nf-in {
+  /* Room for five digits; field-sizing grows the field with its value where supported. */
+  width: 5.2ch;
+  min-width: 44px;
+  min-height: 44px;
+  align-self: stretch;
+  padding: 0;
+  flex: 0 1 auto;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.nf-u {
+  flex: none;
+  white-space: nowrap;
+  color: var(--text-3);
+  font-size: 0.85rem;
+}
+@supports (field-sizing: content) {
+  .nf-in {
+    field-sizing: content;
+    width: auto;
+    max-width: 7ch;
+  }
+}
+/* Narrow field (phone with a large font): label on its own line, the stepper below it. */
+@container (max-width: 26rem) {
+  .nf-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .nf-l {
+    flex: none;
+  }
+  .nf-ctl {
+    margin-left: 0;
+  }
+}
+.nf-m {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 8px;
+}
+.nf-note {
+  color: var(--text-3);
+  font-size: 0.85rem;
+}
+.nf-err {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 6px;
+  color: var(--bad);
+  font-size: 0.9rem;
+}
+.nf-err svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+.nf.bad .nf-box {
+  border-color: var(--bad);
+  box-shadow: 0 0 0 3px var(--bad-soft);
+}
+.nf.bad .nf-m {
+  display: none;
+}
+.nfs {
+  padding: 0;
+  overflow: hidden;
+}
+/* Network presets */
+.nf-pre {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(6.4rem, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.nf-pre button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 64px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  border: 1.5px solid var(--stroke);
+  background: var(--layer);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.nf-pre button b {
+  font-size: 0.95rem;
+}
+.nf-pre button small {
+  color: var(--text-3);
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+.nf-pre button.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.nf-pre button.on small {
+  color: var(--text-2);
+}
+/* Help icon ⓘ */
+.hl-i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Real 44×44 tap target; negative margins keep the line height of the text around it. */
+  width: 44px;
+  height: 44px;
+  margin: -14px -6px -14px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  flex: none;
+  position: relative;
+}
+.hl-i::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+}
+.hl-i svg {
+  width: max(16px, 0.85rem);
+  height: max(16px, 0.85rem);
+}
+
+/* ---------- Help section ---------- */
+.hl-search {
+  margin-bottom: 14px;
+}
+.hl-res .row .s mark,
+.hl-body mark {
+  background: var(--accent-soft);
+  color: var(--text);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+.hl-sec {
+  margin-top: 6px;
+}
+.hl-body {
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.hl-body h3 {
+  margin: 18px 0 6px;
+  font-size: 1.05rem;
+}
+.hl-body p {
+  margin: 0 0 10px;
+  color: var(--text-2);
+}
+.hl-body ul,
+.hl-body ol {
+  margin: 0 0 10px;
+  padding-left: 1.3rem;
+  color: var(--text-2);
+}
+.hl-body li {
+  margin: 4px 0;
+}
+.hl-body b {
+  color: var(--text);
+}
+.hl-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.9em;
+  background: var(--layer-2);
+  padding: 1px 5px;
+  border-radius: 5px;
+}
+.hl-lead {
+  color: var(--text-2);
+  margin: 0 0 14px;
+}
+.hl-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+.hl-gl {
+  margin: 0;
+}
+.hl-gl dt {
+  font-weight: 700;
+  margin-top: 12px;
+  color: var(--text);
+}
+.hl-gl dd {
+  margin: 2px 0 0;
+  color: var(--text-2);
+}
+.hl-rel {
+  margin-top: 18px;
+}
+.hl-src {
+  border-top: 1px solid var(--stroke);
+  padding: 10px 0;
+}
+.hl-src:first-child {
+  border-top: 0;
+}
+.hl-src b {
+  display: block;
+}
+.hl-src .pill {
+  margin: 4px 4px 0 0;
+}
+.hl-src p {
+  margin: 4px 0 0;
+}

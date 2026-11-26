@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 534 466" width="534" height="466" role="img" aria-label="Граф зв&apos;язків" font-family="sans-serif">
+<title>Граф зв&apos;язків</title>
+<text x="60" y="12" font-size="10" fill="#3730a3" text-anchor="middle" font-weight="700">Люди · 6</text>
+<text x="192" y="12" font-size="10" fill="#166534" text-anchor="middle" font-weight="700">Документи · 24</text>
+<text x="324" y="12" font-size="10" fill="#9a3412" text-anchor="middle" font-weight="700">ПК, принтери, шари · 5</text>
+<text x="456" y="12" font-size="10" fill="#5b21b6" text-anchor="middle" font-weight="700">Сервери,</text>
+<text x="456" y="24" font-size="10" fill="#5b21b6" text-anchor="middle" font-weight="700">домени, PKI · 5</text>
+<g fill="none" stroke-linecap="round">
+<path d="M114 144 C126 144 126 50 138 50" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 144 C126 144 126 90 138 90" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 144 C126 144 126 278 138 278" stroke="#94a3b8" stroke-width="1.6"/>
+<path d="M114 144 C126 144 126 117 138 117 H246 C258 117 258 137 270 137 H378 C390 137 390 244 402 244" stroke="#b91c1c" stroke-width="1"/>
+<path d="M114 184 C126 184 126 278 138 278" stroke="#94a3b8" stroke-width="2.8"/>
+<path d="M114 184 C126 184 126 131 138 131 H246 C258 131 258 151 270 151 H378 C390 151 390 164 402 164" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 224 C126 224 126 158 138 158" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 224 C126 224 126 198 138 198" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 224 C126 224 126 238 138 238" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 224 C126 224 126 278 138 278" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 264 C126 264 126 318 138 318" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 264 C126 264 126 278 138 278" stroke="#94a3b8" stroke-width="2.2"/>
+<path d="M114 304 C126 304 126 358 138 358" stroke="#b91c1c" stroke-width="1"/>
+<path d="M114 304 C126 304 126 398 138 398" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 304 C126 304 126 278 138 278" stroke="#94a3b8" stroke-width="1.6"/>
+<path d="M114 344 C126 344 126 438 138 438" stroke="#94a3b8" stroke-width="1"/>
+<path d="M114 344 C126 344 126 278 138 278" stroke="#94a3b8" stroke-width="2.2"/>
+<path d="M246 358 C258 358 258 298 270 298" stroke="#b91c1c" stroke-width="1"/>
+<path d="M246 358 C258 358 258 258 270 258" stroke="#b91c1c" stroke-width="1"/>
+<path d="M246 158 C258 158 258 178 270 178" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 158 C258 158 258 258 270 258" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 438 C258 438 258 338 270 338" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 438 C258 438 258 258 270 258" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 50 C258 50 258 218 270 218" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 50 C258 50 258 258 270 258" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 318 C258 318 258 298 270 298" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 318 C258 318 258 258 270 258" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 398 C258 398 258 338 270 338" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 198 C258 198 258 178 270 178" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 238 C258 238 258 218 270 218" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 90 C258 90 258 178 270 178" stroke="#94a3b8" stroke-width="1"/>
+<path d="M246 278 C258 278 258 298 270 298" stroke="#94a3b8" stroke-width="2.8"/>
+<path d="M246 278 C258 278 258 178 270 178" stroke="#94a3b8" stroke-width="2.2"/>
+<path d="M246 278 C258 278 258 218 270 218" stroke="#94a3b8" stroke-width="2.8"/>
+<path d="M246 278 C258 278 258 338 270 338" stroke="#94a3b8" stroke-width="2.8"/>
+<path d="M378 298 C390 298 390 324 402 324" stroke="#94a3b8" stroke-width="1"/>
+<path d="M378 178 C390 178 390 324 402 324" stroke="#94a3b8" stroke-width="1"/>
+<path d="M378 218 C390 218 390 324 402 324" stroke="#94a3b8" stroke-width="1"/>
+<path d="M378 338 C390 338 390 244 402 244" stroke="#b91c1c" stroke-width="1"/>
+<path d="M378 258 C390 258 390 324 402 324" stroke="#94a3b8" stroke-width="1"/>
+<path d="M510 204 C521 204 521 244 510 244" stroke-dasharray="3 2" stroke="#b91c1c" stroke-width="1"/>
+<path d="M510 204 C523 204 523 324 510 324" stroke-dasharray="3 2" stroke="#94a3b8" stroke-width="1"/>
+<path d="M510 204 C522 204 522 284 510 284" stroke-dasharray="3 2" stroke="#94a3b8" stroke-width="1"/>
+</g>
+<g>
+<title>людина: Administrator · зв&apos;язків: 5</title>
+<rect x="6" y="128" width="108" height="32" rx="5" fill="#eef2ff" stroke="#3730a3" stroke-width="1"/>
+<circle cx="17" cy="141.4" r="2.6" fill="#3730a3"/>
+<path d="M12.1 149.9 A4.9 4.9 0 0 1 21.9 149.9 Z" fill="#3730a3"/>
+<text x="27" y="147.5" font-size="10" fill="#0f172a">Administrator</text>
+</g>
+<g>
+<title>людина: Іван Петренко · зв&apos;язків: 5</title>
+<rect x="6" y="168" width="108" height="32" rx="5" fill="#eef2ff" stroke="#3730a3" stroke-width="1"/>
+<circle cx="17" cy="181.4" r="2.6" fill="#3730a3"/>
+<path d="M12.1 189.9 A4.9 4.9 0 0 1 21.9 189.9 Z" fill="#3730a3"/>
+<text x="27" y="187.5" font-size="10" fill="#0f172a">Іван Петренко</text>
+</g>
+<g>
+<title>людина: Андрій Шевчук · зв&apos;язків: 4</title>
+<rect x="6" y="208" width="108" height="32" rx="5" fill="#eef2ff" stroke="#3730a3" stroke-width="1"/>
+<circle cx="17" cy="221.4" r="2.6" fill="#3730a3"/>
+<path d="M12.1 229.9 A4.9 4.9 0 0 1 21.9 229.9 Z" fill="#3730a3"/>
+<text x="27" y="227.5" font-size="10" fill="#0f172a">Андрій Шевчук</text>
+</g>
+<g>
+<title>людина: Марія Бондар · зв&apos;язків: 4</title>
+<rect x="6" y="248" width="108" height="32" rx="5" fill="#eef2ff" stroke="#3730a3" stroke-width="1"/>
+<circle cx="17" cy="261.4" r="2.6" fill="#3730a3"/>
+<path d="M12.1 269.9 A4.9 4.9 0 0 1 21.9 269.9 Z" fill="#3730a3"/>
+<text x="27" y="267.5" font-size="10" fill="#0f172a">Марія Бондар</text>
+</g>
+<g>
+<title>людина: Олена Коваль · зв&apos;язків: 4</title>
+<rect x="6" y="288" width="108" height="32" rx="5" fill="#eef2ff" stroke="#3730a3" stroke-width="1"/>
+<circle cx="17" cy="301.4" r="2.6" fill="#3730a3"/>
+<path d="M12.1 309.9 A4.9 4.9 0 0 1 21.9 309.9 Z" fill="#3730a3"/>
+<text x="27" y="307.5" font-size="10" fill="#0f172a">Олена Коваль</text>
+</g>
+<g>
+<title>людина: Світлана Мельник · зв&apos;язків: 4</title>
+<rect x="6" y="328" width="108" height="32" rx="5" fill="#eef2ff" stroke="#3730a3" stroke-width="1"/>
+<circle cx="17" cy="341.4" r="2.6" fill="#3730a3"/>
+<path d="M12.1 349.9 A4.9 4.9 0 0 1 21.9 349.9 Z" fill="#3730a3"/>
+<text x="27" y="341.5" font-size="10" fill="#0f172a">Світлана</text>
+<text x="27" y="353.5" font-size="10" fill="#0f172a">Мельник</text>
+</g>
+<g>
+<title>документ: Інструкція_VPN.pdf · зв&apos;язків: 3</title>
+<rect x="138" y="34" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 44.2 H150.6 L153.2 46.8 V55.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 50 H151.3 M146.7 52.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="47.5" font-size="10" fill="#0f172a">Інструкція_VPN.</text>
+<text x="159" y="59.5" font-size="10" fill="#0f172a">pdf</text>
+</g>
+<g>
+<title>документ: scan_0003.pdf · зв&apos;язків: 2</title>
+<rect x="138" y="74" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 84.2 H150.6 L153.2 86.8 V95.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 90 H151.3 M146.7 92.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="93.5" font-size="10" fill="#0f172a">scan_0003.pdf</text>
+</g>
+<g>
+<title>документ: network-diagram-old.vsdx · зв&apos;язків: 3</title>
+<rect x="138" y="142" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 152.2 H150.6 L153.2 154.8 V163.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 158 H151.3 M146.7 160.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="155.5" font-size="10" fill="#0f172a">network-</text>
+<text x="159" y="167.5" font-size="10" fill="#0f172a">diagram-old.vs…</text>
+</g>
+<g>
+<title>документ: budget-2025-draft.xlsx · зв&apos;язків: 2</title>
+<rect x="138" y="182" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 192.2 H150.6 L153.2 194.8 V203.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 198 H151.3 M146.7 200.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="195.5" font-size="10" fill="#0f172a">budget-2025-</text>
+<text x="159" y="207.5" font-size="10" fill="#0f172a">draft.xlsx</text>
+</g>
+<g>
+<title>документ: scan_0001.pdf · зв&apos;язків: 2</title>
+<rect x="138" y="222" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 232.2 H150.6 L153.2 234.8 V243.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 238 H151.3 M146.7 240.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="241.5" font-size="10" fill="#0f172a">scan_0001.pdf</text>
+</g>
+<g>
+<title>15 документів: Акт_звірки.pdf, Довіреність.pdf, Договір_постачання_№17.pdf, Звіт_аудиту_2022.pdf, Кошторис_ремонту.xlsx, Лист_до_контрагента.docx, Меморандум.docx, Наказ_про_відпустки.doc, Положення_про_ІБ.odt, Прайс_2023.xls, Презентація_для_інвесторів.pptx, Протокол_наради_12-03.docx … (+3)</title>
+<rect x="141" y="259" width="108" height="32" rx="5" fill="#fff" stroke="#166534" stroke-width="1"/>
+<rect x="138" y="262" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1" stroke-dasharray="4 2"/>
+<path d="M144.8 272.2 H150.6 L153.2 274.8 V283.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 278 H151.3 M146.7 280.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="281.5" font-size="10" fill="#0f172a" font-weight="700">15 документів</text>
+</g>
+<g>
+<title>документ: Графік_чергувань.xlsx · зв&apos;язків: 3</title>
+<rect x="138" y="302" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 312.2 H150.6 L153.2 314.8 V323.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 318 H151.3 M146.7 320.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="315.5" font-size="10" fill="#0f172a">Графік_</text>
+<text x="159" y="327.5" font-size="10" fill="#0f172a">чергувань.xlsx</text>
+</g>
+<g>
+<title>документ: Звіт_бухгалтерія_2024_Q4_остаточний.docx · зв&apos;язків: 3</title>
+<rect x="138" y="342" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#b91c1c" stroke-width="2.2"/>
+<path d="M144.8 352.2 H150.6 L153.2 354.8 V363.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 358 H151.3 M146.7 360.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="355.5" font-size="10" fill="#0f172a" font-weight="700">Звіт_бухгалтері</text>
+<text x="159" y="367.5" font-size="10" fill="#0f172a" font-weight="700">я_2024_Q4_оста…</text>
+<circle cx="245" cy="343" r="6" fill="#b91c1c"/>
+<text x="245" y="346.5" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">!</text>
+</g>
+<g>
+<title>документ: HR_анкета_кандидата.docx · зв&apos;язків: 2</title>
+<rect x="138" y="382" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 392.2 H150.6 L153.2 394.8 V403.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 398 H151.3 M146.7 400.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="395.5" font-size="10" fill="#0f172a">HR_анкета_</text>
+<text x="159" y="407.5" font-size="10" fill="#0f172a">кандидата.docx</text>
+</g>
+<g>
+<title>документ: scan_0002.pdf · зв&apos;язків: 3</title>
+<rect x="138" y="422" width="108" height="32" rx="5" fill="#f0fdf4" stroke="#166534" stroke-width="1"/>
+<path d="M144.8 432.2 H150.6 L153.2 434.8 V443.9 H144.8 Z" fill="#fff" stroke="#166534" stroke-width="1.2"/>
+<path d="M146.7 438 H151.3 M146.7 440.6 H151.3" stroke="#166534" stroke-width="1"/>
+<text x="159" y="441.5" font-size="10" fill="#0f172a">scan_0002.pdf</text>
+</g>
+<g>
+<title>принтер: HP LaserJet M507 (2 поверх) · зв&apos;язків: 7</title>
+<rect x="270" y="162" width="108" height="32" rx="5" fill="#fff7ed" stroke="#9a3412" stroke-width="1"/>
+<rect x="277.8" y="172.2" width="6.5" height="3.9" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<rect x="275.2" y="176.1" width="11.7" height="5.2" rx="1" fill="#9a3412"/>
+<rect x="277.8" y="180" width="6.5" height="3.9" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<text x="291" y="175.5" font-size="10" fill="#0f172a">HP LaserJet</text>
+<text x="291" y="187.5" font-size="10" fill="#0f172a">M507 (2 поверх)</text>
+</g>
+<g>
+<title>ПК: HR-NB02 · зв&apos;язків: 7</title>
+<rect x="270" y="202" width="108" height="32" rx="5" fill="#fff7ed" stroke="#9a3412" stroke-width="1"/>
+<rect x="275.2" y="212.5" width="11.7" height="7.8" rx="1" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<path d="M281 220.3 V223.5 M277.8 223.5 H284.3" stroke="#9a3412" stroke-width="1.2"/>
+<text x="291" y="221.5" font-size="10" fill="#0f172a">HR-NB02</text>
+</g>
+<g>
+<title>шара: \\FS01\Buh$\Звіти · зв&apos;язків: 6</title>
+<rect x="270" y="242" width="108" height="32" rx="5" fill="#fff7ed" stroke="#9a3412" stroke-width="1"/>
+<path d="M275.2 262.9 V253.1 H279.7 L281.3 254.8 H286.9 V262.9 Z" fill="#9a3412" fill-opacity="0.25" stroke="#9a3412" stroke-width="1.2"/>
+<text x="291" y="255.5" font-size="10" fill="#0f172a">\\FS01\Buh$\</text>
+<text x="291" y="267.5" font-size="10" fill="#0f172a">Звіти</text>
+</g>
+<g>
+<title>ПК: BUH-PC01 · зв&apos;язків: 7</title>
+<rect x="270" y="282" width="108" height="32" rx="5" fill="#fff7ed" stroke="#9a3412" stroke-width="1"/>
+<rect x="275.2" y="292.5" width="11.7" height="7.8" rx="1" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<path d="M281 300.3 V303.5 M277.8 303.5 H284.3" stroke="#9a3412" stroke-width="1.2"/>
+<text x="291" y="301.5" font-size="10" fill="#0f172a">BUH-PC01</text>
+</g>
+<g>
+<title>ПК: IT-WS03 · зв&apos;язків: 7</title>
+<rect x="270" y="322" width="108" height="32" rx="5" fill="#fff7ed" stroke="#9a3412" stroke-width="1"/>
+<rect x="275.2" y="332.5" width="11.7" height="7.8" rx="1" fill="#fff" stroke="#9a3412" stroke-width="1.2"/>
+<path d="M281 340.3 V343.5 M277.8 343.5 H284.3" stroke="#9a3412" stroke-width="1.2"/>
+<text x="291" y="341.5" font-size="10" fill="#0f172a">IT-WS03</text>
+</g>
+<g>
+<title>сервер: mail.example.test · зв&apos;язків: 1</title>
+<rect x="402" y="148" width="108" height="32" rx="5" fill="#f5f3ff" stroke="#5b21b6" stroke-width="1"/>
+<rect x="409.1" y="158.2" width="7.8" height="11.7" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M409.1 162.1 H416.9 M409.1 166 H416.9" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="414.6" cy="167.9" r="0.8" fill="#5b21b6"/>
+<text x="423" y="161.5" font-size="10" fill="#0f172a">mail.example.</text>
+<text x="423" y="173.5" font-size="10" fill="#0f172a">test</text>
+</g>
+<g>
+<title>домен: CORP (corp.example.test) · зв&apos;язків: 3</title>
+<rect x="402" y="188" width="108" height="32" rx="5" fill="#f5f3ff" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="413" cy="204" r="5.9" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<ellipse cx="413" cy="204" rx="2.3" ry="5.9" fill="none" stroke="#5b21b6" stroke-width="1"/>
+<path d="M407.2 204 H418.9" stroke="#5b21b6" stroke-width="1"/>
+<text x="423" y="201.5" font-size="10" fill="#0f172a">CORP (corp.</text>
+<text x="423" y="213.5" font-size="10" fill="#0f172a">example.test)</text>
+</g>
+<g>
+<title>сервер: DC01.corp.example.test · зв&apos;язків: 3</title>
+<rect x="402" y="228" width="108" height="32" rx="5" fill="#f5f3ff" stroke="#b91c1c" stroke-width="2.2"/>
+<rect x="409.1" y="238.2" width="7.8" height="11.7" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M409.1 242.1 H416.9 M409.1 246 H416.9" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="414.6" cy="247.9" r="0.8" fill="#5b21b6"/>
+<text x="423" y="241.5" font-size="10" fill="#0f172a" font-weight="700">DC01.corp.</text>
+<text x="423" y="253.5" font-size="10" fill="#0f172a" font-weight="700">example.test</text>
+<circle cx="509" cy="229" r="6" fill="#b91c1c"/>
+<text x="509" y="232.5" font-size="9" fill="#fff" text-anchor="middle" font-weight="700">!</text>
+</g>
+<g>
+<title>сертифікат: Example-Issuing-CA-01 · зв&apos;язків: 1</title>
+<rect x="402" y="268" width="108" height="32" rx="5" fill="#f5f3ff" stroke="#5b21b6" stroke-width="1"/>
+<path d="M413 277.9 L418.2 280.1 V284 Q418.2 288.2 413 290.2 Q407.8 288.2 407.8 284 V280.1 Z" fill="#5b21b6" fill-opacity="0.25" stroke="#5b21b6" stroke-width="1.2"/>
+<text x="423" y="281.5" font-size="10" fill="#0f172a">Example-</text>
+<text x="423" y="293.5" font-size="10" fill="#0f172a">Issuing-CA-01</text>
+</g>
+<g>
+<title>сервер: FS01.corp.example.test · зв&apos;язків: 5</title>
+<rect x="402" y="308" width="108" height="32" rx="5" fill="#f5f3ff" stroke="#5b21b6" stroke-width="1"/>
+<rect x="409.1" y="318.2" width="7.8" height="11.7" rx="1" fill="#fff" stroke="#5b21b6" stroke-width="1.2"/>
+<path d="M409.1 322.1 H416.9 M409.1 326 H416.9" stroke="#5b21b6" stroke-width="1"/>
+<circle cx="414.6" cy="327.9" r="0.8" fill="#5b21b6"/>
+<text x="423" y="321.5" font-size="10" fill="#0f172a">FS01.corp.</text>
+<text x="423" y="333.5" font-size="10" fill="#0f172a">example.test</text>
+</g>
+</svg>

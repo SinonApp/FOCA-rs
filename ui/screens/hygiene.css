@@ -1,0 +1,300 @@
+/* Document hygiene: grade badges, set summary, fix steps, before/after diff, shared-file check. */
+
+.hy-g {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-weight: 800;
+  font-size: 1.05em;
+  color: #fff;
+  background: var(--text-3);
+  flex: none;
+}
+.hy-g.big {
+  width: 56px;
+  height: 56px;
+  font-size: 1.7em;
+  border-radius: 14px;
+}
+.hy-g.g-A,
+.hy-dist i.g-A {
+  background: #16a34a;
+}
+.hy-g.g-B,
+.hy-dist i.g-B {
+  background: #65a30d;
+}
+.hy-g.g-C,
+.hy-dist i.g-C {
+  background: #ca8a04;
+}
+.hy-g.g-D,
+.hy-dist i.g-D {
+  background: #ea580c;
+}
+.hy-g.g-E,
+.hy-dist i.g-E {
+  background: #dc2626;
+}
+.hy-g.g-F,
+.hy-dist i.g-F {
+  background: #991b1b;
+}
+.hy-g.g-none {
+  background: var(--layer-3);
+  color: var(--text-2);
+}
+.hy-gh {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+.hy-sc {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+
+/* set summary */
+.hy-set {
+  margin-bottom: 12px;
+}
+.hy-set-h {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hy-set-h > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.hy-set-h .s,
+.hy-res .s {
+  font-size: 0.82em;
+  color: var(--text-2);
+}
+.hy-dist {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  height: 84px;
+  margin: 12px 0 6px;
+}
+.hy-dist span {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.78em;
+}
+.hy-dist i {
+  display: block;
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background: var(--layer-3);
+}
+.hy-dist small {
+  color: var(--text-3);
+}
+.hy-freq {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin: 8px 0;
+}
+.hy-freq small {
+  width: 100%;
+  color: var(--text-3);
+}
+.hy-freq .chip {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-height: 36px;
+  height: auto;
+  padding: 6px 12px;
+  white-space: normal;
+  font-size: 0.82em;
+}
+
+/* issues and steps */
+.hy-iss,
+.hy-steps,
+.hy-warn {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hy-iss li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  overflow-wrap: anywhere;
+}
+.hy-iss li i {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.45em;
+  border-radius: 50%;
+  background: var(--text-3);
+}
+.hy-iss li.sev-crit i {
+  background: var(--crit);
+}
+.hy-iss li.sev-high i {
+  background: var(--bad);
+}
+.hy-iss li.sev-warn i {
+  background: var(--warn);
+}
+.hy-iss li.sev-low i {
+  background: var(--info);
+}
+.hy-iss li.more {
+  color: var(--text-2);
+  font-size: 0.85em;
+  padding-left: 16px;
+}
+.hy-note {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 6px 0;
+  color: var(--warn);
+  font-size: 0.9em;
+}
+.hy-none {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--ok);
+}
+.hy-steps li,
+.hy-warn li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+.hy-steps li.auto svg.i {
+  color: var(--ok);
+}
+.hy-steps li.man svg.i {
+  color: var(--warn);
+}
+.hy-steps small {
+  color: var(--text-3);
+}
+.hy-opt .toggle {
+  flex: none;
+}
+.hy-sig {
+  margin: 8px 0;
+}
+
+/* files */
+.hy-file {
+  margin-bottom: 10px;
+}
+.hy-fh,
+.hy-res-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.hy-fn {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.v2pf-fh .hy-g {
+  width: 32px;
+  height: 32px;
+}
+.v2pf-hy {
+  margin: 4px 0 8px;
+}
+
+/* before / after */
+.hy-sum {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.hy-res {
+  margin-bottom: 12px;
+}
+.hy-ba-g {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.hy-arr {
+  font-size: 1.3em;
+  color: var(--text-2);
+}
+.hy-verdict {
+  margin: 8px 0;
+}
+.hy-verdict ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.hy-verdict .s {
+  display: block;
+  font-size: 0.85em;
+}
+.hy-diff .row {
+  align-items: flex-start;
+}
+.hy-diff .t {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.hy-ba {
+  display: flex;
+  gap: 8px;
+  font-size: 0.85em;
+  margin-top: 2px;
+  min-width: 0;
+}
+.hy-ba .k {
+  flex: none;
+  /* Scales with the font size: a fixed 42px width let the label run into the value at font scale 2. */
+  min-width: 3.6em;
+  color: var(--text-3);
+}
+.hy-ba .v {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.hy-ba .v.gone {
+  color: var(--ok);
+}
+.hy-d.removed .hy-ba .v:not(.gone) {
+  text-decoration: line-through;
+  text-decoration-color: var(--bad);
+}
+.hy-act {
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.hy-all {
+  min-height: 44px;
+}

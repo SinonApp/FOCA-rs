@@ -1,0 +1,27 @@
+{
+  "author": "Irving Bird",
+  "description": "$three $bar $thousands $dollars $from 1998 $through 2000",
+  "format": "svg",
+  "people": [
+    {
+      "name": "Irving Bird",
+      "role": "creator",
+      "source": "svg:metadata:dc:creator"
+    },
+    {
+      "name": "Mary Lambert",
+      "role": "creator",
+      "source": "svg:metadata:dc:creator"
+    }
+  ],
+  "title": "MyFoo Financial Report",
+  "xmp": {
+    "dc:creator": "Irving Bird; Mary Lambert",
+    "dc:date": "2000-04-11",
+    "dc:description": "$three $bar $thousands $dollars $from 1998 $through 2000",
+    "dc:format": "image/svg+xml",
+    "dc:language": "en",
+    "dc:publisher": "Example Organization",
+    "dc:title": "MyFoo Financial Report"
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "application": "Greenshot 1.2.10",
+  "author": "Марина Шевчук",
+  "camera": {
+    "make": "Samsung",
+    "model": "SM-G991B"
+  },
+  "created": "2024-08-02T11:05:33+03:00",
+  "fields": {
+    "exif:Make": "Samsung",
+    "exif:Model": "SM-G991B",
+    "png:Author": "Марина Шевчук",
+    "png:Comment": "C:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png",
+    "png:Software": "Greenshot 1.2.10"
+  },
+  "format": "png",
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png",
+      "source": "png:Comment",
+      "user": "m.shevchuk"
+    }
+  ],
+  "people": [
+    {
+      "name": "Марина Шевчук",
+      "role": "author",
+      "source": "png:Author"
+    },
+    {
+      "name": "Марина Шевчук",
+      "role": "creator",
+      "source": "xmp:dc:creator"
+    },
+    {
+      "name": "m.shevchuk",
+      "role": "path_user",
+      "source": "C:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png"
+    }
+  ],
+  "software": [
+    "Greenshot 1.2.10",
+    "Adobe Photoshop CC 2019 (Windows)"
+  ],
+  "xmp": {
+    "dc:creator": "Марина Шевчук",
+    "xmp:CreateDate": "2024-08-02T11:05:33+03:00",
+    "xmp:CreatorTool": "Adobe Photoshop CC 2019 (Windows)",
+    "xmpMM:History/stEvt:action": "saved",
+    "xmpMM:History/stEvt:softwareAgent": "Adobe Photoshop CC 2019 (Windows)"
+  },
+  "xmp_history": [
+    {
+      "action": "saved",
+      "software_agent": "Adobe Photoshop CC 2019 (Windows)"
+    }
+  ]
+}

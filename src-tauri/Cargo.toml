@@ -1,0 +1,40 @@
+[package]
+name = "foca-rs"
+version = "2.0.0-beta.2"
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "FOCA-rs, Android app (Tauri 2): WebView UI + foca-engine + native Kotlin layer"
+
+[lib]
+name = "foca_rs_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde.workspace = true
+serde_json.workspace = true
+time.workspace = true
+foca-core.workspace = true
+foca-engine.workspace = true
+# Logging: tracing events (target foca::app) are written by the foca-engine subscriber to <data>/logs/foca.log.
+tracing = { version = "0.1", default-features = false, features = ["std"] }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+
+# Direct JNI into Kotlin (scan service without an Activity); tao provides the app context via ndk-context.
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk-context = "0.1"
+
+[dev-dependencies]
+tempfile.workspace = true
+foca-net.workspace = true
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+# Build profiles live in the root Cargo.toml (workspace members' profiles are ignored).

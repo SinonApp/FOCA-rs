@@ -1,0 +1,390 @@
+/* Documents and document card. Prefix .dt- */
+
+/* ---------- document row ---------- */
+.dt-doc {
+  align-items: flex-start;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.dt-doc > .ext {
+  margin-top: 2px;
+}
+.dt-fname {
+  overflow-wrap: anywhere;
+}
+.dt-doc .t {
+  font-weight: 600;
+}
+.dt-dmeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-top: 6px;
+}
+.dt-fi {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.dt-fic {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: color-mix(in srgb, currentColor 13%, transparent);
+}
+.dt-fic svg.i {
+  width: 15px;
+  height: 15px;
+}
+
+.dt-more,
+.dt-end {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  color: var(--text-3);
+  font-size: 0.88rem;
+  text-align: center;
+}
+.dt-more svg.i {
+  color: var(--accent);
+}
+
+/* Active filters */
+.dt-tgrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  margin-top: 10px;
+}
+.dt-tgrow .lbl {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.dt-tgrow .lbl small {
+  display: block;
+  font-weight: 400;
+  color: var(--text-3);
+  font-size: 0.82rem;
+}
+.sheet .chip .c {
+  margin-left: 2px;
+}
+
+/* ---------- selection mode ---------- */
+body.dt-selecting #nav,
+body.dt-selecting #searchpill {
+  display: none !important;
+}
+body.dt-selecting .snack {
+  bottom: calc(var(--dt-selbar-h, 80px) + 8px);
+}
+.dt-selgrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+}
+@container (max-width: 22rem) {
+  .dt-selgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .dt-selbar button {
+    flex-direction: row;
+    gap: 8px;
+    min-height: 48px;
+    font-size: 0.88rem;
+  }
+}
+
+/* ---------- document card ---------- */
+.dt-dhero {
+  position: relative;
+  overflow: hidden;
+}
+.dt-dh-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ext.dt-ext-l {
+  height: 28px;
+  min-width: 56px;
+  font-size: 0.85rem;
+  border-radius: 7px;
+}
+.dt-dh-name {
+  margin: 10px 0 4px;
+  font-size: 1.22rem;
+  line-height: 1.3;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+.dt-dh-s {
+  color: var(--text-3);
+  font-size: 0.86rem;
+}
+.dt-url {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 4px 4px 4px 12px;
+  border-radius: var(--r-s);
+  background: var(--layer-2);
+  border: 1px solid var(--stroke);
+}
+.dt-url .mono {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  word-break: break-all;
+  padding: 6px 0;
+  user-select: text;
+}
+.dt-dbtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.dt-dbtns .btn {
+  flex: 1 1 auto;
+}
+.dt-dbtns .btn.primary {
+  flex-basis: 100%;
+}
+
+.dt-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.dt-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px 0 10px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.dt-flag svg.i {
+  color: var(--c);
+}
+
+.dt-kv .v .mono {
+  word-break: break-all;
+  font-size: 0.85rem;
+}
+.dt-kv .dt-lchev {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  vertical-align: -1px;
+  color: var(--accent);
+}
+
+.dt-sha {
+  padding: 12px 6px 6px 14px;
+}
+.dt-sha-k {
+  color: var(--text-3);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+.dt-sha-v {
+  margin-top: 4px;
+  padding-right: 8px;
+  font-size: 0.84rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: text;
+}
+.dt-sha.full .dt-sha-v {
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.55;
+}
+.dt-sha-b {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-left: -10px;
+}
+.dt-sha-b .btn.text {
+  min-height: 44px;
+  gap: 6px;
+}
+
+.dt-rev {
+  align-items: flex-start;
+}
+.dt-rev-h {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.dt-rev-w {
+  color: var(--text-3);
+  font-size: 0.82rem;
+}
+.dt-rev-t {
+  margin-top: 6px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+  user-select: text;
+}
+.dt-rev-t.del {
+  text-decoration: line-through;
+  text-decoration-color: var(--bad);
+  color: var(--text-2);
+}
+.dt-rev-t.com {
+  font-style: italic;
+}
+.dt-rev-t.com::before {
+  content: "«";
+}
+.dt-rev-t.com::after {
+  content: "»";
+}
+
+.dt-gps {
+  overflow: hidden;
+}
+.dt-map {
+  position: relative;
+  height: 140px;
+  background:
+    linear-gradient(
+        0deg,
+        transparent 49%,
+        color-mix(in srgb, var(--text-3) 30%, transparent) 49% 51%,
+        transparent 51%
+      )
+      0 0 / 46px 46px,
+    linear-gradient(
+        90deg,
+        transparent 49%,
+        color-mix(in srgb, var(--text-3) 30%, transparent) 49% 51%,
+        transparent 51%
+      )
+      0 0 / 46px 46px,
+    linear-gradient(
+      115deg,
+      color-mix(in srgb, var(--ok) 22%, var(--layer-2)) 0 38%,
+      color-mix(in srgb, var(--accent) 20%, var(--layer-2)) 38% 46%,
+      var(--layer-3) 46%
+    );
+}
+.dt-pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -85%);
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50% 50% 50% 0;
+  rotate: -45deg;
+  background: var(--crit);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+.dt-pin svg.i {
+  rotate: 45deg;
+  width: 22px;
+  height: 22px;
+}
+.dt-gpskv {
+  border: 0;
+  border-top: 1px solid var(--stroke);
+  border-radius: 0;
+}
+.dt-thumbs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.dt-th {
+  margin: 0;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r);
+  background: var(--layer);
+  overflow: hidden;
+}
+.dt-th-img {
+  display: block;
+  aspect-ratio: 4 / 3;
+}
+.dt-th-img.a {
+  background: linear-gradient(170deg, #7fb2e6 0 42%, #8b9a6b 42% 70%, #5f6f52 70%);
+}
+.dt-th-img.b {
+  background:
+    radial-gradient(circle at 30% 45%, #f0c27a 0 12%, transparent 13%),
+    radial-gradient(circle at 62% 50%, #e7a66d 0 11%, transparent 12%),
+    linear-gradient(180deg, #c9cfd6 0 58%, #6b7a8f 58%);
+}
+.dt-th figcaption {
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+#tb-acts .ib.dt-dis {
+  opacity: 0.35;
+}
+.dt-docs {
+  container-type: inline-size;
+}
+@container (max-width: 20rem) {
+  .dt-docs .t {
+    -webkit-line-clamp: 4;
+  }
+}
+.dt-fic {
+  width: max(26px, 1.85rem);
+  height: max(26px, 1.85rem);
+}
+.dt-fic svg.i {
+  width: max(15px, 1.05rem);
+  height: max(15px, 1.05rem);
+}
+.dt-ext-in {
+  display: none;
+}
+@container (max-width: 20rem) {
+  .dt-doc > .ext {
+    display: none;
+  }
+  .dt-doc .dt-ext-in {
+    display: inline-grid;
+    margin-bottom: 4px;
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "application": "Microsoft Macintosh Word",
+  "author": "Author: Jeff",
+  "category": "category goes here",
+  "company": "Company - ExifTool",
+  "created": "2009-10-24T01:41:00Z",
+  "custom": {
+    "A Custom Field": "A Custom field contents",
+    "Checked by": "Checked by",
+    "Client": "Client",
+    "Date completed": "2009-10-23T07:00:00Z",
+    "Department": "Department",
+    "Destination": "Destination",
+    "Disposition": "Disposition",
+    "Division": "Division",
+    "Document number": "35",
+    "Editor": "Editor",
+    "Forward to": "Forward to",
+    "Group": "Group",
+    "Language": "Language",
+    "Mailstop": "Mailstop",
+    "Matter": "Matter",
+    "Office": "Office",
+    "Owner": "Owner",
+    "Project": "Project",
+    "Publisher": "Publisher",
+    "Purpose": "Purpose",
+    "Received from": "Received from",
+    "Recorded by": "Recorded by",
+    "Recorded date": "2009-10-20T07:00:00Z",
+    "Reference": "Reference",
+    "Source": "Source",
+    "Status": "Status",
+    "Telephone number": "415-399-9921",
+    "Typist": "Typist"
+  },
+  "description": "here are my comments",
+  "edit_time_secs": 420,
+  "fields": {
+    "app:AppVersion": "12.0000",
+    "app:DocSecurity": "0",
+    "app:HyperlinkBase": "the hyperlink base goes here!",
+    "app:HyperlinksChanged": "false",
+    "app:LinksUpToDate": "false",
+    "app:ScaleCrop": "false",
+    "app:SharedDoc": "false",
+    "app:TitlesOfParts": "The document title"
+  },
+  "format": "docx",
+  "keywords": "keyword 1, keyword 2, keyword 3",
+  "last_modified_by": "Jeff",
+  "manager": "Manager: Self",
+  "modified": "2009-10-24T01:48:00Z",
+  "people": [
+    {
+      "name": "Author: Jeff",
+      "role": "author",
+      "source": "core.xml:dc:creator"
+    },
+    {
+      "name": "Jeff",
+      "role": "last_modified_by",
+      "source": "core.xml:cp:lastModifiedBy"
+    }
+  ],
+  "revision": "3",
+  "rsids": [
+    "00AB6AD5"
+  ],
+  "software": [
+    "Microsoft Macintosh Word 12.0000"
+  ],
+  "stats": {
+    "characters": 42,
+    "characters_with_spaces": 45,
+    "lines": 7,
+    "pages": 1,
+    "paragraphs": 4,
+    "words": 7
+  },
+  "subject": "the subject",
+  "template": "Normal",
+  "title": "The document title"
+}

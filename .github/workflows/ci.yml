@@ -1,0 +1,114 @@
+name: CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_INCREMENTAL: "0"
+  CARGO_TERM_COLOR: always
+  NDK_VERSION: "29.0.14206865"
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: "rustfmt, clippy" }
+      - uses: Swatinem/rust-cache@v2
+        with: { key: "v3-linetables" }
+      - run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev
+      - run: cargo fmt --all -- --check
+      # webkit2gtk is installed here, so the whole workspace builds (locally without it `cargo test` covers default-members, i.e. the core).
+      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo test --workspace --no-fail-fast
+      # Scan pause policy (src-tauri): a pure module, tested without Tauri.
+      - run: rustc --edition 2021 --test src-tauri/src/policy.rs -o "$RUNNER_TEMP/policy" && "$RUNNER_TEMP/policy"
+      # Third-party license list must match Cargo.lock, the Gradle dependencies and THIRD_PARTY.md.
+      - run: python3 qa/gen-licenses.py --check
+
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: for f in ui/js/*.js ui/screens/*.js qa/*.mjs; do node --check "$f"; done
+      - run: npm run format:check
+      - run: npm run lint
+      # Demo data invariants and the demo/core contract on the UI side.
+      - run: node qa/data-invariants.mjs
+      - run: python3 qa/check-docs-links.py
+
+  # Kotlin compile of both flavors on every push and pull request (no APK, no .so).
+  android-kotlin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+      # cmdline-tools 16 no longer ships the legacy "tools" package that the action installs by default.
+      - uses: android-actions/setup-android@v3
+        with: { packages: "platform-tools" }
+      - run: sdkmanager "ndk;${NDK_VERSION}"
+      # The Kotlin compiler runs in the Gradle daemon (in-process) and exhausts the default 384 MiB
+      # metaspace when both flavors compile; hosted runners have enough RAM for a larger daemon.
+      - name: Gradle memory
+        run: |
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC -Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: "aarch64-linux-android" }
+      - uses: Swatinem/rust-cache@v2
+        with: { key: "android-check" }
+      - run: bash qa/android-build.sh kotlin
+        env: { NDK_HOME: "${{ env.ANDROID_SDK_ROOT }}/ndk/${{ env.NDK_VERSION }}" }
+      # JVM unit tests (app/src/test); reuses the generated Gradle files from the step above.
+      - run: bash qa/check-kotlin.sh
+      # Package/JNI consistency (steps 1-2; the symbol check needs the .so and runs in android-apk).
+      - run: bash qa/check-jni.sh
+
+  # Unsigned arm64 release APKs for foss and play. Signing stays out of CI.
+  android-apk:
+    runs-on: ubuntu-latest
+    needs: [core, android-kotlin]
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with: { distribution: temurin, java-version: 21, cache: gradle }
+      # cmdline-tools 16 no longer ships the legacy "tools" package that the action installs by default.
+      - uses: android-actions/setup-android@v3
+        with: { packages: "platform-tools" }
+      - run: sdkmanager "ndk;${NDK_VERSION}"
+      # The Kotlin compiler runs in the Gradle daemon (in-process) and exhausts the default 384 MiB
+      # metaspace when both flavors compile; hosted runners have enough RAM for a larger daemon.
+      - name: Gradle memory
+        run: |
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC -Dfile.encoding=UTF-8" >> ~/.gradle/gradle.properties
+      - uses: dtolnay/rust-toolchain@stable
+        with: { targets: "aarch64-linux-android" }
+      - uses: Swatinem/rust-cache@v2
+        with: { key: "android-release" }
+      # `tauri android build` does not know the flavors; see the header of qa/android-build.sh.
+      - run: bash qa/android-build.sh apk
+        env: { NDK_HOME: "${{ env.ANDROID_SDK_ROOT }}/ndk/${{ env.NDK_VERSION }}" }
+      - run: bash qa/check-jni.sh target/aarch64-linux-android/release/libfoca_rs_lib.so
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-unsigned-arm64
+          path: |
+            src-tauri/gen/android/app/build/outputs/apk/universalFoss/release/*.apk
+            src-tauri/gen/android/app/build/outputs/apk/universalPlay/release/*.apk
+          if-no-files-found: error

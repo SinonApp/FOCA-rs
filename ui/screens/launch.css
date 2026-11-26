@@ -1,0 +1,511 @@
+/* Targets & launch, Scope and Confirmation screens. Prefix la- */
+
+/* Module badge (F.moduleBadge); may be used on other screens. */
+.pill.la-mb-hit {
+  color: var(--bad);
+  background: var(--bad-soft);
+}
+.pill.la-mb-ext {
+  color: var(--text-2);
+  background: var(--layer-2);
+}
+
+/* Target input */
+.la-ta {
+  align-items: flex-start;
+  padding-right: 4px;
+}
+.la-ta > svg.i {
+  margin-top: 16px;
+}
+.la-ta textarea {
+  min-height: 4.6em;
+  line-height: 1.4;
+  padding: 14px 0;
+  /* Grows with the placeholder too, so a long hint is never cut at narrow widths or large fonts. */
+  field-sizing: content;
+}
+.la-ta textarea::placeholder {
+  color: var(--text-3);
+}
+.la-add {
+  margin-top: 2px;
+  color: var(--accent);
+}
+.la-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 12px;
+}
+
+/* Target chips */
+.la-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.la-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 48px;
+  padding: 4px 0 4px 10px;
+  border-radius: 14px;
+  background: var(--layer);
+  border: 1px solid var(--stroke-2);
+}
+.la-chip-ic {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.la-chip-ic svg.i {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+.la-chip-b {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.la-chip-v {
+  font-weight: 600;
+  font-size: 0.93rem;
+  overflow-wrap: anywhere;
+}
+.la-chip-t {
+  font-size: 0.76rem;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+.la-chip-x {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin-left: -2px;
+  border: 0;
+  background: none;
+  border-radius: 12px;
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+}
+.la-chip-x:active {
+  background: var(--hover);
+}
+.la-chip-x svg.i {
+  width: 16px;
+  height: 16px;
+}
+.la-chip.bad {
+  border-color: color-mix(in srgb, var(--bad) 55%, transparent);
+  background: var(--bad-soft);
+}
+.la-chip.bad .la-chip-ic {
+  background: transparent;
+  color: var(--bad);
+}
+.la-chip.bad .la-chip-t {
+  color: var(--bad);
+}
+.la-chip.bad .la-chip-b {
+  cursor: pointer;
+}
+.la-chip.ex .la-chip-ic {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+.la-chip.ex .la-chip-v {
+  font-family: var(--mono);
+  font-weight: 400;
+  font-size: 0.86rem;
+}
+.la-none {
+  color: var(--text-3);
+  font-size: 0.9rem;
+  margin: 2px 2px 0;
+}
+.la-errs {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.la-errh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  color: var(--bad);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0 2px;
+}
+.la-errh span {
+  color: var(--text-3);
+  font-weight: 400;
+}
+.la-errrow {
+  display: flex;
+}
+.la-sum {
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+  margin: 10px 2px 0;
+}
+
+/* Local files */
+.la-files {
+  margin-bottom: 10px;
+}
+.la-files .row {
+  padding-right: 4px;
+}
+.la-files .tail .ib {
+  margin: -6px 0;
+}
+.la-frow .t {
+  font-weight: 600;
+}
+.la-pre {
+  margin: 0;
+  padding: 12px;
+  background: var(--layer-2);
+  border-radius: var(--r-s);
+  font: 0.85rem/1.6 var(--mono);
+  color: var(--text-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+/* Profiles */
+.la-profs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.la-profs .card + .card {
+  margin-top: 0;
+}
+.la-prof {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-width: 1.5px;
+}
+.la-prof:active {
+  background: var(--hover);
+}
+.la-prof.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--layer));
+}
+.la-prof-b {
+  flex: 1;
+  min-width: 0;
+}
+.la-prof-t {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+.la-prof-t b {
+  font-size: 1rem;
+}
+.la-prof-t .muted {
+  margin-left: auto;
+  font-size: 0.82rem;
+}
+.la-prof-t svg.i {
+  color: var(--text-2);
+}
+.la-prof.on .la-prof-t svg.i {
+  color: var(--accent);
+}
+.la-prof-d {
+  color: var(--text-2);
+  font-size: 0.88rem;
+  margin-top: 3px;
+}
+.la-prof-p,
+.la-src-p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.la-src-p {
+  margin-top: 6px;
+}
+.la-mods {
+  margin-top: 10px;
+}
+.la-mod .tail,
+.la-src .tail {
+  justify-content: center;
+}
+
+/* "Advanced" */
+.la-adv {
+  margin-top: 16px;
+  overflow: hidden;
+}
+.la-adv-h {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: var(--text);
+}
+.la-adv-h > svg.i {
+  color: var(--text-2);
+  width: 20px;
+  height: 20px;
+}
+.la-adv-h span {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.la-adv-h small {
+  color: var(--text-3);
+  font-size: 0.82rem;
+}
+.la-adv-h .la-adv-c {
+  transition: transform 0.2s;
+  color: var(--text-3);
+}
+.la-adv.open .la-adv-c {
+  transform: rotate(180deg);
+}
+.la-adv-b {
+  padding: 0 14px 16px;
+  border-top: 1px solid var(--stroke);
+}
+.la-adv-b .list,
+.la-adv-b .la-steps {
+  background: var(--layer-2);
+}
+.la-adv-b .list .row {
+  background: var(--layer-2);
+}
+.la-adv-b .chips.wrap {
+  margin-bottom: 0;
+}
+.la-adv-b .chip {
+  background: var(--layer-2);
+}
+.la-adv-b .chip.on {
+  background: var(--accent-soft);
+}
+.la-adv-b .field,
+.la-adv-b select.sel {
+  background: var(--layer-2);
+}
+.la-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.la-inline .field {
+  flex: 1 1 12rem;
+  min-width: 0;
+  min-height: 48px;
+}
+
+/* Sticky footer */
+
+/* Scope */
+.la-kvs {
+  font-size: 0.82rem;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.la-kvs.ok {
+  color: var(--ok);
+}
+.la-kvs.warn {
+  color: var(--warn);
+}
+.la-kvs.bad {
+  color: var(--bad);
+}
+.la-tperm {
+  margin-top: 6px;
+}
+
+/* Confirmation */
+.la-off .t {
+  color: var(--text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-3);
+}
+.la-skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--warn);
+}
+.la-cstat {
+  margin-top: 14px;
+}
+.la-cstat .v {
+  font-size: 1.4rem;
+  overflow-wrap: anywhere;
+}
+.la-frow .check svg.i {
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+}
+.la-frow.sel .check svg.i {
+  opacity: 1;
+}
+.la-h3b {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.la-h3b .pill {
+  font-weight: 600;
+}
+.la-pg .sec-h {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+/* New project / new scan, proxy from settings, scope edits */
+.la-chip-x {
+  width: 48px;
+  height: 48px;
+  margin: -4px 0 -4px -6px;
+}
+.la-h3s {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.la-nh {
+  margin: 0 2px 8px;
+}
+.la-net .row {
+  align-items: flex-start;
+}
+.la-net .s {
+  overflow-wrap: anywhere;
+}
+.la-nc {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 8px 2px 0;
+  overflow-wrap: anywhere;
+}
+.la-nc svg.i {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ok);
+}
+.la-nc.err svg.i {
+  color: var(--bad);
+}
+.la-netb {
+  margin: 10px 0 14px;
+}
+.la-steps2 {
+  margin-top: 12px;
+}
+.la-kbtn {
+  min-width: 0;
+  padding: 0 14px;
+}
+.la-bnb {
+  margin-top: 8px;
+}
+.la-docs .chip {
+  min-height: 44px;
+}
+.la-btns .btn {
+  flex: 1 1 10rem;
+}
+
+/* Lightweight confirmation for "Standard": checkbox and button in the sticky footer, details collapsed. */
+.la-more {
+  margin-top: 12px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r);
+  background: var(--layer);
+}
+.la-more > summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.la-more > summary::-webkit-details-marker {
+  display: none;
+}
+.la-more > summary .i {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.la-more[open] > .list,
+.la-more[open] > .la-cstat {
+  margin: 0 10px 10px;
+}
+.la-foot .btn + .btn {
+  margin-top: 8px;
+}
+.la-fbtns {
+  flex-wrap: wrap-reverse;
+}
+.la-fbtns > .btn {
+  flex: 1 1 auto;
+}
+.la-exn {
+  color: var(--warn);
+}
+.la-extra {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.la-extra .i {
+  flex: none;
+  margin-top: 2px;
+}
+.la-notes {
+  white-space: pre-wrap;
+}
+
+/* Background-work hint between the profile and "Advanced": keep the section header off the card above. */
+#la-bg:not(:empty) {
+  margin-top: 18px;
+}

@@ -1,0 +1,83 @@
+{
+  "application": "Adobe Photoshop 7.0",
+  "author": "Phil Harvey",
+  "camera": {
+    "make": "FUJIFILM",
+    "model": "FinePix2400Zoom"
+  },
+  "created": "2001-05-19T18:36:41",
+  "description": "A witty caption",
+  "fields": {
+    "exif:ApertureValue": "3.6 EV",
+    "exif:Artist": "Phil Harvey",
+    "exif:BrightnessValue": "2 EV",
+    "exif:ColorSpace": "sRGB",
+    "exif:ComponentsConfiguration": "YCbCr_",
+    "exif:CompressedBitsPerPixel": "1.6",
+    "exif:Copyright": "Copyright 2004 Phil Harvey",
+    "exif:DateTime": "2004:02:26 09:36:46",
+    "exif:DateTimeDigitized": "2001:05:19 18:36:41",
+    "exif:DateTimeOriginal": "2001:05:19 18:36:41",
+    "exif:ExifVersion": "2.1",
+    "exif:ExposureBiasValue": "0 EV",
+    "exif:ExposureProgram": "normal program",
+    "exif:FNumber": "f/3.5",
+    "exif:FileSource": "digital still camera",
+    "exif:Flash": "fired, no return light detection function, auto mode 0 (unknown)",
+    "exif:FlashpixVersion": "1.0",
+    "exif:FocalLength": "6 mm",
+    "exif:FocalPlaneResolutionUnit": "cm",
+    "exif:FocalPlaneXResolution": "3053 pixels per cm",
+    "exif:FocalPlaneYResolution": "3053 pixels per cm",
+    "exif:ImageDescription": "A witty caption",
+    "exif:Make": "FUJIFILM",
+    "exif:MaxApertureValue": "3.6 EV",
+    "exif:MeteringMode": "pattern",
+    "exif:Model": "FinePix2400Zoom",
+    "exif:Orientation": "row 0 at top and column 0 at left",
+    "exif:PhotographicSensitivity": "100",
+    "exif:PixelXDimension": "100 pixels",
+    "exif:PixelYDimension": "80 pixels",
+    "exif:ResolutionUnit": "inch",
+    "exif:SceneType": "directly photographed image",
+    "exif:SensingMethod": "one-chip color area sensor",
+    "exif:ShutterSpeedValue": "6 EV",
+    "exif:Software": "Adobe Photoshop 7.0",
+    "exif:XResolution": "72 pixels per inch",
+    "exif:YCbCrPositioning": "co-sited",
+    "exif:YResolution": "72 pixels per inch",
+    "iptc:By-line": "Phil Harvey",
+    "iptc:By-lineTitle": "My Position",
+    "iptc:Caption-Abstract": "A witty caption",
+    "iptc:City": "Kingston",
+    "iptc:CopyrightNotice": "Copyright 2004 Phil Harvey",
+    "iptc:Country": "Canada",
+    "iptc:Credit": "My Credit",
+    "iptc:Headline": "No headline",
+    "iptc:Keywords": "jambalaya",
+    "iptc:ObjectName": "Test IPTC picture",
+    "iptc:Province-State": "Ont",
+    "iptc:Source": "I'm the source",
+    "iptc:Writer-Editor": "I wrote it",
+    "jpeg:comment": "a comment"
+  },
+  "format": "jpeg",
+  "keywords": "jambalaya",
+  "modified": "2004-02-26T09:36:46",
+  "people": [
+    {
+      "name": "Phil Harvey",
+      "role": "author",
+      "source": "exif:Artist"
+    },
+    {
+      "name": "I wrote it",
+      "role": "other",
+      "source": "iptc:Writer-Editor"
+    }
+  ],
+  "software": [
+    "Adobe Photoshop 7.0"
+  ],
+  "title": "No headline"
+}

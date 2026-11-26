@@ -1,0 +1,17 @@
+{
+  "versions": [
+    {
+      "name": "chrome/platforms/win/channels/stable/versions/159.0.8154.13",
+      "version": "159.0.8154.13"
+    },
+    {
+      "name": "chrome/platforms/win/channels/stable/versions/158.0.8127.37",
+      "version": "158.0.8127.37"
+    },
+    {
+      "name": "chrome/platforms/win/channels/stable/versions/158.0.8127.36",
+      "version": "158.0.8127.36"
+    }
+  ],
+  "nextPageToken": "988140093"
+}

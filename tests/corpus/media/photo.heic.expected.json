@@ -1,0 +1,53 @@
+{
+  "application": "17.4",
+  "author": "Іван Петренко",
+  "camera": {
+    "make": "Apple",
+    "model": "iPhone 15 Pro",
+    "serial": "EXAMPLE-BODY-0042"
+  },
+  "created": "2024-03-14T18:42:00",
+  "fields": {
+    "exif:Artist": "Іван Петренко",
+    "exif:BodySerialNumber": "EXAMPLE-BODY-0042",
+    "exif:DateTimeOriginal": "2024:03:14 18:42:00",
+    "exif:GPSLatitude": "46 deg 28 min 57 sec N",
+    "exif:GPSLatitudeRef": "N",
+    "exif:GPSLongitude": "30 deg 43 min 22 sec E",
+    "exif:GPSLongitudeRef": "E",
+    "exif:GPSVersionID": "2.3.0.0",
+    "exif:Make": "Apple",
+    "exif:Model": "iPhone 15 Pro",
+    "exif:Software": "17.4",
+    "media:handler": "pict",
+    "media:major_brand": "heic"
+  },
+  "format": "heic",
+  "gps": {
+    "lat": 46.4825,
+    "lon": 30.722778
+  },
+  "people": [
+    {
+      "name": "Іван Петренко",
+      "role": "author",
+      "source": "exif:Artist"
+    },
+    {
+      "name": "John Doe",
+      "role": "creator",
+      "source": "xmp:dc:creator"
+    }
+  ],
+  "software": [
+    "17.4",
+    "Adobe Lightroom Classic 13.2"
+  ],
+  "stats": {
+    "items": 3
+  },
+  "xmp": {
+    "dc:creator": "John Doe",
+    "xmp:CreatorTool": "Adobe Lightroom Classic 13.2"
+  }
+}

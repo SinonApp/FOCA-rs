@@ -1,0 +1,22 @@
+{
+  "attachments": [
+    {
+      "name": "a.txt",
+      "size": 5
+    },
+    {
+      "name": "b.eml",
+      "size": 2147483647
+    }
+  ],
+  "created": "2024-03-14T18:42:00",
+  "format": "zip",
+  "modified": "2024-03-14T18:42:00",
+  "stats": {
+    "files": 2,
+    "uncompressed_bytes": 2147483652
+  },
+  "warnings": [
+    "b.eml: 2147483647 bytes exceed the decompression budget, skipped"
+  ]
+}

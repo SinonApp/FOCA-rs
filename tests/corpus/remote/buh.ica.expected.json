@@ -1,0 +1,54 @@
+{
+  "fields": {
+    "ica:1C Бухгалтерія.Address": "10.10.1.40:1494",
+    "ica:1C Бухгалтерія.Domain": "CONTOSO",
+    "ica:1C Бухгалтерія.InitialProgram": "#1C Бухгалтерія",
+    "ica:1C Бухгалтерія.SSLProxyHost": "*:443",
+    "ica:1C Бухгалтерія.Username": "o.kovalenko",
+    "ica:1C Бухгалтерія.WorkDirectory": "C:\\Users\\o.kovalenko\\AppData\\Local\\1C",
+    "ica:WFClient.HttpBrowserAddress": "ctx.contoso.example:8080",
+    "ica:WFClient.ProxyType": "Auto",
+    "ica:WFClient.Version": "2"
+  },
+  "format": "ica",
+  "paths": [
+    {
+      "kind": "windows",
+      "path": "C:\\Users\\o.kovalenko\\AppData\\Local\\1C",
+      "source": "ica:1C Бухгалтерія.WorkDirectory",
+      "user": "o.kovalenko"
+    }
+  ],
+  "people": [
+    {
+      "name": "o.kovalenko",
+      "role": "account",
+      "source": "ica:username"
+    },
+    {
+      "name": "o.kovalenko",
+      "role": "path_user",
+      "source": "C:\\Users\\o.kovalenko\\AppData\\Local\\1C"
+    }
+  ],
+  "secrets": [
+    {
+      "kind": "ica_clearpassword",
+      "source": "ica:1C Бухгалтерія.ClearPassword",
+      "value": "Buh2023!"
+    }
+  ],
+  "servers": [
+    {
+      "name": "ctx.contoso.example",
+      "source": "ica:WFClient.HttpBrowserAddress"
+    },
+    {
+      "name": "10.10.1.40",
+      "source": "ica:1C Бухгалтерія.Address"
+    }
+  ],
+  "software": [
+    "1C Бухгалтерія"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "notify.header": "FOCA-rs · {project}: оповещений {count}",
+  "notify.more": "… и ещё {count}",
+  "alert.new_host": "Новый хост: {host}",
+  "alert.new_port": "Новый открытый порт: {host}:{port} {service}",
+  "alert.doc_secret": "Новый документ с секретами ({count}): {doc}, {host}",
+  "alert.doc_pii": "Новый документ с персональными данными ({count}): {doc}, {host}",
+  "alert.doc_gps": "Новый документ с GPS-координатами: {doc}, {host}",
+  "alert.tls_expiry": "TLS-сертификат {host} истекает через {days} дн. ({date})",
+  "alert.tls_expiry.expired": "TLS-сертификат {host} истёк ({date})",
+  "alert.dangling_cname": "Висящий CNAME: {host} → {cname} {provider}",
+  "alert.ct_new_cert": "Новый сертификат в CT-логах: {names} ({issuer})",
+  "alert.risk_rise": "Риск вырос до {risk} (было {prev})"
+}

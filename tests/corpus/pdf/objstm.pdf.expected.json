@@ -1,0 +1,26 @@
+{
+  "application": "PDFCreator 3.2.0",
+  "author": "m.shevchuk",
+  "created": "2020-01-05T12:00:00Z",
+  "fields": {
+    "pdf:version": "1.5"
+  },
+  "format": "pdf",
+  "incremental_updates": 0,
+  "people": [
+    {
+      "name": "m.shevchuk",
+      "role": "author",
+      "source": "pdf:Info:Author"
+    }
+  ],
+  "producer": "GPL Ghostscript 9.50",
+  "software": [
+    "PDFCreator 3.2.0",
+    "GPL Ghostscript 9.50"
+  ],
+  "stats": {
+    "pages": 1
+  },
+  "title": "Presentation"
+}
