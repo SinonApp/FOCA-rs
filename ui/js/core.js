@@ -321,7 +321,21 @@
       `<div class="checkrow ${on ? "on" : ""}" role="checkbox" aria-checked="${!!on}"
         data-act="${act}"><span class="cb">${ic("check")}</span><span class="lbl">${label}${sub ? `<small>${sub}</small>` : ""}</span></div>`,
     secret: (val, id) => `<span class="secret masked" data-secret="${id || ""}">${esc(val)}</span>`,
+    /**
+     * Themed replacement of a native <select>: a field-like button that opens F.choose. It keeps the
+     * select contract for screen code: `.value` holds the value and a `change` event bubbles on pick.
+     * @param {{id: string, value: string, options: Array<{v: string, t: string, s?: string}>, title?: string, attrs?: string, cls?: string}} o
+     */
+    select: ({ id, value, options, title = "", attrs = "", cls = "" }) => {
+      pickReg[id] = { options, title };
+      const cur = options.find(o => String(o.v) === String(value)) || options[0] || { v: "", t: "" };
+      return `<button type="button" class="pick ${cls}" id="${esc(id)}" value="${esc(String(cur.v))}"
+        data-act="pick:${esc(id)}" aria-haspopup="dialog" ${attrs}><span class="pk-b"><span
+        class="pk-t">${esc(cur.t)}</span>${cur.s ? `<span class="pk-s">${esc(cur.s)}</span>` : ""}</span>${ic("chev-down", "pk-c")}</button>`;
+    },
   };
+  // Options of the F.ui.select buttons on screen, by element id (refreshed on every render).
+  const pickReg = {};
   /**
    * Wraps a screen renderer: the screen draws its normal state, the core substitutes demo states.
    * @param {Function} normal Renders the normal state.
@@ -429,6 +443,7 @@
     const need =
       stack.length > 1 ||
       !!sheetOpen ||
+      !!pickOpen ||
       !!backHook ||
       !!(stack.length === 1 && F.parentOf && F.parentOf(stack[0]));
     if (need && !trapped) {
@@ -536,6 +551,7 @@
       ov.remove();
       return true;
     }
+    if (closePick()) return true;
     if (closeSheet(true)) {
       syncTrap();
       return true;
@@ -887,6 +903,7 @@
 
   // ---------- sheets ----------
   let sheetOpen = null;
+  let pickOpen = null; // F.choose panel, see "option picker" below.
   let ignorePop = false;
   /**
    * Opens a bottom sheet.
@@ -959,6 +976,109 @@
     syncTrap();
   };
   F.actions["sheet-close"] = () => F.closeSheet();
+
+  // ---------- option picker ----------
+  // Own bottom panel above everything (also above an open sheet, so pickers work inside filter sheets).
+  const closePick = () => {
+    if (!pickOpen) return false;
+    const { scrim, sh, back } = pickOpen;
+    pickOpen = null;
+    scrim.classList.remove("show");
+    sh.classList.remove("show");
+    setTimeout(() => {
+      scrim.remove();
+      sh.remove();
+    }, 250);
+    if (back && back.isConnected) back.focus({ preventScroll: true });
+    syncTrap();
+    return true;
+  };
+  /**
+   * Opens a themed single-choice list.
+   * @param {{title?: string, value?: string, options: Array<{v: string, t: string, s?: string}>, onPick: Function, back?: Element}} o
+   */
+  F.choose = ({ title = "", value, options, onPick, back }) => {
+    closePick();
+    const scrim = document.createElement("div");
+    scrim.className = "scrim pick-scrim";
+    const sh = document.createElement("div");
+    sh.className = "sheet pick-sh";
+    sh.setAttribute("role", "dialog");
+    sh.setAttribute("aria-modal", "true");
+    if (title) sh.setAttribute("aria-label", title);
+    sh.innerHTML = `<div class="sh-grab"><i></i></div>${
+      title
+        ? `<div class="sh-h"><h3>${esc(title)}</h3><button class="ib" data-pk-x
+      aria-label="${esc(F.t("app.secrets_close", "Закрыть"))}">${ic("x")}</button></div>`
+        : ""
+    }<div class="sh-b"><div class="list pk-list" role="radiogroup">${options
+      .map((o, i) => {
+        const on = String(o.v) === String(value);
+        return `<div class="row tap pk-o ${on ? "on" : ""}" role="radio" aria-checked="${on}" tabindex="0"
+          data-pk="${i}"><span class="radio"></span><div class="body"><div class="t">${esc(o.t)}</div>${o.s ? `<div class="s">${esc(o.s)}</div>` : ""}</div></div>`;
+      })
+      .join("")}</div></div>`;
+    document.body.append(scrim, sh);
+    pickOpen = { scrim, sh, back };
+    syncTrap();
+    requestAnimationFrame(() => {
+      scrim.classList.add("show");
+      sh.classList.add("show");
+      const on = sh.querySelector(".pk-o.on") || sh.querySelector(".pk-o");
+      if (on) {
+        on.scrollIntoView({ block: "nearest" });
+        on.focus({ preventScroll: true });
+      }
+    });
+    scrim.addEventListener("click", closePick);
+    const x = sh.querySelector("[data-pk-x]");
+    if (x) x.addEventListener("click", closePick);
+    const pick = el => {
+      const o = options[+el.dataset.pk];
+      closePick();
+      if (o && onPick) onPick(o.v);
+    };
+    sh.addEventListener("click", e => {
+      const el = e.target.closest("[data-pk]");
+      if (el) pick(el);
+    });
+    sh.addEventListener("keydown", e => {
+      const el = e.target.closest("[data-pk]");
+      if (e.key === "Escape") closePick();
+      else if (el && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        pick(el);
+      }
+    });
+    return sh;
+  };
+  F.closePick = closePick;
+  /** Sets an F.ui.select field without a change event (e.g. "Reset" in a filter sheet). */
+  F.pickSet = (el, v) => {
+    if (!el) return;
+    const reg = pickReg[el.id];
+    const o = reg && reg.options.find(x => String(x.v) === String(v));
+    el.value = String(v);
+    const t = el.querySelector(".pk-t"),
+      sub = el.querySelector(".pk-s");
+    if (o && t) t.textContent = o.t;
+    if (sub) sub.textContent = (o && o.s) || "";
+  };
+  F.actions.pick = (id, el) => {
+    const reg = pickReg[id];
+    if (!reg || !el) return;
+    F.choose({
+      title: reg.title,
+      value: el.value,
+      options: reg.options,
+      back: el,
+      onPick: v => {
+        if (String(v) === String(el.value)) return;
+        F.pickSet(el, v);
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+      },
+    });
+  };
 
   // ---------- snackbar ----------
   let snT;

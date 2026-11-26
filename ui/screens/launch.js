@@ -775,9 +775,13 @@
       <p class="fhint la-nh">${esc(tx("launch.net_hint", "Весь трафик скана идёт через прокси из настроек. Один для мастера и скана."))}</p>
       ${proxyBlock()}
       <label class="flabel" for="la-ua">User-Agent</label>
-      <select class="sel" id="la-ua" data-key="ua">${Object.entries(UAS)
-        .map(([k, v]) => `<option value="${k}" ${wiz.ua === k ? "selected" : ""}>${v}</option>`)
-        .join("")}</select>
+      ${ui.select({
+        id: "la-ua",
+        value: wiz.ua,
+        title: "User-Agent",
+        attrs: 'data-key="ua"',
+        options: Object.entries(UAS).map(([k, v]) => ({ v: k, t: v })),
+      })}
       <div class="card nfs la-nfs la-steps2">${nfNet("threads", tx("launch.nf_threads", "Потоков"), "", 1, 64, [4, 8], tx("launch.nf_threads_note", "больше: риск бана"), "set-threads", tx("launch.nf_threads_max", "телефон и сеть больше не вытянут"), tx("launch.nf_threads_min", "нужен хотя бы один поток"))}${nfNet("rps", tx("launch.nf_rps", "Запросов в сек."), tx("launch.nf_per_s", "/с"), 1, 100, [5, 10], tx("launch.nf_rps_note", "на один хост"), "set-rps", tx("launch.nf_rps_max", "так быстро сайт почти наверняка заблокирует"), tx("launch.nf_rps_min", "меньше одного запроса в секунду ядро не поддерживает"))}</div>
       <p class="fhint">${esc(tx("launch.net_shared", "Потоки и запросы в секунду. Общие с «Настройки → Сеть». Скан не превысит лимит запросов к одному хосту, даже при большом числе потоков."))}</p>`;
   }
@@ -1145,7 +1149,7 @@
           refreshTargets();
         }
       });
-      page.querySelectorAll("select[data-key]").forEach(s =>
+      page.querySelectorAll("button.pick[data-key]").forEach(s =>
         s.addEventListener("change", () => {
           wiz[s.dataset.key] = s.value;
         }),

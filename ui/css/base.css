@@ -1136,6 +1136,60 @@ select.sel {
   background: var(--layer);
   font-size: max(16px, 1rem);
 }
+/* Themed picker field (F.ui.select): replaces native <select>, opens the F.choose panel. */
+button.pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: var(--r);
+  border: 1px solid var(--stroke-2);
+  background: var(--layer);
+  color: var(--text);
+  font: inherit;
+  font-size: max(16px, 1rem);
+  text-align: left;
+  cursor: pointer;
+}
+button.pick:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.pick .pk-b {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pick .pk-t {
+  overflow-wrap: anywhere;
+}
+.pick .pk-s {
+  font-size: 0.82em;
+  color: var(--text-2);
+}
+.pick svg.pk-c {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--text-2);
+}
+.scrim.pick-scrim {
+  z-index: 55;
+}
+.sheet.pick-sh {
+  z-index: 56;
+}
+.pk-list .pk-o .radio {
+  align-self: center;
+  margin-top: 0;
+}
+.pk-list .pk-o.on {
+  background: var(--accent-soft);
+}
 
 /* Switch. */
 .toggle {

@@ -706,8 +706,13 @@
         sources.map(s => [s, s]),
       )}
       <div class="flabel" id="fd-hl">${esc(F.t("findings.host", "Хост"))}</div>
-      <select class="sel" id="fd-host"
-        aria-labelledby="fd-hl"><option value="">${esc(F.t("findings.all_hosts", "Все хосты"))}</option>${hosts.map(h => `<option ${draft.host === h ? "selected" : ""}>${esc(h)}</option>`).join("")}</select>
+      ${ui.select({
+        id: "fd-host",
+        value: draft.host || "",
+        title: F.t("findings.host", "Хост"),
+        attrs: 'aria-labelledby="fd-hl"',
+        options: [{ v: "", t: F.t("findings.all_hosts", "Все хосты") }, ...hosts.map(h => ({ v: h, t: h }))],
+      })}
       <div class="fd-evrow"><span class="lbl">${esc(F.t("findings.ev_only", "Только с доказательствами"))}<small>${esc(F.t("findings.ev_only_sub", "Есть фрагмент, запрос или фото"))}</small></span>${ui.toggle(draft.ev, "fd-ev-t", `aria-label="${esc(F.t("findings.ev_only", "Только с доказательствами"))}"`)}</div>`;
     F.sheet({
       title: F.t("findings.filters_sort", "Фильтры и сортировка"),
@@ -763,7 +768,7 @@
             c.classList.remove("on");
             c.setAttribute("aria-pressed", "false");
           });
-          sh.querySelector("#fd-host").value = "";
+          F.pickSet(sh.querySelector("#fd-host"), "");
           const t = sh.querySelector(".toggle");
           t.classList.remove("on");
           t.setAttribute("aria-checked", "false");

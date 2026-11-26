@@ -1850,13 +1850,16 @@
         return;
       }
       const tl = TL();
-      const opt = v => YEARS.map(y => `<option ${y === v ? "selected" : ""}>${y}</option>`).join("");
+      const years = YEARS.map(y => ({ v: String(y), t: String(y) }));
+      const yearPick = (id, title, v) => ui.select({ id, value: String(v), title, options: years });
       F.sheet({
         title: F.t("timeline.custom_period", "Свой период"),
-        html: `<label class="flabel" for="v2t-f">${esc(F.t("timeline.from_year", "С года"))}</label><select class="sel"
-          id="v2t-f">${opt(tl.from)}</select><label class="flabel"
-          for="v2t-t">${esc(F.t("timeline.year", "По год"))}</label><select class="sel"
-          id="v2t-t">${opt(tl.to)}</select><p class="fhint">${esc(F.t("timeline.dates_come_from_metadata", "Даты берутся из метаданных: создание, изменение, печать."))}</p>`,
+        html: `<label class="flabel" for="v2t-f">${esc(F.t("timeline.from_year", "С года"))}</label>${yearPick(
+          "v2t-f",
+          F.t("timeline.from_year", "С года"),
+          tl.from,
+        )}<label class="flabel"
+          for="v2t-t">${esc(F.t("timeline.year", "По год"))}</label>${yearPick("v2t-t", F.t("timeline.year", "По год"), tl.to)}<p class="fhint">${esc(F.t("timeline.dates_come_from_metadata", "Даты берутся из метаданных: создание, изменение, печать."))}</p>`,
         footer: `<button class="btn"
           data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn primary"
           data-act="v2t-apply">${esc(F.t("timeline.apply", "Применить"))}</button>`,
@@ -2166,7 +2169,12 @@
                 placeholder="${whKey.status === "ok" ? esc(whKey.mask) : "https://hooks.example.com/foca"}" type="password" inputmode="url" autocomplete="off"><button class="ib" data-act="v2mo-eye:v2mo-url" aria-label="${esc(F.t("monitor.show_url", "Показать URL"))}">${ic("eye")}</button></div>
             ${moErr("url")}
             <label class="flabel" for="v2mo-whkind">${esc(F.t("monitor.payload_format", "Формат полезной нагрузки"))}</label>
-            <select id="v2mo-whkind" class="v2mo-sel">${WH_KINDS.map(([k, l]) => `<option value="${k}" ${(wh.kind || "generic") === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>
+            ${ui.select({
+              id: "v2mo-whkind",
+              value: wh.kind || "generic",
+              title: F.t("monitor.payload_format", "Формат полезной нагрузки"),
+              options: WH_KINDS.map(([k, l]) => ({ v: k, t: l })),
+            })}
             <div class="v2mo-kvrow">
               <button class="btn sm tonal" data-act="v2mo-save-wh">${ic("check")}${esc(F.t("monitor.save_webhook", "Сохранить"))}</button>
               <button class="btn sm" data-act="v2mo-test:webhook">${ic("v2-send")}${esc(F.t("monitor.test", "Тест"))}</button>
@@ -3071,8 +3079,12 @@
               ? `<div class="row"><div class="body"><div class="t">${esc(l)}</div></div><div class="tail">${ui.toggle(a, "toggle", `aria-label="${esc(l)}"`)}</div></div>`
               : t === "s"
                 ? `<div class="row v2p-sel"><div class="body"><label class="t"
-                  for="v2p-s${i}">${esc(l)}</label><select class="sel"
-                  id="v2p-s${i}">${a.map((o, j) => `<option ${j === b ? "selected" : ""}>${o}</option>`).join("")}</select></div></div>`
+                  for="v2p-s${i}">${esc(l)}</label>${ui.select({
+                    id: `v2p-s${i}`,
+                    value: String(b),
+                    title: l,
+                    options: a.map((o, j) => ({ v: String(j), t: o })),
+                  })}</div></div>`
                 : `<div class="row"><div class="lead-ic">${ic("key")}</div><div class="body"><div class="t">${esc(l)}</div><div class="s">${hibpKey() ? `${esc(F.t("plugins.set_api_keys", "Указан в «Ключах API» ·"))} ${esc((((F.db.settings || {}).keys || {}).hibp || {}).mask || "")}` : F.t("plugins.not_set_plugin_will_not_run", "Не указан: без ключа плагин не запустится")}</div></div><div class="tail"><button class="btn sm tonal"
                   data-act="scan-key:hibp">${hibpKey() ? F.t("app.edit", "Изменить") : F.t("plugins.set", "Указать")}</button></div></div>`,
           )
@@ -3305,14 +3317,15 @@
     openrouter: ["OpenRouter", "openrouter.ai"],
     custom: [F.t("ai.custom_openai_compatible_api", "Свой OpenAI-совместимый API"), ""],
   });
+  // [value, short label, secondary hint]
   const THINKING_OPTS = () => [
-    ["auto", F.t("ai.auto_model_default", "Авто (по умолчанию модели)")],
+    ["auto", F.t("ai.auto", "Авто"), F.t("ai.think_auto_sub", "по умолчанию модели")],
     ["off", F.t("ai.off", "Выключен")],
     ["minimal", F.t("ai.minimal", "Минимальный")],
     ["low", F.t("sev.low", "Низкий")],
     ["medium", F.t("sev.warn", "Средний")],
     ["high", F.t("sev.high", "Высокий")],
-    ["xhigh", F.t("ai.very_high_xhigh", "Очень высокий (xhigh)")],
+    ["xhigh", F.t("ai.very_high", "Очень высокий"), "xhigh"],
     ["max", F.t("ai.maximum", "Максимум")],
   ];
   const fmtCtx = n =>
@@ -3454,10 +3467,13 @@
         }
         return `
         <p class="lead">${esc(F.t("ai.ai_writes_short_summary_risks", "ИИ составляет краткую сводку рисков и рекомендаций по результатам скана через облачный API выбранного провайдера. Список доступных моделей запрашивается напрямую у провайдера."))}</p>
-        <label class="flabel" for="v2ai-p">${esc(F.t("ai.provider", "Провайдер"))}</label><select class="sel" id="v2ai-p"
-          data-v2ai="prov">${Object.entries(PROV())
-            .map(([k, v]) => `<option value="${k}" ${ai.prov === k ? "selected" : ""}>${v[0]}</option>`)
-            .join("")}</select>
+        <label class="flabel" for="v2ai-p">${esc(F.t("ai.provider", "Провайдер"))}</label>${ui.select({
+          id: "v2ai-p",
+          value: ai.prov,
+          title: F.t("ai.provider", "Провайдер"),
+          attrs: 'data-v2ai="prov"',
+          options: Object.entries(PROV()).map(([k, v]) => ({ v: k, t: v[0], s: v[1] })),
+        })}
         ${
           ai.prov === "custom"
             ? `<label class="flabel" for="v2ai-url">${esc(F.t("ai.base_url_openai_compatible", "Base URL (OpenAI-совместимый)"))}</label><div class="field">${ic("globe")}<input id="v2ai-url" type="url" data-v2ai="base_url" value="${esc(ai.base_url)}" placeholder="https://api.example.com/v1" autocomplete="off"></div>`
@@ -3474,16 +3490,20 @@
         </div>
         ${
           models.length
-            ? `<select class="sel" id="v2ai-m" data-v2ai="model">${
-                hasManual
-                  ? `<option value="${esc(ai.model)}" selected>${esc(ai.model)} ${esc(F.t("ai.manual", "(вручную)"))}</option>`
-                  : ""
-              }${models
-                .map(
-                  m =>
-                    `<option value="${esc(m.id)}" ${ai.model === m.id ? "selected" : ""}>${esc(m.label && m.label !== m.id ? `${m.label} (${m.id})` : m.id)}</option>`,
-                )
-                .join("")}</select>`
+            ? ui.select({
+                id: "v2ai-m",
+                value: ai.model,
+                title: F.t("ai.model", "Модель"),
+                attrs: 'data-v2ai="model"',
+                options: [
+                  ...(hasManual ? [{ v: ai.model, t: ai.model, s: F.t("ai.manual", "(вручную)") }] : []),
+                  ...models.map(m => ({
+                    v: m.id,
+                    t: m.label && m.label !== m.id ? m.label : m.id,
+                    s: m.label && m.label !== m.id ? m.id : "",
+                  })),
+                ],
+              })
             : ""
         }
         ${metaPills.length ? `<div class="chips wrap v2ai-caps">${metaPills.join("")}</div>` : ""}
@@ -3503,9 +3523,13 @@
         } ${esc(F.t("ai.key_kept_androids_protected", "Ключ хранится в защищённом хранилище Android."))}</div>
         ${ui.secH(F.t("ai.reasoning_thinking_generation", "Рассуждение (Thinking) и генерация"))}
         <label class="flabel" for="v2ai-th">${esc(F.t("ai.reasoning_level_thinking", "Уровень рассуждения (Thinking / Reasoning effort)"))}</label>
-        <select class="sel" id="v2ai-th" data-v2ai="thinking">${THINKING_OPTS()
-          .map(([k, l]) => `<option value="${k}" ${ai.thinking === k ? "selected" : ""}>${l}</option>`)
-          .join("")}</select>
+        ${ui.select({
+          id: "v2ai-th",
+          value: ai.thinking,
+          title: F.t("ai.reasoning_level", "Уровень рассуждений"),
+          attrs: 'data-v2ai="thinking"',
+          options: THINKING_OPTS().map(([k, l, sub]) => ({ v: k, t: l, s: sub || "" })),
+        })}
         ${
           showBudget
             ? `<label class="flabel" for="v2ai-tb">${esc(F.t("ai.reasoning_token_budget_optional", "Бюджет токенов рассуждения (опционально)"))}</label><div class="field">${ic("v2-chip")}<input id="v2ai-tb" type="number" min="0" max="65536" step="256" data-v2ai="thinking_budget" value="${ai.thinking_budget || ""}" placeholder="${esc(F.t("ai.auto_gemini_2_5_claude_budget", "Авто (для Gemini 2.5 / Claude budget_tokens)"))}"></div>`
