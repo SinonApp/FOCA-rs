@@ -920,9 +920,9 @@
     unsupported: () => F.t("scan.ctl_unsupported", "Для этого элемента действие недоступно"),
   };
   const CTL_DONE = {
-    paused: () => F.t("scan.ctl_paused", "На паузе: остальной скан идёт"),
+    paused: () => F.t("scan.ctl_paused", "На паузе, остальной скан идёт дальше"),
     running: () => F.t("scan.ctl_running", "Продолжено"),
-    skipped: () => F.t("scan.ctl_skipped", "Пропущено: скан продолжается"),
+    skipped: () => F.t("scan.ctl_skipped", "Пропущено, скан идёт дальше"),
     restarting: () => F.t("scan.ctl_restarting", "Перезапуск в этом скане"),
     queued: () =>
       F.t(
@@ -1028,7 +1028,7 @@
           const x = F.scan.substep;
           if (x && x.id === id) x.slow = false;
           F.snack(
-            F.t("scan.snack_step_skipped", { name: subLabel(id) }, "«{name}» пропущен: скан продолжается"),
+            F.t("scan.snack_step_skipped", { name: subLabel(id) }, "«{name}» пропущен, скан идёт дальше"),
           );
         } else F.snack(F.t("scan.step_already", "Этот шаг уже завершён"));
         refresh();
@@ -1509,7 +1509,7 @@
             F.t(
               "scan.snack_src_skipped",
               { name: src ? sn(src) : id },
-              "«{name}» пропущен: скан продолжается",
+              "«{name}» пропущен, скан идёт дальше",
             ),
           );
         } else F.snack(F.t("scan.src_already", "Источник уже ответил"));
