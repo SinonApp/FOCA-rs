@@ -71,8 +71,8 @@
   cy="6.5" r="1.6"/></symbol>
 <symbol id="i-plug"
   viewBox="0 0 16 16"><path d="M6 2.5v3M10 2.5v3M4.5 5.5h7V8a3.5 3.5 0 0 1-7 0zM8 11.5v2"/></symbol>
-<symbol id="i-gear" viewBox="0 0 16 16"><circle cx="8" cy="8"
-  r="2"/><path d="M8 1.8v1.7M8 12.5v1.7M14.2 8h-1.7M3.5 8H1.8M12.4 3.6l-1.2 1.2M4.8 11.2l-1.2 1.2M12.4 12.4l-1.2-1.2M4.8 4.8 3.6 3.6"/></symbol>
+<symbol id="i-gear" viewBox="0 0 16 16"><path stroke-linejoin="round" d="M12.59 6.27 14.25 6.60 14.25 9.40 12.59 9.73 12.46 10.02 13.40 11.43 11.43 13.40 10.02 12.46 9.73 12.59 9.40 14.25 6.60 14.25 6.27 12.59 5.98 12.46 4.57 13.40 2.60 11.43 3.54 10.02 3.41 9.73 1.75 9.40 1.75 6.60 3.41 6.27 3.54 5.98 2.60 4.57 4.57 2.60 5.98 3.54 6.27 3.41 6.60 1.75 9.40 1.75 9.73 3.41 10.02 3.54 11.43 2.60 13.40 4.57 12.46 5.98z"/><circle cx="8" cy="8"
+  r="2.1"/></symbol>
 <symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></symbol>
 <symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2.5 14 13H2z"/><path d="M8 6.5v3M8 11.3h.01"/></symbol>
 <symbol id="i-filter" viewBox="0 0 16 16"><path d="M2.5 3.5h11L9.5 8.5v4l-3 1.5V8.5z"/></symbol>
