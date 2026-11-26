@@ -707,11 +707,7 @@
   }
   function copy(text) {
     const done = () => F.snack(F.t("debug.copied", "Скопировано"));
-    try {
-      navigator.clipboard.writeText(text).then(done, () => fallback(text));
-    } catch (e) {
-      fallback(text);
-    }
+    F.clipWrite(text).then(r => (r.ok ? done() : fallback(text)));
     function fallback(s) {
       const ta = document.createElement("textarea");
       ta.value = s;

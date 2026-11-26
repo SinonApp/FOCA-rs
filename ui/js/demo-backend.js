@@ -10364,6 +10364,10 @@
       return { enabled: true, granted: true, action: "requested", demo: true };
     },
     platform_exit: () => ({ ok: true, demo: true }),
+    // No native clipboard in the browser demo (like desktop): the UI falls back to navigator.clipboard.
+    platform_clipboard_read: () => ({ ok: false, unsupported: true, text: "", available: false, demo: true }),
+    platform_clipboard_write: () => ({ ok: false, unsupported: true, demo: true }),
+    platform_clipboard_clear: () => ({ ok: false, unsupported: true, cleared: false, demo: true }),
     platform_verify_search: ({ url } = {}) => ({ ok: true, closed: true, demo: true, url }),
     platform_device_info: () => ({
       demo: true,

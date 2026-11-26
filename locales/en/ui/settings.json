@@ -97,6 +97,7 @@
   "settings.check_key": "Check key",
   "settings.how_get_key": "How to get a key",
   "settings.clip_empty": "Clipboard is empty",
+  "settings.clip_unreadable": "Could not read the clipboard: paste the key manually",
   "settings.pasted_cleared": "Pasted from clipboard · clipboard cleared",
   "settings.pasted": "Pasted from clipboard",
   "settings.keys_banner_a": "Keys are kept in Android secure storage (Keystore) and",

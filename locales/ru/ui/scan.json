@@ -445,6 +445,7 @@
   "launch.snack_t_removed": "«{v}» убрана из этого скана",
   "launch.snack_t_deleted": "Цель «{v}» удалена",
   "launch.clip_empty": "Буфер обмена пуст",
+  "launch.clip_unreadable": "Не удалось прочитать буфер обмена: вставьте цели вручную",
   "launch.clip_pasted": "Вставлено из буфера",
   "launch.file_read_err": "Не удалось прочитать файл: {err}",
   "launch.imported": "Импортировано: {n}",

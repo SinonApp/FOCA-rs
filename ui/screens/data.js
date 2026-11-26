@@ -756,7 +756,7 @@
   };
   F.actions["dt-sec-copy"] = id => {
     const go = () => {
-      F.clipCopy(secById(id).value);
+      F.clipCopy(secById(id).value, { sensitive: true });
       F.snack(
         F.clipAutoClear()
           ? F.t("data.secret_copied_clipboard_clears", "Секрет скопирован · буфер очистится через 30 с")

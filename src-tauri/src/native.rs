@@ -50,6 +50,12 @@ impl Native for NoNative {
                 Ok(json!({ "enabled": true, "granted": true, "action": "none" }))
             }
             "app_exit" => Ok(json!({ "ok": true })),
+            // The UI falls back to navigator.clipboard (the desktop WebView may allow it).
+            "clipboard_read" => {
+                Ok(json!({ "ok": false, "unsupported": true, "text": "", "available": false }))
+            }
+            "clipboard_write" => Ok(json!({ "ok": false, "unsupported": true })),
+            "clipboard_clear" => Ok(json!({ "ok": false, "unsupported": true, "cleared": false })),
             "bg_status" | "bg_set" => Ok(json!({
                 "oem": "other", "autostart": "unknown", "battery_unrestricted": true,
                 "hide_recents": false, "hide_recents_default": false, "stub": true

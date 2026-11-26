@@ -97,11 +97,11 @@ sections.lock = async (page, { go, shot }) => {
       },
     });
     FOCA.CLIP_CLEAR_MS = 50;
-    FOCA.clipCopy("s3cr3t-value");
+    await FOCA.clipCopy("s3cr3t-value");
     const before = buf;
     await new Promise(r => setTimeout(r, 150));
     const after = buf;
-    FOCA.clipCopy("other");
+    await FOCA.clipCopy("other");
     buf = "user copied something else";
     await new Promise(r => setTimeout(r, 150));
     return { before, after, foreign: buf };

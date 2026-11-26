@@ -470,6 +470,14 @@ async fn platform(ctx: &Ctx, p: &str, a: &Value) -> Result<Value, CmdError> {
         // A visible browser for manual search engine verification exists only on Android.
         "verify_search" => Ok(json!({ "ok": false, "unsupported": true, "stub": true,
             "error": "Пройти проверку можно только в приложении на телефоне: встроенного браузера на стенде нет" })),
+        // The stand has no native clipboard: the UI falls back to navigator.clipboard.
+        "clipboard_read" => Ok(
+            json!({ "ok": false, "unsupported": true, "text": "", "available": false, "stub": true }),
+        ),
+        "clipboard_write" => Ok(json!({ "ok": false, "unsupported": true, "stub": true })),
+        "clipboard_clear" => {
+            Ok(json!({ "ok": false, "unsupported": true, "cleared": false, "stub": true }))
+        }
         _ => Err(CmdError::new("unknown_command", format!("platform_{p}"))),
     }
 }

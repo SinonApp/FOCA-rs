@@ -1425,28 +1425,83 @@
   });
 
   // ---------- clipboard ----------
+  // The Android WebView never grants the async Clipboard API read (navigator.clipboard.readText()
+  // rejects), so under Tauri the clipboard goes through the native ClipboardManager
+  // (platform_clipboard_*). Desktop and `foca serve` answer `unsupported` and the browser demo has no
+  // native layer: both fall back to navigator.clipboard.
   // Copying secrets: when "Clear clipboard after 30 s" is on (sec.clip, default on), the clipboard is wiped
   // after 30 s unless it already holds something else.
   F.CLIP_CLEAR_MS = 30000;
   F.clipAutoClear = () => (((F.db && F.db.settings) || {}).sec || {}).clip !== false;
   let clipT = null;
-  F.clipClear = expected => {
-    const cb = navigator.clipboard;
-    if (!cb) return Promise.resolve(false);
-    const wipe = () => Promise.resolve(cb.writeText("")).then(() => true);
-    if (expected == null || !cb.readText) return wipe().catch(() => false);
-    return Promise.resolve(cb.readText())
-      .then(cur => (cur === expected ? wipe() : false), wipe)
-      .catch(() => false);
-  };
-  F.clipCopy = txt => {
+  // Native call: resolves the reply, or null when there is no native clipboard (browser, desktop).
+  const clipNative = (cmd, args) =>
+    F.isTauri && F.api && F.api[cmd]
+      ? F.api[cmd](args).then(
+          r => (r && r.unsupported ? null : r || {}),
+          () => null,
+        )
+      : Promise.resolve(null);
+  // Reads the clipboard: { ok, text, error? }. `ok: false` means the clipboard could not be read
+  // (permission, no focus, ROM privacy setting), as opposed to an empty clipboard ({ ok: true, text: "" }).
+  F.clipRead = () =>
+    clipNative("platform_clipboard_read", {}).then(r => {
+      if (r) return { ok: r.ok !== false, text: String(r.text || ""), error: r.error || null };
+      const cb = navigator.clipboard;
+      if (!cb || !cb.readText) return { ok: false, text: "", error: "unsupported" };
+      return Promise.resolve()
+        .then(() => cb.readText())
+        .then(
+          t => ({ ok: true, text: String(t || ""), error: null }),
+          e => ({ ok: false, text: "", error: (e && e.name) || "denied" }),
+        );
+    });
+  // Writes text: resolves true when it reached the clipboard. `sensitive` hides the value in the
+  // Android 13+ copy preview; `clearAfter` (ms) lets the native layer schedule the conditional clear.
+  F.clipWrite = (txt, { sensitive = false, clearAfter = 0 } = {}) => {
     const s = String(txt == null ? "" : txt);
-    try {
-      const p = navigator.clipboard && navigator.clipboard.writeText(s);
-      if (p && p.catch) p.catch(() => {});
-    } catch (e) {}
+    return clipNative("platform_clipboard_write", {
+      text: s,
+      sensitive: !!sensitive,
+      clear_after_ms: clearAfter,
+    }).then(r => {
+      if (r) return r.ok !== false ? { ok: true, native: true } : { ok: false, native: true };
+      try {
+        const p = navigator.clipboard && navigator.clipboard.writeText(s);
+        if (!p) return { ok: false };
+        return Promise.resolve(p).then(
+          () => ({ ok: true }),
+          () => ({ ok: false }),
+        );
+      } catch (e) {
+        return { ok: false };
+      }
+    });
+  };
+  // Wipes the clipboard; with `expected` only while it still holds that value. Resolves true if cleared.
+  F.clipClear = expected =>
+    clipNative("platform_clipboard_clear", expected == null ? {} : { expected: String(expected) }).then(r => {
+      if (r) return !!r.cleared;
+      const cb = navigator.clipboard;
+      if (!cb || !cb.writeText) return false;
+      const wipe = () => Promise.resolve(cb.writeText("")).then(() => true);
+      if (expected == null || !cb.readText) return wipe().catch(() => false);
+      return Promise.resolve()
+        .then(() => cb.readText())
+        .then(cur => (cur === expected ? wipe() : false), wipe)
+        .catch(() => false);
+    });
+  // Copies with the auto-clear policy; `sensitive` for keys and secrets. Resolves like F.clipWrite.
+  F.clipCopy = (txt, { sensitive = false } = {}) => {
+    const s = String(txt == null ? "" : txt);
+    const auto = F.clipAutoClear();
     clearTimeout(clipT);
-    if (F.clipAutoClear()) clipT = setTimeout(() => F.clipClear(s), F.CLIP_CLEAR_MS);
+    clipT = null;
+    return F.clipWrite(s, { sensitive, clearAfter: auto ? F.CLIP_CLEAR_MS : 0 }).then(r => {
+      // The native layer runs the timer itself (WebView timers may be throttled in the background).
+      if (auto && !r.native) clipT = setTimeout(() => F.clipClear(s), F.CLIP_CLEAR_MS);
+      return r;
+    });
   };
 
   // ---------- local text files ----------

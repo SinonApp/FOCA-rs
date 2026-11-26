@@ -614,9 +614,7 @@
       if (id === "list") {
         const k = kindOf(exp.o.kind);
         const items = exp.o.items || k.items();
-        try {
-          navigator.clipboard.writeText(items.join("\n"));
-        } catch (e) {}
+        F.clipWrite(items.join("\n"));
         F.closeSheet();
         F.snack(
           F.t(

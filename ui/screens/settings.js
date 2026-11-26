@@ -630,16 +630,20 @@
       });
     },
     "st-kpaste": async () => {
-      let t = "";
-      try {
-        t = await navigator.clipboard.readText();
-      } catch (e) {}
+      const r = await F.clipRead();
+      const t = r.text.trim();
       const i = document.getElementById("st-kv");
-      if (!(t && t.trim()) && !F.isDemo) {
-        F.snack(F.t("settings.clip_empty", "Буфер обмена пуст"));
+      // The browser demo has no clipboard access by default: a sample key stands in.
+      if (!t && !F.isDemo) {
+        F.snack(
+          r.ok
+            ? F.t("settings.clip_empty", "Буфер обмена пуст")
+            : F.t("settings.clip_unreadable", "Не удалось прочитать буфер обмена: вставьте ключ вручную"),
+        );
         return;
       }
-      i.value = (t && t.trim()) || "hP3xN8qL2vR7tY0wK5zab9";
+      if (!i) return;
+      i.value = t || "hP3xN8qL2vR7tY0wK5zab9";
       // The key must not stay in the clipboard after it has been pasted.
       const cleared = t ? await F.clipClear() : false;
       F.snack(
@@ -708,10 +712,7 @@
           ),
         );
       const copyLink = () => {
-        try {
-          const p = navigator.clipboard && navigator.clipboard.writeText(url);
-          if (p && p.catch) p.catch(() => {});
-        } catch (e) {}
+        F.clipWrite(url);
         F.snack(
           F.t(
             "settings.link_copied",

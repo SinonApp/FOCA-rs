@@ -1288,13 +1288,15 @@
       ta.setSelectionRange(e.v.length, e.v.length);
     },
     "la-paste": async () => {
-      let txt = "";
-      try {
-        txt = await navigator.clipboard.readText();
-      } catch (e) {}
-      if (!txt || !txt.trim()) {
+      const r = await F.clipRead();
+      let txt = r.text;
+      if (!txt.trim()) {
         if (!F.isDemo) {
-          F.snack(tx("launch.clip_empty", "Буфер обмена пуст"));
+          F.snack(
+            r.ok
+              ? tx("launch.clip_empty", "Буфер обмена пуст")
+              : tx("launch.clip_unreadable", "Не удалось прочитать буфер обмена: вставьте цели вручную"),
+          );
           return;
         }
         txt = `${baseDom().replace(/\..*$/, "")}-group.com\n*.${baseDom()}`;

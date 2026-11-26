@@ -884,6 +884,20 @@ impl Bridge {
             // grades and cleans them (hygiene_get / doc_clean { path }) without a project.
             "shared_files" => n("shared_files", json!({})),
             "pick_image" => n("pick_image", a.clone()),
+            // Clipboard through ClipboardManager: the Android WebView never grants the async
+            // Clipboard API read. Desktop answers `unsupported` and the UI uses navigator.clipboard.
+            "clipboard_read" => n("clipboard_read", json!({})),
+            "clipboard_write" => n(
+                "clipboard_write",
+                clipboard_write_args(a).map_err(|e| err("bad_args", e))?,
+            ),
+            "clipboard_clear" => n(
+                "clipboard_clear",
+                match a.get("expected").and_then(Value::as_str) {
+                    Some(x) => json!({ "expected": x }),
+                    None => json!({}),
+                },
+            ),
             _ => Err(err("unknown_command", format!("platform_{p}"))),
         }
     }
@@ -1495,6 +1509,63 @@ fn open_url_desktop(url: &str) -> Result<(), String> {
     cmd.spawn()
         .map(|_| ())
         .map_err(|e| format!("не удалось открыть браузер: {e}"))
+}
+
+/// Largest text `platform_clipboard_write` accepts (bytes) and the longest auto-clear delay.
+const CLIP_MAX_BYTES: usize = 1024 * 1024;
+const CLIP_MAX_CLEAR_MS: u64 = 10 * 60 * 1000;
+
+/// Validates `platform_clipboard_write { text, sensitive?, clear_after_ms? }` for the plugin.
+fn clipboard_write_args(a: &Value) -> Result<Value, String> {
+    let text = a
+        .get("text")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "нет текста для буфера обмена".to_string())?;
+    if text.len() > CLIP_MAX_BYTES {
+        return Err("слишком длинный текст для буфера обмена".into());
+    }
+    let sensitive = a.get("sensitive").and_then(Value::as_bool).unwrap_or(false);
+    let ms = a
+        .get("clear_after_ms")
+        .and_then(Value::as_u64)
+        .unwrap_or(0)
+        .min(CLIP_MAX_CLEAR_MS);
+    Ok(json!({ "text": text, "sensitive": sensitive, "clear_after_ms": ms }))
+}
+
+#[cfg(test)]
+mod clipboard_tests {
+    use serde_json::json;
+
+    #[test]
+    fn clipboard_write_args_are_checked_and_clamped() {
+        let v = super::clipboard_write_args(
+            &json!({ "text": "k", "sensitive": true, "clear_after_ms": 30000 }),
+        )
+        .unwrap();
+        assert_eq!(
+            v,
+            json!({ "text": "k", "sensitive": true, "clear_after_ms": 30000 })
+        );
+        let v = super::clipboard_write_args(&json!({ "text": "", "clear_after_ms": u64::MAX }))
+            .unwrap();
+        assert_eq!(v["sensitive"], false);
+        assert_eq!(v["clear_after_ms"], super::CLIP_MAX_CLEAR_MS);
+        assert!(super::clipboard_write_args(&json!({})).is_err());
+        assert!(super::clipboard_write_args(&json!({ "text": 5 })).is_err());
+        let big = "x".repeat(super::CLIP_MAX_BYTES + 1);
+        assert!(super::clipboard_write_args(&json!({ "text": big })).is_err());
+    }
+
+    #[test]
+    fn desktop_clipboard_is_reported_unsupported() {
+        use crate::native::{Native, NoNative};
+        for cmd in ["clipboard_read", "clipboard_write", "clipboard_clear"] {
+            let v = NoNative.call(cmd, json!({})).unwrap();
+            assert_eq!(v["unsupported"], true, "{cmd}");
+            assert_eq!(v["ok"], false, "{cmd}");
+        }
+    }
 }
 
 #[cfg(test)]

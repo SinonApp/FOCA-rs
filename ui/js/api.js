@@ -942,6 +942,11 @@
     platform_request_notifications: () => run("platform_request_notifications", {}),
     platform_exit: () => run("platform_exit", {}),
     platform_device_info: () => run("platform_device_info", {}),
+    // Native clipboard (the Android WebView cannot read it): { ok, text, available, error? },
+    // { ok, scheduled }, { ok, cleared }; desktop and the demo answer { unsupported: true }.
+    platform_clipboard_read: () => run("platform_clipboard_read", {}),
+    platform_clipboard_write: o => run("platform_clipboard_write", o || {}),
+    platform_clipboard_clear: o => run("platform_clipboard_clear", o || {}),
     // Terms of use (first screen) and the Debug tab.
     terms_get: () => run("terms_get", {}),
     terms_accept: version => run("terms_accept", { version }),

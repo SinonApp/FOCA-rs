@@ -97,6 +97,7 @@
   "settings.check_key": "Проверить ключ",
   "settings.how_get_key": "Как получить ключ",
   "settings.clip_empty": "Буфер обмена пуст",
+  "settings.clip_unreadable": "Не удалось прочитать буфер обмена: вставьте ключ вручную",
   "settings.pasted_cleared": "Вставлено из буфера · буфер очищен",
   "settings.pasted": "Вставлено из буфера",
   "settings.keys_banner_a": "Ключи хранятся в защищённом хранилище Android (Keystore) и",

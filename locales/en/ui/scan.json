@@ -445,6 +445,7 @@
   "launch.snack_t_removed": "“{v}” removed from this scan",
   "launch.snack_t_deleted": "Target “{v}” deleted",
   "launch.clip_empty": "The clipboard is empty",
+  "launch.clip_unreadable": "Could not read the clipboard: paste the targets manually",
   "launch.clip_pasted": "Pasted from clipboard",
   "launch.file_read_err": "Could not read the file: {err}",
   "launch.imported": "Imported: {n}",

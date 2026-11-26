@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -15,6 +16,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.os.PersistableBundle
 import android.os.PowerManager
 import android.print.PdfPrintDriver
 import android.print.PrintAttributes
@@ -881,6 +883,130 @@ class FocaPlugin(private val created: Activity) : Plugin(created) {
     val a = invoke.getArgs()
     if (a.has("hide_recents")) RecentsGuard.setEnabled(ctx, a.getBoolean("hide_recents", false))
     bg_status(invoke)
+  }
+
+  // Clipboard. The WebView cannot read it (no async Clipboard API read grant), so the UI goes through
+  // ClipboardManager. Decisions live in ClipLogic (unit tested).
+  private val clipboard: ClipboardManager? get() = ctx.getSystemService(ClipboardManager::class.java)
+  /** SHA-256 of the last clip this app wrote; null after a clear or a foreign change. */
+  private var clipWritten: String? = null
+  /** A clip change not made by this app was seen after [clipWritten] (only reported while focused). */
+  private var clipChanged = false
+  private var clipListening = false
+  private var clipClearTask: Runnable? = null
+  private val clipHandler by lazy { Handler(Looper.getMainLooper()) }
+
+  /** Text of the primary clip, or null when there is none or the system hides it from the app. */
+  private fun clipText(cm: ClipboardManager): String? {
+    val clip = cm.primaryClip ?: return null
+    for (i in 0 until clip.itemCount) {
+      val t = clip.getItemAt(i).coerceToText(ctx)
+      if (!t.isNullOrEmpty()) return ClipLogic.capText(t)
+    }
+    return ""
+  }
+
+  private fun clipListen(cm: ClipboardManager) {
+    if (clipListening) return
+    clipListening = true
+    cm.addPrimaryClipChangedListener {
+      // Android 10+ delivers this only while the app may read the clipboard; our own writes match.
+      val t = try { clipText(cm) } catch (_: Throwable) { null } ?: return@addPrimaryClipChangedListener
+      if (clipWritten != null && ClipLogic.digest(t) != clipWritten) clipChanged = true
+    }
+  }
+
+  /** Clears the clipboard if [ClipLogic.shouldClear] allows it; returns whether it was cleared. */
+  private fun clipClearIf(cm: ClipboardManager, expectedDigest: String?): Boolean {
+    val focused = activity.hasWindowFocus()
+    val cur = if (focused) clipText(cm) else null
+    // Focused and no clip at all is readable too (nothing there); a hidden clip is not.
+    val readable = focused && (cur != null || !cm.hasPrimaryClip())
+    val ok = ClipLogic.shouldClear(expectedDigest, readable, cur?.let { ClipLogic.digest(it) }, clipWritten, clipChanged)
+    if (!ok) return false
+    if (ClipLogic.canClearNatively(Build.VERSION.SDK_INT)) cm.clearPrimaryClip()
+    else cm.setPrimaryClip(ClipData.newPlainText("", ""))
+    clipWritten = null
+    clipChanged = false
+    return true
+  }
+
+  /** `platform_clipboard_read`: `{ ok, text, available, error? }`. `error`: `no_focus` (the app has no
+   *  window focus, Android 10+ hides the clipboard), `blocked` (a clip exists but the system or the
+   *  ROM privacy setting withholds it), `unavailable` (no ClipboardManager). */
+  @Command
+  fun clipboard_read(invoke: Invoke) {
+    val out = JSObject().put("text", "").put("available", false)
+    try {
+      val cm = clipboard ?: run { invoke.resolve(out.put("ok", false).put("error", "unavailable")); return }
+      clipListen(cm)
+      if (!activity.hasWindowFocus()) { invoke.resolve(out.put("ok", false).put("error", "no_focus")); return }
+      val t = clipText(cm)
+      if (t == null) {
+        if (cm.hasPrimaryClip()) { FLog.w("буфер обмена: клип есть, но система его не отдаёт"); out.put("ok", false).put("error", "blocked") }
+        else out.put("ok", true)
+      } else {
+        out.put("ok", true).put("text", t).put("available", t.isNotEmpty())
+      }
+    } catch (e: Throwable) {
+      FLog.w("clipboard_read", e)
+      out.put("ok", false).put("error", "platform")
+    }
+    invoke.resolve(out)
+  }
+
+  /** `platform_clipboard_write { text, sensitive?, clear_after_ms? }`: `{ ok }`. `sensitive` sets
+   *  `EXTRA_IS_SENSITIVE` (Android 13+ hides the value in the copy preview); `clear_after_ms` schedules
+   *  the conditional auto-clear here, so it runs even if the WebView timers are throttled. */
+  @Command
+  fun clipboard_write(invoke: Invoke) {
+    val a = invoke.getArgs()
+    val text = a.getString("text", null) ?: ""
+    try {
+      val cm = clipboard ?: run { invoke.resolve(JSObject().put("ok", false).put("error", "unavailable")); return }
+      clipListen(cm)
+      val clip = ClipData.newPlainText(ClipLogic.LABEL, text)
+      if (a.getBoolean("sensitive", false)) {
+        clip.description.extras = PersistableBundle().apply { putBoolean(ClipLogic.EXTRA_IS_SENSITIVE, true) }
+      }
+      val d = ClipLogic.digest(text)
+      clipWritten = d
+      clipChanged = false
+      cm.setPrimaryClip(clip)
+      clipClearTask?.let { clipHandler.removeCallbacks(it) }
+      clipClearTask = null
+      val ms = a.getInteger("clear_after_ms", 0)
+      if (ms > 0) {
+        val task = Runnable {
+          clipClearTask = null
+          val done = try { clipClearIf(cm, d) } catch (e: Throwable) { FLog.w("clipboard auto-clear", e); false }
+          FLog.i("буфер обмена: автоочистка ${if (done) "выполнена" else "пропущена (там уже другое)"}")
+        }
+        clipClearTask = task
+        clipHandler.postDelayed(task, ms.toLong())
+      }
+      invoke.resolve(JSObject().put("ok", true).put("scheduled", ms > 0))
+    } catch (e: Throwable) {
+      FLog.w("clipboard_write", e)
+      invoke.resolve(JSObject().put("ok", false).put("error", "platform"))
+    }
+  }
+
+  /** `platform_clipboard_clear { expected? }`: `{ ok, cleared }`. With `expected` the clipboard is wiped
+   *  only while it still holds that value (see ClipLogic.shouldClear). */
+  @Command
+  fun clipboard_clear(invoke: Invoke) {
+    val a = invoke.getArgs()
+    val expected = if (a.has("expected")) a.getString("expected", null) else null
+    try {
+      val cm = clipboard ?: run { invoke.resolve(JSObject().put("ok", false).put("cleared", false)); return }
+      val cleared = clipClearIf(cm, expected?.let { ClipLogic.digest(it) })
+      if (cleared) clipClearTask?.let { clipHandler.removeCallbacks(it); clipClearTask = null }
+      invoke.resolve(JSObject().put("ok", true).put("cleared", cleared))
+    } catch (e: Throwable) {
+      FLog.w("clipboard_clear", e)
+      invoke.resolve(JSObject().put("ok", false).put("cleared", false).put("error", "platform"))
+    }
   }
 
   @Command
