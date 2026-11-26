@@ -337,24 +337,25 @@ pub struct Overview {
 /// get a localized "version unknown" suffix. The internal key (`word2007`) never reaches the
 /// report.
 pub fn sw_label(s: &foca_core::api::Software, lang: crate::Lang) -> String {
+    let name = crate::ftext::terms(&s.name, lang);
     let ver = s.ver.trim();
     if ver.is_empty() {
         if matches!(s.kind.as_str(), "office" | "pdf" | "image" | "")
-            && !s.name.chars().any(|c| c.is_ascii_digit())
+            && !name.chars().any(|c| c.is_ascii_digit())
         {
             let unk = match lang {
                 crate::Lang::Ru => "версия неизвестна",
                 crate::Lang::Uk => "версія невідома",
                 crate::Lang::En => "version unknown",
             };
-            return format!("{} ({unk})", s.name);
+            return format!("{name} ({unk})");
         }
-        return s.name.clone();
+        return name;
     }
-    if s.name.contains(ver) {
-        s.name.clone()
+    if name.contains(ver) {
+        name
     } else {
-        format!("{} ({ver})", s.name)
+        format!("{name} ({ver})")
     }
 }
 

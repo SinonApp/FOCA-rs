@@ -592,7 +592,7 @@ fn visuals(c: &Ctx, o: &mut String) {
         }
         o.push('\n');
     }
-    if let Some(g) = timeline::grid(&c.vis.timeline) {
+    if let Some(g) = timeline::grid(&c.vis.timeline, c.o.lang) {
         let _ = writeln!(o, "## {}\n", esc(v.timeline));
         let mut head = vec![v.year];
         head.extend(g.lanes.iter().map(|x| v.lanes[*x as usize]));

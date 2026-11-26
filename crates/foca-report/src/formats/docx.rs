@@ -98,7 +98,7 @@ fn doc_tables(c: &Ctx, w: &mut DocWriter, list: &[DocTable]) {
 /// Chronology as a year × lane table (the text form of the timeline diagram).
 fn chronology(c: &Ctx, w: &mut DocWriter) {
     use crate::svg::{flat, timeline};
-    let Some(g) = timeline::grid(&c.vis.timeline) else {
+    let Some(g) = timeline::grid(&c.vis.timeline, c.o.lang) else {
         return;
     };
     let v = i18n::viz(c.o.lang);

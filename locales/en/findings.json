@@ -3777,6 +3777,26 @@
     [
       " … и ещё ",
       " … +"
+    ],
+    [
+      "(нет)",
+      "(none)"
+    ],
+    [
+      "Content-Security-Policy: есть",
+      "Content-Security-Policy: present"
+    ],
+    [
+      "Цифровая камера",
+      "Digital camera"
+    ],
+    [
+      "камера неизвестна",
+      "camera unknown"
+    ],
+    [
+      "(камера)",
+      "(camera)"
     ]
   ],
   "log_terms": [

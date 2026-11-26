@@ -420,6 +420,86 @@ fn log_export_errors_in_export_language() {
     }
 }
 
+/// A project with a scope-blocked MTA-STS fetch (finding and log row stored by an older core),
+/// missing security headers and a camera from EXIF renders without Russian in EN and UK.
+#[test]
+fn scope_blocked_mail_headers_and_camera_localized() {
+    use foca_report::svg::timeline::{Lane, Timeline, TimelineEvent};
+    use foca_report::svg::Visuals;
+    let mut s = fixture().snap.clone();
+    let oos = "вне скоупа: mta-sts.contoso.example (нет в целях или в исключениях)";
+    let mut f = s.findings[0].clone();
+    f.id = 999_101;
+    f.title = "Запись MTA-STS есть, но файл политики недоступен".into();
+    f.description = oos.into();
+    f.evidence = String::new();
+    f.provenance.rule = "mail-mta_sts_policy_unreachable".into();
+    s.findings.push(f);
+    let mut h = s.findings[0].clone();
+    h.id = 999_102;
+    h.evidence = "URL: https://contoso.example/\nStrict-Transport-Security: (нет)\nContent-Security-Policy: есть\nX-Frame-Options: (нет)".into();
+    s.findings.push(h);
+    s.software.push(foca_core::api::Software {
+        id: "sony".into(),
+        name: "Sony (камера)".into(),
+        kind: "camera".into(),
+        docs: 1,
+        ..Default::default()
+    });
+    let vis = Visuals {
+        timeline: Timeline {
+            events: vec![TimelineEvent {
+                lane: Lane::Software,
+                year: 2024,
+                label: "Sony (камера)".into(),
+            }],
+        },
+        ..Visuals::default()
+    };
+    let log = vec![RequestEntry {
+        time: "2026-11-26T21:55:00Z".into(),
+        module: "mail".into(),
+        method: "GET".into(),
+        url: "https://mta-sts.contoso.example/.well-known/mta-sts.txt".into(),
+        host: "mta-sts.contoso.example".into(),
+        blocked: true,
+        error: Some(format!("out_of_scope: {oos}")),
+        ..Default::default()
+    }];
+    for lang in [Lang::En, Lang::Uk] {
+        for fmt in [ReportFormat::Md, ReportFormat::Html] {
+            let r = text(&foca_report::build_report_with_visuals(
+                &s,
+                &log,
+                &vis,
+                &ReportOptions { lang, ..opts(fmt) },
+                NOW,
+            ));
+            for w in [
+                "(нет)",
+                ": есть",
+                "вне скоупа",
+                "нет в целях",
+                "исключениях",
+                "Цифровая",
+                "неизвестна",
+                "файл политики",
+            ] {
+                assert!(!r.contains(w), "{lang:?} {fmt:?}: {w}");
+            }
+            if lang == Lang::En {
+                assert!(!r.contains("(камера)"), "{fmt:?}");
+                assert!(r.contains("mta-sts.contoso.example (not among the targets or excluded)"));
+                assert!(r.contains("Strict-Transport-Security: (none)"), "{fmt:?}");
+                assert!(r.contains("Sony (camera)"), "{fmt:?}");
+            } else {
+                assert!(r.contains("немає серед цілей або у винятках"), "{fmt:?}");
+                assert!(r.contains("Strict-Transport-Security: (немає)"), "{fmt:?}");
+            }
+        }
+    }
+}
+
 #[test]
 fn english_report_date_and_no_evidence_repeating_description() {
     let mut s = fixture().snap.clone();

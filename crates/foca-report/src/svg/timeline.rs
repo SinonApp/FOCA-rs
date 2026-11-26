@@ -65,13 +65,14 @@ pub(crate) struct Grid {
     pub totals: Vec<usize>,
 }
 
-pub(crate) fn grid(tl: &Timeline) -> Option<Grid> {
+/// Builds the grid; labels (core data such as `Sony (камера)`) are put into the report language.
+pub(crate) fn grid(tl: &Timeline, l: Lang) -> Option<Grid> {
     let mut by: BTreeMap<i32, [BTreeMap<String, usize>; 4]> = BTreeMap::new();
     for e in tl.events.iter().take(MAX_EVENTS) {
         if !(1970..=2100).contains(&e.year) {
             continue;
         }
-        let label = flat(&e.label);
+        let label = flat(&crate::ftext::terms(&e.label, l));
         *by.entry(e.year).or_default()[e.lane as usize]
             .entry(label)
             .or_default() += 1;
@@ -186,7 +187,7 @@ fn cell_lines(c: &Cell, lane_w: f64) -> Vec<String> {
 /// Renders the chronology, or `None` without dated events.
 pub fn render(tl: &Timeline, l: Lang) -> Option<Figure> {
     let t = i18n::viz(l);
-    let g = grid(tl)?;
+    let g = grid(tl, l)?;
     let lane_w = (W - YEAR_W - PAD) / g.lanes.len() as f64;
     let row_h: Vec<f64> = g
         .rows
@@ -382,7 +383,7 @@ mod tests {
         tl.events.push(ev(Lane::Software, 2019, "Office 2016"));
         tl.events.push(ev(Lane::Software, 2019, "Acrobat"));
         tl.events.push(ev(Lane::Software, 1800, "bogus"));
-        let g = grid(&tl).unwrap();
+        let g = grid(&tl, Lang::Ru).unwrap();
         assert_eq!(g.lanes, vec![Lane::Documents, Lane::Software]);
         assert_eq!(g.rows.len(), MAX_YEARS + 1);
         assert!(g.rows[0].1 && g.rows[0].0 == 1999);
