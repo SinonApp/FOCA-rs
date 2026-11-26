@@ -63,4 +63,3 @@ FOCA-rs 2.0.0-beta.2 is an Android application (Tauri v2 + Rust core) for author
 | `ui/` | [Vanilla JS Mobile UI](../ui/README.md) |
 | `qa/` | [QA Scripts, Invariants & E2E Harness](../qa/README.md) |
 | `tests/` | [Reference Document Corpus & Fixtures](../tests/README.md) |
-| `progress/` | [Historical Plans & Screen Concepts](../progress/README.md) |

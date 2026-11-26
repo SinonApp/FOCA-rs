@@ -68,4 +68,3 @@ FOCA-rs 2.0.0-beta.2: Android-приложение (Tauri 2 + чисто-Rust я
 | `ui/` | [Интерфейс](../../ui/README.md) |
 | `qa/` | [Скрипты проверки](../../qa/README.md) |
 | `tests/` | [Корпус и фикстуры](../../tests/README.md) |
-| `progress/` | [Исторические планы и концепты экранов](../../progress/README.md) |
