@@ -744,15 +744,20 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
             tokio::select! {
                 r = &mut run => break r,
                 _ = tick.tick() => {
-                    // propagate scan pause/resume to the brute force
-                    let paused = c.pause.borrow().is_some();
+                    // propagate scan pause/resume and the stage's own Pause button to the brute force
+                    let held = c.is_held(&["stage:fuzz".to_string(), "source:fuzz".to_string()]);
+                    let paused = c.pause.borrow().is_some() || held;
                     if paused && !ctl.is_paused() {
                         ctl.pause();
                     } else if !paused && ctl.is_paused() {
                         ctl.resume();
                     }
-                    // "stop brute force" (scan_skip_source { id: "fuzz" })
-                    if lock(&c.skip).contains("fuzz") && !ctl.is_cancelled() {
+                    // "stop brute force" (scan_skip_source { id: "fuzz" }), Skip or Restart on the stage
+                    let stop_asked = {
+                        let sk = lock(&c.skip);
+                        sk.contains("fuzz") || sk.contains(&format!("{}fuzz", super::control::SKIP_STAGE))
+                    } || c.restart_asked("stage", "fuzz");
+                    if stop_asked && !ctl.is_cancelled() {
                         tracing::info!(target: "foca::scan", "{}: перебор остановлен пользователем", c.scan_id);
                         ctl.cancel();
                     }

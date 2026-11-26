@@ -524,10 +524,11 @@ pub(crate) async fn pipeline(mut c: Ctx) -> Result<(), Stop> {
                 tracing::info!(target: "foca::scan", "{}: этап «{}», перезапуск по запросу через {ms} мс", c.scan_id, label)
             }
         }
+        // a skip asked while the stage was running is spent once the stage is over, whether the stage
+        // noticed it at a checkpoint or cut its own long-running work short (brute force)
+        lock(&c.skip).remove(&format!("{}{}", control::SKIP_STAGE, stage.0));
         match r {
-            Err(Stop::SkipStage) => {
-                lock(&c.skip).remove(&format!("{}{}", control::SKIP_STAGE, stage.0));
-            }
+            Err(Stop::SkipStage) => {}
             // a restart asked while the stage was finishing runs it again as well
             Err(Stop::RestartStage) => continue,
             Ok(()) if c.take_restart("stage", stage.0) => continue,

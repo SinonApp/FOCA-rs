@@ -362,6 +362,54 @@ async fn stop_fuzz_only_keeps_scan_going() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn stage_buttons_reach_a_running_brute_force() {
+    let e = fuzz_env().await;
+    let id = e.project("example.test").await;
+    e.call(
+        "settings_set",
+        json!({ "patch": { "fuzz": { "threads": 1, "max_hosts": 1 } } }),
+    )
+    .await;
+    e.call("scan_start", full(&id)).await;
+    for _ in 0..500 {
+        if fuzz_log(&e, &id).await.len() > 20 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    // the stage's own Pause holds the brute force, not only the next checkpoint
+    let r = e
+        .call(
+            "scan_control",
+            json!({ "kind": "stage", "id": "fuzz", "action": "pause" }),
+        )
+        .await;
+    assert_eq!(r["state"], "paused", "{r}");
+    tokio::time::sleep(Duration::from_millis(900)).await;
+    let n1 = fuzz_log(&e, &id).await.len();
+    tokio::time::sleep(Duration::from_millis(1200)).await;
+    let n2 = fuzz_log(&e, &id).await.len();
+    assert!(
+        n2 <= n1 + 4,
+        "brute force runs on while the stage is paused: {n1} -> {n2}"
+    );
+    // Skip on the stage cuts the brute force short and the scan finishes
+    let r = e
+        .call(
+            "scan_control",
+            json!({ "kind": "stage", "id": "fuzz", "action": "skip" }),
+        )
+        .await;
+    assert_eq!(r["state"], "skipped", "{r}");
+    tokio::time::timeout(Duration::from_secs(20), e.wait())
+        .await
+        .expect("the scan did not finish after Skip on the running stage");
+    assert!(e.events().iter().any(|x| x["type"] == "done"));
+    let n3 = fuzz_log(&e, &id).await.len();
+    assert!(n3 <= n2 + 8, "brute force went on after Skip: {n2} -> {n3}");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn standard_profile_means_zero_fuzz_requests() {
     let e = fuzz_env().await;
     let id = e.project("example.test").await;
