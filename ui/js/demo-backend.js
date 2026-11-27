@@ -279,6 +279,41 @@
     if (sum.kev) sum.max_epss = 0.94;
     return sum;
   }
+  // One page of a demo product's CVE list, shaped like the core's `cve_list`.
+  const DEMO_CWE = [79, 787, 20, 416, 94, 122];
+  function demoCveList({ product, version, offset = 0, limit = 50 }) {
+    const sw = SOFTWARE.find(
+      x => x.cves && demoCveSum(x).product === product && (!version || x.ver === version),
+    );
+    if (!sw) throw apiErr("not_found", "продукт не найден в базе NVD");
+    const sum = demoCveSum(sw);
+    const band = v => (v >= 9 ? "critical" : v >= 7 ? "high" : v >= 4 ? "medium" : "low");
+    const rows = sum.cves.map((c, i) => ({
+      id: c.id,
+      cvss: c.cvss,
+      severity: band(c.cvss),
+      kev: c.kev,
+      epss: c.epss,
+      cwe: [DEMO_CWE[i % DEMO_CWE.length]],
+      year: Number(c.id.split("-")[1]),
+      range: sw.kind === "office" ? "=2013" : `[,${sw.ver})`,
+    }));
+    return {
+      product: sum.product,
+      version: sum.version,
+      version_specific: true,
+      total: rows.length,
+      offset,
+      critical: sum.critical,
+      high: sum.high,
+      medium: sum.medium,
+      low: sum.low,
+      kev: sum.kev,
+      unbounded: 0,
+      max_epss: sum.max_epss,
+      items: rows.slice(offset, offset + limit),
+    };
+  }
   // ================= reference data =================
   // Software: rel is the release year (a document cannot be older), exts lists the file types it produces.
   const SOFTWARE = [
@@ -12026,6 +12061,7 @@
       save();
       return clone(f);
     },
+    cve_list: a => demoCveList(a),
     finding_playbook: ({ project, id, lang }) => {
       const st = P(project);
       const f = touchFinding(st, id);

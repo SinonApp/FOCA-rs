@@ -402,8 +402,13 @@ fn cve_products(
                 if let Some(e) = c.max_epss {
                     cvss.push_str(&format!(" · EPSS {e:.2}"));
                 }
-                let top: Vec<&str> = c.cves.iter().take(3).map(|r| r.id.as_str()).collect();
-                (c.matched.to_string(), bands, cvss, top.join(", "))
+                // top 10 (KEV, CVSS, EPSS order) with the total when the list is longer
+                let top: Vec<&str> = c.cves.iter().take(10).map(|r| r.id.as_str()).collect();
+                let mut top = top.join(", ");
+                if c.matched as usize > 10 {
+                    top.push_str(&format!(" (10/{})", c.matched));
+                }
+                (c.matched.to_string(), bands, cvss, top)
             } else {
                 (
                     format!("{} ({})", c.known, t.version_unknown),

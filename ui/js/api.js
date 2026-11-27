@@ -883,6 +883,7 @@
     ai_summarize: (preview_id, opts) => run("ai_summarize", { project: cur(), preview_id, opts }),
     ai_cancel: () => run("ai_cancel", { project: cur() }),
     ai_summaries_list: () => run("ai_summaries_list", { project: cur() }),
+    cve_list: (q, offset = 0, limit = 50) => run("cve_list", { ...q, offset, limit }),
     ai_summary_use: summary => run("ai_summary_use", { project: cur(), summary }),
     ai_summary_delete: summary => run("ai_summary_delete", { project: cur(), summary }),
     pin_set: (pin, panic) => run("pin_set", { pin, panic }),

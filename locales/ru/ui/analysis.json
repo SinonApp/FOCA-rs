@@ -295,6 +295,7 @@
   "findings.status_title": "Статус находки",
   "findings.copy": "Копировать",
   "findings.open_nvd": "Открыть NVD",
+  "findings.cve_all": "Все уязвимости продукта",
   "findings.ext_demo": "Откроется во внешнем браузере (демо)",
   "findings.link_copied": "Ссылка скопирована: откройте её в браузере",
   "findings.effort_low": "Низкая трудоёмкость",

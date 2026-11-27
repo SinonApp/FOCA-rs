@@ -327,3 +327,41 @@ fn milestone_prefix_is_stripped() {
     assert_eq!(norm_ver("Skia/PDF m142").as_deref(), Some("142"));
     assert_eq!(norm_ver("v3.3.5").as_deref(), Some("3.3.5"));
 }
+
+#[test]
+fn list_page_has_ranges_fixed_versions_and_pages() {
+    let d = db();
+    let p = d
+        .list_page(&q(&["f5:nginx"], Some("1.19.0")), 0, 50)
+        .unwrap();
+    assert!(p.version_specific);
+    assert_eq!(p.total, 2, "{p:?}");
+    assert_eq!(p.unbounded, 1);
+    assert!(
+        p.items[1].unbounded && p.items[1].range.is_none(),
+        "listed last"
+    );
+    let r = &p.items[0];
+    assert_eq!(r.id, "CVE-2099-0001");
+    assert_eq!(r.severity, Some("critical"));
+    assert!(r.kev);
+    assert_eq!(r.cwe, vec![787]);
+    assert_eq!(r.year, 2099);
+    assert_eq!(r.range.as_deref(), Some("[1.1.0,1.20.1)"));
+    assert_eq!(r.fixed.as_deref(), Some("1.20.1"));
+    assert_eq!((p.critical, p.kev), (1, 1));
+    assert_eq!(p.fixed_in.as_deref(), Some("1.20.1"));
+
+    // version unknown: every CVE of the product, not version-specific, paginated
+    let all = d.list_page(&q(&["f5:nginx"], None), 0, 1).unwrap();
+    assert!(!all.version_specific);
+    assert_eq!(all.total, 3, "{all:?}");
+    assert_eq!(all.items.len(), 1);
+    assert_eq!(all.items[0].id, "CVE-2099-0001", "KEV first");
+    let next = d.list_page(&q(&["f5:nginx"], None), 1, 1).unwrap();
+    assert_ne!(next.items[0].id, "CVE-2099-0001");
+    assert_eq!(next.offset, 1);
+    assert!(next.fixed_in.is_none());
+    let j = serde_json::to_value(&next).unwrap();
+    assert!(j["items"][0].get("range").is_none());
+}

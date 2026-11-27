@@ -1038,6 +1038,7 @@
         </div>`
             : ""
         }
+        ${finding.cve_query && F.cveUi ? `<button class="btn tonal block fd-cvl" data-act="fd-cvl:${finding.id}">${ic("bug")}${esc(F.t("findings.cve_all", "Все уязвимости продукта"))}</button>` : ""}
         ${finding.mitre ? `<div class="fd-mitre">${ic("target")}<span><small>MITRE ATT&amp;CK</small>${esc(finding.mitre)}</span></div>` : ""}
         ${stdChips(finding)}
       </div>
@@ -1272,6 +1273,12 @@
       const [id, st] = a.split(":");
       F.closeSheet();
       setStatus(+id, st);
+    },
+    "fd-cvl": id => {
+      const f = F.db.findings.find(x => String(x.id) === String(id));
+      if (!f || !f.cve_query || !F.cveUi) return;
+      const q = f.cve_query;
+      F.cveUi.open({ q, name: q.product, version: q.version || "" });
     },
     "fd-cve": c =>
       F.sheet({

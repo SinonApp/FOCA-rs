@@ -83,6 +83,22 @@ pub fn evidence_secrets(ev: &str) -> Vec<String> {
     v
 }
 
+/// The `cve_list` query of a CVE summary finding, from its `nvd:` provenance field.
+fn cve_query(f: &Value) -> Option<Value> {
+    let raw = f["provenance"]["fields"]
+        .as_array()?
+        .iter()
+        .filter_map(Value::as_str)
+        .find_map(|x| x.strip_prefix("nvd:"))?;
+    let mut it = raw.splitn(3, '|');
+    let (product, version) = (it.next()?, it.next().unwrap_or(""));
+    let mut q = json!({ "product": product, "version": version });
+    if let Some(y) = it.next().and_then(|y| y.parse::<u16>().ok()) {
+        q["until_year"] = json!(y);
+    }
+    Some(q)
+}
+
 /// Standards of a finding rule for the UI (`foca_analysis::standards`), `null` when the rule is
 /// not mapped. Computed on every response, never stored.
 pub fn standards_json(rule: &str) -> Value {
@@ -310,6 +326,9 @@ impl Engine {
                 f["evidence"] = json!(ev);
                 f["secret_refs"] = json!(refs);
                 f["standards"] = standards_json(f["provenance"]["rule"].as_str().unwrap_or(""));
+                if let Some(q) = cve_query(f) {
+                    f["cve_query"] = q;
+                }
             }
         }
         if let Some(arr) = v["patterns"].as_array_mut() {

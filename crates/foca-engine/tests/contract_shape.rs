@@ -226,6 +226,11 @@ async fn contract_shape_matches_demo_backend_inner() {
         json!({ "project": id, "id": fid2, "name": "a.jpg" })
     );
     c!(
+        "cve_list",
+        "cve_list",
+        json!({ "product": "microsoft:office", "version": "15.0.4420" })
+    );
+    c!(
         "finding_playbook",
         "finding_playbook",
         json!({ "project": id, "id": fid2, "lang": "uk" })

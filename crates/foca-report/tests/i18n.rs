@@ -553,20 +553,23 @@ fn cve_summary_per_product_in_reports() {
             product: "tecnick:tcpdf".into(),
             version: "6.2.13".into(),
             version_known: true,
-            matched: 2,
-            known: 9,
+            matched: 12,
+            known: 19,
             critical: 1,
             medium: 1,
             max_cvss: Some(9.8),
             kev: 1,
             max_epss: Some(0.5),
-            cves: vec![CveRef {
-                id: "CVE-2099-0001".into(),
-                cvss: Some(9.8),
-                kev: true,
-                epss: Some(0.5),
-                ..Default::default()
-            }],
+            // 12 matched: the report lists the top 10 and the total
+            cves: (1..=12)
+                .map(|i| CveRef {
+                    id: format!("CVE-2099-{i:04}"),
+                    cvss: Some(if i == 1 { 9.8 } else { 5.0 }),
+                    kev: i == 1,
+                    epss: Some(0.5),
+                    ..Default::default()
+                })
+                .collect(),
             ..Default::default()
         }),
         ..Default::default()
@@ -616,6 +619,8 @@ fn cve_summary_per_product_in_reports() {
             assert!(r.contains("9.8 · EPSS 0.50"), "{lang:?} {fmt:?}");
             assert!(r.contains("01.05.2026"), "{lang:?} {fmt:?}");
             assert!(r.contains("CVE-2099-0001"), "{lang:?} {fmt:?}");
+            assert!(r.contains("CVE-2099-0010 (10/12)"), "{lang:?} {fmt:?}");
+            assert!(!r.contains("CVE-2099-0011"), "{lang:?} {fmt:?}");
             assert!(r.contains(unknown), "{lang:?} {fmt:?}");
         }
     }

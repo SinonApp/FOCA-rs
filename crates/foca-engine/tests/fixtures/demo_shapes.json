@@ -11825,6 +11825,131 @@
     }
    }
   },
+  "cve_list": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "product": {
+     "t": [
+      "string"
+     ]
+    },
+    "version": {
+     "t": [
+      "string"
+     ]
+    },
+    "version_specific": {
+     "t": [
+      "bool"
+     ]
+    },
+    "total": {
+     "t": [
+      "number"
+     ]
+    },
+    "offset": {
+     "t": [
+      "number"
+     ]
+    },
+    "critical": {
+     "t": [
+      "number"
+     ]
+    },
+    "high": {
+     "t": [
+      "number"
+     ]
+    },
+    "medium": {
+     "t": [
+      "number"
+     ]
+    },
+    "low": {
+     "t": [
+      "number"
+     ]
+    },
+    "kev": {
+     "t": [
+      "number"
+     ]
+    },
+    "unbounded": {
+     "t": [
+      "number"
+     ]
+    },
+    "max_epss": {
+     "t": [
+      "number"
+     ]
+    },
+    "items": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "cvss": {
+        "t": [
+         "number"
+        ]
+       },
+       "severity": {
+        "t": [
+         "string"
+        ]
+       },
+       "kev": {
+        "t": [
+         "bool"
+        ]
+       },
+       "epss": {
+        "t": [
+         "null",
+         "number"
+        ]
+       },
+       "cwe": {
+        "t": [
+         "array"
+        ],
+        "items": {
+         "t": [
+          "number"
+         ]
+        }
+       },
+       "year": {
+        "t": [
+         "number"
+        ]
+       },
+       "range": {
+        "t": [
+         "string"
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
   "finding_playbook": {
    "t": [
     "object"
@@ -19631,6 +19756,85 @@
      "t": [
       "string"
      ]
+    },
+    "history": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "items": {
+       "t": [
+        "array"
+       ],
+       "items": {
+        "t": [
+         "object"
+        ],
+        "keys": {
+         "id": {
+          "t": [
+           "string"
+          ]
+         },
+         "text": {
+          "t": [
+           "string"
+          ]
+         },
+         "thoughts": {
+          "t": [
+           "string"
+          ]
+         },
+         "provider": {
+          "t": [
+           "string"
+          ]
+         },
+         "model": {
+          "t": [
+           "string"
+          ]
+         },
+         "lang": {
+          "t": [
+           "string"
+          ]
+         },
+         "created": {
+          "t": [
+           "string"
+          ]
+         },
+         "tokens_in": {
+          "t": [
+           "number"
+          ]
+         },
+         "tokens_out": {
+          "t": [
+           "number"
+          ]
+         },
+         "tokens_thoughts": {
+          "t": [
+           "number"
+          ]
+         }
+        }
+       }
+      },
+      "report_id": {
+       "t": [
+        "string"
+       ]
+      },
+      "running": {
+       "t": [
+        "bool"
+       ]
+      }
+     }
     }
    }
   },

@@ -494,3 +494,40 @@ async fn host_tool_stays_on_the_host_and_times_out() {
     let err = e.err("tool_host", json!({ "url": "ftp://x.test/" })).await;
     assert_eq!(err.code, "bad_args");
 }
+
+/// `cve_list`: the full CVE list of a product version from the embedded NVD table, one page
+/// at a time, with ranges, fixed versions and the document-year limit.
+#[tokio::test]
+async fn cve_list_pages_through_the_offline_table() {
+    let e = env(0).await;
+    let q = |extra: Value| {
+        let mut a = json!({ "product": "f5:nginx", "version": "1.18.0" });
+        for (k, v) in extra.as_object().unwrap() {
+            a[k] = v.clone();
+        }
+        a
+    };
+    let p = e.call("cve_list", q(json!({ "limit": 5 }))).await;
+    let total = p["total"].as_u64().unwrap();
+    assert!(total > 5, "{p}");
+    assert!(p["version_specific"].as_bool().unwrap());
+    let items = p["items"].as_array().unwrap();
+    assert_eq!(items.len(), 5);
+    assert!(items[0]["id"].as_str().unwrap().starts_with("CVE-"));
+    assert!(items.iter().all(|r| r["year"].as_u64().unwrap() > 1999));
+    assert!(items.iter().any(|r| r["range"].is_string()), "{p}");
+    let next = e
+        .call("cve_list", q(json!({ "limit": 5, "offset": 5 })))
+        .await;
+    assert_ne!(next["items"][0]["id"], items[0]["id"]);
+    let old = e.call("cve_list", q(json!({ "until_year": 2020 }))).await;
+    assert!(old["total"].as_u64().unwrap() < total, "{old}");
+    let any = e
+        .call("cve_list", json!({ "product": "f5:nginx", "limit": 3 }))
+        .await;
+    assert_eq!(any["version_specific"], false);
+    let none = e
+        .err("cve_list", json!({ "product": "nobody:nothing" }))
+        .await;
+    assert_eq!(none.code, "not_found");
+}

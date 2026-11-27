@@ -231,6 +231,9 @@ fn merge_into(f: &mut api::Finding, m: &CveMatch, s: &CveSummary) {
             f.tags.push(t.into());
         }
     }
+    if !f.provenance.fields.iter().any(|x| x.starts_with("nvd:")) {
+        f.provenance.fields.push(cve_list_field(s));
+    }
 }
 
 fn side_tag(m: &CveMatch) -> &'static str {
@@ -295,7 +298,20 @@ fn new_finding(m: &CveMatch, s: &CveSummary, now: &str, scan: Option<&str>) -> a
     f.cve = s.cves.iter().take(TOP).map(|c| c.id.clone()).collect();
     f.cvss = s.max_cvss;
     f.tags = vec!["nvd".into(), side_tag(m).into()];
+    // what the full CVE list of the finding asks for (`cve_list`): the UI reads it back
+    f.provenance.fields.push(cve_list_field(s));
     f
+}
+
+/// Provenance field with the `cve_list` query of a CVE summary:
+/// `nvd:<product>|<version>|<until_year>`.
+pub(crate) fn cve_list_field(s: &CveSummary) -> String {
+    format!(
+        "nvd:{}|{}|{}",
+        s.product,
+        s.version,
+        s.until_year.map(|y| y.to_string()).unwrap_or_default()
+    )
 }
 
 /// Adds the CVE findings (or merges them into KEV/EOL findings) and fills the per-entry CVE

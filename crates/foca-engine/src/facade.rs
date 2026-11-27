@@ -229,6 +229,7 @@ impl Engine {
             "report_logo_set" => self.report_logo_set(&a),
             "report_logo_clear" => self.report_logo_clear(),
             "finding_playbook" => self.finding_playbook(&a),
+            "cve_list" => self.cve_list(&a),
             "signatures_status" => self.signatures_status(),
             "signatures_import" => self.signatures_import(&a),
             "signatures_update" => self.signatures_update(&a).await,

@@ -78,6 +78,32 @@ impl Engine {
     }
 
     /// `finding_playbook { project, id, lang? }`: contextual remediation playbook for one finding.
+    /// The full CVE list of a product version from the offline NVD table, one page at a time
+    /// (`cve_list`, `docs/API.md`): `product` is `CveSummary.product` (CPE keys, comma
+    /// separated), `version` its version, `until_year` the document-year limit of software seen
+    /// in documents.
+    pub(crate) fn cve_list(&self, a: &Value) -> CmdResult {
+        let product = req_str(a, "product")?;
+        let keys: Vec<String> = product
+            .split(',')
+            .map(str::trim)
+            .filter(|k| !k.is_empty())
+            .map(str::to_string)
+            .collect();
+        let q = foca_analysis::cve::CveQuery {
+            keys,
+            version: arg_str(a, "version").map(str::to_string),
+            until_year: a["until_year"].as_u64().and_then(|y| u16::try_from(y).ok()),
+            ..Default::default()
+        };
+        let offset = a["offset"].as_u64().unwrap_or(0) as usize;
+        let limit = a["limit"].as_u64().unwrap_or(50).clamp(1, 200) as usize;
+        let page = foca_analysis::cve::db()
+            .list_page(&q, offset, limit)
+            .ok_or_else(|| CmdError::new("not_found", "продукт не найден в базе NVD"))?;
+        Ok(json!(page))
+    }
+
     pub(crate) fn finding_playbook(&self, a: &Value) -> CmdResult {
         let pid = self.project_arg(a)?;
         let lang = arg_str(a, "lang")

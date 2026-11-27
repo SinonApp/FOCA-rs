@@ -295,6 +295,7 @@
   "findings.status_title": "Finding status",
   "findings.copy": "Copy",
   "findings.open_nvd": "Open NVD",
+  "findings.cve_all": "All vulnerabilities of the product",
   "findings.ext_demo": "Will open in the external browser (demo)",
   "findings.link_copied": "Link copied: open it in a browser",
   "findings.effort_low": "Low effort",

@@ -596,6 +596,7 @@ impl CveDb {
             known: known.len() as u32,
             matched: hits.len() as u32,
             later,
+            until_year: q.until_year,
             ..Default::default()
         };
         for h in &hits {
@@ -649,6 +650,134 @@ impl CveDb {
         hits.into_iter()
             .map(|h| (self.cves[h.idx as usize].clone(), h))
             .collect()
+    }
+}
+
+/// One row of a product's CVE list (`cve_list`, `docs/API.md`).
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct CveRow {
+    pub id: String,
+    pub cvss: Option<f32>,
+    /// `critical` | `high` | `medium` | `low` (none without a score).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub severity: Option<&'static str>,
+    pub kev: bool,
+    pub epss: Option<f32>,
+    /// CWE numbers (`79` for CWE-79).
+    pub cwe: Vec<u16>,
+    /// Published year.
+    pub year: u16,
+    /// Matched affected range in table syntax (`[1.1,1.20.1)`, `=2016`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub range: Option<String>,
+    /// Exclusive upper bound of the matched range.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fixed: Option<String>,
+    /// Range not specified in NVD.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub unbounded: bool,
+}
+
+/// One page of a product's CVE list: the matched CVEs of the version or, when the version is
+/// unknown, every CVE of the product (`version_specific: false`).
+#[derive(Debug, Clone, Default, PartialEq, serde::Serialize)]
+pub struct CveListPage {
+    pub product: String,
+    pub version: String,
+    pub version_specific: bool,
+    pub total: usize,
+    pub offset: usize,
+    pub critical: u32,
+    pub high: u32,
+    pub medium: u32,
+    pub low: u32,
+    pub kev: u32,
+    pub unbounded: u32,
+    pub max_epss: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fixed_in: Option<String>,
+    pub items: Vec<CveRow>,
+}
+
+fn sev_key(s: Option<Severity>) -> Option<&'static str> {
+    match s? {
+        Severity::Critical => Some("critical"),
+        Severity::High => Some("high"),
+        Severity::Medium => Some("medium"),
+        Severity::Low => Some("low"),
+        _ => None,
+    }
+}
+
+impl CveDb {
+    /// A page of the CVE list of a product (`offset`, at most `limit` rows), sorted KEV first,
+    /// then CVSS and EPSS; counts cover the whole list.
+    pub fn list_page(&self, q: &CveQuery, offset: usize, limit: usize) -> Option<CveListPage> {
+        let (keys, known, mut hits) = self.matches(q)?;
+        let ver = query_version(q).unwrap_or_default().to_string();
+        let specific = norm_ver(&ver).is_some();
+        if !specific {
+            hits = known
+                .iter()
+                .map(|&idx| Hit {
+                    idx,
+                    range: None,
+                    unbounded: false,
+                })
+                .collect();
+        }
+        if let Some(y) = q.until_year {
+            hits.retain(|h| self.cves[h.idx as usize].year <= y);
+        }
+        sort_hits(&mut hits, &self.cves);
+        let mut page = CveListPage {
+            product: keys.join(","),
+            version: ver,
+            version_specific: specific,
+            total: hits.len(),
+            offset,
+            ..Default::default()
+        };
+        for h in &hits {
+            let c = &self.cves[h.idx as usize];
+            if h.unbounded {
+                page.unbounded += 1;
+                continue;
+            }
+            match c.severity() {
+                Some(Severity::Critical) => page.critical += 1,
+                Some(Severity::High) => page.high += 1,
+                Some(Severity::Medium) => page.medium += 1,
+                Some(Severity::Low) => page.low += 1,
+                _ => {}
+            }
+            page.kev += u32::from(c.kev);
+            page.max_epss = max_opt(page.max_epss, c.epss);
+        }
+        if specific && !hits.is_empty() {
+            page.fixed_in = self.fixed_in(&keys, &hits);
+        }
+        page.items = hits
+            .iter()
+            .skip(offset)
+            .take(limit)
+            .map(|h| {
+                let c = &self.cves[h.idx as usize];
+                CveRow {
+                    id: c.id(),
+                    cvss: c.cvss,
+                    severity: sev_key(c.severity()),
+                    kev: c.kev,
+                    epss: c.epss,
+                    cwe: c.cwe.to_vec(),
+                    year: c.year,
+                    fixed: h.fixed(),
+                    range: h.range.clone(),
+                    unbounded: h.unbounded,
+                }
+            })
+            .collect();
+        Some(page)
     }
 }
 

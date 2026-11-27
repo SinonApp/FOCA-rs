@@ -482,6 +482,10 @@ pub struct CveSummary {
     /// Lowest version outside every matched range ("update to"), when computable.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fixed_in: Option<String>,
+    /// Software seen in documents: only CVEs published up to this year are counted (the full
+    /// list, `cve_list`, takes the same limit).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub until_year: Option<u16>,
 }
 
 /// `Host`. Extra field: `scope`, one of `in_scope` | `excluded` | `out_of_scope`.

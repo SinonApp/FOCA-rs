@@ -90,6 +90,7 @@ put("scope_add_hosts", call("scope_add_hosts", { project: "contoso", hosts: ["in
 put("finding_set_status", call("finding_set_status", { project: "contoso", id: 5, status: "confirmed" }));
 put("finding_update", call("finding_update", { project: "contoso", id: 7, patch: { notes: [{ text: "t", who: "Вы", time: "20.11" }] } }));
 put("finding_photo_add", call("finding_photo_add", { project: "contoso", id: 7, name: "a.jpg" }));
+put("cve_list", call("cve_list", { product: "microsoft:office", version: "15.0.4420" }));
 put("finding_playbook", call("finding_playbook", { project: "contoso", id: 7, lang: "uk" }));
 put("doc_delete", call("doc_delete", { project: "contoso", ids: [20] }));
 put("doc_restore", call("doc_restore", { project: "contoso", ids: [20] }));
