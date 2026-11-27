@@ -105,6 +105,9 @@ put("settings_set", call("settings_set", { patch: { net: { rps: 5 } } }));
 put("key_set", call("key_set", { service: "brave", value: "BSAqxxxxxxab12" }));
 put("key_delete", call("key_delete", { service: "censys" }));
 put("net_check", call("net_check"));
+put("key_check", call("key_check", { service: "searx", value: "https://searx.example.org" }));
+put("dorks_pending", call("dorks_pending", { project: "contoso" }));
+put("dorks_retry", call("dorks_retry", { project: "contoso" }));
 // Offline import, full-text search, user rules, document forensics.
 put("import_offline", call("import_offline", { project: "contoso", paths: [] }));
 put("demo_case_import", call("demo_case_import", {}));

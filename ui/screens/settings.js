@@ -467,16 +467,16 @@
     [
       "brave",
       "Brave Search API",
-      "Необязательно: без ключа Brave работает через встроенный браузер",
+      "Необязательно: ещё один поисковик для дорков, без капч. Brave требует карту: бесплатного тарифа нет, каждый тариф даёт кредит $5 в месяц (около 1000 запросов)",
       "https://brave.com/search/api/",
-      "Зарегистрируйтесь на brave.com/search/api, выберите тариф Free (2 000 запросов/мес) и скопируйте ключ из раздела API Keys.",
+      "Зарегистрируйтесь на brave.com/search/api, привяжите карту (кредит $5 в месяц покрывает около 1000 запросов) и скопируйте ключ из раздела API Keys. Кончился лимит: источник остановится до следующего месяца.",
     ],
     [
       "searx",
       "SearXNG",
-      "Метапоиск через свой экземпляр (адрес)",
-      "https://docs.searxng.org/",
-      "Укажите адрес своего экземпляра SearXNG, например https://searx.local:8888. Публичные экземпляры часто ограничивают API.",
+      "Свой экземпляр SearXNG: спрашивается раньше публичных. Можно несколько адресов через запятую",
+      "https://docs.searxng.org/admin/installation-docker.html",
+      "Поднимите SearXNG (docker) на своём сервере, включите формат json в settings.yml и укажите адрес https://… с публичным именем. Подробнее: docs/user/searxng.md.",
     ],
     [
       "shodan",
@@ -616,6 +616,42 @@
     mount: page => pg(page),
   });
   let chkT = null;
+  // Result of key_check for Brave (monthly quota) and own SearXNG (JSON answer per instance).
+  function keyCheckHTML(id, r) {
+    const why = {
+      rejected: F.t("settings.kc_rejected", "Ключ отклонён (HTTP 401/403)"),
+      limit: F.t(
+        "settings.kc_limit",
+        "Лимит запросов исчерпан (HTTP 429): подождите или проверьте кредит в кабинете",
+      ),
+      json_off: F.t("settings.kc_json_off", "Экземпляр не отдаёт JSON: включите формат json в settings.yml"),
+      bad_url: F.t("settings.kc_bad_url", "Нужен адрес https:// с публичным именем"),
+      unreachable: F.t("settings.kc_unreachable", "Сервис не отвечает"),
+      nokey: F.t("settings.paste_first", "Сначала вставьте ключ"),
+    };
+    if (r.ok && id === "brave") {
+      const left =
+        r.remaining != null && r.limit
+          ? " · " +
+            F.t(
+              "settings.kc_quota",
+              { left: fmtN(r.remaining), lim: fmtN(r.limit) },
+              "осталось {left} из {lim} запросов в месяц",
+            )
+          : "";
+      return `<span class="ok">${ic("check")}${esc(F.t("settings.key_works", "Ключ работает") + left)}</span>`;
+    }
+    if (id === "searx" && Array.isArray(r.instances) && r.instances.length) {
+      return r.instances
+        .map(x =>
+          x.ok
+            ? `<span class="ok">${ic("check")}${esc(x.url)}: ${esc(F.t("settings.kc_searx_ok", { n: x.results || 0 }, "отвечает JSON, результатов: {n}"))}</span>`
+            : `<span class="bad">${ic("alert")}${esc(x.url)}: ${esc(why[x.code] || (x.status ? "HTTP " + x.status : x.code))}</span>`,
+        )
+        .join("<br>");
+    }
+    return `<span class="bad">${ic("alert")}${esc(why[r.code] || (r.status ? "HTTP " + r.status : r.code || "?"))}</span>`;
+  }
   Object.assign(F.actions, {
     "st-key": id => {
       const [, name, what0, , how0] = KEYS.find(k => k[0] === id);
@@ -626,7 +662,7 @@
         title: name,
         cls: "st-sheet",
         html: `<p class="lead st-klead">${esc(what)}</p>
-          <label class="flabel" for="st-kv">${esc(F.t("settings.api_key", "Ключ API"))}</label>
+          <label class="flabel" for="st-kv">${esc(id === "searx" ? F.t("settings.searx_urls", "Адреса экземпляров") : F.t("settings.api_key", "Ключ API"))}</label>
           <div class="field st-kfield" data-secret-wrap>${ic("key")}<input id="st-kv"
             data-secret-input type="password" value="${esc(k.v)}" placeholder="${esc(F.t("settings.paste_key_ph", "Вставьте ключ"))}"
             autocomplete="off" autocapitalize="off" spellcheck="false"><button class="ib" data-act="st-kpaste"
@@ -635,7 +671,7 @@
           <div id="st-kres"
             class="st-kres">${k.st === "ok" ? `<span class="ok">${ic("check")}${esc(keyLimit(k))}</span>` : k.st === "err" ? `<span class="bad">${ic("alert")}${esc(k.err)}</span>` : ""}</div>
           <button class="btn tonal block st-kcheck"
-            data-act="st-kcheck:${id}">${ic("refresh")}${esc(F.t("settings.check_key", "Проверить ключ"))}</button>
+            data-act="st-kcheck:${id}">${ic("refresh")}${esc(id === "searx" ? F.t("settings.test_searx", "Проверить экземпляры") : F.t("settings.check_key", "Проверить ключ"))}</button>
           <div class="srow st-khow"
             data-act="st-khow:${id}">${ic("link")}<span class="lbl">${esc(F.t("settings.how_get_key", "Как получить ключ"))}<small>${esc(how)}</small></span>${ic("open")}</div>`,
         footer: `${
@@ -698,6 +734,23 @@
       res.innerHTML = "";
       clearTimeout(chkT);
       chkT = setTimeout(() => {
+        // Brave and own SearXNG are checked by the core with a real request.
+        if (id === "brave" || id === "searx") {
+          const saved = state.keys[id] && state.keys[id].v === value;
+          Promise.resolve(F.api.key_check(id, saved && !F.isDemo ? "" : value)).then(
+            r => {
+              res.innerHTML = keyCheckHTML(id, r || {});
+              el.disabled = false;
+              el.innerHTML = `${ic("refresh")}${esc(F.t("settings.check_again", "Проверить ещё раз"))}`;
+            },
+            e => {
+              res.innerHTML = `<span class="bad">${ic("alert")}${esc(e.message || String(e))}</span>`;
+              el.disabled = false;
+              el.innerHTML = `${ic("refresh")}${esc(F.t("settings.check_again", "Проверить ещё раз"))}`;
+            },
+          );
+          return;
+        }
         if (!F.isDemo) {
           // The core has no separate key check: validate the format now, the key itself on the first
           // scan request.

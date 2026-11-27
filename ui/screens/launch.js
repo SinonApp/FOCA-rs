@@ -436,11 +436,15 @@
     mods: {},
     src: {},
   });
+  // settings.search (Common Crawl depth defaults); the QA vm has no F.db
+  const searchSet = () => ((F.db && F.db.settings) || {}).search || {};
+  const ccYears = () => searchSet().cc_years || 3;
   Object.assign(wiz, {
     mode: wiz.mode || "scan",
     newExcl: wiz.newExcl || [],
     docs: wiz.docs || DOC_DEFAULT.slice(),
     depth: wiz.depth || 2,
+    ccDepth: wiz.ccDepth || searchSet().cc_depth || "latest",
     // 0 = no limit, so only a missing value falls back to the default
     maxDocs: wiz.maxDocs ?? 500,
     maxSize: wiz.maxSize ?? 50,
@@ -756,6 +760,20 @@
             )
             .join("")}</div>`,
       ).join("")}
+
+      <h3 class="sub-h la-h3">${esc(tx("launch.cc_depth", "Common Crawl: глубина"))}</h3>
+      <div class="seg"
+        role="radiogroup">${[
+          ["latest", tx("launch.cc_latest", "3 последних")],
+          ["years", tx("launch.cc_years", { n: ccYears() }, "За {n} г.")],
+          ["all", tx("launch.cc_all", "Все снимки")],
+        ]
+          .map(
+            ([v, l]) => `<button class="${wiz.ccDepth === v ? "on" : ""}" role="radio"
+        aria-checked="${wiz.ccDepth === v}" data-act="la-cc:${v}">${esc(l)}</button>`,
+          )
+          .join("")}</div>
+      <p class="fhint">${esc(tx("launch.cc_hint", "Глубокий обход идёт в фоне поиска и не задерживает другие источники; недоделанные снимки продолжатся в следующем скане."))}</p>
 
       <h3 class="sub-h la-h3">${esc(tx("launch.limits", "Лимиты"))}</h3>
       <div class="card nfs la-nfs">${nfL("depth", tx("launch.crawl_depth", "Глубина краулера, уровней"), "", "scan.crawl_depth", "", "set-limits")}${nfL("maxDocs", tx("launch.nf_maxdocs", "Документов на цель"), "", "scan.max_docs", tx("launch.nf_maxdocs_note", "больше: дольше скачивание"), "set-limits", 50)}${nfL("maxSize", tx("launch.nf_maxsize", "Размер файла, до"), tx("launch.nf_mb", "МБ"), "scan.max_size_mb", tx("launch.nf_maxsize_note", "крупнее: редко документы"), "set-limits", 5)}</div>
@@ -1435,6 +1453,10 @@
       el.classList.toggle("on", i < 0);
       el.setAttribute("aria-pressed", i < 0);
     },
+    "la-cc": v => {
+      wiz.ccDepth = v;
+      F.render(true);
+    },
     "la-ports-top": n => {
       wiz.portsTop = +n;
       F.render(true);
@@ -1662,6 +1684,8 @@
           exts: wiz.docs.slice(),
           limit: wiz.maxDocs,
           crawl_depth: wiz.depth,
+          cc_depth: wiz.ccDepth,
+          cc_years: ccYears(),
           max_size_mb: wiz.maxSize,
           ua: wiz.ua,
         };

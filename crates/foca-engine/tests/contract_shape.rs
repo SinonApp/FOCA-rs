@@ -572,6 +572,15 @@ async fn contract_shape_matches_demo_backend_inner() {
     );
     c!("key_delete", "key_delete", json!({ "service": "censys" }));
     c!("net_check", "net_check", json!({}));
+    // own SearXNG check against the local server (the test bench allows plain HTTP)
+    let sx = e.server.url();
+    c!(
+        "key_check",
+        "key_check",
+        json!({ "service": "searx", "value": sx })
+    );
+    c!("dorks_pending", "dorks_pending", json!({ "project": id }));
+    c!("dorks_retry", "dorks_retry", json!({ "project": id }));
     c!("scan_status_idle", "scan_status", json!({}));
     // scan: responses and events
     e.clear_events();

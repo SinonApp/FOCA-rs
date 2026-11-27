@@ -1622,6 +1622,83 @@
     (F.scan.sources || []).filter(
       x => x.verifyUrl && !x.retryAsked && !x.verifyDone && x.status === "blocked",
     );
+  // Dork groups no engine could run (captcha everywhere): postponed per project, retried by the core.
+  function dorksHTML() {
+    const d = F.scan.dorks;
+    if (!d || !d.pending) return "";
+    const n = d.pending;
+    const when = d.retryAt
+      ? F.t(
+          "scan.dorks_at",
+          {
+            time: new Date(d.retryAt).toLocaleTimeString(F.i18n ? F.i18n.lang() : "ru", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          },
+          "Следующий повтор около {time}.",
+        )
+      : F.t("scan.dorks_next", "Повторятся в следующем скане.");
+    const title = F.tp
+      ? F.tp(
+          "scan.dorks_pending",
+          n,
+          { n },
+          "{n} поиск отложен, повторится сам|{n} поиска отложено, повторятся сами|{n} поисков отложено, повторятся сами",
+        )
+      : F.t("scan.dorks_pending_plain", { n }, "Поисков отложено: {n}");
+    return `<div class="banner info scn-dorks">${ic("clock")}<div><b>${esc(title)}</b><div class="s">${esc(F.t("scan.dorks_d", "Все поисковики показали капчу. Капчи мы не решаем: эти запросы повторятся медленно, по одному.") + " " + when)}</div>
+      <div class="btnrow"><button class="btn sm tonal" data-act="scan-dorks-retry">${ic("refresh")}${esc(F.t("scan.dorks_retry", "Повторить сейчас"))}</button></div></div></div>`;
+  }
+  // The running screen patches in place; the idle screen re-renders.
+  const redrawDorks = () => {
+    if (onScan() && !F.scan.running) F.render(true);
+    else refresh();
+  };
+  // A `dorks` event newer than the request wins over its (older) answer.
+  let dorkSeq = 0;
+  const loadDorks = () => {
+    if (!F.api || typeof F.api.dorks_pending !== "function") return;
+    const seq = ++dorkSeq;
+    Promise.resolve(F.api.dorks_pending())
+      .then(r => {
+        if (!r || seq !== dorkSeq) return;
+        const prev = F.scan.dorks || {};
+        F.scan.dorks = { pending: r.pending || 0, retryAt: r.retry_at || null };
+        if (prev.pending !== F.scan.dorks.pending || prev.retryAt !== F.scan.dorks.retryAt) redrawDorks();
+      })
+      .catch(() => {});
+  };
+  F.on("scan", ev => {
+    if (!ev) return;
+    if (ev.type === "dorks") {
+      dorkSeq++;
+      F.scan.dorks = { pending: ev.pending || 0, retryAt: ev.retry_at || null };
+      redrawDorks();
+    } else if (ev.type === "started" || ev.type === "done") loadDorks();
+  });
+  F.on("db", ev => {
+    if (ev && ev.kind === "project") loadDorks();
+  });
+  F.actions["scan-dorks-retry"] = () =>
+    Promise.resolve(F.api.dorks_retry()).then(
+      r => {
+        const mode = (r && r.mode) || "none";
+        F.snack(
+          mode === "now"
+            ? F.t("scan.dorks_now", "Повторяем отложенные поиски")
+            : mode === "scan"
+              ? F.t("scan.dorks_scan", "Запущен короткий скан: только поисковики для отложенных запросов")
+              : mode === "busy"
+                ? F.t("scan.dorks_busy", "Идёт другой скан: повтор после него")
+                : F.t("scan.dorks_none", "Отложенных поисков нет"),
+        );
+        if (mode === "scan" && !onScan()) F.go("/p/scan");
+        loadDorks();
+      },
+      e => F.snack(F.t("scan.dorks_err", { err: e.message || e }, "Не удалось повторить: {err}")),
+    );
+
   function verifyAllHTML() {
     const l = needVerify();
     if (!l.length) return "";
@@ -1803,6 +1880,7 @@
       <div class="sec-h scn-sh" data-anc><h2>${esc(F.t("scan.sources", "Источники"))}</h2><span class="muted"
         id="scn-ss">${srcSummary()}</span></div>
       <div id="scn-vall">${verifyAllHTML()}</div>
+      <div id="scn-dork">${dorksHTML()}</div>
       <div class="list" id="scn-src">${srcListHTML()}</div>
       ${same ? `<div class="list scn-oosl">${oosRow()}</div>` : ""}
     </div>`;
@@ -1840,6 +1918,7 @@
     else vis.forEach(src => setHTML($("#scn-src-" + src.id), srcRowHTML(src)));
     setHTML($("#scn-ss"), srcSummary());
     setHTML($("#scn-vall"), verifyAllHTML());
+    setHTML($("#scn-dork"), dorksHTML());
     const oo = $("#scn-oos");
     if (oo) {
       const rowHtml = oosRow();
@@ -1924,6 +2003,7 @@
     const top = stoppedCard() || finishedCard();
     return `
       ${top}
+      ${dorksHTML()}
       <div class="card pad scn-hero ${top ? "scn-gap" : ""}">
         <div class="scn-hero-ic">${ic("scan")}</div>
         <h3>${esc(F.t("scan.idle_title", "Скан сейчас не идёт"))}</h3>

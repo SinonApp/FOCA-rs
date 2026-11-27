@@ -60,7 +60,13 @@
       "free",
       "Архивные копии документов (web.archive.org, цель не трогаем)",
     ],
-    ["cc", "Common Crawl", "arch", "free", "Индексы веб-обхода: 3 последних"],
+    [
+      "cc",
+      "Common Crawl",
+      "arch",
+      "free",
+      "Индексы веб-обхода: 3 последних или глубже, за годы или все снимки (ниже, «Глубина поиска»)",
+    ],
     ["arquivo", "Arquivo.pt", "arch", "free", "Португальский веб-архив: поиск по типу файла"],
     ["crt", "crt.sh", "sub", "free", "Поддомены из журналов сертификатов (CT)"],
     ["crtname", "crt.name", "sub", "opt", "Поддомены из CT (зеркало-индекс)"],
@@ -151,9 +157,15 @@
       "Brave Search API",
       "key",
       "key",
-      "Официальный API Brave по ключу (2 000 запросов/мес бесплатно)",
+      "Официальный API Brave по ключу: ещё один поисковик для дорков. Нужна карта; кредит $5 в месяц, около 1000 запросов",
     ],
-    ["searx", "SearXNG", "key", "key", "Свой экземпляр SearXNG (адрес, в «Ключах API»)"],
+    [
+      "searx",
+      "SearXNG",
+      "key",
+      "key",
+      "Свой экземпляр SearXNG (адрес в «Ключах API»): спрашивается раньше публичных",
+    ],
     ["shodan", "Shodan (кэш баннеров)", "key", "key", "Порты и баннеры из базы Shodan, без обращения к цели"],
   ];
   /** Source groups, exported as F.SOURCE_GROUPS. Each entry is a tuple `[id, title, icon]`. */
@@ -286,8 +298,68 @@
           }
         </div>
       </div>
-      <p class="fhint st-hint">${ic("info")}${esc(F.t("sources.hint", "Группы вместо длинного списка: внутри, отдельные переключатели. Ключи нужны только платным сервисам."))}</p>`;
+      <p class="fhint st-hint">${ic("info")}${esc(F.t("sources.hint", "Группы вместо длинного списка: внутри, отдельные переключатели. Ключи нужны только платным сервисам."))}</p>
+      ${depthHTML()}`;
   }
+  // Search depth and retries (settings.search): Common Crawl depth and pacing, postponed dork retries.
+  const srch = () => (F.db.settings || {}).search || {};
+  const segOf = (key, cur, opts) =>
+    `<div class="seg src-seg" role="radiogroup">${opts
+      .map(
+        ([v, l]) =>
+          `<button class="${String(cur) === String(v) ? "on" : ""}" role="radio" aria-checked="${String(cur) === String(v)}" data-act="src-set:${key}:${v}">${esc(l)}</button>`,
+      )
+      .join("")}</div>`;
+  function depthHTML() {
+    const s = srch(),
+      depth = s.cc_depth || "latest",
+      years = s.cc_years || 3,
+      pace = s.cc_pace_s || 3,
+      retry = s.dork_retry_min == null ? 15 : s.dork_retry_min;
+    const yr = n => F.t("sources.cc_years_n", { n }, "{n} г.");
+    return `${ui.secH(F.t("sources.depth_h", "Глубина поиска и повторы"))}
+      <div class="card pad src-depth">
+        <div class="flabel">${esc(F.t("sources.cc_depth", "Common Crawl: какие снимки"))}</div>
+        ${segOf("cc_depth", depth, [
+          ["latest", F.t("sources.cc_latest", "3 последних")],
+          ["years", F.t("sources.cc_years", "За годы")],
+          ["all", F.t("sources.cc_all", "Все снимки")],
+        ])}
+        ${
+          depth === "years"
+            ? `<div class="flabel">${esc(F.t("sources.cc_years_h", "Сколько лет"))}</div>${segOf(
+                "cc_years",
+                years,
+                [1, 2, 3, 5, 10].map(n => [n, yr(n)]),
+              )}`
+            : ""
+        }
+        <div class="flabel">${esc(F.t("sources.cc_pace", "Пауза между запросами к индексу"))}</div>
+        ${segOf(
+          "cc_pace_s",
+          pace,
+          [3, 5, 10].map(n => [n, F.t("sources.sec_n", { n }, "{n} с")]),
+        )}
+        <div class="flabel">${esc(F.t("sources.dork_retry", "Повтор поисков, отложенных из-за капчи"))}</div>
+        ${segOf("dork_retry_min", retry, [
+          [0, F.t("sources.retry_off", "Только в следующем скане")],
+          [5, F.t("sources.min_n", { n: 5 }, "{n} мин")],
+          [15, F.t("sources.min_n", { n: 15 }, "{n} мин")],
+          [60, F.t("sources.min_n", { n: 60 }, "{n} мин")],
+        ])}
+      </div>
+      <p class="fhint st-hint">${ic("info")}${esc(F.t("sources.depth_hint", "Индекс Common Crawl часто отвечает ошибками: запросы идут не чаще раза в 3 секунды, сбои повторяются с паузой. Глубокий обход идёт в фоне этапа «Поиск», не задерживая другие источники; результаты по домену хранятся сутки, а недоделанные снимки продолжатся в следующем скане. Капчи мы не решаем: поиски, на которые все поисковики ответили капчей, повторятся позже, по одному."))}</p>`;
+  }
+  F.actions["src-set"] = arg => {
+    const i = arg.indexOf(":"),
+      key = arg.slice(0, i),
+      raw = arg.slice(i + 1);
+    const v = /^[0-9.]+$/.test(raw) ? +raw : raw;
+    const st = F.db.settings || (F.db.settings = {});
+    st.search = { ...(st.search || {}), [key]: v };
+    F.api.settings_set({ search: { [key]: v } });
+    F.render(true);
+  };
   F.route("/settings/sources", {
     title: () => F.t("sources.title", "Источники"),
     nav: false,

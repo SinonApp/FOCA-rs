@@ -4701,6 +4701,8 @@
       recon: {
         screenshots: false,
       },
+      // Search depth and retries (core settings.search).
+      search: { cc_depth: "latest", cc_years: 3, cc_pace_s: 3, cc_minutes: 15, dork_retry_min: 15 },
       ai: {
         provider: "deepseek",
         model: "",
@@ -6614,6 +6616,23 @@
       stages: RUN.sel ? RUN.sel.map(k => STAGES[k].id) : null,
     });
     RUN.sources.forEach(s => emit({ type: "source", scan_id: id, ...s }));
+    // Startpage hit a captcha and no other engine took the spreadsheet dorks: the core postpones them
+    // (dorks_pending) and retries after the cool-down.
+    {
+      const sp = RUN.sources.find(x => x.id === "startpage");
+      if (sp && sp.status === "blocked" && !RUN.sel) {
+        const d = (v.targets || [])[0] || st.project.id;
+        st.dorks_pending = [{ domain: d, exts: ["xls", "xlsx", "ods"], since: 1795737600, tries: 1 }];
+        const mins = (settings.search || {}).dork_retry_min;
+        emit({
+          type: "dorks",
+          scan_id: id,
+          project: st.project.id,
+          pending: st.dorks_pending.length,
+          retry_at: mins === 0 ? null : Date.now() + (mins || 15) * 60000,
+        });
+      }
+    }
     if (prevStop && prevStop.progress) {
       // From the stop point: stages before `stage` are applied immediately (idempotent: already applied data
       // does not change).
@@ -10565,6 +10584,43 @@
       };
       save();
       return clone(s.keys[service]);
+    },
+    // Brave key or own SearXNG check (core: a real request; demo: format rules only).
+    key_check: ({ service, value }) => {
+      const s = load().settings;
+      const v = String(value || "").trim();
+      if (!v && !((s.keys || {})[service] || {}).mask) return { ok: false, code: "nokey", service };
+      if (service === "searx") {
+        const urls = v.split(/[\s,;]+/).filter(Boolean);
+        const instances = urls.map(u => {
+          const good =
+            /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(\/|$)/i.test(u) && !/\.(local|internal)(\/|$)/i.test(u);
+          return { url: u.replace(/\/+$/, ""), ok: good, code: good ? "ok" : "bad_url" };
+        });
+        const bad = instances.find(x => !x.ok);
+        return { ok: !bad && instances.length > 0, code: bad ? bad.code : "ok", service, instances };
+      }
+      if (service === "brave") {
+        if (v && v.length < 12) return { ok: false, code: "rejected", service, status: 401 };
+        return { ok: true, code: "ok", service, status: 200, remaining: 958, limit: 1000 };
+      }
+      return { ok: false, code: "unsupported", service };
+    },
+    // Dork groups postponed after captchas everywhere (core: project facts search.dorks_pending).
+    dorks_pending: ({ project } = {}) => {
+      const st = P(project || load().settings.last_project);
+      const items = clone(st.dorks_pending || []);
+      return { project: st.project.id, pending: items.length, items, retry_at: null };
+    },
+    // "Retry now": the demo runs the postponed dorks at once (no captcha this time).
+    dorks_retry: ({ project } = {}) => {
+      const st = P(project || load().settings.last_project);
+      const n = (st.dorks_pending || []).length;
+      if (!n) return { ok: false, mode: "none", pending: 0 };
+      st.dorks_pending = [];
+      save();
+      emit({ type: "dorks", scan_id: RUN ? RUN.id : "", project: st.project.id, pending: 0, retry_at: null });
+      return { ok: true, mode: RUN ? "now" : "scan", pending: n };
     },
     key_delete: ({ service }) => {
       const s = load().settings;

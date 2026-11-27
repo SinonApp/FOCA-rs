@@ -924,6 +924,11 @@
         settingsView(F.db.settings);
         F.emit("db", { kind: "settings" });
       }),
+    // Brave key or own SearXNG check: { ok, code, status?, remaining?, limit?, instances? }.
+    key_check: (service, value) => run("key_check", value ? { service, value } : { service }),
+    // Dork groups postponed after captchas everywhere, and "Retry now".
+    dorks_pending: () => run("dorks_pending", { project: cur() }),
+    dorks_retry: () => run("dorks_retry", { project: cur() }),
     net_check: () => run("net_check", {}),
     net_proxy_check: args => run("net_proxy_check", args || {}),
     // --- reports ---

@@ -2579,6 +2579,38 @@
         }
        }
       },
+      "search": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "cc_depth": {
+         "t": [
+          "string"
+         ]
+        },
+        "cc_years": {
+         "t": [
+          "number"
+         ]
+        },
+        "cc_pace_s": {
+         "t": [
+          "number"
+         ]
+        },
+        "cc_minutes": {
+         "t": [
+          "number"
+         ]
+        },
+        "dork_retry_min": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      },
       "ai": {
        "t": [
         "object"
@@ -6212,6 +6244,38 @@
         "screenshots": {
          "t": [
           "bool"
+         ]
+        }
+       }
+      },
+      "search": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "cc_depth": {
+         "t": [
+          "string"
+         ]
+        },
+        "cc_years": {
+         "t": [
+          "number"
+         ]
+        },
+        "cc_pace_s": {
+         "t": [
+          "number"
+         ]
+        },
+        "cc_minutes": {
+         "t": [
+          "number"
+         ]
+        },
+        "dork_retry_min": {
+         "t": [
+          "number"
          ]
         }
        }
@@ -12894,6 +12958,38 @@
       }
      }
     },
+    "search": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "cc_depth": {
+       "t": [
+        "string"
+       ]
+      },
+      "cc_years": {
+       "t": [
+        "number"
+       ]
+      },
+      "cc_pace_s": {
+       "t": [
+        "number"
+       ]
+      },
+      "cc_minutes": {
+       "t": [
+        "number"
+       ]
+      },
+      "dork_retry_min": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
     "ai": {
      "t": [
       "object"
@@ -13555,6 +13651,38 @@
       }
      }
     },
+    "search": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "cc_depth": {
+       "t": [
+        "string"
+       ]
+      },
+      "cc_years": {
+       "t": [
+        "number"
+       ]
+      },
+      "cc_pace_s": {
+       "t": [
+        "number"
+       ]
+      },
+      "cc_minutes": {
+       "t": [
+        "number"
+       ]
+      },
+      "dork_retry_min": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
     "ai": {
      "t": [
       "object"
@@ -13751,6 +13879,105 @@
        ]
       }
      }
+    }
+   }
+  },
+  "key_check": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "ok": {
+     "t": [
+      "bool"
+     ]
+    },
+    "code": {
+     "t": [
+      "string"
+     ]
+    },
+    "service": {
+     "t": [
+      "string"
+     ]
+    },
+    "instances": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "url": {
+        "t": [
+         "string"
+        ]
+       },
+       "ok": {
+        "t": [
+         "bool"
+        ]
+       },
+       "code": {
+        "t": [
+         "string"
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  "dorks_pending": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "project": {
+     "t": [
+      "string"
+     ]
+    },
+    "pending": {
+     "t": [
+      "number"
+     ]
+    },
+    "items": {
+     "t": [
+      "array"
+     ],
+     "items": null
+    },
+    "retry_at": {
+     "t": [
+      "null"
+     ]
+    }
+   }
+  },
+  "dorks_retry": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "ok": {
+     "t": [
+      "bool"
+     ]
+    },
+    "mode": {
+     "t": [
+      "string"
+     ]
+    },
+    "pending": {
+     "t": [
+      "number"
+     ]
     }
    }
   },
@@ -20708,6 +20935,38 @@
     "status": {
      "t": [
       "string"
+     ]
+    }
+   }
+  },
+  "dorks": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "type": {
+     "t": [
+      "string"
+     ]
+    },
+    "scan_id": {
+     "t": [
+      "string"
+     ]
+    },
+    "project": {
+     "t": [
+      "string"
+     ]
+    },
+    "pending": {
+     "t": [
+      "number"
+     ]
+    },
+    "retry_at": {
+     "t": [
+      "number"
      ]
     }
    }
