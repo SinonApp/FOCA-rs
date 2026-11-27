@@ -64,7 +64,10 @@ if [ "$WHAT" = all ] || [ "$WHAT" = steps ]; then
 fi
 
 if [ "$WHAT" = all ] || [ "$WHAT" = routes ]; then
-  # A project with a scan (if no scenarios ran, a passive scan is started through the API).
+  # The routes check screens, not the lock: 05-report-settings leaves a PIN, and the core reads pin.json on
+  # every call, so removing it opens the app without /lock (there is no command to remove a PIN).
+  rm -f "$E2E_DIR/data/pin.json"
+  # The project with the most data (if no scenarios ran, a passive scan is started through the API).
   python3 - "$REAL" > "$OUT/routes.txt" <<'PY'
 import json, sys, time, urllib.request
 base = sys.argv[1]
@@ -76,7 +79,11 @@ def call(cmd, args={}):
 # Accept the terms of use, otherwise every route opens the /terms screen.
 if not call("terms_get")["accepted"]: call("terms_accept", {"version": call("terms_get")["version"]})
 lst = call("project_list")
-pid = next((p["id"] for p in lst if p["scans"]), None)
+def richness(p):
+    s = call("project_snapshot", {"id": p["id"]})
+    return (bool(s["docs"]) and bool(s["findings"]) and bool(s["people"]) and bool(s["hosts"]), len(s["docs"]) + len(s["findings"]))
+cands = [p for p in lst if p["scans"]]
+pid = max(cands, key=richness)["id"] if cands else None
 if not pid:
     pid = lst[0]["id"] if lst else call("project_create", {"name": "example.test", "client": "ТОВ «Приклад»", "targets": ["example.test"], "excludes": []})["id"]
     call("scan_start", {"project": pid, "profile": "passive"})
@@ -98,17 +105,19 @@ routes = [r.strip() for r in open("qa/routes.txt").read().replace("\n", ",").spl
 print(",".join(sub.get(r, r) for r in routes))
 PY
   R=$(cat "$OUT/routes.txt")
+  N=$(printf '%s' "$R" | tr ',' '\n' | grep -c .)
+  [ "$N" -gt 0 ] || fail "routes (core): no route list (see the traceback above)"
   i=0
-  for cfg in "--w 393" "--w 360 --fs 2"; do
+  [ "$N" -gt 0 ] && for cfg in "--w 393" "--w 360 --fs 2"; do
     i=$((i+1)); log="$OUT/logs/routes_$i.log"
     qa/shoot.sh --real "$REAL" --routes "$R" --out "$OUT/routes" $cfg > "$log" 2>&1; rc=$?
-    res=$(python3 - "$log" "$rc" <<'PY'
+    res=$(python3 - "$log" "$rc" "$N" <<'PY'
 import json, sys
 t = open(sys.argv[1], encoding="utf-8", errors="replace").read(); rc = int(sys.argv[2])
 try: d = json.loads(t[t.find("{\n"):])
 except Exception: print("BAD", "rc=%d report not parsed: %s" % (rc, t[-300:].replace("\n", " "))); sys.exit()
 ovf = [r["route"] for r in d["report"] if r["overflow"]["sw"] or r["overflow"]["docw"]]
-bad = rc != 0 or d["errors"] or ovf
+bad = rc != 0 or d["errors"] or ovf or len(d["report"]) < int(sys.argv[3])
 print("BAD" if bad else "OK", "rc=%d routes %d errors %s overflow %s" % (rc, len(d["report"]), d["errors"][:4], ovf))
 PY
 )
