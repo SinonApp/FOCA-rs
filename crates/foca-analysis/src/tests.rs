@@ -363,3 +363,81 @@ fn eol_from_historic_docs_downgraded() {
     assert_eq!(o07.sev, Severity::Low, "web archive document");
     assert!(o07.evidence.contains("Исторические данные ("));
 }
+
+#[test]
+fn new_format_findings_pdb_ai_geodata_sourcemap_connections() {
+    let mut exe = Metadata::new(DocFormat::Exe);
+    exe.paths = vec![PathRef {
+        path: r"C:\Users\jdeveloper\source\repos\Billing\obj\Release\Billing.pdb".into(),
+        kind: PathKind::Windows,
+        user: Some("jdeveloper".into()),
+        host: None,
+        source: "pe:pdb".into(),
+    }];
+    let mut png = Metadata::new(DocFormat::Png);
+    png.ai_generated = Some(foca_core::AiGenerated {
+        generator: Some("ComfyUI".into()),
+        model: Some("sdxl-base".into()),
+        prompt: Some("a quiet office".into()),
+        source: "png:workflow".into(),
+    });
+    let mut kml = Metadata::new(DocFormat::Kml);
+    kml.geo_points = vec![foca_core::GeoPoint {
+        lat: 50.45,
+        lon: 30.52,
+        alt: None,
+        time: None,
+        name: Some("Depot 1".into()),
+        source: "kml:coordinates".into(),
+    }];
+    let mut map = Metadata::new(DocFormat::SourceMap);
+    map.stats.insert("sources_content".into(), 3);
+    let mut xlsx = Metadata::new(DocFormat::Xlsx);
+    xlsx.connections = vec![foca_core::DataConnection {
+        kind: "oledb".into(),
+        name: Some("Sales".into()),
+        server: Some("sql01.corp.example".into()),
+        database: Some("Sales".into()),
+        user: Some("report_ro".into()),
+        has_password: true,
+        source: "xl/connections.xml".into(),
+        ..Default::default()
+    }];
+    let docs = [
+        doc(1, "Billing.dll", exe),
+        doc(2, "office.png", png),
+        doc(3, "depots.kml", kml),
+        doc(4, "app.js.map", map),
+        doc(5, "sales.xlsx", xlsx),
+    ];
+    let inputs: Vec<DocInput> = docs.iter().map(DocInput::new).collect();
+    let a = analyze(&inputs, &scope(), &prev_now());
+    let by = |rule: &str| {
+        a.findings
+            .iter()
+            .find(|f| f.provenance.rule == rule)
+            .unwrap_or_else(|| {
+                panic!(
+                    "{rule}: {:?}",
+                    a.findings
+                        .iter()
+                        .map(|f| &f.provenance.rule)
+                        .collect::<Vec<_>>()
+                )
+            })
+    };
+    assert!(by("doc.pdb_user").evidence.contains("jdeveloper"));
+    let ai = by("doc.ai_generated");
+    assert!(ai.evidence.contains("ComfyUI / sdxl-base"));
+    assert!(
+        !ai.evidence.contains("quiet office"),
+        "prompt must stay out of findings"
+    );
+    assert!(by("doc.geodata").evidence.contains("Depot 1"));
+    assert!(by("doc.sourcemap").evidence.contains("sourcesContent: 3"));
+    let c = by("doc.data_connection");
+    assert_eq!(c.sev, Severity::High);
+    assert!(
+        c.evidence.contains("server=sql01.corp.example") && c.evidence.contains("password=***")
+    );
+}

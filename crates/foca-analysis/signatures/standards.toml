@@ -458,6 +458,34 @@ kszi = ["6.1.2.4"]
 nist = ["AC-22"]
 
 [[rule]]
+id = "doc.pdb_user"
+mitre = ["T1589.003"]
+cwe = ["CWE-497"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.4"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.ai_generated"
+iso27001 = ["8.12"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.geodata"
+mitre = ["T1591.001"]
+cwe = ["CWE-212"]
+iso27001 = ["8.12"]
+kszi = ["6.1.2.5"]
+nist = ["AC-22"]
+
+[[rule]]
+id = "doc.sourcemap"
+mitre = ["T1592.002"]
+cwe = ["CWE-540"]
+iso27001 = ["8.12", "8.28"]
+nist = ["AC-22"]
+
+[[rule]]
 id = "doc.lnk_host_mac"
 mitre = ["T1592.001"]
 cwe = ["CWE-497"]

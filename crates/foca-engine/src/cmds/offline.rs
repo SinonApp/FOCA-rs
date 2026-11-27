@@ -610,6 +610,16 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
     fx.insert("xmp_history".into(), serde_json::to_value(&m.xmp_history)?);
     fx.insert("xmp_ids".into(), serde_json::to_value(&m.xmp_ids)?);
     fx.insert("pii".into(), serde_json::to_value(&m.pii)?);
+    let geo: Vec<&foca_core::GeoPoint> = m.geo_points.iter().take(200).collect();
+    fx.insert("geo_points".into(), serde_json::to_value(&geo)?);
+    fx.insert(
+        "ai_generated".into(),
+        serde_json::to_value(&m.ai_generated)?,
+    );
+    fx.insert("connections".into(), serde_json::to_value(&m.connections)?);
+    fx.insert("mail_hops".into(), serde_json::to_value(&m.mail_hops)?);
+    fx.insert("fonts".into(), serde_json::to_value(&m.fonts)?);
+    fx.insert("form_fields".into(), serde_json::to_value(&m.form_fields)?);
     let mut links: Vec<Value> = Vec::new();
     let mut seen = std::collections::BTreeSet::new();
     let found = stored

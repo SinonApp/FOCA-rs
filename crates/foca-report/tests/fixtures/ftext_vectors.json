@@ -3751,6 +3751,78 @@
  },
  {
   "lang": "en",
+  "rule": "doc.pdb_user",
+  "text": "Имя разработчика в пути сборки (PDB) (X1)",
+  "out": "Developer user name in the build path (PDB) (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.pdb_user",
+  "text": "Исполняемый файл хранит путь к отладочным символам PDB с папкой пользователя: раскрываются логин разработчика, структура проектов и сборочная машина.",
+  "out": "The executable keeps the path to its PDB debug symbols with a user folder: it reveals the developer's login, the project layout and the build machine."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.pdb_user",
+  "text": "Собирать релизы на сборочном сервере с нейтральными путями (/pathmap, -fdebug-prefix-map) или без пути PDB.",
+  "out": "Build releases on a build server with neutral paths (/pathmap, -fdebug-prefix-map) or without the PDB path."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.ai_generated",
+  "text": "Изображение создано генеративной нейросетью (X1)",
+  "out": "Image made by a generative AI model (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.ai_generated",
+  "text": "В метаданных изображения остались параметры генерации или отметка C2PA о синтетическом содержимом: видно, что картинка не фотография, и какой сервис или модель её создали.",
+  "out": "The image metadata keeps generation parameters or a C2PA synthetic content mark: it shows that the picture is not a photo and which service or model made it."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.ai_generated",
+  "text": "Отмечать сгенерированные изображения явно; удалять параметры генерации (промпт, модель) перед публикацией.",
+  "out": "Label generated images explicitly; remove generation parameters (prompt, model) before publishing."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.geodata",
+  "text": "Координаты в файле геоданных (X1)",
+  "out": "Coordinates in a geodata file (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.geodata",
+  "text": "Файл геоданных (KML/GPX) содержит координаты точек и треков, часто с именами и временем: раскрываются объекты, маршруты и места работы.",
+  "out": "The geodata file (KML/GPX) holds coordinates of points and tracks, often with names and times: it reveals sites, routes and workplaces."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.geodata",
+  "text": "Проверить, какие точки и треки допустимо публиковать; удалить служебные объекты и время.",
+  "out": "Check which points and tracks may be published; remove internal sites and timestamps."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.sourcemap",
+  "text": "Карта исходников раскрывает исходный код и пути сборки (X1)",
+  "out": "Source map exposes source code and build paths (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.sourcemap",
+  "text": "Опубликованная карта исходников (.map) перечисляет исходные файлы проекта, иногда вместе с их полным текстом и путями на машине разработчика.",
+  "out": "A published source map (.map) lists the project's source files, sometimes with their full text and paths on the developer's machine."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.sourcemap",
+  "text": "Не выкладывать .map в продуктив или закрыть к ним доступ; собирать без sourcesContent и абсолютных путей.",
+  "out": "Do not deploy .map files to production or restrict access to them; build without sourcesContent and absolute paths."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7510,6 +7582,78 @@
   "rule": "takeover-http",
   "text": "Удалить запись CNAME или занять ресурс у провайдера за компанией.",
   "out": "Видалити запис CNAME або закріпити ресурс у провайдера за компанією."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.pdb_user",
+  "text": "Имя разработчика в пути сборки (PDB) (X1)",
+  "out": "Ім'я розробника в шляху збірки (PDB) (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.pdb_user",
+  "text": "Исполняемый файл хранит путь к отладочным символам PDB с папкой пользователя: раскрываются логин разработчика, структура проектов и сборочная машина.",
+  "out": "Виконуваний файл зберігає шлях до налагоджувальних символів PDB з папкою користувача: розкриваються логін розробника, структура проєктів і машина збірки."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.pdb_user",
+  "text": "Собирать релизы на сборочном сервере с нейтральными путями (/pathmap, -fdebug-prefix-map) или без пути PDB.",
+  "out": "Збирати релізи на сервері збірки з нейтральними шляхами (/pathmap, -fdebug-prefix-map) або без шляху PDB."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.ai_generated",
+  "text": "Изображение создано генеративной нейросетью (X1)",
+  "out": "Зображення створене генеративною нейромережею (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.ai_generated",
+  "text": "В метаданных изображения остались параметры генерации или отметка C2PA о синтетическом содержимом: видно, что картинка не фотография, и какой сервис или модель её создали.",
+  "out": "У метаданих зображення залишилися параметри генерації або позначка C2PA про синтетичний вміст: видно, що картинка не фотографія, і який сервіс чи модель її створили."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.ai_generated",
+  "text": "Отмечать сгенерированные изображения явно; удалять параметры генерации (промпт, модель) перед публикацией.",
+  "out": "Явно позначати згенеровані зображення; видаляти параметри генерації (промпт, модель) перед публікацією."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.geodata",
+  "text": "Координаты в файле геоданных (X1)",
+  "out": "Координати у файлі геоданих (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.geodata",
+  "text": "Файл геоданных (KML/GPX) содержит координаты точек и треков, часто с именами и временем: раскрываются объекты, маршруты и места работы.",
+  "out": "Файл геоданих (KML/GPX) містить координати точок і треків, часто з назвами й часом: розкриваються об'єкти, маршрути та місця роботи."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.geodata",
+  "text": "Проверить, какие точки и треки допустимо публиковать; удалить служебные объекты и время.",
+  "out": "Перевірити, які точки й треки можна публікувати; видалити службові об'єкти та час."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.sourcemap",
+  "text": "Карта исходников раскрывает исходный код и пути сборки (X1)",
+  "out": "Карта вихідних кодів розкриває вихідний код і шляхи збірки (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.sourcemap",
+  "text": "Опубликованная карта исходников (.map) перечисляет исходные файлы проекта, иногда вместе с их полным текстом и путями на машине разработчика.",
+  "out": "Опублікована карта вихідних кодів (.map) перелічує вихідні файли проєкту, іноді разом з їхнім повним текстом і шляхами на машині розробника."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.sourcemap",
+  "text": "Не выкладывать .map в продуктив или закрыть к ним доступ; собирать без sourcesContent и абсолютных путей.",
+  "out": "Не викладати .map у продуктив або закрити до них доступ; збирати без sourcesContent і абсолютних шляхів."
  },
  {
   "lang": "uk",

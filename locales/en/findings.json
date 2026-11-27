@@ -3749,6 +3749,78 @@
       "rules": "takeover-http",
       "pattern": "Удалить запись CNAME или занять ресурс у провайдера за компанией.",
       "text": "Delete the CNAME record or claim the resource at the provider for the company."
+    },
+    {
+      "id": "f626",
+      "rules": "doc.pdb_user",
+      "pattern": "Имя разработчика в пути сборки (PDB) ({})",
+      "text": "Developer user name in the build path (PDB) ({0})"
+    },
+    {
+      "id": "f627",
+      "rules": "doc.pdb_user",
+      "pattern": "Исполняемый файл хранит путь к отладочным символам PDB с папкой пользователя: раскрываются логин разработчика, структура проектов и сборочная машина.",
+      "text": "The executable keeps the path to its PDB debug symbols with a user folder: it reveals the developer's login, the project layout and the build machine."
+    },
+    {
+      "id": "f628",
+      "rules": "doc.pdb_user",
+      "pattern": "Собирать релизы на сборочном сервере с нейтральными путями (/pathmap, -fdebug-prefix-map) или без пути PDB.",
+      "text": "Build releases on a build server with neutral paths (/pathmap, -fdebug-prefix-map) or without the PDB path."
+    },
+    {
+      "id": "f629",
+      "rules": "doc.ai_generated",
+      "pattern": "Изображение создано генеративной нейросетью ({})",
+      "text": "Image made by a generative AI model ({0})"
+    },
+    {
+      "id": "f630",
+      "rules": "doc.ai_generated",
+      "pattern": "В метаданных изображения остались параметры генерации или отметка C2PA о синтетическом содержимом: видно, что картинка не фотография, и какой сервис или модель её создали.",
+      "text": "The image metadata keeps generation parameters or a C2PA synthetic content mark: it shows that the picture is not a photo and which service or model made it."
+    },
+    {
+      "id": "f631",
+      "rules": "doc.ai_generated",
+      "pattern": "Отмечать сгенерированные изображения явно; удалять параметры генерации (промпт, модель) перед публикацией.",
+      "text": "Label generated images explicitly; remove generation parameters (prompt, model) before publishing."
+    },
+    {
+      "id": "f632",
+      "rules": "doc.geodata",
+      "pattern": "Координаты в файле геоданных ({})",
+      "text": "Coordinates in a geodata file ({0})"
+    },
+    {
+      "id": "f633",
+      "rules": "doc.geodata",
+      "pattern": "Файл геоданных (KML/GPX) содержит координаты точек и треков, часто с именами и временем: раскрываются объекты, маршруты и места работы.",
+      "text": "The geodata file (KML/GPX) holds coordinates of points and tracks, often with names and times: it reveals sites, routes and workplaces."
+    },
+    {
+      "id": "f634",
+      "rules": "doc.geodata",
+      "pattern": "Проверить, какие точки и треки допустимо публиковать; удалить служебные объекты и время.",
+      "text": "Check which points and tracks may be published; remove internal sites and timestamps."
+    },
+    {
+      "id": "f635",
+      "rules": "doc.sourcemap",
+      "pattern": "Карта исходников раскрывает исходный код и пути сборки ({})",
+      "text": "Source map exposes source code and build paths ({0})"
+    },
+    {
+      "id": "f636",
+      "rules": "doc.sourcemap",
+      "pattern": "Опубликованная карта исходников (.map) перечисляет исходные файлы проекта, иногда вместе с их полным текстом и путями на машине разработчика.",
+      "text": "A published source map (.map) lists the project's source files, sometimes with their full text and paths on the developer's machine."
+    },
+    {
+      "id": "f637",
+      "rules": "doc.sourcemap",
+      "pattern": "Не выкладывать .map в продуктив или закрыть к ним доступ; собирать без sourcesContent и абсолютных путей.",
+      "text": "Do not deploy .map files to production or restrict access to them; build without sourcesContent and absolute paths."
     }
   ],
   "tech_cats": {

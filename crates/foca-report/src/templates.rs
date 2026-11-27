@@ -75,13 +75,15 @@ fn group(rule: &str) -> usize {
             | "hidden-sheets"
             | "thumbnail"
             | "doc.pdf_revision_authors"
+            | "doc.ai_generated"
+            | "doc.sourcemap"
     ) {
         1
     } else if r == "doc.modified_after_signing" || r.starts_with("doc.signature") {
         2
     } else if matches!(
         r,
-        "pii" | "gps" | "pim.contact_pii" | "doc.signer_identity" | "mass-names"
+        "pii" | "gps" | "pim.contact_pii" | "doc.signer_identity" | "mass-names" | "doc.geodata"
     ) {
         3
     } else if r.starts_with("internal-")
@@ -92,6 +94,8 @@ fn group(rule: &str) -> usize {
             r,
             "remote-file"
                 | "doc.data_connection"
+                | "doc.pdb_user"
+                | "doc.author_cluster"
                 | "service-accounts"
                 | "media.device_serial"
                 | "org.structure"

@@ -61,6 +61,11 @@
       "Подключения к базам, .odc и сводные таблицы раскрывают серверы, базы и учётные записи.",
     "doc.lnk_host_mac": "Ярлык .lnk хранит имя компьютера, MAC-адрес и серийный номер тома автора.",
     "doc.lnk_unc_path": "Ярлык указывает на сетевую папку. Видны файловый сервер и структура каталогов.",
+    "doc.pdb_user": "Путь к PDB в программе содержит папку пользователя: виден логин разработчика и проекты.",
+    "doc.ai_generated": "Изображение создано нейросетью: в метаданных остались генератор, модель и промпт.",
+    "doc.geodata": "Файл KML/GPX хранит координаты объектов и треков, часто с именами и временем.",
+    "doc.sourcemap": "Карта исходников перечисляет файлы проекта и пути сборки, иногда с исходным кодом.",
+    "doc.author_cluster": "Документы связаны общими следами: один автор, компьютер, шаблон или устройство.",
     "mail.internal_relay": "Заголовки Received раскрывают внутренние почтовые серверы и частные IP-адреса.",
     "mail.originating_ip": "X-Originating-IP раскрывает адрес компьютера отправителя.",
     "mail.internal_domain": "В Message-ID видно внутреннее имя почтового сервера или домена AD.",
@@ -359,6 +364,78 @@
           `<div class="fx-gh">${esc(g)}</div><div class="kv fx-kv">${rows.map(([k, v]) => kvr(esc(k), mono(v))).join("")}</div>`,
       )
       .join("");
+  }
+
+  /** Data connections parsed by the core (server, database, provider, user; passwords never stored). */
+  function connListBlock(fx) {
+    const list = fx.connections || [];
+    if (!list.length) return "";
+    const L = {
+      server: F.t("forensics.c_server", "Сервер"),
+      database: F.t("forensics.f_db", "База"),
+      provider: F.t("forensics.c_provider", "Провайдер"),
+      user: F.t("forensics.f_user", "Пользователь"),
+      target: F.t("forensics.c_target", "Адрес или файл"),
+    };
+    return list
+      .map(c => {
+        const rows = Object.keys(L)
+          .filter(k => c[k])
+          .map(k => kvr(esc(L[k]), mono(c[k])));
+        if (c.has_password)
+          rows.push(
+            kvr(
+              esc(F.t("forensics.c_pass", "Пароль")),
+              esc(F.t("forensics.c_pass_v", "был в файле, не сохраняется")),
+            ),
+          );
+        return `<div class="fx-gh">${esc(c.name || c.kind)} <span class="mono">${esc(c.kind)}</span></div><div class="kv fx-kv">${rows.join("")}</div>`;
+      })
+      .join("");
+  }
+  /** Points from KML/GPX geodata. */
+  function geoBlock(fx) {
+    const pts = fx.geo_points || [];
+    if (!pts.length) return "";
+    return `<div class="kv fx-kv">${pts
+      .slice(0, 50)
+      .map(p =>
+        kvr(
+          esc(p.name || p.source),
+          mono(
+            `${p.lat.toFixed(5)}, ${p.lon.toFixed(5)}${p.alt != null ? ` · ${p.alt} m` : ""}${p.time ? ` · ${dt(p.time)}` : ""}`,
+          ),
+        ),
+      )
+      .join("")}</div>`;
+  }
+  /** Generative AI markers; the prompt is shown only here, never in reports. */
+  function aiBlock(fx) {
+    const a = fx.ai_generated;
+    if (!a) return "";
+    return `<div class="kv fx-kv">${[
+      kvr(esc(F.t("forensics.ai_gen", "Генератор")), a.generator ? mono(a.generator) : ""),
+      kvr(esc(F.t("forensics.ai_model", "Модель")), a.model ? mono(a.model) : ""),
+      kvr(esc(F.t("forensics.ai_src", "Где найдено")), mono(a.source)),
+      kvr(esc(F.t("forensics.ai_prompt", "Промпт")), a.prompt ? mono(a.prompt) : ""),
+    ].join("")}</div>`;
+  }
+  /** Mail transport hops (Received), newest first. */
+  function hopsBlock(fx) {
+    const hops = fx.mail_hops || [];
+    if (!hops.length) return "";
+    return `<div class="list">${hops
+      .map(
+        (h, i) =>
+          `<div class="row"><span class="fx-n">${i + 1}</span><span class="mono fx-break">${esc(h.from || "?")} → ${esc(h.by || "?")}${h.ip ? ` (${esc(h.ip)})` : ""}</span>${h.internal ? pill("warn", esc(F.t("forensics.hop_int", "внутренний"))) : ""}</div>`,
+      )
+      .join("")}</div>`;
+  }
+  /** Fonts and form fields: plain lists. */
+  function listBlock(items) {
+    return items.length
+      ? `<div class="kv fx-kv">${items.map(([k, v]) => kvr(esc(k), v ? mono(v) : "")).join("")}</div>`
+      : "";
   }
 
   function xmpBlock(fx) {
@@ -684,7 +761,43 @@
           `<p class="fx-p">${esc(F.t("forensics.scan_note", "Страницы состоят только из изображений: текст не извлекается, поиск и анализ его не видят. Проверьте документ вручную."))}</p>`,
           "warn",
         ),
-      conn && sec("conn", "db", F.t("forensics.s_conn", "Подключения к данным"), "", conn, "warn"),
+      (conn || (fx.connections || []).length) &&
+        sec(
+          "conn",
+          "db",
+          F.t("forensics.s_conn", "Подключения к данным"),
+          (fx.connections || []).length || "",
+          connListBlock(fx) + (conn || ""),
+          (fx.connections || []).some(c => c.has_password) ? "high" : "warn",
+        ),
+      (fx.mail_hops || []).length &&
+        sec(
+          "hops",
+          "mail",
+          F.t("forensics.s_hops", "Путь письма (Received)"),
+          fx.mail_hops.length,
+          hopsBlock(fx),
+        ),
+      (fx.geo_points || []).length &&
+        sec("geo", "pin", F.t("forensics.s_geo", "Геоданные"), fx.geo_points.length, geoBlock(fx), "warn"),
+      fx.ai_generated &&
+        sec("ai", "spark", F.t("forensics.s_ai", "Сгенерировано ИИ"), "", aiBlock(fx), "low"),
+      (fx.form_fields || []).length &&
+        sec(
+          "form",
+          "note",
+          F.t("forensics.s_form", "Поля формы"),
+          fx.form_fields.length,
+          listBlock(fx.form_fields.map(f => [f.name, f.value || ""])),
+        ),
+      (fx.fonts || []).length &&
+        sec(
+          "fonts",
+          "doc",
+          F.t("forensics.s_fonts", "Шрифты"),
+          fx.fonts.length,
+          listBlock(fx.fonts.map(f => [f, ""])),
+        ),
       fmt[2] && sec("fmt", fmt[1], fmt[0], "", fmt[2]),
       fx.pii.length &&
         sec(

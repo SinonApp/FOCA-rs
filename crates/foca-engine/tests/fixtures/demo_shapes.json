@@ -14843,6 +14843,41 @@
         "array"
        ],
        "items": null
+      },
+      "geo_points": {
+       "t": [
+        "array"
+       ],
+       "items": null
+      },
+      "ai_generated": {
+       "t": [
+        "null"
+       ]
+      },
+      "connections": {
+       "t": [
+        "array"
+       ],
+       "items": null
+      },
+      "mail_hops": {
+       "t": [
+        "array"
+       ],
+       "items": null
+      },
+      "fonts": {
+       "t": [
+        "array"
+       ],
+       "items": null
+      },
+      "form_fields": {
+       "t": [
+        "array"
+       ],
+       "items": null
       }
      }
     }

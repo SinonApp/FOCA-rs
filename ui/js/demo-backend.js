@@ -1083,6 +1083,12 @@
     links: [],
     fields: {},
     embedded: [],
+    geo_points: [],
+    ai_generated: null,
+    connections: [],
+    mail_hops: [],
+    fonts: [],
+    form_fields: [],
     ...o,
   });
   const KEP_ISSUER = "O=Інформаційно-довідковий департамент ДПС, CN=КНЕДП - ІДД ДПС, C=UA";
@@ -12266,8 +12272,8 @@
     software: 54,
     os: 19,
     secrets: 221,
-    std_rules: 76,
-    std_refs: 447,
+    std_rules: 80,
+    std_refs: 464,
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
   const DEMO_SIG_TABLES = [

@@ -348,6 +348,7 @@ fn template_key_for(rule: &str, category: &str) -> &'static str {
         | "doc.pdf_removed_text"
         | "doc.pdf_revision_authors"
         | "doc.lineage"
+        | "doc.ai_generated"
         | "zip.path_traversal" => "doc-sanitize",
 
         "doc.modified_after_signing"
@@ -355,7 +356,7 @@ fn template_key_for(rule: &str, category: &str) -> &'static str {
         | "doc.signer_identity"
         | "doc.signature_tsa_gap" => "doc-signature",
 
-        "pii" | "gps" | "pim.contact_pii" => "pii",
+        "pii" | "gps" | "pim.contact_pii" | "doc.geodata" => "pii",
 
         "infra.tls_legacy_version" | "infra.tls_weak_cipher" => "tls-crypto",
 
@@ -422,6 +423,8 @@ fn template_key_for(rule: &str, category: &str) -> &'static str {
         | "service-accounts"
         | "email-pattern"
         | "doc.data_connection"
+        | "doc.pdb_user"
+        | "doc.sourcemap"
         | "doc.lnk_host_mac"
         | "doc.lnk_unc_path"
         | "media.device_serial"
