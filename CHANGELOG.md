@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 ---
 
+## 2.0.0-beta.4 (unreleased)
+
+### Added
+- **More site technologies**: the webappanalyzer table keeps 7604 of 7715 technologies (was 5623). Detection now also reads the contents of fetched JavaScript files, the visible page text, inline and fetched stylesheets, the TLS certificate issuer and robots.txt, with version templates as before.
+- **Browser signals on Android**: in Standard and Full the home page of each site is rendered once in the hidden browser and one read-only script (1.5 s budget) reads JavaScript globals such as `jQuery.fn.jquery`, DOM selectors and the hosts the page requests. App-shell pages the crawler renders answer the same script. Settings → Site crawl → "Home pages via browser" caps renders per scan (default 10). Passive renders nothing; the CLI and desktop note in the scan log that browser-only signals were not checked.
+- **Plugins, themes and modules**: WordPress plugins and themes (also `mu-plugins` and renamed content folders), Drupal modules and themes, Joomla components, modules, plugins and templates, Magento and PrestaShop modules are found by their file paths, with the version from `?ver=` (the WordPress core version is ignored). Each carries its CMS, slug and a CPE guess for vulnerability matching. Full reads `readme.txt` of up to 30 WordPress plugins for the version.
+- **Technologies screen**: each technology shows which signals found it (headers, HTML, JS file, CSS, TLS, robots.txt, JS or DOM in the browser, plugin path, readme), and plugins are grouped under their CMS with versions.
+
 ## 2.0.0-beta.3: 2026-11-27
 
 Third beta. It fixes the projects that disappeared after an upgrade, makes Pause, the stage and captcha controls do what they say, and finds more documents: a new site crawler, files on public storage linked from the site, a deeper Common Crawl sweep and postponed searches. It also adds scan deletion, several hosts at once, a saved AI summary history and a real signature database update with more detection data.

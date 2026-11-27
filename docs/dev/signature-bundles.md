@@ -20,7 +20,7 @@ Upstream tables that live next to the module that uses them:
 
 | Table | Source (license) | Used by |
 |---|---|---|
-| `crates/foca-recon/data/webappanalyzer.json.gz` | enthec/webappanalyzer (GPL-3.0) | `foca-recon::tech`: headers, cookies, meta, HTML, script and URL rules, `implies`/`requires`/`excludes`, CPE; merged by name with the hand rules in `tech.json` (hand fields win). |
+| `crates/foca-recon/data/webappanalyzer.json.gz` | enthec/webappanalyzer (GPL-3.0) | `foca-recon::tech`: headers, cookies, meta, HTML, script and URL rules, `implies`/`requires`/`excludes`, CPE; merged by name with the hand rules in `tech.json` (hand fields win). Since 2.0.0-beta.4 also JS file content (`sc`), text (`t`), CSS (`y`), TLS issuer (`ci`), robots (`ro`), browser-only JS globals (`g`), DOM (`d`), request hosts (`q`) and WordPress slugs (`ps`): extra keys that older loaders ignore, so the same table id stays readable by 2.0.0-beta.3 (test `table_still_parses_with_the_beta3_loader`). |
 | `crates/foca-net/data/saas_dns.json` | webappanalyzer DNS rules (GPL-3.0) | `foca-net::intel::saas`: services the hand tables do not know. |
 | `crates/foca-recon/data/endoflife.tsv.gz` | endoflife.date (MIT) | `foca-recon::tech`: release cycles past end of life at the snapshot date. |
 | `crates/foca-recon/data/retire.json.gz` | Retire.js (Apache-2.0) | `foca-recon::retire`: JS library versions and vulnerable ranges (`recon.vuln_js_lib`). |

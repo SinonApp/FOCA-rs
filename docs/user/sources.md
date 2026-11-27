@@ -77,6 +77,23 @@ The crawler runs only in the Standard and Full profiles. It starts from the targ
 - **Links inside documents**: web links in downloaded documents (for PDF, URI annotations) that point to in-scope documents or linked storage files are downloaded too, up to 2 steps deep, within the document limit.
 - **Provenance**: every document found this way shows where it came from in its card: the page that linked it, the document the link was found in, the storage provider and a Google export note.
 
+## Site Technology Signals
+
+The `recon` source detects site technologies with the webappanalyzer rules plus about 130 hand rules. What it reads depends on the profile:
+
+| Signal | Where it comes from | Profiles |
+|---|---|---|
+| Headers, cookies, `<meta>`, HTML, `<script src>`, page URL | the home page (archive copy in Passive) | all |
+| JavaScript file contents | scripts the stage already fetches (first 512 KiB of each) | all |
+| Visible page text, CSS | the home page text, inline `<style>` and up to 5 same-site stylesheets | all |
+| TLS certificate issuer | the TLS inspection of the network stage | Standard, Full |
+| robots.txt | the archived robots.txt | all |
+| JS globals, DOM selectors, request hosts | one render of each site's home page in the hidden Android browser, plus app-shell pages the crawler rendered | Standard, Full, Android only |
+| Plugins, themes, modules | asset paths in the fetched HTML: WordPress `/wp-content/plugins/<slug>/` and `themes/`, Drupal, Joomla, Magento, PrestaShop; version from `?ver=` (the WordPress core version is ignored) | all |
+| Plugin readme | `readme.txt` `Stable tag` of up to 30 WordPress plugins | Full |
+
+The browser render reads only the globals and selectors the rules need, with one script that stops after 1.5 s and never changes the page. Settings → Site crawl → "Home pages via browser" caps renders per scan (default 10, 0 turns them off). The CLI and desktop builds have no browser: the scan log notes that browser-only signals were not checked. Each technology lists the signals that found it, and plugins are grouped under their CMS on Data → Site technologies.
+
 ## Source Statuses
 
 Displayed on the Scan screen and in Settings → Sources:

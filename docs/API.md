@@ -668,7 +668,11 @@ ReconView { at|null, scan|null, level: "external"|"target"|"active"|null,
            sources: { recon|wellknown|buckets|grepapp: { status, n|null, error|null }|null },
            sites: [{ host, url, via: "site"|"archive"|"", error|null, at,
                      favicon: { url, mmh3: number, md5, sha256, size, queries: [{ engine: "shodan"|"fofa"|"censys", q }] }|null }],
-           tech: [{ name, version|null, category, outdated: string|null /* e.g. "version X is older than Y" */, confidence, host }],
+           tech: [{ name, version|null, category, outdated: string|null /* e.g. "version X is older than Y" */, confidence, host,
+                    signals: string[] /* header|cookie|meta|html|script_src|url|script (JS file content)|text|css|cert (TLS issuer)|robots|js|dom|xhr (browser only)|plugin_path|readme|implied */,
+                    evidence: string[] /* e.g. "JS: jQuery.fn.jquery = 3.6.0", "plugin path: /wp-content/plugins/x/..." */,
+                    plugin_of: "wordpress"|"drupal"|"joomla"|"magento"|"prestashop"|null, slug: string|null /* plugin/theme/module directory */,
+                    cpe: string|null /* upstream CPE, or for a plugin a guess cpe:2.3:a:*:<slug>:*:*:*:*:*:<cms>:*:* */ }],
            analytics: [{ kind /* ga4, ga-ua, gtm, yandex-metrika… */, id, host }],
            hidden_paths: [{ path, reason, source, host }], sitemap: [{ loc, lastmod|null, host }] /* up to 300 per site */, sitemap_total,
            security: [{ host, source, contacts[], emails[], expires|null, policy[] }],
@@ -782,7 +786,7 @@ Settings { net: { proxy_on, type, addr, label, orbot, out_ip, out_country, kill_
            monitor: { [project]: { mode: "off"|"daily"|"weekly", time, days: number[], wifi, charge, tg, hook, what } } /* per-project monitoring */,
            ai: { provider, model, local: false, redact: { secrets, pii, client, evid } },
            ocr: { enabled: false /* disabled by default */, max_pages: 10 /* ≥ 1 */, max_mb: 15 /* ≥ 1 */ } /* optional offline OCR for scanned PDFs/images via Android ML Kit */,
-           recon: { screenshots: false /* disabled by default; Standard/Full profiles only (I-13) */ },
+           recon: { screenshots: false /* disabled by default; Standard/Full profiles only (I-13) */, render_hosts: 10 /* site home pages rendered in the platform browser for browser-only technology signals per scan; 0 = off */ },
            search: { cc_depth: "latest" /* latest | years | all */, cc_years: 3 /* 1..20 */, cc_pace_s: 3 /* seconds between Common Crawl index calls, at least 3 against the public index */, cc_minutes: 5 /* time budget of the background deep sweep per scan: it runs beside the scan, its late documents are downloaded when the next stage starts, the rest continues from the cache in the next scan */, dork_retry_min: 15 /* cool-down before the in-scan retry of postponed dorks; 0 = next scan only */, dork_retry_gap_s?: 45 /* pause between postponed groups */ },
            report?: { picked: { [project]: finding_id[] } /* "Add to report" */, draft: { [project]: ReportDraft } /* builder draft */, company?: string /* executor name for the report header/cover, used by report_build when opts.company is empty */ },
            ui?: { battery: { excluded, oem, done }, look: { theme, lang, density }, sig: { auto, updated },
@@ -821,6 +825,7 @@ place, `ui/js/limits.js` (`F.limits`); the core applies the invariants in `foca-
 | `crawl.max_pages` | ≥ 1, fits `u32` | | 500-2000 | below 50, above 20 000 | 100 000 |
 | `crawl.max_minutes` | ≥ 1, fits `u32` | | 10-30 | 240 | |
 | `crawl.max_rendered`, `crawl.max_images` | fits `u32` | none | 10-50, 100-500 | 500, 5000 | |
+| `recon.render_hosts` | fits `u32` | none | 5-20 | 50 | 0 turns home page renders off |
 | `crawl.max_image_mb` | ≥ 1 (never above the traffic limit) | | 100-500 | 5000 | |
 | `crawl.doc_link_depth` | ≤ 255 | links in documents not followed | 1-2 | 5 | |
 | `ocr.max_pages`, `ocr.max_mb` | ≥ 1; recognized text capped at 64 KiB | | 5-30, 5-25 | 50 | |

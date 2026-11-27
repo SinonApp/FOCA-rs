@@ -20,7 +20,9 @@ Core analysis functions take already-fetched data (HTML, JS bodies, document tex
 
 - **Passive Recon**:
   - `favicon.rs`: Shodan-compatible MurmurHash3 (`http.favicon.hash`), SHA-256/MD5, `<link rel=icon>` discovery.
-  - `tech.rs`: Wappalyzer-style technology fingerprinting + analytics ID pivots (rules in `crates/foca-recon/data/`; details in [crates/foca-recon/README.md](../../../crates/foca-recon/README.md)).
+  - `tech.rs`: Wappalyzer-style technology fingerprinting + analytics ID pivots (rules in `crates/foca-recon/data/`; details in [crates/foca-recon/README.md](../../../crates/foca-recon/README.md)). Static signals cover headers, cookies, meta, HTML, script URLs, page URL, JS file contents, visible text, CSS, the TLS issuer and robots.txt (`SiteExtra`, `detect_with`).
+  - `tech/browser.rs`: browser-only signals (JS globals, DOM selectors, request hosts): `probe_script` builds the bounded read-only script the Android WebView runs after a render, `BrowserSignals` parses its answer.
+  - `tech/cmsparts.rs`: WordPress/Drupal/Joomla/Magento/PrestaShop plugins, themes and modules by asset path with `?ver=` versions (core version ignored), CPE guess, `readme.txt` check for the active profile.
   - `js.rs`: JavaScript endpoint discovery and masked secret detection.
   - `grepapp.rs`: passive public GitHub code search via grep.app (`Access::Passive`).
   - `wellknown.rs` - `robots.txt`, `sitemap.xml`, and `security.txt` parsers plus Wayback archive collection.
@@ -48,7 +50,9 @@ Layout: `webaudit/` holds the deep web audit and its probes (headers, CSP, metho
 | `src/lib.rs` | 43 | Crate root and re-exports |
 | `src/report.rs` | 554 | `analyze_site` orchestrator returning `ReconReport` |
 | `src/screenshot.rs` | 387 | Isolated Android WebView visual snapshots (`WebScreenshotter`) and 64-bit `dHash` perceptual hashing |
-| `src/tech.rs` | 564 | Wappalyzer-style technology fingerprinting and analytics pivot IDs |
+| `src/tech.rs` | 1443 | Wappalyzer-style technology fingerprinting and analytics pivot IDs |
+| `src/tech/browser.rs` | 304 | Browser-only signals: probe script and answer matching |
+| `src/tech/cmsparts.rs` | 686 | CMS plugins, themes and modules by asset path |
 | `src/webaudit/apidocs.rs` | 855 | Exposed Swagger/OpenAPI specs, Swagger UI, Spring Actuator, and OIDC discovery |
 | `src/webaudit/csp.rs` | 387 | Content-Security-Policy parser, weakness audit, and host extraction |
 | `src/webaudit/fetch.rs` | 32 | Response helpers shared by the probes that contact the target |
