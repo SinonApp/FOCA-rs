@@ -74,6 +74,9 @@ pub struct Crawler {
     pub storage: Option<StorageEndpoints>,
     /// Collect images as EXIF candidates in [`CrawlOutput::images`] instead of [`Found`].
     pub collect_images: bool,
+    /// Ignore image links altogether (images for EXIF are off): they are neither candidates nor
+    /// documents, so they never count against the document limit.
+    pub skip_images: bool,
     /// Offline test harness only: the port start hosts listen on (`http(s)://<host>:<port>/`).
     pub site_port: Option<u16>,
     /// Unfinished frontiers of earlier scans, by domain ([`Crawler::with_resume`]).
@@ -117,6 +120,7 @@ impl Default for Crawler {
             pace_base: Duration::ZERO,
             storage: None,
             collect_images: false,
+            skip_images: false,
             site_port: None,
             resume: HashMap::new(),
             out: Arc::new(Mutex::new(CrawlOutput::default())),
@@ -801,6 +805,13 @@ impl Crawler {
         Ok(batch)
     }
 
+    /// An image link while images are off: not followed and not a document.
+    fn skipped_image(&self, u: &Url) -> bool {
+        !self.collect_images
+            && self.skip_images
+            && ext_of_url(u.as_str()).is_some_and(|e| is_image_ext(&e))
+    }
+
     /// Processes a fetched page: links, and a rendered copy when it is an app shell.
     async fn page(
         &self,
@@ -902,6 +913,9 @@ impl Crawler {
                     continue;
                 }
             }
+            if self.skipped_image(&u) {
+                continue;
+            }
             if self.collect_images {
                 if let Some(ext) = ext_of_url(u.as_str()).filter(|e| is_image_ext(e)) {
                     let wanted = st.ctx.filter.allows_ext(&ext) || matches!(ext.as_str(), "webp");
@@ -985,6 +999,9 @@ impl Crawler {
                     continue;
                 }
                 let lu = clean_url(&lu);
+                if self.skipped_image(&lu) {
+                    continue;
+                }
                 if !st.add_doc(&lu, &page_s) && self.max_depth >= 1 {
                     st.enqueue(lu, 1);
                 }

@@ -166,6 +166,11 @@ pub(crate) fn crawler(c: &Ctx, cfg: &CrawlCfg) -> Crawler {
         }
         emit_stats(&e, &st, &sid, s);
     });
+    // images off: image links are ignored, unless the run's document types ask for them
+    let typed_images = lock(&c.st)
+        .exts
+        .iter()
+        .any(|e| foca_search::filter::is_image_ext(e));
     Crawler {
         max_depth: cfg.max_depth,
         max_pages: cfg.max_pages,
@@ -174,6 +179,7 @@ pub(crate) fn crawler(c: &Ctx, cfg: &CrawlCfg) -> Crawler {
         honor_nofollow: cfg.nofollow,
         storage: cfg.storage.then(|| c.e.cfg.endpoints.storage.clone()),
         collect_images: cfg.images,
+        skip_images: !cfg.images && !typed_images,
         site_port: c.e.cfg.site_port,
         ..Default::default()
     }

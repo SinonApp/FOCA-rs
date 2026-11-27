@@ -317,6 +317,37 @@ async fn storage_files_and_doc_links_stay_within_the_download_limit() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn images_off_are_neither_fetched_nor_counted_as_documents() {
+    let (e, site) = env_with_site(site).await;
+    let id = e.project("noimg").await;
+    crawl_scan(&e, &id, json!({ "limit": 4, "crawl": { "images": false } })).await;
+    let s = e.snap(&id).await;
+    let names: Vec<&str> = s["docs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d["name"].as_str().unwrap())
+        .collect();
+    assert!(
+        !names
+            .iter()
+            .any(|n| n.ends_with(".jpg") || n.ends_with(".png")),
+        "{names:?}"
+    );
+    assert_eq!(site.hits("/img/photo.jpg") + site.hits("/img/logo.png"), 0);
+    // images no longer use up the limit: the deep page is still reached
+    for want in ["deep.docx", "hidden.xlsx", "start.pdf"] {
+        assert!(names.contains(&want), "{want}: {names:?}");
+    }
+    let crawl = e
+        .events()
+        .into_iter()
+        .rfind(|x| x["type"] == "crawl")
+        .unwrap();
+    assert_ne!(crawl["stop"], "docs", "{crawl}");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn crawl_resumes_frontier_in_next_scan() {
     let (e, site) = env_with_site(|_, r: &TestRequest| {
         let p = r.path().to_string();
