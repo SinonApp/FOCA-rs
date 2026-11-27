@@ -450,6 +450,8 @@ ul.rp-fixed.card {
 .rp-pvpg {
   padding-left: 0;
   padding-right: 0;
+  /* Room below the last sheet so its footer clears the gesture bar and any floating control. */
+  padding-bottom: calc(40px + var(--inset-bottom, 0px));
 }
 .rp-ptools {
   display: flex;
@@ -484,9 +486,19 @@ ul.rp-fixed.card {
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
+/*
+ * Not a scroll container at 100 %: the page scrolls vertically on its own, so a vertical swipe on a
+ * sheet never gets caught by a nested scroller. Only a zoomed preview scrolls sideways here; all
+ * sheet content is in flow, so nothing overflows vertically inside it.
+ */
 .rp-scroll {
-  overflow: auto;
+  overflow: visible;
   padding: 0 14px 8px;
+}
+.rp-scroll.rp-zoomed {
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
 }
 .rp-paperw {
   width: calc(100% * var(--z, 1));
@@ -585,11 +597,18 @@ html[data-theme="light"] .rp-paper {
   margin: 0 0 3cqw;
   color: var(--ink-2);
 }
+/* In flow (not absolute) so a long title or a large font grows the sheet instead of spilling out. */
 .rp-tmain {
-  position: absolute;
-  left: 8cqw;
-  right: 8cqw;
-  top: 32%;
+  padding-top: 30cqw;
+}
+.rp-paper .rp-cont small {
+  font-size: 2.4cqw;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.rp-paper .rp-end {
+  margin-top: 4cqw;
+  font-style: italic;
 }
 .rp-tlogo {
   width: 12cqw;

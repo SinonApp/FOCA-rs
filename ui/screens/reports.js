@@ -1925,6 +1925,8 @@
   }
 
   // ================= PREVIEW /p/report-preview =================
+  // Table rows per preview sheet: longer tables continue on the next sheet.
+  const PREVIEW_ROWS = 10;
   const L10N = {
     RU: {
       title: "Отчёт о тестировании на проникновение",
@@ -1939,7 +1941,9 @@
       th: ["№", "Находка", "Хост", "Важность"],
       page: "стр.",
       secret: "Секрет",
-      more: n => `… ещё ${n}`,
+      cont: "(продолжение)",
+      tail: n =>
+        `Конец предпросмотра: здесь только сводные таблицы. Файл отчёта (около ${n} стр.) содержит все разделы, выбранные в конструкторе.`,
       none: "Находок, отвечающих условиям отчёта, нет.",
       nodata: "нет данных",
       lvl: { crit: "Критический", high: "Высокий", mid: "Средний", low: "Низкий", none: "Нет данных" },
@@ -1962,7 +1966,9 @@
       th: ["№", "Знахідка", "Хост", "Важливість"],
       page: "стор.",
       secret: "Секрет",
-      more: n => `… ще ${n}`,
+      cont: "(продовження)",
+      tail: n =>
+        `Кінець попереднього перегляду: тут лише зведені таблиці. Файл звіту (близько ${n} стор.) містить усі розділи, вибрані в конструкторі.`,
       none: "Знахідок, що відповідають умовам звіту, немає.",
       nodata: "немає даних",
       lvl: { crit: "Критичний", high: "Високий", mid: "Середній", low: "Низький", none: "Немає даних" },
@@ -1985,7 +1991,9 @@
       th: ["#", "Finding", "Host", "Severity"],
       page: "p.",
       secret: "Secret",
-      more: n => `… ${n} more`,
+      cont: "(continued)",
+      tail: n =>
+        `End of the preview: it shows the summary tables only. The report file (about ${n} pages) holds every section chosen in the builder.`,
       none: "No findings match the report filters.",
       nodata: "no data",
       lvl: { crit: "Critical", high: "High", mid: "Medium", low: "Low", none: "No data" },
@@ -2104,7 +2112,7 @@
     const pages = (res && res.pages) || pagesEst(draft) || 1;
     const by = esc(draft.company || "-");
     const withStd = draft.tpl !== "executive";
-    const rows = (withStd ? list.filter(f => f.standards) : list).slice(0, 10);
+    const rows = withStd ? list.filter(f => f.standards) : list;
     return `
       <div class="rp-ptools"><span class="rp-pinfo">${FMT_L[draft.fmt] || "PDF"} · ${draft.lang} · ~${plural(pages, "reports.pl_page", "страница", "страницы", "страниц")}${res ? ` · ${esc(F.t("reports.snapshot", { d: reps.prevOf.date || "" }, "снимок {d}"))}` : ""}</span></div>
       ${titleNote(draft.lang)}
@@ -2152,8 +2160,6 @@
           }))(F.rules.riskScore(list))
         : { score: null, level: "none" };
     const by = esc(draft.company || "-");
-    const head = n =>
-      `<div class="rp-ph"><span>${draft.logo && draft.company ? `<i class="rp-plogo">${esc(initials(draft.company))}</i>` : ""}${by}</span><span>${tr.conf}</span></div><div class="rp-pf"><span>${esc(F.db.project ? F.db.project.name : "")}</span><span>${tr.page} ${n} / ${pages}</span></div>`;
     const maxCount = Math.max(1, ...["crit", "high", "warn", "low", "info"].map(cnt));
     const bars = ["crit", "high", "warn", "low", "info"]
       .map(s => {
@@ -2173,15 +2179,53 @@
         .join(
           "",
         )}</td><td>${esc(f.host)}</td><td><span class="rp-sev s-${f.sev}">${sl[f.sev] || ""}</span></td></tr>`;
-    let pn = 1;
-    const next = () => ++pn;
+    const siteRow = (f, i) =>
+      `<tr><td>${i + 1}</td><td>${esc(f.title)}</td><td class="rp-url">${esc(f.url || f.host)}</td><td><span class="rp-sev s-${f.sev}">${sl[f.sev] || ""}</span></td></tr>`;
     const secNo = (() => {
       let k = 0;
       return () => ++k;
     })();
+    // Every included row is shown: long tables continue on the next sheets (PREVIEW_ROWS rows per
+    // sheet, the header row repeats), so scrolling reaches the real end of the report tables.
+    const sheets = [];
+    const table = (h2, head, rows, render) => {
+      const parts = [];
+      for (let i = 0; i < rows.length; i += PREVIEW_ROWS) parts.push(rows.slice(i, i + PREVIEW_ROWS));
+      parts.forEach((part, k) =>
+        sheets.push(
+          `${k === 0 ? `<h2>${h2}</h2>` : `<h2 class="rp-cont">${h2} <small>${esc(tr.cont)}</small></h2>`}
+          <table class="rp-tbl"><thead><tr>${head}</tr></thead>
+          <tbody>${part.map((f, i) => render(f, k * PREVIEW_ROWS + i)).join("")}</tbody></table>`,
+        ),
+      );
+    };
+    const thAll = tr.th.map(x => `<th>${x}</th>`).join("");
+    if (draft.sec.summary)
+      sheets.push(`<h2>${secNo()}. ${tr.sum}</h2>
+          <div class="rp-risk"><div class="rp-rv">${rk.score == null ? "-" : rk.score}<small>/100</small></div><div><b>${tr.risk}</b><span>${tr.lvl[rk.level] || tr.nodata}</span><small class="rp-rnote">${esc(tr.riskBy(res ? res.total : list.length))}</small></div></div>
+          <p>${esc(text)}</p>
+          <div class="rp-bars">${bars}</div>`);
+    if (draft.sec.findings) {
+      const h2 = `${secNo()}. ${tr.find}`;
+      if (list.length) table(h2, thAll, list, row);
+      else sheets.push(`<h2>${h2}</h2><p>${tr.none}</p>`);
+    }
     // "Found on the site" (forgotten-file search, fuzz module) is a subsection of Infrastructure, as in
     // foca-report.
     const site = list.filter(f => f.module === "fuzz");
+    if (draft.sec.infra && site.length)
+      table(
+        `${secNo()}. ${SITE_L[draft.lang] || SITE_L.RU}`,
+        `<th>#</th><th>${tr.th[1]}</th><th>URL</th><th>${tr.th[3]}</th>`,
+        site,
+        siteRow,
+      );
+    if (draft.sec.fixed && fixed.length) table(`${secNo()}. ${tr.fixed}`, thAll, fixed, row);
+    // The footer counts the sheets of this preview; the file estimate stays in the info line.
+    const total = sheets.length + 1;
+    const head = n =>
+      `<div class="rp-ph"><span>${draft.logo && draft.company ? `<i class="rp-plogo">${esc(initials(draft.company))}</i>` : ""}${by}</span><span>${tr.conf}</span></div><div class="rp-pf"><span>${esc(F.db.project ? F.db.project.name : "")}</span><span>${tr.page} ${n} / ${total}</span></div>`;
+    const tail = `<p class="rp-more rp-end">${esc(tr.tail(pages))}</p>`;
     return `
       <div class="rp-ptools">
         <span class="rp-pinfo">${FMT_L[draft.fmt] || "PDF"} · ${draft.lang} · ~${plural(pages, "reports.pl_page", "страница", "страницы", "страниц")}${draft.pickedOnly ? ` · ${esc(F.t("reports.selection_l", "выборка"))}` : ""}${res ? ` · ${esc(F.t("reports.snapshot", { d: reps.prevOf.date || "" }, "снимок {d}"))}` : ""}</span>
@@ -2194,7 +2238,7 @@
         </div>
       </div>
       ${titleNote(draft.lang)}
-      <div class="rp-scroll"><div class="rp-paperw" style="--z:${prev.z}">
+      <div class="rp-scroll${prev.z > 1 ? " rp-zoomed" : ""}"><div class="rp-paperw" style="--z:${prev.z}">
         <section class="rp-paper rp-title"><div class="rp-pi">
           ${head(1)}
           <div class="rp-tmain">
@@ -2207,60 +2251,17 @@
               <dt>${tr.by}</dt><dd>${by}</dd>
             </dl>
           </div>
+          ${sheets.length ? "" : tail}
         </div></section>
-        ${
-          draft.sec.summary
-            ? `<section class="rp-paper"><div class="rp-pi">
-          ${head(next())}
-          <h2>${secNo()}. ${tr.sum}</h2>
-          <div class="rp-risk"><div class="rp-rv">${rk.score == null ? "-" : rk.score}<small>/100</small></div><div><b>${tr.risk}</b><span>${tr.lvl[rk.level] || tr.nodata}</span><small class="rp-rnote">${esc(tr.riskBy(res ? res.total : list.length))}</small></div></div>
-          <p>${esc(text)}</p>
-          <div class="rp-bars">${bars}</div>
-        </div></section>`
-            : ""
-        }
-        ${
-          draft.sec.findings
-            ? `<section class="rp-paper"><div class="rp-pi">
-          ${head(next())}
-          <h2>${secNo()}. ${tr.find}</h2>
-          ${
-            list.length
-              ? `<table class="rp-tbl"><thead><tr>${tr.th.map(x => `<th>${x}</th>`).join("")}</tr></thead>
-          <tbody>${list.slice(0, 10).map(row).join("")}</tbody></table>
-          ${list.length > 10 ? `<p class="rp-more">${tr.more(list.length - 10)}</p>` : ""}`
-              : `<p>${tr.none}</p>`
-          }
-        </div></section>`
-            : ""
-        }
-        ${
-          draft.sec.infra && site.length
-            ? `<section class="rp-paper"><div class="rp-pi">
-          ${head(next())}
-          <h2>${secNo()}. ${SITE_L[draft.lang] || SITE_L.RU}</h2>
-          <table class="rp-tbl"><thead><tr><th>#</th><th>${tr.th[1]}</th><th>URL</th><th>${tr.th[3]}</th></tr></thead>
-          <tbody>${site
-            .slice(0, 10)
-            .map(
-              (f, i) =>
-                `<tr><td>${i + 1}</td><td>${esc(f.title)}</td><td class="rp-url">${esc(f.url || f.host)}</td><td><span class="rp-sev s-${f.sev}">${sl[f.sev] || ""}</span></td></tr>`,
-            )
-            .join("")}</tbody></table>
-          ${site.length > 10 ? `<p class="rp-more">${tr.more(site.length - 10)}</p>` : ""}
-        </div></section>`
-            : ""
-        }
-        ${
-          draft.sec.fixed && fixed.length
-            ? `<section class="rp-paper"><div class="rp-pi">
-          ${head(next())}
-          <h2>${secNo()}. ${tr.fixed}</h2>
-          <table class="rp-tbl"><thead><tr>${tr.th.map(x => `<th>${x}</th>`).join("")}</tr></thead>
-          <tbody>${fixed.slice(0, 10).map(row).join("")}</tbody></table>
-        </div></section>`
-            : ""
-        }
+        ${sheets
+          .map(
+            (body, i) => `<section class="rp-paper"><div class="rp-pi">
+          ${head(i + 2)}
+          ${body}
+          ${i === sheets.length - 1 ? tail : ""}
+        </div></section>`,
+          )
+          .join("")}
       </div></div>`;
   }
 

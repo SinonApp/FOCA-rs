@@ -28,6 +28,7 @@ Third beta. It fixes the projects that disappeared after an upgrade, makes Pause
 - **Unreachable is not rate-limited**: in forgotten file discovery, a host that does not answer at all (refused connection, timeout, DNS or TLS failure) stops as unreachable with its own warning, instead of "the site limited requests".
 - **File names from Google Drive**: files with non-Latin names keep their names instead of `gdrive-<id>.bin`, and a file without a usable name gets its extension from its content.
 - **Network map at large fonts**: long AD domain names wrap instead of pushing the screen wider than the phone.
+- **Report preview to the end**: the preview stopped after a few sheets with "… N more" under each table and a footer like "p. 5 / 115", so it looked as if it could not be scrolled further. Every included finding is now shown, long tables continue on the next sheets, the footer counts the preview sheets, and a closing note gives the page estimate of the file. The sheets no longer form a nested scroll area, the title block grows with large fonts instead of spilling over, and the last footer clears the gesture bar.
 - **Form spacing**: a full-width button under a field keeps a gap, so Check key in the API key sheet is no longer glued to the field.
 
 ### Changed
