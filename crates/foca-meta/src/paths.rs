@@ -119,7 +119,11 @@ pub fn analyze_path(raw: &str) -> Option<PathInfo> {
         return Some(PathInfo {
             path: s.to_string(),
             kind: PathKind::Windows,
-            user: user_after(&comps, &["Users", "Documents and Settings", "Profiles"]),
+            // DOCUME~1 is the 8.3 short name of Documents and Settings (Windows XP temp paths)
+            user: user_after(
+                &comps,
+                &["Users", "Documents and Settings", "DOCUME~1", "Profiles"],
+            ),
             host: None,
         });
     }

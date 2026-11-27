@@ -863,6 +863,7 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
             }
         }
         DocFormat::Msi => msi_summary(&mut meta),
+        DocFormat::Pub => publisher_streams(&mut meta, &mut cf, ctx)?,
         _ => {}
     }
     // an encrypted OOXML package (MS-OFFCRYPTO) is stored in a compound file
@@ -924,6 +925,56 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         }
     }
     Ok(meta)
+}
+
+/// Publisher: picture source paths and pictures of the Escher streams, hyperlinks of the
+/// Contents and Quill streams (layout after Apache POI HPBF).
+fn publisher_streams<F: Read + Seek>(
+    meta: &mut Metadata,
+    cf: &mut cfb::CompoundFile<F>,
+    ctx: &Ctx,
+) -> Result<(), MetaError> {
+    for p in ["/Escher/EscherStm", "/Escher/EscherDelayStm"] {
+        if let Some(d) = read_stream(cf, p, ctx)? {
+            super::ole_objects::officeart_props(meta, &d);
+            if p.ends_with("DelayStm") {
+                super::ole_objects::attach_blips(meta, &d, ctx)?;
+            }
+        }
+    }
+    for p in ["/Contents", "/Quill/QuillSub/CONTENTS"] {
+        if let Some(d) = read_stream(cf, p, ctx)? {
+            for l in super::biff::link_strings(&d) {
+                if meta.links.len() < 2000 {
+                    Metadata::add_unique(&mut meta.links, &truncate(&l, 2048));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+/// UTF-16LE text runs of 3+ characters (any script), `\r` as a line break.
+fn utf16_runs(d: &[u8], out: &mut String) {
+    let mut cur = String::new();
+    let flush = |cur: &mut String, out: &mut String| {
+        if cur.trim().chars().count() >= 3 && out.len() < MAX_WORD_TEXT {
+            out.push_str(cur.trim());
+            out.push('\n');
+        }
+        cur.clear();
+    };
+    for ch in d.as_chunks::<2>().0 {
+        let u = u16::from_le_bytes(*ch);
+        match char::from_u32(u32::from(u)) {
+            Some('\r' | '\u{0B}') => flush(&mut cur, out),
+            Some(c) if u >= 0x20 && !c.is_control() && !(0xE000..0xF900).contains(&u) => {
+                cur.push(c)
+            }
+            _ => flush(&mut cur, out),
+        }
+    }
+    flush(&mut cur, out);
 }
 
 /// Windows Installer reuses the summary information properties: Template holds the platform
@@ -1215,6 +1266,10 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
                 }
                 strings(&data, &mut out);
             }
+        }
+        // Publisher story text lives in the Quill TEXT chunks (UTF-16)
+        if let Some(q) = read_stream(&mut cf, "/Quill/QuillSub/CONTENTS", ctx)? {
+            utf16_runs(&q, &mut out);
         }
         for l in super::vba::scan_ole(b, &mut Metadata::default()) {
             out.push_str(&l);

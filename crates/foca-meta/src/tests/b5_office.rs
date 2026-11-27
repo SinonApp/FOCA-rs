@@ -151,3 +151,43 @@ fn os_version_placeholders_are_not_reported() {
         assert_eq!(m.os.as_deref(), want, "{os:#x}");
     }
 }
+
+#[test]
+fn publisher_story_text_picture_paths_and_links() {
+    let w = |s: &str| -> Vec<u8> { s.encode_utf16().flat_map(u16::to_le_bytes).collect() };
+    let mut quill = b"CHNKINK \x04\x00\x01\x00".to_vec();
+    quill.extend_from_slice(&[0; 16]);
+    quill.extend(w("Оголошення відділу\rКонтакт: hr@corp.example\r"));
+    let mut pib = w("C:\\DOCUME~1\\Nick\\LOCALS~1\\Temp\\pub19.tmp");
+    pib.extend_from_slice(&[0, 0]);
+    let mut body = (0x0105u16 | 0xC000).to_le_bytes().to_vec();
+    body.extend_from_slice(&(pib.len() as u32).to_le_bytes());
+    body.extend(pib);
+    let mut fopt = ((1u16 << 4) | 3).to_le_bytes().to_vec();
+    fopt.extend_from_slice(&0xF00Bu16.to_le_bytes());
+    fopt.extend_from_slice(&(body.len() as u32).to_le_bytes());
+    fopt.extend(body);
+    let mut contents = vec![0u8; 8];
+    contents.extend(w("http://intranet.corp.example/jobs"));
+    contents.extend_from_slice(&[0, 0]);
+    let f = cfb(&[
+        ("/Quill/QuillSub/CONTENTS", quill),
+        ("/Escher/EscherStm", fopt),
+        ("/Contents", contents),
+    ]);
+    let m = extract(&f, Some("a.pub"), &Limits::default()).unwrap();
+    assert_eq!(m.format, crate::DocFormat::Pub);
+    assert!(
+        m.paths.iter().any(|p| p.path.ends_with("pub19.tmp")),
+        "{:?}",
+        m.fields
+    );
+    assert!(m.people.iter().any(|p| p.name == "Nick"));
+    assert!(m
+        .links
+        .iter()
+        .any(|l| l == "http://intranet.corp.example/jobs"));
+    let t = crate::text(&f, &Limits::default()).unwrap();
+    assert!(t.contains("Оголошення відділу"), "{t}");
+    assert!(t.contains("hr@corp.example"), "{t}");
+}
