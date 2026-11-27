@@ -10810,7 +10810,8 @@
           });
         }
       }
-      if (!b || b.schema !== "foca-sig-bundle/v1" || !b.version || !b.released_at) {
+      const schemaOk = b && (b.schema === "foca-sig-bundle/v1" || b.schema === "foca-sig-bundle/v2");
+      if (!schemaOk || !b.version || !b.released_at) {
         throw apiErr("bad_args", "Пустая версия или дата выпуска пакета сигнатур", {
           code: "sig.no_version",
           params: {},
@@ -12080,10 +12081,23 @@
     products: 54,
     software: 54,
     os: 19,
-    secrets: 24,
-    std_rules: 74,
-    std_refs: 438,
+    secrets: 221,
+    std_rules: 75,
+    std_refs: 445,
   };
+  // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
+  const DEMO_SIG_TABLES = [
+    ["webappanalyzer", 5623, "7dba7bf3e8b4", "GPL-3.0-only"],
+    ["endoflife", 2179, "32423d8113b6", "MIT"],
+    ["saas_dns", 147, "7dba7bf3e8b4", "GPL-3.0-only"],
+    ["gitleaks", 197, "v8.30.1", "MIT"],
+    ["kev_enrich", 924, "2026-11-26", "FIRST-EPSS-terms"],
+    ["retire", 76, "da66c52a5a5a", "Apache-2.0"],
+    ["recog", 1062, "f1191e24332c", "BSD-2-Clause"],
+    ["favicons_md5", 645, "f1191e24332c", "BSD-2-Clause"],
+    ["psl", 10502, "88b076a1fb2a", "MPL-2.0"],
+    ["takeover", 26, "5bd4e1283791", "CC-BY-4.0"],
+  ];
   const DEMO_SIG_FRAMEWORKS = [
     ["owasp", "OWASP Top 10:2025"],
     ["mitre", "MITRE ATT&CK v20"],
@@ -12108,7 +12122,7 @@
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const age = Math.max(0, Math.round((today - released) / 86400000));
     return {
-      schema: "foca-sig-bundle/v1",
+      schema: "foca-sig-bundle/v2",
       version: cur ? cur.version : B.version,
       updated_at: cur ? cur.released_at : B.released,
       source: cur ? "bundle" : "builtin",
@@ -12140,6 +12154,13 @@
         refs: B.std_refs,
         frameworks: DEMO_SIG_FRAMEWORKS.map(([id, label, legacy]) => ({ id, label, legacy: !!legacy })),
       },
+      tables: DEMO_SIG_TABLES.map(([id, records, version, license]) => ({
+        id,
+        records,
+        version,
+        license,
+        source: cur && cur.tables && cur.tables[id] ? "bundle" : "builtin",
+      })),
       feed_url: DEMO_SIG_FEED,
       last_check: db._sigCheck ? clone(db._sigCheck) : null,
     };

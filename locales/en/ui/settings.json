@@ -430,7 +430,7 @@
   "settings.ocr_hint": "Off by default to save battery. Recognized text is indexed in FTS5 and checked by the PII detector with mandatory masking.",
   "settings.sig_empty": "Databases not loaded",
   "settings.sig_empty_text": "Load a signed bundle of software signatures, CVE and secret-detection rules.",
-  "settings.bundle_hint": "Paste the signed bundle JSON (schema [code]foca-sig-bundle/v1[/code]; SHA-256 and the Ed25519 signature are verified before applying).",
+  "settings.bundle_hint": "Paste the signed bundle JSON (schema [code]foca-sig-bundle/v2[/code]; SHA-256 and the Ed25519 signature are verified before applying).",
   "settings.paste_bundle": "Paste the signature bundle JSON",
   "settings.bundle_ok": "Signature bundle {v} installed and verified",
   "settings.bundle_bad": "Invalid bundle signature or format",
@@ -863,5 +863,17 @@
   "settings.kc_quota": "{left} of {lim} queries left this month",
   "settings.kc_searx_ok": "answers JSON, results: {n}",
   "settings.searx_urls": "Instance addresses",
-  "settings.test_searx": "Test instances"
+  "settings.test_searx": "Test instances",
+  "settings.sig_tables": "External sources",
+  "settings.sig_tbl_line": "{label}: {n}",
+  "signatures.tbl.webappanalyzer": "Web technologies (webappanalyzer)",
+  "signatures.tbl.endoflife": "End-of-life dates (endoflife.date)",
+  "signatures.tbl.saas_dns": "SaaS by DNS (webappanalyzer)",
+  "signatures.tbl.gitleaks": "Secret rules (gitleaks)",
+  "signatures.tbl.kev_enrich": "EPSS and CVSS for KEV (FIRST, CISA)",
+  "signatures.tbl.retire": "JS libraries (Retire.js)",
+  "signatures.tbl.recog": "Service banners (Recog)",
+  "signatures.tbl.favicons_md5": "Site icons, MD5 (Recog)",
+  "signatures.tbl.psl": "Public suffixes (PSL)",
+  "signatures.tbl.takeover": "Subdomain takeover (can-i-take-over-xyz)"
 }

@@ -430,7 +430,7 @@
   "settings.ocr_hint": "По умолчанию выключено для экономии батареи. Распознанный текст индексируется в FTS5 и проверяется детектором ПДн с обязательной маскировкой.",
   "settings.sig_empty": "Базы не загружены",
   "settings.sig_empty_text": "Загрузите подписанный пакет сигнатур ПО, CVE и правил поиска секретов.",
-  "settings.bundle_hint": "Вставьте JSON подписанного пакета (схема [code]foca-sig-bundle/v1[/code], SHA-256 и подпись Ed25519 проверяются до применения).",
+  "settings.bundle_hint": "Вставьте JSON подписанного пакета (схема [code]foca-sig-bundle/v2[/code], SHA-256 и подпись Ed25519 проверяются до применения).",
   "settings.paste_bundle": "Вставьте JSON пакета сигнатур",
   "settings.bundle_ok": "Пакет сигнатур {v} установлен и проверен",
   "settings.bundle_bad": "Неверная подпись или формат пакета",
@@ -863,5 +863,17 @@
   "settings.kc_quota": "осталось {left} из {lim} запросов в месяц",
   "settings.kc_searx_ok": "отвечает JSON, результатов: {n}",
   "settings.searx_urls": "Адреса экземпляров",
-  "settings.test_searx": "Проверить экземпляры"
+  "settings.test_searx": "Проверить экземпляры",
+  "settings.sig_tables": "Внешние источники",
+  "settings.sig_tbl_line": "{label}: {n}",
+  "signatures.tbl.webappanalyzer": "Веб-технологии (webappanalyzer)",
+  "signatures.tbl.endoflife": "Сроки поддержки (endoflife.date)",
+  "signatures.tbl.saas_dns": "SaaS по DNS (webappanalyzer)",
+  "signatures.tbl.gitleaks": "Правила секретов (gitleaks)",
+  "signatures.tbl.kev_enrich": "EPSS и CVSS для KEV (FIRST, CISA)",
+  "signatures.tbl.retire": "JS-библиотеки (Retire.js)",
+  "signatures.tbl.recog": "Баннеры служб (Recog)",
+  "signatures.tbl.favicons_md5": "Значки сайтов, MD5 (Recog)",
+  "signatures.tbl.psl": "Публичные суффиксы (PSL)",
+  "signatures.tbl.takeover": "Захват поддоменов (can-i-take-over-xyz)"
 }

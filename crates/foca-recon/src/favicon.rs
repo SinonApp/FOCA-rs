@@ -68,6 +68,11 @@ pub fn install_md5_table(tsv: &str) -> usize {
     n
 }
 
+/// Number of hashes in a favicon MD5 table (parsing never fails: bad rows are skipped).
+pub fn check_md5_table(tsv: &str) -> usize {
+    parse_md5_table(tsv).len()
+}
+
 /// Number of favicon MD5 fingerprints in use.
 pub fn md5_count() -> usize {
     md5_table().len()

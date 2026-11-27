@@ -2991,6 +2991,26 @@
         ) + line(noBreakCodes((sm.frameworks || []).map(fwLabel).join(", "))),
       ],
     ];
+    // Ingested upstream tables: records the core really loaded and the upstream pin.
+    const tables = d.tables || [];
+    if (tables.length)
+      rows.push([
+        "db",
+        F.t("settings.sig_tables", "Внешние источники"),
+        tables
+          .map(t =>
+            line(
+              `${esc(
+                F.t(
+                  "settings.sig_tbl_line",
+                  { label: F.t("signatures.tbl." + t.id, t.id), n: fmtInt(t.records) },
+                  "{label}: {n}",
+                ),
+              )}&nbsp;· <span class="st-nw">${esc(t.version || "-")}</span>`,
+            ),
+          )
+          .join(""),
+      ]);
     const title = sigState.busy
       ? F.t("settings.running", "Выполняется…")
       : F.t("settings.version_v", { v: d.version || "-" }, "Версия {v}");
@@ -3126,8 +3146,8 @@
     "st-sigimp": () => {
       F.sheet({
         title: F.t("signatures.import", "Импортировать пакет сигнатур"),
-        html: `<p class="fhint">${rich(F.t("settings.bundle_hint", "Вставьте JSON подписанного пакета (схема [code]foca-sig-bundle/v1[/code], SHA-256 и подпись Ed25519 проверяются до применения)."))}</p>
-          <textarea id="st-sig-json" class="in mono" rows="8" placeholder='{"schema":"foca-sig-bundle/v1",...}'></textarea>`,
+        html: `<p class="fhint">${rich(F.t("settings.bundle_hint", "Вставьте JSON подписанного пакета (схема [code]foca-sig-bundle/v2[/code], SHA-256 и подпись Ed25519 проверяются до применения)."))}</p>
+          <textarea id="st-sig-json" class="in mono" rows="8" placeholder='{"schema":"foca-sig-bundle/v2",...}'></textarea>`,
         footer: `<button class="btn" data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn primary" data-act="st-sigimp-go">${ic("check")}${esc(F.t("signatures.import", "Импортировать"))}</button>`,
       });
     },

@@ -820,6 +820,22 @@ fn demo_signature_numbers_match_core_status() {
     ] {
         assert_eq!(field(k), v.to_string(), "{k}");
     }
+    // Ingested tables: `[id, records, version, license]` rows in the core order.
+    let start = src
+        .find("const DEMO_SIG_TABLES = [")
+        .expect("DEMO_SIG_TABLES");
+    let tb = &src[start..start + src[start..].find("];").unwrap()];
+    let demo_tables: Vec<String> = tb
+        .lines()
+        .filter_map(|l| l.trim().strip_prefix('['))
+        .map(|l| l.trim_end_matches(&[',', ']'][..]).replace('"', ""))
+        .collect();
+    let core_tables: Vec<String> = st
+        .tables
+        .iter()
+        .map(|t| format!("{}, {}, {}, {}", t.id, t.records, t.version, t.license))
+        .collect();
+    assert_eq!(demo_tables, core_tables);
     let start = src
         .find("const DEMO_SIG_FRAMEWORKS = [")
         .expect("DEMO_SIG_FRAMEWORKS");

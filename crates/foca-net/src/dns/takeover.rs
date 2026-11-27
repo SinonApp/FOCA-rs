@@ -109,6 +109,11 @@ pub fn install(json: &str) -> Result<usize, String> {
     Ok(n)
 }
 
+/// Parses a fingerprint table without installing it; returns the service count.
+pub fn check(json: &str) -> Result<usize, String> {
+    parse_table(json).map(|t| t.len())
+}
+
 fn suffix_hit(t: &str, s: &str) -> bool {
     t == s || t.ends_with(&format!(".{s}"))
 }

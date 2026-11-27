@@ -42,6 +42,8 @@ impl Engine {
         crate::services::logs::set_file(&cfg.data_dir, cfg.utc_offset);
         tracing::info!(target: "foca::engine", "движок открыт: {}", cfg.data_dir.display());
         let store = Store::open_with_clock(&cfg.data_dir, clock.clone())?;
+        // Data tables of an installed signature bundle (v2) replace the built-in ones.
+        crate::services::sigbundle::activate(&cfg.data_dir);
         #[cfg(feature = "report")]
         let reports: Option<Arc<dyn ReportBuilder>> =
             Some(Arc::new(crate::services::report::FocaReport));

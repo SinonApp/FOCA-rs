@@ -39,7 +39,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
   - Enabled user plugins run in the network stage of real scans (`scan/plugins.rs`, source id `plugins`); a failing plugin is reported on the source and never fails the scan, and plugins held by the passive policy report `skipped`.
   - Commands: `plugins_list`, `plugin_install`, `plugin_toggle`, `plugin_remove`, `plugin_test`.
 - **Signed Signature Bundles (`services/sigbundle.rs`)**:
-  - Updates CISA KEV entries and secret patterns without rebuilding the APK via `foca-sig-bundle/v1` (CPE prefixes are stored but not used for matching).
+  - Updates CISA KEV entries and secret patterns without rebuilding the APK via `foca-sig-bundle/v2` (v1 still read): KEV entries, secret patterns and whole data tables (technology, end-of-life, Retire.js, Recog, PSL, takeover, EPSS); CPE prefixes are stored but not used for matching.
   - Verifies both `SHA-256` and `Ed25519` (`ring::signature::ED25519`) before atomically installing `<data_dir>/signatures/current.json`, retaining `previous.json` for instant rollback (`signatures_status`, `signatures_import`, `signatures_rollback`).
   - `signatures_update` checks the official feed (rolling GitHub release `signatures`): 404 = `no_update`, not newer = `up_to_date`, newer = installed, failures are recorded and returned as coded errors; every check lands in `last_check.json`. Status counts come from the loaded tables. Details and the maintainer tool (`examples/sig_bundle.rs`, `scripts/build-sig-bundle.sh`): [signature bundles](../signature-bundles.md).
 - **Cloud-Only AI with Live Models & Thinking Controls (`cmds/ai.rs`, `services/ai.rs`)**:

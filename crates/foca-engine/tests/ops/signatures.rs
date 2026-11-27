@@ -22,6 +22,7 @@ fn foreign_bundle() -> String {
         kev_additions: vec![],
         cpe_additions: vec![],
         secret_additions: vec![],
+        tables: Default::default(),
         sha256: String::new(),
         signature_ed25519: String::new(),
     };

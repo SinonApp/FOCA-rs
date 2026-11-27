@@ -575,6 +575,11 @@ pub fn install_upstream_dns(json: &str) -> Result<usize, String> {
     Ok(n)
 }
 
+/// Parses upstream DNS rules without installing them; returns the rule count.
+pub fn check_upstream_dns(json: &str) -> Result<usize, String> {
+    parse_upstream_dns(json).map(|r| r.len())
+}
+
 /// Number of upstream DNS rules in use.
 pub fn upstream_dns_count() -> usize {
     upstream_dns().len()

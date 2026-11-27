@@ -554,7 +554,7 @@ mod tests {
             "Пустой идентификатор или шаблон правила секрета в пакете".into(),
             "Правило секрета sig_x в пакете не компилируется: Regex".into(),
             "Некорректный JSON пакета сигнатур: expected value at line 1 column 1".into(),
-            "Нужен bundle_json или bundle (foca-sig-bundle/v1)".into(),
+            "Нужен bundle_json или bundle (foca-sig-bundle/v2)".into(),
         ];
         for e in [
             foca_net::notify::NotifyError::Rejected {

@@ -169,16 +169,23 @@ impl Rules {
         Ok(Rules(out))
     }
 
-    /// Our rules followed by the gitleaks rules.
+    /// Our rules followed by the gitleaks rules (a signature bundle may replace the latter,
+    /// see [`install_gitleaks`]).
     pub fn builtin() -> &'static Rules {
+        if let Some(r) = *gitleaks_override()
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+        {
+            return r;
+        }
         static R: OnceLock<Rules> = OnceLock::new();
-        R.get_or_init(|| {
-            let mut all = Rules::parse(BUILTIN_TOML).unwrap_or(Rules(Vec::new()));
-            if let Ok(g) = Rules::parse_with(GITLEAKS_TOML, false) {
-                all.0.extend(g.0);
-            }
-            all
-        })
+        R.get_or_init(|| Rules::with_gitleaks(GITLEAKS_TOML).unwrap_or(Rules(Vec::new())))
+    }
+
+    fn with_gitleaks(gitleaks: &str) -> Result<Rules, String> {
+        let mut all = Rules::parse(BUILTIN_TOML)?;
+        all.0.extend(Rules::parse_with(gitleaks, false)?.0);
+        Ok(all)
     }
 
     pub fn len(&self) -> usize {
@@ -258,6 +265,24 @@ impl Rules {
         }
         out
     }
+}
+
+fn gitleaks_override() -> &'static std::sync::RwLock<Option<&'static Rules>> {
+    static O: std::sync::RwLock<Option<&'static Rules>> = std::sync::RwLock::new(None);
+    &O
+}
+
+/// Replaces the gitleaks part of [`Rules::builtin`] (a signed signature bundle); returns the
+/// gitleaks rule count. Every regex is compiled first, so a broken table changes nothing. The
+/// previous set is leaked on purpose: callers hold `&'static` references, and a bundle is
+/// installed a handful of times per process at most.
+pub fn install_gitleaks(toml: &str) -> Result<usize, String> {
+    let n = Rules::parse(toml)?.len();
+    let all: &'static Rules = Box::leak(Box::new(Rules::with_gitleaks(toml)?));
+    *gitleaks_override()
+        .write()
+        .unwrap_or_else(|e| e.into_inner()) = Some(all);
+    Ok(n)
 }
 
 impl Rule {

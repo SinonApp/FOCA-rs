@@ -286,5 +286,5 @@
   "core.sig.empty_rule": "Правило секретів у пакеті має порожній ідентифікатор або шаблон",
   "core.sig.bad_rule": "Правило секретів {id} у пакеті не компілюється: {error}",
   "core.sig.bad_json": "Пакет сигнатур не є коректним JSON: {error}",
-  "core.sig.need_bundle": "Потрібен bundle_json або bundle (foca-sig-bundle/v1)"
+  "core.sig.need_bundle": "Потрібен bundle_json або bundle (foca-sig-bundle/v2)"
 }

@@ -12,20 +12,55 @@ The analysis matches documents against data compiled into the app from
 | `software.toml` | Software (`[[software]]`) and OS (`[[os]]`) detection signatures. |
 | `secrets.toml` | Built-in secret detection rules (`[[rule]]`). |
 | `standards.toml` | Finding rule to standards mapping (OWASP Top 10:2025, MITRE ATT&CK v20, CWE with the 2025 Top 25 flag, NIST SP 800-53 Rev. 5 = НД ТЗІ 3.6-006-24, ISO/IEC 27001:2022, OWASP WSTG v4.2, GDPR and Law 2297-VI, legacy НД ТЗІ 2.5-004-99 / 3.7-003-05 for КСЗІ). |
+| `secrets_gitleaks.toml` | gitleaks default rules (MIT) converted to the `secrets.toml` format with allowlists and stopwords; our rules run first and win on the same value. |
+| `kev_enrich.tsv.gz` | FIRST EPSS score and percentile plus CISA Vulnrichment CVSS, CWE and SSVC for every kept KEV entry. |
+| `sources.lock.json` | Pinned upstream version (commit, tag or snapshot date), input SHA-256, license, attribution text, output hashes and counts (including skipped items) of every ingested source. |
+
+Upstream tables that live next to the module that uses them:
+
+| Table | Source (license) | Used by |
+|---|---|---|
+| `crates/foca-recon/data/webappanalyzer.json.gz` | enthec/webappanalyzer (GPL-3.0) | `foca-recon::tech`: headers, cookies, meta, HTML, script and URL rules, `implies`/`requires`/`excludes`, CPE; merged by name with the hand rules in `tech.json` (hand fields win). |
+| `crates/foca-net/data/saas_dns.json` | webappanalyzer DNS rules (GPL-3.0) | `foca-net::intel::saas`: services the hand tables do not know. |
+| `crates/foca-recon/data/endoflife.tsv.gz` | endoflife.date (MIT) | `foca-recon::tech`: release cycles past end of life at the snapshot date. |
+| `crates/foca-recon/data/retire.json.gz` | Retire.js (Apache-2.0) | `foca-recon::retire`: JS library versions and vulnerable ranges (`recon.vuln_js_lib`). |
+| `crates/foca-net/data/recog.tsv.gz` | Rapid7 Recog (BSD-2-Clause) | `foca-net::recog`: banner product, version and OS in the port scan. |
+| `crates/foca-recon/data/favicons_md5.tsv` | Rapid7 Recog (BSD-2-Clause) | `foca-recon::favicon`: product of a favicon by MD5. |
+| `crates/foca-net/data/public_suffix_list.dat.gz` | Public Suffix List (MPL-2.0, unmodified) | `foca-net::dns::psl`: registrable domains for CT and PTR grouping. |
+| `crates/foca-net/data/takeover.json` | can-i-take-over-xyz (CC-BY-4.0, fields reduced) | `foca-net::takeover`: dangling CNAME providers and claimability. |
+
+## Ingest scripts
+
+`crates/foca-analysis/signatures/tools/update_<source>.py` (Python 3.11+, PyYAML for
+endoflife.date) download one source at the version pinned in the script (`COMMIT`, `TAG`,
+`EPSS_DATE`), check the SHA-256 of every input against `sources.lock.json`, convert, and record the
+outcome in the lock file. A changed upstream file stops the script; `--repin` accepts new hashes
+after a deliberate version bump. Downloads are cached in `$FOCA_SIG_CACHE` (default
+`~/.cache/foca-sig`). Every regex is compiled with the Rust `regex` crate through
+`cargo run -p foca-analysis --example regex_check`; patterns it rejects (lookarounds, backreferences,
+over the size limit) are skipped and counted in the lock file. Order: `update_webappanalyzer.py`
+before `update_endoflife.py` (the join reads its output), `update_kev.py` before
+`update_kev_enrich.py`. Then run `python3 qa/gen-licenses.py` and the tests.
+
+Not ingested: original Wappalyzer (proprietary), nmap-service-probes (NPSL), trufflehog (AGPL),
+secrets-patterns-db (mixed license), can-i-take-over-dns (no license), nuclei takeover templates
+(no CNAME suffixes in the templates).
 
 `signatures_status` reports these numbers as loaded at runtime (`crates/foca-engine/src/services/sigbundle.rs`):
 `kev.used` of `kev.total`, `kev.released` and `kev.age_days` (stale after 30 days), software and OS
-signature counts, secret rules (built-in plus bundle rules) and the standards mapping
-(`std_map.rules`, `std_map.refs`, `std_map.frameworks` labelled from the data). The numbers a bundle
-claims in its own `counts` field are never shown.
+signature counts, secret rules (built-in plus gitleaks plus bundle rules), the standards mapping
+(`std_map.rules`, `std_map.refs`, `std_map.frameworks` labelled from the data) and `tables`: one
+entry per ingested table with the records the module really loaded, the upstream pin, the license and
+`source` (`builtin` or `bundle`). The numbers a bundle claims in its own `counts` field are never
+shown.
 
-## Bundle format (`foca-sig-bundle/v1`)
+## Bundle format (`foca-sig-bundle/v2`)
 
 A bundle is one JSON object:
 
 ```json
 {
-  "schema": "foca-sig-bundle/v1",
+  "schema": "foca-sig-bundle/v2",
   "version": "2026.11.27",
   "released_at": "2026-11-27",
   "counts": { "cpe": 73, "cve": 930, "secrets": 24, "standards": 438 },
@@ -34,6 +69,7 @@ A bundle is one JSON object:
                       "date_added": "2026-11-26", "ransomware": false, "name": "…", "fixed_in": null }],
   "cpe_additions": [],
   "secret_additions": [{ "id": "…", "title": "…", "pattern": "…" }],
+  "tables": { "psl": { "version": "88b076a1fb2a", "sha256": "<hex>", "data": "<base64>" } },
   "sha256": "<hex of the canonical payload>",
   "signature_ed25519": "<hex, 64 bytes>"
 }
@@ -41,7 +77,18 @@ A bundle is one JSON object:
 
 - `sha256` and `signature_ed25519` cover the canonical payload: the compact JSON of `schema`,
   `version`, `released_at`, `counts`, `kev_catalog` (omitted when absent), `kev_additions`,
-  `cpe_additions`, `secret_additions` in that order (`sigbundle::canonical_payload`).
+  `cpe_additions`, `secret_additions`, `tables` (omitted when empty) in that order
+  (`sigbundle::canonical_payload`).
+- `tables` (v2 only) maps a table id of `sigbundle::TABLES` (`webappanalyzer`, `endoflife`,
+  `saas_dns`, `gitleaks`, `kev_enrich`, `retire`, `recog`, `favicons_md5`, `psl`, `takeover`) to
+  the table file exactly as committed in the repository (gzip or text), base64-encoded, with its
+  SHA-256 and upstream pin. Before installation every table is decoded, its SHA-256 checked and
+  parsed by its module; an unknown id, a hash mismatch or a parse error rejects the whole bundle.
+  After installation (and at engine start) the tables replace the built-in ones in the running
+  modules; a table the bundle does not carry keeps the built-in data, and a rollback to the
+  built-in database restores all built-in tables.
+- `foca-sig-bundle/v1` bundles stay readable: they carry no `tables`, their canonical payload is
+  unchanged, so their signatures still verify. A v1 bundle with `tables` is rejected.
 - The signature is checked against the Ed25519 public key compiled into the app
   (`OFFICIAL_ED25519_PUBKEY`). A bundle signed with any other key is rejected with `bad_signature`.
 - KEV additions extend the built-in catalog (deduplicated by CVE). Secret additions are compiled by
@@ -79,8 +126,9 @@ compared by their numeric parts (`2026.11.27` > `2026.11.20`).
 The signing key is not in the repository. Keep the 32-byte Ed25519 seed offline as a file with 64
 hex characters (mode 600).
 
-1. Refresh the data and commit it: `python3 crates/foca-analysis/signatures/update_kev.py`, then the
-   usual tests (`cargo test -p foca-analysis`).
+1. Refresh the data and commit it: `python3 crates/foca-analysis/signatures/update_kev.py` and the
+   ingest scripts whose pins you bumped (see [Ingest scripts](#ingest-scripts)), then
+   `python3 qa/gen-licenses.py` and the usual tests (`cargo test -p foca-analysis -p foca-recon -p foca-net`).
 2. Build and sign the bundle from that tree:
 
    ```sh
@@ -88,7 +136,8 @@ hex characters (mode 600).
    ```
 
    The script runs `cargo run -p foca-engine --release --example sig_bundle -- build …`. The bundle
-   holds every kept KEV entry of `kev.tsv.gz` plus the snapshot header (`kev_catalog`); the version
+   holds every kept KEV entry of `kev.tsv.gz` plus the snapshot header (`kev_catalog`) and all data
+   tables of `sigbundle::TABLES` (about 0.7 MB of base64 in total); the version
    defaults to the KEV catalog version (`--version` overrides it). Built-in secret rules are not
    copied into the bundle: they already ship with the app. The tool refuses a key whose public key
    differs from the one built into the app (`--allow-foreign-key` is for test bundles only).
@@ -117,7 +166,11 @@ The tool prints the public key bytes to paste into `OFFICIAL_ED25519_PUBKEY` in
 
 - `cargo test -p foca-engine --lib sigbundle`: install and rollback with a test key, tampered and
   foreign signatures, counts from the loaded tables, KEV age, feed outcomes (`no_update` on 404,
-  `installed` once, `up_to_date`, recorded failures) and a bundle built from the repository data.
+  `installed` once, `up_to_date`, recorded failures), a bundle built from the repository data, v2
+  tables (round trip, tampered, unknown and unparsable tables) and v1 compatibility.
+- Per-table unit tests in their modules: `foca-recon` `tech` (merge, version templates, end-of-life
+  cycles, startup time), `retire`, `favicon`; `foca-net` `recog`, `psl`, `takeover`, `saas`;
+  `foca-analysis` `secrets` (gitleaks rules and allowlists) and `kev` (enrichment).
 - `cargo test -p foca-engine --test ops signatures`: the command against a local feed server (404,
   foreign signature, refused URL) including `message_msg` codes.
 - `crates/foca-engine/tests/contract_shape.rs`: demo backend shapes and the demo copy of the numbers

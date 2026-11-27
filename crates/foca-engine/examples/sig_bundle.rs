@@ -74,12 +74,14 @@ fn build(args: &[String]) -> Result<(), String> {
     sigbundle::sign_bundle_with_seed(&mut bundle, &seed).map_err(|e| e.message)?;
     sigbundle::verify_bundle(&bundle, &hex32(&pk)?).map_err(|e| e.message)?;
     let json = serde_json::to_string(&bundle).map_err(|e| e.to_string())?;
-    std::fs::write(&out, json).map_err(|e| format!("{out}: {e}"))?;
+    std::fs::write(&out, &json).map_err(|e| format!("{out}: {e}"))?;
     println!(
-        "{out}: version {} released {} · {} KEV items · sha256 {}",
+        "{out}: version {} released {} · {} KEV items · {} data tables · {} bytes · sha256 {}",
         bundle.version,
         bundle.released_at,
         bundle.kev_additions.len(),
+        bundle.tables.len(),
+        json.len(),
         bundle.sha256
     );
     Ok(())

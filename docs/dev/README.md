@@ -9,7 +9,7 @@
 | [Android & Kotlin](android.md) | `foss` vs `play` product flavors, `OcrEngine.kt` split, `ScanService`, headless WorkManager monitoring, `RenderFetcher`, `VerifyDialog`, `KeyVault`, `ReportSigner`, localized string resources |
 | [User Interface (UI)](ui.md) | Vanilla JS `ui/` layout, route map, `F.i18n` / `F.t` / lazy help, `/settings/licenses`, Cloud-only AI, honest network targets, UI principles |
 | [UI ↔ Core Contract](../API.md) | Tauri IPC commands, DTO types, events, scope rules, and active phase (`docs/API.md`) |
-| [Signature bundles](signature-bundles.md) | Built-in signature data, `foca-sig-bundle/v1` format, update feed outcomes, building and signing a bundle (key kept offline) |
+| [Signature bundles](signature-bundles.md) | Built-in signature data, `foca-sig-bundle/v2` format (v1 still read), ingest scripts for the upstream tables, update feed outcomes, building and signing a bundle (key kept offline) |
 | [Build & Test](build.md) | Core, UI, E2E harness, `foss` / `play` APK builds, license compliance check, APK signing (no passwords), version bump, release process, low-RAM tips |
 | [Contributing](contributing.md) | Branches and commits, working in parallel, how to add a source, finding rule, screen, scan stage or command |
 

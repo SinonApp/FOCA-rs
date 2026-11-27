@@ -195,6 +195,11 @@ pub fn install(gz: &[u8]) -> Result<usize, String> {
     Ok(n)
 }
 
+/// Parses a table without installing it; returns the library count.
+pub fn check(gz: &[u8]) -> Result<usize, String> {
+    parse(gz).map(|l| l.len())
+}
+
 /// (libraries, vulnerable ranges) in use.
 pub fn counts() -> (usize, usize) {
     let l = libs();

@@ -69,7 +69,7 @@ Planned for the betas after `2.0.0-beta.3`. Order may change with bug reports.
 ✅ All 9 milestones (`2.0-M1` through `2.0-M9`) implemented and verified; released as `2.0.0-beta.1`.
 
 ### 2.0-M1: Signed Signature Bundles (`I-25`) & Semantic CPE/CVE Version Ranges (`I-10`)
-- ✅ **Signed Ed25519 signature bundles**: [`crates/foca-engine/src/services/sigbundle.rs`](../crates/foca-engine/src/services/sigbundle.rs) (`foca-sig-bundle/v1`, canonical `SHA-256` + `Ed25519` verification via `ring`, atomic `current.json` / `previous.json` swap and instant rollback; commands `signatures_status`, `signatures_import`, `signatures_update`, `signatures_rollback`).
+- ✅ **Signed Ed25519 signature bundles**: [`crates/foca-engine/src/services/sigbundle.rs`](../crates/foca-engine/src/services/sigbundle.rs) (`foca-sig-bundle/v1`, v2 with data tables, canonical `SHA-256` + `Ed25519` verification via `ring`, atomic `current.json` / `previous.json` swap and instant rollback; commands `signatures_status`, `signatures_import`, `signatures_update`, `signatures_rollback`).
 - ✅ **Semantic CPE 2.3 & CVE version-range engine**: [`crates/foca-analysis/src/products/vercmp.rs`](../crates/foca-analysis/src/products/vercmp.rs) integrated with offline CISA KEV (`confirmed` vulnerable range vs. `patched` suppression vs. `possible`/`likely`).
 
 ### 2.0-M2: Keyed Passive Collectors (`I-9`) & WebView Screenshots (`I-13`)

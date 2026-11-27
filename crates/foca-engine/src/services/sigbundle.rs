@@ -1,7 +1,10 @@
 //! Ed25519-signed signature bundles.
 //!
-//! Signature bundles (`foca-sig-bundle/v1`) update CISA KEV entries, CPE rules, and secret
-//! detection rules without rebuilding the APK. Every bundle is verified with `Ed25519`
+//! Signature bundles update CISA KEV entries, CPE rules, secret detection rules and (schema
+//! `foca-sig-bundle/v2`) whole data tables without rebuilding the APK. A v2 bundle carries
+//! `tables`: each one is a table file exactly as shipped in the repo (base64), with its SHA-256
+//! and upstream pin; ids are listed in [`TABLES`]. v1 bundles are still read and verified (their
+//! canonical payload has no `tables` key, so old signatures stay valid). Every bundle is verified with `Ed25519`
 //! (`ring::signature::ED25519`) and `SHA-256` before touching disk. Validated bundles are
 //! written atomically to `<data_dir>/signatures/current.json`, keeping the previous bundle in
 //! `<data_dir>/signatures/previous.json` for instant rollback.
@@ -21,8 +24,72 @@ use sha2::{Digest, Sha256};
 
 use crate::CmdError;
 
-/// Schema identifier of a v1 signature bundle.
-pub const BUNDLE_SCHEMA: &str = "foca-sig-bundle/v1";
+/// Schema identifier of the signature bundles this build writes.
+pub const BUNDLE_SCHEMA: &str = "foca-sig-bundle/v2";
+/// Older schema that is still accepted (no `tables`).
+pub const BUNDLE_SCHEMA_V1: &str = "foca-sig-bundle/v1";
+
+/// Upstream pins and stats of the ingested sources (written by the ingest scripts).
+const SOURCES_LOCK: &str = include_str!("../../../foca-analysis/signatures/sources.lock.json");
+
+/// Data tables a v2 bundle may replace: `(id, source key in sources.lock.json, built-in file)`.
+pub const TABLES: &[(&str, &str, &[u8])] = &[
+    (
+        "webappanalyzer",
+        "webappanalyzer",
+        foca_recon::tech::UPSTREAM_GZ,
+    ),
+    ("endoflife", "endoflife", foca_recon::tech::EOL_GZ),
+    (
+        "saas_dns",
+        "webappanalyzer",
+        foca_net::saas::UPSTREAM_DNS_JSON.as_bytes(),
+    ),
+    (
+        "gitleaks",
+        "gitleaks",
+        foca_analysis::secrets::GITLEAKS_TOML.as_bytes(),
+    ),
+    ("kev_enrich", "epss", foca_analysis::kev::ENRICH_GZ),
+    ("retire", "retire", foca_recon::retire::RETIRE_GZ),
+    ("recog", "recog", foca_net::recog::RECOG_GZ),
+    (
+        "favicons_md5",
+        "recog",
+        foca_recon::favicon::FAVICONS_MD5_TSV.as_bytes(),
+    ),
+    ("psl", "psl", foca_net::dns::psl::PSL_GZ),
+    (
+        "takeover",
+        "can-i-take-over-xyz",
+        foca_net::takeover::TAKEOVER_JSON.as_bytes(),
+    ),
+];
+
+/// A data table shipped in a v2 bundle.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SigTable {
+    /// Upstream pin (commit, tag or snapshot date).
+    pub version: String,
+    /// SHA-256 of the decoded table file.
+    pub sha256: String,
+    /// The table file as shipped in the repository (gzip or text), base64.
+    pub data: String,
+}
+
+/// Loaded numbers of one data table for the status screen.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TableInfo {
+    pub id: String,
+    /// Records the app really loaded (technologies, cycles, rules, ...).
+    pub records: u32,
+    /// Upstream pin of the data in use.
+    pub version: String,
+    /// SPDX id or terms of the upstream data.
+    pub license: String,
+    /// `builtin` or `bundle`.
+    pub source: String,
+}
 
 /// 32-byte Ed25519 public key used to verify signature bundles.
 /// The private signing key is kept offline by the release maintainers.
@@ -106,7 +173,7 @@ pub struct SigSecretItem {
     pub pattern: String,
 }
 
-/// A signed v1 signature bundle (`foca-sig-bundle/v1`).
+/// A signed signature bundle (`foca-sig-bundle/v1` or `/v2`; the name is kept for API stability).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SigBundleV1 {
     pub schema: String,
@@ -122,6 +189,9 @@ pub struct SigBundleV1 {
     pub cpe_additions: Vec<SigCpeItem>,
     #[serde(default)]
     pub secret_additions: Vec<SigSecretItem>,
+    /// v2: data tables by id ([`TABLES`]).
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub tables: std::collections::BTreeMap<String, SigTable>,
     pub sha256: String,
     pub signature_ed25519: String,
 }
@@ -148,6 +218,8 @@ pub struct SigStatus {
     pub software: SoftwareInfo,
     /// Finding rule to standards mapping.
     pub std_map: StdMapInfo,
+    /// Ingested upstream data tables with the numbers really loaded.
+    pub tables: Vec<TableInfo>,
     /// Feed checked by `signatures_update` without a `url`.
     pub feed_url: String,
     /// Result of the last `signatures_update`, `None` before the first check.
@@ -257,6 +329,8 @@ pub fn canonical_payload(b: &SigBundleV1) -> Vec<u8> {
         kev_additions: &'a [SigKevItem],
         cpe_additions: &'a [SigCpeItem],
         secret_additions: &'a [SigSecretItem],
+        #[serde(skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+        tables: &'a std::collections::BTreeMap<String, SigTable>,
     }
     serde_json::to_vec(&Canonical {
         schema: &b.schema,
@@ -267,6 +341,7 @@ pub fn canonical_payload(b: &SigBundleV1) -> Vec<u8> {
         kev_additions: &b.kev_additions,
         cpe_additions: &b.cpe_additions,
         secret_additions: &b.secret_additions,
+        tables: &b.tables,
     })
     .unwrap_or_default()
 }
@@ -323,6 +398,17 @@ pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
         kev_additions,
         cpe_additions: Vec::new(),
         secret_additions: Vec::new(),
+        tables: TABLES
+            .iter()
+            .map(|(id, src, bytes)| {
+                let t = SigTable {
+                    version: lock_pin(src),
+                    sha256: sha256_hex(bytes),
+                    data: b64_encode(bytes),
+                };
+                (id.to_string(), t)
+            })
+            .collect(),
         sha256: String::new(),
         signature_ed25519: String::new(),
     }
@@ -333,7 +419,7 @@ pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
 /// Error texts are core messages (`core.sig.*` in `locales/<lang>/ui/core.json`).
 pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<(), CmdError> {
     let bad_sig = |m: &str| CmdError::new("bad_signature", m);
-    if bundle.schema != BUNDLE_SCHEMA {
+    if bundle.schema != BUNDLE_SCHEMA && bundle.schema != BUNDLE_SCHEMA_V1 {
         return Err(CmdError::new(
             "bad_args",
             format!("Неизвестная схема пакета сигнатур: {}", bundle.schema),
@@ -389,7 +475,222 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
             )
         })?;
     }
+    if !bundle.tables.is_empty() && bundle.schema == BUNDLE_SCHEMA_V1 {
+        return Err(CmdError::new(
+            "bad_args",
+            "Таблицы данных допустимы только в пакете схемы v2",
+        ));
+    }
+    for (id, t) in &bundle.tables {
+        let bytes = table_bytes(id, t)?;
+        check_table(id, &bytes).map_err(|e| {
+            CmdError::new(
+                "bad_args",
+                format!("Таблица {id} в пакете не читается: {e}"),
+            )
+        })?;
+    }
     Ok(())
+}
+
+/// Upstream pin of a source in `sources.lock.json` (tag, commit or snapshot version).
+fn lock_pin(source: &str) -> String {
+    let lock: serde_json::Value = serde_json::from_str(SOURCES_LOCK).unwrap_or_default();
+    let s = &lock["sources"][source];
+    let pick = |k: &str| s[k].as_str().map(str::to_string);
+    pick("tag")
+        .or_else(|| pick("version"))
+        .or_else(|| pick("commit").map(|c| c.chars().take(12).collect()))
+        .unwrap_or_default()
+}
+
+fn lock_license(source: &str) -> String {
+    let lock: serde_json::Value = serde_json::from_str(SOURCES_LOCK).unwrap_or_default();
+    lock["sources"][source]["license"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string()
+}
+
+const B64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+fn b64_encode(bytes: &[u8]) -> String {
+    let mut out = String::with_capacity(bytes.len().div_ceil(3) * 4);
+    for c in bytes.chunks(3) {
+        let n = (u32::from(c[0]) << 16)
+            | (u32::from(*c.get(1).unwrap_or(&0)) << 8)
+            | u32::from(*c.get(2).unwrap_or(&0));
+        for i in 0..4 {
+            if i <= c.len() {
+                out.push(B64[(n >> (18 - 6 * i)) as usize & 63] as char);
+            } else {
+                out.push('=');
+            }
+        }
+    }
+    out
+}
+
+fn b64_decode(s: &str) -> Option<Vec<u8>> {
+    let s = s.trim().trim_end_matches('=');
+    let mut out = Vec::with_capacity(s.len() * 3 / 4);
+    let (mut acc, mut bits) = (0u32, 0u32);
+    for ch in s.bytes() {
+        let v = B64.iter().position(|&b| b == ch)? as u32;
+        acc = (acc << 6) | v;
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((acc >> bits) as u8);
+            acc &= (1 << bits) - 1;
+        }
+    }
+    Some(out)
+}
+
+/// Decodes a bundle table and checks its id and SHA-256.
+fn table_bytes(id: &str, t: &SigTable) -> Result<Vec<u8>, CmdError> {
+    if !TABLES.iter().any(|(k, ..)| *k == id) {
+        return Err(CmdError::new(
+            "bad_args",
+            format!("Неизвестная таблица в пакете сигнатур: {id}"),
+        ));
+    }
+    let bytes = b64_decode(&t.data)
+        .ok_or_else(|| CmdError::new("bad_args", format!("Таблица {id}: некорректный base64")))?;
+    if !sha256_hex(&bytes).eq_ignore_ascii_case(t.sha256.trim()) {
+        return Err(CmdError::new(
+            "bad_signature",
+            format!("Таблица {id}: SHA-256 не совпадает с содержимым"),
+        ));
+    }
+    Ok(bytes)
+}
+
+fn text(bytes: &[u8]) -> Result<&str, String> {
+    std::str::from_utf8(bytes).map_err(|e| e.to_string())
+}
+
+/// Parses a table without installing it; returns its record count.
+fn check_table(id: &str, bytes: &[u8]) -> Result<usize, String> {
+    match id {
+        "webappanalyzer" => foca_recon::tech::parse_upstream(bytes),
+        "endoflife" => foca_recon::tech::parse_eol(bytes).map(|m| m.values().map(Vec::len).sum()),
+        "saas_dns" => foca_net::saas::check_upstream_dns(text(bytes)?),
+        "gitleaks" => foca_analysis::secrets::Rules::parse(text(bytes)?).map(|r| r.len()),
+        "kev_enrich" => foca_analysis::kev::KevCatalog::builtin()
+            .clone()
+            .with_enrichment(bytes)
+            .map(|c| c.enriched())
+            .map_err(|e| e.0),
+        "retire" => foca_recon::retire::check(bytes),
+        "recog" => foca_net::recog::check(bytes),
+        "favicons_md5" => Ok(foca_recon::favicon::check_md5_table(text(bytes)?)),
+        "psl" => foca_net::dns::psl::Psl::from_gz(bytes).map(|p| p.len()),
+        "takeover" => foca_net::takeover::check(text(bytes)?),
+        _ => Err(format!("unknown table {id}")),
+    }
+}
+
+/// Installs every table of `bundle` into the analysis modules (the built-in table for the ones
+/// it does not carry). Without a bundle with tables nothing changes unless a bundle had replaced
+/// tables before (rollback): then the built-in tables come back.
+fn apply_tables(bundle: Option<&SigBundleV1>) {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    static FROM_BUNDLE: AtomicBool = AtomicBool::new(false);
+    let tables = bundle.map(|b| &b.tables).filter(|t| !t.is_empty());
+    if tables.is_none() && !FROM_BUNDLE.load(Ordering::SeqCst) {
+        return;
+    }
+    let get = |id: &str| -> Option<Vec<u8>> {
+        let t = tables?.get(id)?;
+        table_bytes(id, t).ok()
+    };
+    let builtin = |id: &str| {
+        TABLES
+            .iter()
+            .find(|(k, ..)| *k == id)
+            .map(|t| t.2)
+            .unwrap_or(&[])
+    };
+    let pick = |id: &str| get(id).unwrap_or_else(|| builtin(id).to_vec());
+    let report = |id: &str, r: Result<usize, String>| {
+        if let Err(e) = r {
+            tracing::warn!(target: "foca::sig", "таблица {id} не применена: {e}");
+        }
+    };
+    let (tech, eol) = (pick("webappanalyzer"), pick("endoflife"));
+    report(
+        "webappanalyzer",
+        foca_recon::tech::install_upstream(Some(&tech), Some(&eol)).map(|c| c.0),
+    );
+    let txt = |id: &str| String::from_utf8(pick(id)).unwrap_or_default();
+    report(
+        "saas_dns",
+        foca_net::saas::install_upstream_dns(&txt("saas_dns")),
+    );
+    report(
+        "gitleaks",
+        foca_analysis::secrets::install_gitleaks(&txt("gitleaks")),
+    );
+    report("retire", foca_recon::retire::install(&pick("retire")));
+    report("recog", foca_net::recog::install(&pick("recog")));
+    foca_recon::favicon::install_md5_table(&txt("favicons_md5"));
+    report("psl", foca_net::dns::psl::install(&pick("psl")));
+    report("takeover", foca_net::takeover::install(&txt("takeover")));
+    FROM_BUNDLE.store(tables.is_some(), Ordering::SeqCst);
+}
+
+/// Applies the data tables of the active bundle (at engine start and after an install or
+/// rollback). KEV enrichment is applied per lookup by [`active_kev_catalog`].
+pub fn activate(data_dir: &Path) {
+    apply_tables(active_bundle(data_dir).as_ref());
+}
+
+/// Per-table numbers of the data in use.
+fn table_infos(
+    bundle: Option<&SigBundleV1>,
+    kev: &foca_analysis::kev::KevCatalog,
+) -> Vec<TableInfo> {
+    let tech = foca_recon::tech::counts();
+    let (libs, _) = foca_recon::retire::counts();
+    let gitleaks = foca_analysis::secrets::Rules::builtin()
+        .len()
+        .saturating_sub(
+            foca_analysis::secrets::Rules::parse(foca_analysis::secrets::BUILTIN_TOML)
+                .map_or(0, |r| r.len()),
+        );
+    TABLES
+        .iter()
+        .map(|(id, src, _)| {
+            let records = match *id {
+                "webappanalyzer" => tech.upstream,
+                "endoflife" => tech.eol_cycles,
+                "saas_dns" => foca_net::saas::upstream_dns_count(),
+                "gitleaks" => gitleaks,
+                "kev_enrich" => kev.enriched(),
+                "retire" => libs,
+                "recog" => foca_net::recog::count(),
+                "favicons_md5" => foca_recon::favicon::md5_count(),
+                "psl" => foca_net::dns::psl::list().len(),
+                "takeover" => foca_net::takeover::services().len(),
+                _ => 0,
+            };
+            let from_bundle = bundle.and_then(|b| b.tables.get(*id));
+            TableInfo {
+                id: id.to_string(),
+                records: records as u32,
+                version: from_bundle.map_or_else(|| lock_pin(src), |t| t.version.clone()),
+                license: lock_license(src),
+                source: if from_bundle.is_some() {
+                    "bundle"
+                } else {
+                    "builtin"
+                }
+                .into(),
+            }
+        })
+        .collect()
 }
 
 fn sig_dir(data_dir: &Path) -> PathBuf {
@@ -414,6 +715,7 @@ struct LoadedDb {
     kev: KevInfo,
     software: SoftwareInfo,
     std_map: StdMapInfo,
+    tables: Vec<TableInfo>,
 }
 
 fn parse_ymd(s: &str) -> Option<time::Date> {
@@ -519,7 +821,9 @@ fn loaded_db(bundle: Option<&SigBundleV1>, today: Option<time::Date>) -> LoadedD
     let (software, os) = foca_analysis::software::Signatures::builtin().len();
     let secrets = foca_analysis::secrets::Rules::builtin().len()
         + bundle.map_or(0, |b| b.secret_additions.len());
+    let tables = table_infos(bundle, kev);
     LoadedDb {
+        tables,
         counts: SigCounts {
             cpe: (software + os) as u32,
             cve: kev.used() as u32,
@@ -600,6 +904,7 @@ fn make_status(
         kev: db.kev,
         software: db.software,
         std_map: db.std_map,
+        tables: db.tables,
         feed_url: DEFAULT_FEED_URL.into(),
         last_check: read_last_check(data_dir),
     }
@@ -667,9 +972,14 @@ pub fn merge_rules_with_bundle(
     cfg
 }
 
-/// The built-in KEV catalog extended with the entries of `b`, `None` when it adds none.
+/// The built-in KEV catalog extended with the entries and the EPSS/CVSS table of `b`, `None`
+/// when it adds neither.
 fn active_kev_from(b: SigBundleV1) -> Option<foca_analysis::kev::KevCatalog> {
-    if b.kev_additions.is_empty() {
+    let enrich = b
+        .tables
+        .get("kev_enrich")
+        .and_then(|t| table_bytes("kev_enrich", t).ok());
+    if b.kev_additions.is_empty() && enrich.is_none() {
         return None;
     }
     let extra: Vec<foca_analysis::kev::KevEntry> = b
@@ -685,7 +995,11 @@ fn active_kev_from(b: SigBundleV1) -> Option<foca_analysis::kev::KevCatalog> {
             name: k.name,
         })
         .collect();
-    Some(foca_analysis::kev::KevCatalog::builtin().with_additions(extra))
+    let cat = foca_analysis::kev::KevCatalog::builtin().with_additions(extra);
+    match enrich {
+        Some(gz) => cat.clone().with_enrichment(&gz).ok().or(Some(cat)),
+        None => Some(cat),
+    }
 }
 
 /// Returns a KEV catalog extended with entries from an active verified signature bundle (if any).
@@ -721,6 +1035,7 @@ pub(crate) fn import_bundle_with_pubkey(
     let bundle = parse_bundle(bundle_json)?;
     verify_bundle(&bundle, pubkey_bytes)?;
     install(data_dir, &bundle)?;
+    apply_tables(Some(&bundle));
     Ok(make_status(
         data_dir,
         Some(&bundle),
@@ -790,6 +1105,7 @@ pub fn apply_feed(
             return Ok("up_to_date");
         }
         install(data_dir, &bundle)?;
+        apply_tables(Some(&bundle));
         Ok("installed")
     })();
     match result {
@@ -824,6 +1140,7 @@ pub(crate) fn rollback_with_pubkey(
     if prev.is_file() {
         if let Some(bundle) = verified_bundle_at(&prev, pubkey_bytes) {
             fs::rename(&prev, &cur).map_err(|e| CmdError::new("io", e.to_string()))?;
+            apply_tables(Some(&bundle));
             return Ok(make_status(
                 data_dir,
                 Some(&bundle),
@@ -837,6 +1154,7 @@ pub(crate) fn rollback_with_pubkey(
     if cur.is_file() {
         fs::remove_file(&cur).map_err(|e| CmdError::new("io", e.to_string()))?;
     }
+    apply_tables(None);
     Ok(make_status(
         data_dir,
         None,
@@ -895,6 +1213,7 @@ fn build_signed_test_bundle(version: &str, released_at: &str, seed: &[u8; 32]) -
         kev_additions,
         cpe_additions,
         secret_additions,
+        tables: Default::default(),
         sha256: String::new(),
         signature_ed25519: String::new(),
     };
@@ -966,6 +1285,97 @@ mod tests {
         assert!(!rb2.can_rollback);
     }
 
+    fn v2_bundle(version: &str) -> SigBundleV1 {
+        let mut b = bundle_from_builtin(version, "2026-11-27");
+        b.kev_additions.clear();
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        b
+    }
+
+    #[test]
+    fn v2_tables_roundtrip_install_and_verify() {
+        assert_eq!(b64_decode(&b64_encode(b"foca-rs")).unwrap(), b"foca-rs");
+        assert_eq!(b64_encode(b"ab"), "YWI=");
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let b = v2_bundle("2026.11.28");
+        assert_eq!(b.schema, BUNDLE_SCHEMA);
+        assert_eq!(b.tables.len(), TABLES.len());
+        let json = serde_json::to_string(&b).unwrap();
+        let st = import_bundle_with_pubkey(dir.path(), &json, &pk, TODAY).unwrap();
+        assert_eq!(st.source, "bundle");
+        assert!(st
+            .tables
+            .iter()
+            .all(|t| t.source == "bundle" && t.records > 0));
+        // The same data as built in: the loaded numbers do not change.
+        let builtin = status_with_pubkey(tempfile::tempdir().unwrap().path(), &pk, TODAY);
+        for (a, b) in st.tables.iter().zip(&builtin.tables) {
+            assert_eq!(a.records, b.records, "{}", a.id);
+        }
+        assert!(active_kev_from(b.clone()).unwrap().enriched() > 900);
+        let rb = rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
+        assert_eq!(rb.source, "builtin");
+    }
+
+    #[test]
+    fn tampered_or_unknown_tables_are_rejected() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        // A table whose bytes do not match its SHA-256 (re-signed, so only the table check fails).
+        let mut b = v2_bundle("2026.11.28");
+        let t = b.tables.get_mut("takeover").unwrap();
+        t.data = b64_encode(br#"{"services":[]}"#);
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        let err =
+            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk, TODAY)
+                .unwrap_err();
+        assert!(err.message.contains("takeover"), "{}", err.message);
+        // A matching SHA-256 over data the parser rejects.
+        let mut b = v2_bundle("2026.11.28");
+        let junk = b"not gzip".to_vec();
+        b.tables.insert(
+            "retire".into(),
+            SigTable {
+                version: "x".into(),
+                sha256: sha256_hex(&junk),
+                data: b64_encode(&junk),
+            },
+        );
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        assert!(import_bundle_with_pubkey(
+            dir.path(),
+            &serde_json::to_string(&b).unwrap(),
+            &pk,
+            TODAY
+        )
+        .is_err());
+        // Unknown table ids and tables in a v1 bundle.
+        let mut b = v2_bundle("2026.11.28");
+        let first = b.tables.values().next().unwrap().clone();
+        b.tables.insert("nmap".into(), first);
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        assert!(verify_bundle(&b, &pk).is_err());
+        let mut b = v2_bundle("2026.11.28");
+        b.schema = BUNDLE_SCHEMA_V1.into();
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        assert!(verify_bundle(&b, &pk).is_err());
+        assert_eq!(status_with_pubkey(dir.path(), &pk, TODAY).source, "builtin");
+    }
+
+    #[test]
+    fn v1_bundles_stay_readable() {
+        // A v1 bundle (no tables) keeps its canonical payload: no `tables` key is signed.
+        let mut b = build_signed_test_bundle("2026.11.22", "2026-11-22", &TEST_SEED);
+        b.schema = BUNDLE_SCHEMA_V1.into();
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        let payload = String::from_utf8(canonical_payload(&b)).unwrap();
+        assert!(!payload.contains("tables"));
+        let json = serde_json::to_string(&b).unwrap();
+        assert!(!json.contains("\"tables\""));
+        verify_bundle(&parse_bundle(&json).unwrap(), &test_pubkey()).unwrap();
+    }
+
     #[test]
     fn tampered_payload_or_foreign_signature_is_rejected() {
         let dir = tempfile::tempdir().unwrap();
@@ -1006,11 +1416,26 @@ mod tests {
         assert_eq!(st.counts.cve, st.kev.used);
         assert_eq!(st.kev.catalog, kev.version);
         assert_eq!(st.kev.products, kev.product_count() as u32);
-        let secrets = foca_analysis::secrets::BUILTIN_TOML
-            .lines()
-            .filter(|l| l.trim() == "[[rule]]")
-            .count();
+        // Our tuned rules plus the gitleaks ones.
+        let rules = |t: &str| t.lines().filter(|l| l.trim() == "[[rule]]").count();
+        let secrets = rules(foca_analysis::secrets::BUILTIN_TOML)
+            + rules(foca_analysis::secrets::GITLEAKS_TOML);
         assert_eq!(st.counts.secrets as usize, secrets);
+        // Every ingested table reports the records the modules really loaded.
+        let tbl = |id: &str| st.tables.iter().find(|t| t.id == id).unwrap();
+        assert_eq!(st.tables.len(), TABLES.len());
+        assert!(st
+            .tables
+            .iter()
+            .all(|t| t.records > 0 && !t.version.is_empty()));
+        assert!(st.tables.iter().all(|t| t.source == "builtin"));
+        assert_eq!(
+            tbl("gitleaks").records as usize,
+            rules(foca_analysis::secrets::GITLEAKS_TOML)
+        );
+        assert_eq!(tbl("gitleaks").version, "v8.30.1");
+        assert_eq!(tbl("kev_enrich").records, st.kev.used);
+        assert_eq!(tbl("psl").license, "MPL-2.0");
         let sw = foca_analysis::software::BUILTIN_TOML
             .lines()
             .filter(|l| l.trim() == "[[software]]")

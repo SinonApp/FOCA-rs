@@ -97,6 +97,11 @@ pub fn install(gz: &[u8]) -> Result<usize, String> {
     Ok(n)
 }
 
+/// Parses a table without installing it; returns the fingerprint count.
+pub fn check(gz: &[u8]) -> Result<usize, String> {
+    parse(gz).map(|t| t.len())
+}
+
 /// Number of banner fingerprints in use.
 pub fn count() -> usize {
     table().len()

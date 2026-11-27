@@ -43,7 +43,7 @@ impl Engine {
         } else {
             return Err(CmdError::new(
                 "bad_args",
-                "Нужен bundle_json или bundle (foca-sig-bundle/v1)",
+                "Нужен bundle_json или bundle (foca-sig-bundle/v2)",
             ));
         };
         let today = self.now().date();
