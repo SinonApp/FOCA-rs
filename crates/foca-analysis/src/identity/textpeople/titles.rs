@@ -302,6 +302,48 @@ fn sig_marks(s: &str) -> bool {
 
 /// A signatory: the name sits in a signature block (underscores, `(підпис)`, `М.П.`, slashes
 /// around the name) on its own line or right below the signature line.
+/// The name sits in a bibliography entry or a citation (`12. Петренко І.В. Назва // Журнал.
+/// 2020. С. 12`, `Carter E. Title. Vol. 3, pp. 1-9`): the person is a cited author.
+pub fn cited(c: &Ctx) -> bool {
+    const MARKS: [&str; 18] = [
+        "//",
+        " / ",
+        "[текст]",
+        "посіб",
+        "вісн",
+        "вид-во",
+        "к.:",
+        "м.:",
+        "с. ",
+        "pp.",
+        "vol.",
+        "et al",
+        "та ін",
+        "и др",
+        "ed.",
+        "навч.",
+        "monogr",
+        "моногр",
+    ];
+    let line = c.lines[c.li].trim_start();
+    let l = line.to_lowercase();
+    if MARKS.iter().any(|m| l.contains(m)) {
+        return true;
+    }
+    // `12. Name Title...` with a numbered entry and a year or a period after the names.
+    let numbered = line.split_once(". ").is_some_and(|(n, _)| {
+        !n.is_empty() && n.len() <= 4 && n.bytes().all(|b| b.is_ascii_digit())
+    });
+    let year = l.as_bytes().windows(4).any(|w| {
+        (w.starts_with(b"19") || w.starts_with(b"20")) && w.iter().all(u8::is_ascii_digit)
+    });
+    numbered
+        && (year
+            || c.after
+                .trim_start()
+                .starts_with(|ch: char| ch.is_uppercase()))
+}
+
 pub fn signatory(c: &Ctx) -> bool {
     let line = c.lines[c.li];
     let slashed = c.before.trim_end().ends_with('/') && c.after.trim_start().starts_with('/');

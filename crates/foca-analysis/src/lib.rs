@@ -901,6 +901,9 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             } else if people::is_reviewer(&c.roles) {
                 // Only comments or revisions in other people's documents.
                 "Рецензент".into()
+            } else if ta.cited && !c.from_meta {
+                // Named only in bibliography entries and citations.
+                "Цитируемый автор".into()
             } else {
                 String::new()
             },

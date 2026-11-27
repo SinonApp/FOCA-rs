@@ -70,6 +70,8 @@ pub struct Mention {
     pub unit: Option<String>,
     /// Name inside a signature block (`_____ /Петренко І.В./`, `(підпис)`, `М.П.`).
     pub signatory: bool,
+    /// Name inside a bibliography entry or citation (a cited author, not a staff member).
+    pub cited: bool,
     /// Phone numbers on the same line or block (raw values; mask before storing).
     pub phones: Vec<String>,
     /// E-mail addresses on the same line or block.
@@ -460,18 +462,13 @@ pub fn scan(text: &str) -> TextScan {
     let norm = normalize(clip(text, MAX_TEXT_BYTES));
     let text: &str = &norm;
     let r = registry();
-    let t0 = std::time::Instant::now();
     let doc_lang = r.guess(text);
     let vocab = Vocab::new(text);
     let lines: Vec<&str> = text.lines().collect();
     let found: Vec<Vec<Found>> = (0..lines.len())
         .map(|li| find_wrapped(&lines, li, &vocab, doc_lang))
         .collect();
-    let t3 = t0.elapsed();
     let cs = contacts::scan(text, &lines, doc_lang);
-    if std::env::var("TP_PROF").is_ok() {
-        eprintln!("PROF lines {t3:?} contacts {:?}", t0.elapsed());
-    }
     let mut people = Vec::new();
     for (li, fs) in found.iter().enumerate() {
         for (k, f) in fs.iter().enumerate() {
@@ -488,6 +485,7 @@ pub fn scan(text: &str) -> TextScan {
                 after: &line[f.e..to],
                 alone: fs.len() == 1,
             };
+            let sig = titles::signatory(&ctx);
             let mut m = Mention {
                 name: f.name.clone(),
                 form: f.form,
@@ -495,7 +493,8 @@ pub fn scan(text: &str) -> TextScan {
                 line: li + 1,
                 title: titles::title(&ctx),
                 unit: titles::unit(&ctx),
-                signatory: titles::signatory(&ctx),
+                signatory: sig,
+                cited: !sig && titles::cited(&ctx),
                 phones: vec![],
                 emails: vec![],
                 ids: vec![],

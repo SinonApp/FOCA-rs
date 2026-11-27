@@ -32,10 +32,21 @@ fn surname_shape(t: &Tok, v: &Vocab, strict: bool) -> bool {
         return false;
     }
     let n = t.text.chars().filter(|c| c.is_alphabetic()).count();
-    if !(2..=30).contains(&n) || registry().stop(t.text) {
+    if !(2..=30).contains(&n) || registry().stop(t.text) || abstract_noun(t.text) {
         return false;
     }
     !(strict && v.common(t.text))
+}
+
+/// Ukrainian/Russian abstract-noun endings that never end a surname (`Відповідність`,
+/// `Положення`, `Організація`).
+fn abstract_noun(w: &str) -> bool {
+    let l = w.to_lowercase();
+    [
+        "ість", "ання", "ення", "иття", "ація", "ость", "ение", "ание", "ция",
+    ]
+    .iter()
+    .any(|e| l.ends_with(e))
 }
 
 /// A given name: from the dictionary, or (`unknown_ok`) any capitalised Cyrillic word that is

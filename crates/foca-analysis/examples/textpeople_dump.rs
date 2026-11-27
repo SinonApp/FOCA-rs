@@ -26,7 +26,7 @@ fn main() {
             .map(|m| {
                 serde_json::json!({
                     "name": m.name, "form": format!("{:?}", m.form), "lang": m.lang, "line": m.line,
-                    "title": m.title, "unit": m.unit, "sig": m.signatory,
+                    "title": m.title, "unit": m.unit, "sig": m.signatory, "cited": m.cited,
                     "phones": m.phones.len(), "emails": m.emails, "ids": m.ids,
                 })
             })

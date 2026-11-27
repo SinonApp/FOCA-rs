@@ -4270,7 +4270,8 @@
     "Веб-сервер": "Web server",
     "Файловый (внутр.)": "File server (internal)",
     "Внутренний": "Internal",
-    "Висящий CNAME": "Dangling CNAME"
+    "Висящий CNAME": "Dangling CNAME",
+    "Цитируемый автор": "Cited author"
   },
   "host_sources": {
     "URL документа": "Document URL",

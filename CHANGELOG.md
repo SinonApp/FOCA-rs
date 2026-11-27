@@ -51,7 +51,7 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 
 ### Added
 
-- People from document text in 22 languages and scripts (Cyrillic with case forms and patronymics, Latin with particles, titles and suffixes, Arabic, Hebrew, CJK family-first, Georgian, Armenian, Kazakh), with per-language data files under `signatures/people/`; positions, units and signature blocks are attached to the person.
+- People from document text in 22 languages and scripts (Cyrillic with case forms and patronymics, Latin with particles, titles and suffixes, Arabic, Hebrew, CJK family-first, Georgian, Armenian, Kazakh), with per-language data files under `signatures/people/`; positions, units and signature blocks are attached to the person; authors named only in bibliography entries get the role "cited author".
 - Contacts and identifiers by country: E.164 and national phone formats, obfuscated e-mails (at/dot, собака, arroba, Klammeraffe), RU INN/SNILS/OGRN, PL PESEL/NIP, DE Steuer-ID, UK NINO, ES DNI/NIE, IT codice fiscale, IBAN of all countries with checksums; US SSN, FR NIR and passports only with context. Values stay masked.
 - Data → Phones, title/unit/contacts on person cards, `text_people`/`text_contacts` per document and an aggregated Medium finding for people whose contacts are published next to their names.
 - PDF facts: document language (`/Lang`), page size with its paper name (A4, Letter and others), tagged PDF flag and the file identifier (`/ID`, the same in every revision and copy of one file), shown in the document card under "Document facts".

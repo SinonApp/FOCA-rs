@@ -22,3 +22,31 @@ fn ukrainian_forms() {
     assert!(n.contains(&"Бондар О.М.".to_string()), "{n:?}");
     assert!(n.contains(&"Мельник І.В.".to_string()), "{n:?}");
 }
+
+#[test]
+fn bibliography_authors_are_cited_staff_are_not() {
+    let t = "Список джерел\n\
+             12. Гончаренко Т.В. Адміністративне право : навч. посіб. К.: Вид-во, 2019. 210 с.\n\
+             13. Carter E., Novak J. Data rules // Law Review. 2021. Vol. 3. pp. 1-9.\n\
+             Завідувач кафедри доц. Мирошник О.П.\n";
+    let s = scan(t);
+    let cited = |n: &str| {
+        s.people
+            .iter()
+            .find(|m| m.name.contains(n))
+            .map(|m| m.cited)
+    };
+    assert_eq!(cited("Гончаренко"), Some(true));
+    assert_eq!(cited("Carter"), Some(true));
+    assert_eq!(cited("Мирошник"), Some(false));
+}
+
+#[test]
+fn abstract_nouns_are_not_surnames() {
+    let n = names("Відповідність Ольга Основна\nОрганізація Ірина Петрівна\n");
+    assert!(
+        n.iter()
+            .all(|x| !x.starts_with("Відповідність") && !x.starts_with("Організація")),
+        "{n:?}"
+    );
+}

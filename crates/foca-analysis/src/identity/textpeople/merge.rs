@@ -12,7 +12,13 @@ use crate::people::{self, IdentSource, Identity, Resolved};
 /// e-mail written next to a single name, linked to that name.
 pub fn identities(ts: &TextScan, doc: u64, out: &mut Vec<Identity>) {
     for m in &ts.people {
-        let role = if m.signatory { "signatory" } else { "text" };
+        let role = if m.signatory {
+            "signatory"
+        } else if m.cited {
+            "cited"
+        } else {
+            "text"
+        };
         out.push(Identity::new(&m.name, doc, IdentSource::Text, role));
         for e in &m.emails {
             out.push(Identity::new(e, doc, IdentSource::Text, "email").with_link(&m.name));
@@ -52,6 +58,8 @@ pub struct Attrs {
     pub phones: Vec<String>,
     pub ids: Vec<String>,
     pub signatory: bool,
+    /// Every text mention is in a bibliography entry or citation.
+    pub cited: bool,
     /// First mention: (document, line).
     pub first: Option<(u64, u32)>,
 }
@@ -73,6 +81,7 @@ pub fn attrs<'a>(
         phones: BTreeSet<String>,
         ids: BTreeSet<String>,
         signatory: bool,
+        cited: bool,
         first: Option<(u64, u32)>,
     }
     let mut acc: BTreeMap<usize, Acc> = BTreeMap::new();
@@ -87,6 +96,7 @@ pub fn attrs<'a>(
                 phones: BTreeSet::new(),
                 ids: BTreeSet::new(),
                 signatory: false,
+                cited: true,
                 first: None,
             });
             if let Some(t) = &m.title {
@@ -98,6 +108,7 @@ pub fn attrs<'a>(
             a.phones.extend(m.phones.iter().map(|p| mask_phone(p)));
             a.ids.extend(m.ids.iter().map(|k| k.to_string()));
             a.signatory |= m.signatory;
+            a.cited &= m.cited;
             if a.first.is_none() {
                 a.first = Some((doc, m.line as u32));
             }
@@ -113,6 +124,7 @@ pub fn attrs<'a>(
                     phones: a.phones.into_iter().take(10).collect(),
                     ids: a.ids.into_iter().collect(),
                     signatory: a.signatory,
+                    cited: a.cited,
                     first: a.first,
                 },
             )
