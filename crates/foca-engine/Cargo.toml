@@ -34,6 +34,8 @@ ring.workspace = true
 url.workspace = true
 tokio = { workspace = true, features = ["rt", "sync", "time", "macros"] }
 tokio-util = { workspace = true }
+# bounded per-host worker pools (buffer_unordered / buffered) on the stage's own task
+futures-util.workspace = true
 zip.workspace = true
 # compression backend for zip (logs_export)
 flate2.workspace = true

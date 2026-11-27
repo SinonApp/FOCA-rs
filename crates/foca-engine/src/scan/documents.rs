@@ -31,7 +31,7 @@ pub(super) async fn stage_download(c: &mut Ctx) -> Result<(), Stop> {
 }
 
 /// Downloads the task queue (the download stage, or follow-up downloads found by brute force; `stage` is for progress).
-pub(super) async fn download_queue(c: &mut Ctx, stage: usize) -> Result<(), Stop> {
+pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
     let d = downloader(c);
     let q = StoreQueue::new(c.db.clone(), Some(c.scan_id.clone()));
     q.resume().map_err(Stop::Error)?;
@@ -91,7 +91,7 @@ pub(super) async fn stage_meta(c: &mut Ctx) -> Result<(), Stop> {
 }
 
 /// Parses downloaded documents (the metadata extraction stage, or after brute force).
-pub(super) async fn meta_pending(c: &mut Ctx, stage: usize) -> Result<(), Stop> {
+pub(super) async fn meta_pending(c: &Ctx, stage: usize) -> Result<(), Stop> {
     let todo: Vec<(u64, String, String)> = {
         let db = lock(&c.db);
         db.documents(false)?

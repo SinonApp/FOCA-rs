@@ -24,7 +24,7 @@ pub(crate) fn defaults() -> Value {
             "orbot": false, "groups": { "search": "", "recon": "", "target": "" },
             "out_ip": "", "out_country": "", "kill_switch": true,
             "kill_action": "stop", "ua": "chrome", "threads": 4, "rps": 5, "timeout": 15,
-            "retries": 2, "dns": "system", "dns_custom": ""
+            "retries": 2, "dns": "system", "dns_custom": "", "hosts_parallel": 4
         },
         "keys": keys,
         "power": {

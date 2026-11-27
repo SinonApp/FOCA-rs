@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 use foca_net::bruteforce::Progress;
 use serde_json::{json, Value};
 
-use super::{Ctx, STAGES};
+use super::Ctx;
 use crate::engine::lock;
 
 /// Interval of live counters while a resolver pass runs.
@@ -57,26 +57,6 @@ pub(crate) struct SubStep {
 }
 
 impl Ctx {
-    fn substep_event(&self, id: &str, state: &str, done: usize, total: usize, extra: Value) {
-        let ev = {
-            let mut st = lock(&self.st);
-            let stage = STAGES[st.stage.min(STAGES.len() - 1)].0;
-            let mut ev = json!({ "type": "substep", "scan_id": self.scan_id, "stage": stage,
-                "id": id, "state": state, "done": done, "total": total, "eta_s": null, "slow": false });
-            if let (Some(o), Value::Object(x)) = (ev.as_object_mut(), extra) {
-                o.extend(x);
-            }
-            let mut cur = ev.clone();
-            if let Some(o) = cur.as_object_mut() {
-                o.remove("type");
-                o.remove("scan_id");
-            }
-            st.substep = (state == "running").then_some(cur);
-            ev
-        };
-        self.e.emit(ev);
-    }
-
     /// Starts a sub-step of `total` items: `substep` event and an info log line.
     pub(crate) fn sub_begin(&self, id: &'static str, total: usize) -> SubStep {
         tracing::info!(target: "foca::scan", "{}: шаг «{id}», старт, элементов: {total}", self.scan_id);

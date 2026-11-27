@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use foca_core::Severity;
+use futures_util::stream::{self, StreamExt};
 use serde_json::Value;
 
 use crate::analysis::facts::{self, NetFacts};
@@ -408,18 +409,31 @@ pub(super) async fn stage_network(c: &mut Ctx) -> Result<(), Stop> {
         let n_names = names.len();
         let mut sub = c.sub_begin("liveness", n_names);
         let mut live = 0usize;
-        for (k, n) in names.into_iter().enumerate() {
-            c.gate().await?;
+        // up to `hosts_parallel` names probed at once; answers are applied in name order
+        let probes = {
+            let (c, target_net, ports) = (&*c, &target_net, &cfg.alive_ports);
+            stream::iter(names)
+                .map(move |n| async move {
+                    c.gate().await?;
+                    let r = foca_net::tcp::tcp_alive_checked(
+                        target_net,
+                        &n,
+                        ports,
+                        Duration::from_secs(5),
+                        verify_proto,
+                    )
+                    .await;
+                    Ok::<_, Stop>((n, r))
+                })
+                .buffered(c.hosts_parallel())
+        };
+        tokio::pin!(probes);
+        let mut k = 0usize;
+        while let Some(r) = probes.next().await {
+            let (n, r) = r?;
+            k += 1;
             c.sub_tick(&mut sub, k, n_names, Value::Null);
-            match foca_net::tcp::tcp_alive_checked(
-                &target_net,
-                &n,
-                &cfg.alive_ports,
-                Duration::from_secs(5),
-                verify_proto,
-            )
-            .await
-            {
+            match r {
                 Ok(a) => {
                     if a.unreliable {
                         if !liveness_warned {

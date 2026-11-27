@@ -13,7 +13,8 @@
 //! Stage sources (`source` events, timeout, `scan_skip_source`): `recon` (site pages),
 //! `wellknown` (archive), `buckets`, and `grepapp` (optional; a challenge or 429 yields `blocked`).
 //! Results go to the project facts (`engine.recon`) and `recon.*` findings join the shared finding
-//! list; rerunning the stage (resume after a stop) overwrites the per-host data. At the active level
+//! list; rerunning the stage (resume after a stop) overwrites the per-host data. Sites run
+//! `settings.net.hosts_parallel` at once; each is stored as soon as it is done. At the active level
 //! open non-standard web ports of in-scope hosts get a site recon pass too ([`recon_extra_ports`]).
 
 use std::collections::BTreeMap;
@@ -208,8 +209,6 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
     let hosts: Vec<String> = c.domains.iter().take(MAX_SITES).cloned().collect();
     let now = c.e.now_iso();
     let sid = c.scan_id.clone();
-    let mut rf: ReconFacts = facts::get(&lock(&c.db), K_RECON);
-    rf.level = c.level.clone();
     if hosts.is_empty() {
         for id in RECON_SOURCES {
             if want(id) {
@@ -221,261 +220,295 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
     let urls = project_urls(&lock(&c.db));
     let recon_net = c.group_net("recon")?;
     let n = hosts.len();
-    let mut new_findings = 0usize;
-    for (i, host) in hosts.iter().enumerate() {
-        c.gate().await?;
-        let mut input = ReconInput {
-            target: host.clone(),
-            ..Default::default()
-        };
-        if i == 0 {
-            input.urls = urls.clone();
-        }
-        // earlier data for the site is kept if the source fails or is skipped
-        let prev_site = rf.sites.get(host).cloned();
-        let (mut page_ok, mut wk_ok, mut ga_ok) = (None, None, None);
-        let mut site = SiteRecon {
-            host: host.clone(),
-            at: now.clone(),
-            scan: sid.clone(),
-            ..Default::default()
-        };
-        // 1) site pages
-        if want("recon") {
-            let opts = CollectOptions {
-                archive: archive.then(|| c.e.cfg.endpoints.wayback.clone()),
-                max_scripts: MAX_SCRIPTS,
+    let c: &Ctx = c;
+    let board = c.host_board(n);
+    // earlier data per site is kept if a source fails or is skipped
+    let prev = facts::get::<ReconFacts>(&lock(&c.db), K_RECON).sites;
+    let items: Vec<(String, String)> = hosts.iter().map(|h| (h.clone(), h.clone())).collect();
+    let work = |i: usize, host: String| {
+        let (recon_net, urls, now, sid, board, prev) =
+            (&recon_net, &urls, &now, &sid, &board, &prev);
+        let want = &want;
+        async move {
+            let host = &host;
+            // source states of this site, merged into the stage's in host order at the end
+            let mut lf = ReconFacts::default();
+            let mut new = 0usize;
+            let mut input = ReconInput {
+                target: host.clone(),
+                ..Default::default()
             };
-            // the offline harness serves sites on its own port (`EngineConfig::site_port`)
-            let fetch_host = match c.e.cfg.site_port {
-                Some(p) if !archive => format!("{host}:{p}"),
-                _ => host.clone(),
-            };
-            let end = step(
-                c,
-                "recon",
-                collect::fetch_site(&recon_net, &fetch_host, &opts, &mut input),
-            )
-            .await?;
-            match &end {
-                End::Done(Ok(u)) => {
-                    site.url = u.clone();
-                    site.via = if archive { "archive" } else { "site" }.into();
-                }
-                End::Done(Err(e)) => site.error = Some(e.clone()),
-                _ => {}
+            if i == 0 {
+                input.urls = urls.clone();
             }
-            // n is the number of technologies (estimated from what is fetched so far; final after analysis)
-            let techs = analyze_site(&input).technologies.len();
-            report_end(c, &mut rf, "recon", &end, |_| techs);
-            page_ok = Some(matches!(end, End::Done(Ok(_))));
-        }
-        // 1b) web audit over the fetched pages: passive analysis in the passive profile (no
-        // requests), GET probes of in-scope hosts in the standard one, method/CORS/GraphQL
-        // probes only at the active level
-        let mut web: Option<WebAuditReport> = prev_site.as_ref().and_then(|p| p.web.clone());
-        if want("webaudit") {
-            if page_ok == Some(true) {
-                let level = audit_level(&c.level);
-                let opts = WebAuditOptions {
-                    level,
-                    scope: lock(&c.db).core_scope().ok(),
-                    ..Default::default()
+            let prev_site = prev.get(host).cloned();
+            let (mut page_ok, mut wk_ok, mut ga_ok) = (None, None, None);
+            let mut site = SiteRecon {
+                host: host.clone(),
+                at: now.clone(),
+                scan: sid.clone(),
+                ..Default::default()
+            };
+            // 1) site pages
+            if want("recon") {
+                let opts = CollectOptions {
+                    archive: archive.then(|| c.e.cfg.endpoints.wayback.clone()),
+                    max_scripts: MAX_SCRIPTS,
                 };
-                let mut winput = WebAuditInput::from_recon(&input);
-                winput.from_archive = site.via == "archive";
-                let end = step(c, "webaudit", async {
-                    Ok::<WebAuditReport, String>(webaudit::run(&recon_net, &winput, &opts).await)
-                })
+                // the offline harness serves sites on its own port (`EngineConfig::site_port`)
+                let fetch_host = match c.e.cfg.site_port {
+                    Some(p) if !archive => format!("{host}:{p}"),
+                    _ => host.clone(),
+                };
+                let end = step(
+                    c,
+                    "recon",
+                    collect::fetch_site(recon_net, &fetch_host, &opts, &mut input),
+                )
                 .await?;
-                report_end(c, &mut rf, "webaudit", &end, |r| r.findings.len());
+                match &end {
+                    End::Done(Ok(u)) => {
+                        site.url = u.clone();
+                        site.via = if archive { "archive" } else { "site" }.into();
+                    }
+                    End::Done(Err(e)) => site.error = Some(e.clone()),
+                    _ => {}
+                }
+                // n is the number of technologies (estimated from what is fetched so far; final after analysis)
+                let techs = analyze_site(&input).technologies.len();
+                report_end(c, &mut lf, "recon", &end, |_| techs);
+                page_ok = Some(matches!(end, End::Done(Ok(_))));
+            }
+            // 1b) web audit over the fetched pages: passive analysis in the passive profile (no
+            // requests), GET probes of in-scope hosts in the standard one, method/CORS/GraphQL
+            // probes only at the active level
+            let mut web: Option<WebAuditReport> = prev_site.as_ref().and_then(|p| p.web.clone());
+            if want("webaudit") {
+                if page_ok == Some(true) {
+                    let level = audit_level(&c.level);
+                    let opts = WebAuditOptions {
+                        level,
+                        scope: lock(&c.db).core_scope().ok(),
+                        ..Default::default()
+                    };
+                    let mut winput = WebAuditInput::from_recon(&input);
+                    winput.from_archive = site.via == "archive";
+                    let end = step(c, "webaudit", async {
+                        Ok::<WebAuditReport, String>(webaudit::run(recon_net, &winput, &opts).await)
+                    })
+                    .await?;
+                    report_end(c, &mut lf, "webaudit", &end, |r| r.findings.len());
+                    if let End::Done(Ok(r)) = end {
+                        web = Some(r);
+                    } else if web.is_some() {
+                        site.incomplete = true;
+                    }
+                } else {
+                    let why = "нет страницы сайта для аудита";
+                    c.source_event_full("webaudit", "off", None, Some(why));
+                    set_src(&mut lf, "webaudit", "off", None, Some(why.into()));
+                }
+            }
+            board.set_progress(i, 0.4);
+            c.progress(idx, board.fraction());
+            // 2) robots/sitemap/security.txt from the archive (passive)
+            if want("wellknown") {
+                let wb = c.e.cfg.endpoints.wayback.clone();
+                let end = step(c, "wellknown", collect::wellknown(recon_net, &wb, host)).await?;
+                report_end(c, &mut lf, "wellknown", &end, |w| {
+                    w.hidden_paths.len() + w.sitemap_urls.len() + w.security.len()
+                });
+                wk_ok = Some(matches!(end, End::Done(Ok(_))));
+                if let End::Done(Ok(w)) = end {
+                    input.wellknown = Some(w);
+                }
+            }
+            board.set_progress(i, 0.6);
+            c.progress(idx, board.fraction());
+            // 3) grep.app, an optional third-party API
+            if want("grepapp") {
+                let base = grep_base(c);
+                let end = step(c, "grepapp", grepapp::search(recon_net, &base, host, 1)).await?;
+                let (status, cnt, err): (&str, Option<usize>, Option<String>) = match &end {
+                    End::Done(Ok(r)) => ("ok", Some(r.hits.len()), None),
+                    End::Done(Err(GrepAppError::Challenge)) => (
+                        "blocked",
+                        None,
+                        Some("защита от ботов (челлендж grep.app)".into()),
+                    ),
+                    End::Done(Err(e)) => ("error", None, Some(e.to_string())),
+                    End::Timeout => (
+                        "timeout",
+                        None,
+                        Some("нет ответа за отведённое время".into()),
+                    ),
+                    End::Skipped => ("skipped", None, None),
+                };
+                c.source_event_full("grepapp", status, cnt, err.as_deref());
+                set_src(&mut lf, "grepapp", status, cnt, err);
+                ga_ok = Some(matches!(end, End::Done(Ok(_))));
                 if let End::Done(Ok(r)) = end {
-                    web = Some(r);
-                } else if web.is_some() {
+                    input.grepapp = Some(r);
+                }
+            }
+            let mut rep = analyze_site(&input);
+            // the source did not answer (error/timeout/skip): earlier data is not erased
+            let mut keep_totals = false;
+            if let Some(p) = &prev_site {
+                if page_ok == Some(false) {
+                    let (wk, ga) = (rep.wellknown.take(), rep.grepapp.take());
+                    rep = p.report.clone();
+                    if wk.is_some() {
+                        rep.wellknown = wk;
+                    }
+                    if ga.is_some() {
+                        rep.grepapp = ga;
+                    }
+                    site.url = p.url.clone();
+                    site.via = p.via.clone();
+                    site.incomplete = true;
+                    keep_totals = true;
+                }
+                if wk_ok == Some(false) && rep.wellknown.is_none() && p.report.wellknown.is_some() {
+                    rep.wellknown = p.report.wellknown.clone();
+                    site.incomplete = true;
+                    keep_totals = true;
+                }
+                if ga_ok == Some(false) && rep.grepapp.is_none() && p.report.grepapp.is_some() {
+                    rep.grepapp = p.report.grepapp.clone();
                     site.incomplete = true;
                 }
-            } else {
-                let why = "нет страницы сайта для аудита";
-                c.source_event_full("webaudit", "off", None, Some(why));
-                set_src(&mut rf, "webaudit", "off", None, Some(why.into()));
-            }
-        }
-        c.progress(idx, (i as f64 + 0.4) / n as f64);
-        // 2) robots/sitemap/security.txt from the archive (passive)
-        if want("wellknown") {
-            let wb = c.e.cfg.endpoints.wayback.clone();
-            let end = step(c, "wellknown", collect::wellknown(&recon_net, &wb, host)).await?;
-            report_end(c, &mut rf, "wellknown", &end, |w| {
-                w.hidden_paths.len() + w.sitemap_urls.len() + w.security.len()
-            });
-            wk_ok = Some(matches!(end, End::Done(Ok(_))));
-            if let End::Done(Ok(w)) = end {
-                input.wellknown = Some(w);
-            }
-        }
-        c.progress(idx, (i as f64 + 0.6) / n as f64);
-        // 3) grep.app, an optional third-party API
-        if want("grepapp") {
-            let base = grep_base(c);
-            let end = step(c, "grepapp", grepapp::search(&recon_net, &base, host, 1)).await?;
-            let (status, cnt, err): (&str, Option<usize>, Option<String>) = match &end {
-                End::Done(Ok(r)) => ("ok", Some(r.hits.len()), None),
-                End::Done(Err(GrepAppError::Challenge)) => (
-                    "blocked",
-                    None,
-                    Some("защита от ботов (челлендж grep.app)".into()),
-                ),
-                End::Done(Err(e)) => ("error", None, Some(e.to_string())),
-                End::Timeout => (
-                    "timeout",
-                    None,
-                    Some("нет ответа за отведённое время".into()),
-                ),
-                End::Skipped => ("skipped", None, None),
-            };
-            c.source_event_full("grepapp", status, cnt, err.as_deref());
-            set_src(&mut rf, "grepapp", status, cnt, err);
-            ga_ok = Some(matches!(end, End::Done(Ok(_))));
-            if let End::Done(Ok(r)) = end {
-                input.grepapp = Some(r);
-            }
-        }
-        let mut rep = analyze_site(&input);
-        // the source did not answer (error/timeout/skip): earlier data is not erased
-        let mut keep_totals = false;
-        if let Some(p) = &prev_site {
-            if page_ok == Some(false) {
-                let (wk, ga) = (rep.wellknown.take(), rep.grepapp.take());
-                rep = p.report.clone();
-                if wk.is_some() {
-                    rep.wellknown = wk;
-                }
-                if ga.is_some() {
-                    rep.grepapp = ga;
-                }
-                site.url = p.url.clone();
-                site.via = p.via.clone();
-                site.incomplete = true;
-                keep_totals = true;
-            }
-            if wk_ok == Some(false) && rep.wellknown.is_none() && p.report.wellknown.is_some() {
-                rep.wellknown = p.report.wellknown.clone();
-                site.incomplete = true;
-                keep_totals = true;
-            }
-            if ga_ok == Some(false) && rep.grepapp.is_none() && p.report.grepapp.is_some() {
-                rep.grepapp = p.report.grepapp.clone();
-                site.incomplete = true;
-            }
-            if site.incomplete {
-                rep.refresh_findings();
-            }
-        }
-        // 4) cloud storage: always listed; listing checks only at the active level
-        if want("buckets") {
-            if c.level == "active" && !rep.buckets.is_empty() {
-                let opts = BucketCheckOptions {
-                    enabled: true,
-                    access: Access::Passive,
-                    max_checks: 20,
-                };
-                let net = c.net.clone();
-                let mut b = rep.buckets.clone();
-                let end = step(c, "buckets", async {
-                    check_buckets(&net, &mut b, &opts).await;
-                    Ok::<usize, String>(b.len())
-                })
-                .await?;
-                report_end(c, &mut rf, "buckets", &end, |n| *n);
-                if matches!(end, End::Done(_)) {
-                    rep.buckets = b;
+                if site.incomplete {
                     rep.refresh_findings();
                 }
-            } else {
-                let nb = rep.buckets.len();
-                c.source_event("buckets", "ok", Some(nb));
-                set_src(&mut rf, "buckets", "ok", Some(nb), None);
             }
-        }
-        // store compactly
-        if let Some(w) = rep.wellknown.as_mut() {
-            site.sitemap_total = w.sitemap_urls.len();
-            w.sitemap_urls.truncate(KEEP_SITEMAP);
-        }
-        let mut ep_total = 0;
-        for j in &mut rep.js {
-            ep_total += j.endpoints.len();
-        }
-        site.endpoints_total = ep_total;
-        if keep_totals {
-            // stored lists are already truncated, so totals come from the previous snapshot
-            if let Some(p) = &prev_site {
-                site.sitemap_total = site.sitemap_total.max(p.sitemap_total);
-                site.endpoints_total = site.endpoints_total.max(p.endpoints_total);
-            }
-        }
-        let mut left = KEEP_ENDPOINTS;
-        for j in &mut rep.js {
-            let k = j.endpoints.len().min(left);
-            j.endpoints.truncate(k);
-            left -= k;
-        }
-        // recon.* findings join the shared list (stable ids; a rerun does not duplicate them)
-        {
-            let db = lock(&c.db);
-            let mut nf: NetFacts = facts::get(&db, facts::K_NET);
-            for f in &rep.findings {
-                let mut x = f.to_finding(&now);
-                x.first_scan = Some(sid.clone());
-                if !nf.findings.contains_key(&x.id) {
-                    new_findings += 1;
+            // 4) cloud storage: always listed; listing checks only at the active level
+            if want("buckets") {
+                if c.level == "active" && !rep.buckets.is_empty() {
+                    let opts = BucketCheckOptions {
+                        enabled: true,
+                        access: Access::Passive,
+                        max_checks: 20,
+                    };
+                    let net = c.net.clone();
+                    let mut b = rep.buckets.clone();
+                    let end = step(c, "buckets", async {
+                        check_buckets(&net, &mut b, &opts).await;
+                        Ok::<usize, String>(b.len())
+                    })
+                    .await?;
+                    report_end(c, &mut lf, "buckets", &end, |n| *n);
+                    if matches!(end, End::Done(_)) {
+                        rep.buckets = b;
+                        rep.refresh_findings();
+                    }
+                } else {
+                    let nb = rep.buckets.len();
+                    c.source_event("buckets", "ok", Some(nb));
+                    set_src(&mut lf, "buckets", "ok", Some(nb), None);
                 }
-                nf.findings.entry(x.id).or_insert(x);
             }
-            if let Some(w) = &web {
-                for f in &w.findings {
-                    let mut x = f.to_finding(&now);
+            // store compactly
+            if let Some(w) = rep.wellknown.as_mut() {
+                site.sitemap_total = w.sitemap_urls.len();
+                w.sitemap_urls.truncate(KEEP_SITEMAP);
+            }
+            let mut ep_total = 0;
+            for j in &mut rep.js {
+                ep_total += j.endpoints.len();
+            }
+            site.endpoints_total = ep_total;
+            if keep_totals {
+                // stored lists are already truncated, so totals come from the previous snapshot
+                if let Some(p) = &prev_site {
+                    site.sitemap_total = site.sitemap_total.max(p.sitemap_total);
+                    site.endpoints_total = site.endpoints_total.max(p.endpoints_total);
+                }
+            }
+            let mut left = KEEP_ENDPOINTS;
+            for j in &mut rep.js {
+                let k = j.endpoints.len().min(left);
+                j.endpoints.truncate(k);
+                left -= k;
+            }
+            // recon.* findings join the shared list (stable ids; a rerun does not duplicate them)
+            {
+                let db = lock(&c.db);
+                let mut nf: NetFacts = facts::get(&db, facts::K_NET);
+                for f in &rep.findings {
+                    let mut x = f.to_finding(now);
                     x.first_scan = Some(sid.clone());
-                    x.source = "Веб-аудит".into();
-                    x.module = "webaudit".into();
-                    x.active = w.level == Some(AuditLevel::Active)
-                        && matches!(
-                            f.rule.as_str(),
-                            "recon.web.cors_reflected"
-                                | "recon.web.methods_unsafe_allowed"
-                                | "recon.web.trace_enabled"
-                                | "recon.web.webdav"
-                                | "recon.web.apidoc_graphql"
-                        );
                     if !nf.findings.contains_key(&x.id) {
-                        new_findings += 1;
+                        new += 1;
                     }
                     nf.findings.entry(x.id).or_insert(x);
                 }
-                // in-scope hosts from CSP, source maps and API docs join the host list
-                for h in &w.hosts {
-                    let e = nf.host(h);
-                    if e.source.is_empty() {
-                        e.source = "Веб-аудит (CSP / source map / API)".into();
-                        e.first_scan = Some(sid.clone());
+                if let Some(w) = &web {
+                    for f in &w.findings {
+                        let mut x = f.to_finding(now);
+                        x.first_scan = Some(sid.clone());
+                        x.source = "Веб-аудит".into();
+                        x.module = "webaudit".into();
+                        x.active = w.level == Some(AuditLevel::Active)
+                            && matches!(
+                                f.rule.as_str(),
+                                "recon.web.cors_reflected"
+                                    | "recon.web.methods_unsafe_allowed"
+                                    | "recon.web.trace_enabled"
+                                    | "recon.web.webdav"
+                                    | "recon.web.apidoc_graphql"
+                            );
+                        if !nf.findings.contains_key(&x.id) {
+                            new += 1;
+                        }
+                        nf.findings.entry(x.id).or_insert(x);
+                    }
+                    // in-scope hosts from CSP, source maps and API docs join the host list
+                    for h in &w.hosts {
+                        let e = nf.host(h);
+                        if e.source.is_empty() {
+                            e.source = "Веб-аудит (CSP / source map / API)".into();
+                            e.first_scan = Some(sid.clone());
+                        }
                     }
                 }
+                facts::put(&db, facts::K_NET, &nf)?;
             }
-            facts::put(&db, facts::K_NET, &nf)?;
-        }
-        // out-of-scope hosts are candidates only (never contacted)
-        if let Some(w) = &web {
-            for h in &w.candidates {
-                super::infra::oos(c, h, "csp", host, "CSP / source map");
+            // out-of-scope hosts are candidates only (never contacted)
+            if let Some(w) = &web {
+                for h in &w.candidates {
+                    super::infra::oos(c, h, "csp", host, "CSP / source map");
+                }
             }
+            site.web = web;
+            site.report = rep;
+            // stored right away, so a stop mid-stage keeps the sites already done
+            {
+                let db = lock(&c.db);
+                let mut cur: ReconFacts = facts::get(&db, K_RECON);
+                cur.level = c.level.clone();
+                cur.sites.insert(host.clone(), site);
+                cur.sources.extend(lf.sources.clone());
+                cur.at = Some(now.clone());
+                cur.scan = Some(sid.clone());
+                facts::put(&db, K_RECON, &cur)?;
+            }
+            Ok::<_, Stop>((lf, new))
         }
-        site.web = web;
-        site.report = rep;
-        rf.sites.insert(host.clone(), site);
-        rf.at = Some(now.clone());
-        rf.scan = Some(sid.clone());
-        facts::put(&lock(&c.db), K_RECON, &rf)?;
-        c.progress(idx, (i as f64 + 1.0) / n as f64);
+    };
+    let outs = c.each_host(&board, items, work).await;
+    c.host_board_end(board, if outs.is_ok() { "done" } else { "skipped" });
+    let outs = outs?;
+    let mut new_findings = 0usize;
+    {
+        // source states in host order: the last site decides, as when sites ran one by one
+        let db = lock(&c.db);
+        let mut cur: ReconFacts = facts::get(&db, K_RECON);
+        for (lf, nf) in outs {
+            cur.sources.extend(lf.sources);
+            new_findings += nf;
+        }
+        facts::put(&db, K_RECON, &cur)?;
     }
     if new_findings > 0 {
         let ids = reanalyze_bg(c).await?;
@@ -521,51 +554,60 @@ pub(super) async fn recon_extra_ports(c: &mut Ctx) -> Result<(), Stop> {
     let net = c.group_net("recon")?;
     let now = c.e.now_iso();
     let sid = c.scan_id.clone();
-    let mut new_findings = 0usize;
-    for site in sites {
-        c.gate().await?;
-        let mut input = foca_recon::ReconInput {
-            target: site.clone(),
-            ..Default::default()
-        };
-        let opts = foca_recon::collect::CollectOptions {
-            archive: None,
-            max_scripts: 3,
-        };
-        let url = match foca_recon::collect::fetch_site(&net, &site, &opts, &mut input).await {
-            Ok(u) => u,
-            Err(e) => {
-                tracing::debug!(target: "foca::scan", "recon {site}: {e}");
-                continue;
-            }
-        };
-        let rep = foca_recon::analyze_site(&input);
-        let db = lock(&c.db);
-        let mut nf: NetFacts = facts::get(&db, facts::K_NET);
-        for x in &rep.findings {
-            let mut fd = x.to_finding(&now);
-            fd.first_scan = Some(sid.clone());
-            if !nf.findings.contains_key(&fd.id) {
-                new_findings += 1;
-            }
-            nf.findings.entry(fd.id).or_insert(fd);
-        }
-        facts::put(&db, facts::K_NET, &nf)?;
-        let mut rf: ReconFacts = facts::get(&db, K_RECON);
-        rf.sites.insert(
-            site.clone(),
-            SiteRecon {
-                host: site.clone(),
-                url,
-                via: "site".into(),
-                at: now.clone(),
-                scan: sid.clone(),
-                report: rep,
+    let c: &Ctx = c;
+    let board = c.host_board(sites.len());
+    let items: Vec<(String, String)> = sites.iter().map(|s| (s.clone(), s.clone())).collect();
+    let work = |_: usize, site: String| {
+        let (net, now, sid) = (&net, &now, &sid);
+        async move {
+            let mut input = foca_recon::ReconInput {
+                target: site.clone(),
                 ..Default::default()
-            },
-        );
-        facts::put(&db, K_RECON, &rf)?;
-    }
+            };
+            let opts = foca_recon::collect::CollectOptions {
+                archive: None,
+                max_scripts: 3,
+            };
+            let url = match foca_recon::collect::fetch_site(net, &site, &opts, &mut input).await {
+                Ok(u) => u,
+                Err(e) => {
+                    tracing::debug!(target: "foca::scan", "recon {site}: {e}");
+                    return Ok(0);
+                }
+            };
+            let rep = foca_recon::analyze_site(&input);
+            let db = lock(&c.db);
+            let mut nf: NetFacts = facts::get(&db, facts::K_NET);
+            let mut new = 0usize;
+            for x in &rep.findings {
+                let mut fd = x.to_finding(now);
+                fd.first_scan = Some(sid.clone());
+                if !nf.findings.contains_key(&fd.id) {
+                    new += 1;
+                }
+                nf.findings.entry(fd.id).or_insert(fd);
+            }
+            facts::put(&db, facts::K_NET, &nf)?;
+            let mut rf: ReconFacts = facts::get(&db, K_RECON);
+            rf.sites.insert(
+                site.clone(),
+                SiteRecon {
+                    host: site.clone(),
+                    url,
+                    via: "site".into(),
+                    at: now.clone(),
+                    scan: sid.clone(),
+                    report: rep,
+                    ..Default::default()
+                },
+            );
+            facts::put(&db, K_RECON, &rf)?;
+            Ok::<usize, Stop>(new)
+        }
+    };
+    let outs = c.each_host(&board, items, work).await;
+    c.host_board_end(board, if outs.is_ok() { "done" } else { "skipped" });
+    let new_findings: usize = outs?.into_iter().sum();
     if new_findings > 0 {
         let ids = super::reanalyze_bg(c).await?;
         c.findings_events(&ids);

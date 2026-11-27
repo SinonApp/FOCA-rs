@@ -15,7 +15,7 @@ Path: `crates/foca-fuzz/` · `src/` lines: 4,633 · tests: 48 · depends on: [fo
 `foca-fuzz` discovers forgotten publicly accessible documents, backup archives, directory listings, and exposed service files on an authorized audit target (inspired by classic FOCA's Backups Fuzzer, ffuf soft-404 auto-calibration, and MIT-licensed SecLists wordlists, see `THIRD_PARTY.md`).
 
 - **Active profile only**: every request goes through `foca_net::NetClient` with `Access::Active`, enforcing project scope, host/IP exclusions, path exclusions (`FuzzConfig::exclude_paths`), per-hop redirect validation, and full request logging.
-- **Polite default limits**: 4 workers, 5 req/s, jitter, request budget, and `max_time`.
+- **Polite default limits**: 4 workers, 5 req/s, jitter, request budget, and `max_time`. Fuzzers of several hosts running at once can share one budget (`Fuzzer::with_shared_budget`): every request of every holder counts toward `max_requests`.
 - **Automatic backoff stop**: halts on bursts of HTTP 429/403/5xx or transport errors ("target rate-limited requests: fuzzing stopped"). Zero WAF/rate-limit evasion (no IP/UA rotation, no path obfuscation), no parameter/payload fuzzing, no credential brute-forcing, and no bulk repository/database dumping.
 - **Minimal masked evidence**: records availability and a short masked snippet capped by `FuzzConfig::body_limit`, full files are never downloaded.
 

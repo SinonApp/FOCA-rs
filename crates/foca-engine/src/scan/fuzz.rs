@@ -5,13 +5,16 @@
 //!   in-scope hosts with `active` (exclusions win).
 //! * Goes through the same `NetClient` (scope, request log, kill switch).
 //! * Discovered documents join the regular download queue and parsing.
+//! * Up to `settings.net.hosts_parallel` hosts run at once: one request budget and one time limit
+//!   for all of them, rate and the throttling detector per host (a host that answers 429 stops
+//!   alone), pause and stop reach every running host.
 //!
 //! Commands: `fuzz_estimate`, `wordlists_list`, `wordlists_download`, `wordlists_import`,
 //! `wordlists_delete` (see "Site discovery" in `docs/API.md`).
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
@@ -73,7 +76,7 @@ pub const FUZZ_MODULES: &[(&str, &str, &str)] = &[
 const DEFAULT_MODULES: &[&str] = &["docs", "backups", "exposed", "dirlisting"];
 /// Size limit of an imported wordlist.
 const IMPORT_MAX: u64 = 64 * 1024 * 1024;
-/// Number of web hosts brute-forced per scan (sequentially).
+/// Number of web hosts brute-forced per scan (`settings.net.hosts_parallel` of them at once).
 const MAX_HOSTS_DEFAULT: u64 = 3;
 
 /// Facts key for the run's brute-force parameters (`scan_start { fuzz: {...} }`).
@@ -645,6 +648,63 @@ fn annotate_log(c: &Ctx, filtered: &[foca_fuzz::Filtered]) {
     }
 }
 
+/// Counters shared by the hosts brute-forced at once: finished hosts and the live counters of
+/// the running ones, plus when progress was last sent.
+struct FuzzRun {
+    done: FuzzStats,
+    live: std::collections::BTreeMap<usize, FuzzStats>,
+    last_emit: std::time::Instant,
+}
+
+impl FuzzRun {
+    /// Counters of the whole stage: finished hosts plus what the running ones have done so far.
+    fn total(&self) -> FuzzStats {
+        let mut t = self.done.clone();
+        for s in self.live.values() {
+            add_stats(&mut t, s);
+        }
+        t
+    }
+}
+
+/// How one host's brute force ended and the documents it found.
+struct HostOut {
+    stop: StopReason,
+    docs: Vec<String>,
+}
+
+/// The stop reason of the whole stage from the hosts' own: a user stop, the shared budget or
+/// time first, then a host that limited requests (it stopped only that host), then a denial.
+fn stage_stop(outs: &[HostOut]) -> StopReason {
+    let rank = |s: &StopReason| match s {
+        StopReason::Cancelled => 5,
+        StopReason::Budget => 4,
+        StopReason::MaxTime => 3,
+        StopReason::Blocked { .. } => 2,
+        StopReason::Denied { .. } => 1,
+        StopReason::Completed => 0,
+    };
+    outs.iter()
+        .map(|o| &o.stop)
+        .fold(StopReason::Completed, |a, s| {
+            if rank(s) > rank(&a) {
+                s.clone()
+            } else {
+                a
+            }
+        })
+}
+
+/// `true` once the user asked to stop the brute force: "stop brute force"
+/// (`scan_skip_source { id: "fuzz" }`), Skip or Restart on the stage.
+fn fuzz_stop_asked(c: &Ctx) -> bool {
+    let skipped = {
+        let sk = lock(&c.skip);
+        sk.contains("fuzz") || sk.contains(&format!("{}fuzz", super::control::SKIP_STAGE))
+    };
+    skipped || c.restart_asked("stage", "fuzz")
+}
+
 pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
     let idx = STAGES.iter().position(|s| s.0 == "fuzz").unwrap_or(5);
     if c.level != "active" || !c.module("fuzz") {
@@ -652,7 +712,7 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
     }
     let run_opts: Value = facts::get(&lock(&c.db), &run_key(&c.scan_id));
     let v = effective(&c.e, Some(&run_opts));
-    let mut cfg = config_of(&c.e, &v);
+    let cfg = config_of(&c.e, &v);
     let show_paths = v["show_paths"].as_bool().unwrap_or(false);
     let zero = FuzzStats::default();
     let tasks = {
@@ -672,134 +732,178 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
         return Ok(());
     }
     tracing::info!(target: "foca::scan", "{}: поиск на сайте {} адрес(ов), модули {:?}", c.scan_id, tasks.len(), tasks.first().map(|t| &t.modules));
+    let c: &Ctx = c;
     let now = c.e.now_iso();
     let sid = c.scan_id.clone();
     let dir = wordlist_dir(&c.e);
     let started = std::time::Instant::now();
-    let total_time = cfg.max_time;
-    let mut budget = cfg.max_requests;
-    let mut total = FuzzStats::default();
-    let mut docs: Vec<String> = Vec::new();
-    let mut final_stop = StopReason::Completed;
+    // one budget and one time limit for all hosts, however many run at once
+    let budget = cfg.max_requests;
+    let pool = Arc::new(AtomicU64::new(0));
     let target_net = c.group_net("target")?;
     let n = tasks.len();
-    for (i, task) in tasks.iter().enumerate() {
-        c.gate().await?;
-        if lock(&c.skip).contains("fuzz") {
-            final_stop = StopReason::Cancelled;
-            break;
-        }
-        let left = total_time.saturating_sub(started.elapsed());
-        if budget == 0 {
-            final_stop = StopReason::Budget;
-            break;
-        }
-        if left.is_zero() {
-            final_stop = StopReason::MaxTime;
-            break;
-        }
-        cfg.max_requests = budget;
-        cfg.max_time = left;
-        let ctl = FuzzControl::with_cancel(c.cancel.child_token());
-        let latest: Arc<Mutex<Option<FuzzStats>>> = Arc::default();
-        let dirty = Arc::new(AtomicBool::new(false));
-        let (lt, dt, db, now2, sid2) = (
-            latest.clone(),
-            dirty.clone(),
-            c.db.clone(),
+    let shared = Mutex::new(FuzzRun {
+        done: FuzzStats::default(),
+        live: Default::default(),
+        last_emit: std::time::Instant::now(),
+    });
+    // findings stored by any worker since the last re-analysis
+    let dirty = Arc::new(AtomicBool::new(false));
+    let board = c.host_board(n);
+    let items: Vec<(String, ())> = tasks.iter().map(|t| (t.base.to_string(), ())).collect();
+    let tasks = &tasks;
+    let work = |i: usize, _: ()| {
+        let task = &tasks[i];
+        let (cfg, pool, target_net, dir, now, sid) = (
+            cfg.clone(),
+            pool.clone(),
+            target_net.clone(),
+            dir.clone(),
             now.clone(),
             sid.clone(),
         );
-        let on_event: foca_fuzz::EventFn = Arc::new(move |e: &FuzzEvent| match e {
-            FuzzEvent::Progress { stats } | FuzzEvent::Finished { stats, .. } => {
-                *lock(&lt) = Some(stats.clone());
+        let (dirty, shared, board) = (dirty.clone(), &shared, &board);
+        async move {
+            let out = |stop| HostOut {
+                stop,
+                docs: Vec::new(),
+            };
+            if fuzz_stop_asked(c) {
+                return Ok(out(StopReason::Cancelled));
             }
-            FuzzEvent::Hit { hit } => {
-                // store the finding in project facts right away, so stopping mid-run does not lose it
-                if let Some(nf) = hit_finding(hit, show_paths, &now2, &sid2) {
-                    let d = lock(&db);
-                    let mut f: NetFacts = facts::get(&d, facts::K_NET);
-                    f.findings.entry(nf.id).or_insert(nf);
-                    let _ = facts::put(&d, facts::K_NET, &f);
-                    dt.store(true, Ordering::SeqCst);
+            if pool.load(Ordering::SeqCst) >= budget {
+                return Ok(out(StopReason::Budget));
+            }
+            let left = cfg.max_time.saturating_sub(started.elapsed());
+            if left.is_zero() {
+                return Ok(out(StopReason::MaxTime));
+            }
+            let mut hc = cfg;
+            hc.max_time = left;
+            let ctl = FuzzControl::with_cancel(c.cancel.child_token());
+            let latest: Arc<Mutex<Option<FuzzStats>>> = Arc::default();
+            let (lt, dt, db, now2, sid2) = (
+                latest.clone(),
+                dirty.clone(),
+                c.db.clone(),
+                now.clone(),
+                sid.clone(),
+            );
+            let on_event: foca_fuzz::EventFn = Arc::new(move |e: &FuzzEvent| match e {
+                FuzzEvent::Progress { stats } | FuzzEvent::Finished { stats, .. } => {
+                    *lock(&lt) = Some(stats.clone());
                 }
-            }
-            _ => {}
-        });
-        let fz = Fuzzer::new(target_net.clone(), cfg.clone())
-            .with_control(ctl.clone())
-            .with_events(on_event)
-            .with_wordlist_dir(dir.clone());
-        let host = task.base.to_string();
-        c.fuzz_event(
-            "running",
-            &total,
-            json!({ "host": host, "hosts": n, "host_index": i }),
-        );
-        let run = fz.run(task);
-        tokio::pin!(run);
-        let mut tick = tokio::time::interval(Duration::from_millis(400));
-        let mut last_emit = std::time::Instant::now();
-        let rep = loop {
-            tokio::select! {
-                r = &mut run => break r,
-                _ = tick.tick() => {
-                    // propagate scan pause/resume and the stage's own Pause button to the brute force
-                    let held = c.is_held(&["stage:fuzz".to_string(), "source:fuzz".to_string()]);
-                    let paused = c.pause.borrow().is_some() || held;
-                    if paused && !ctl.is_paused() {
-                        ctl.pause();
-                    } else if !paused && ctl.is_paused() {
-                        ctl.resume();
+                FuzzEvent::Hit { hit } => {
+                    // store the finding in project facts right away, so stopping mid-run does not lose it
+                    if let Some(nf) = hit_finding(hit, show_paths, &now2, &sid2) {
+                        let d = lock(&db);
+                        let mut f: NetFacts = facts::get(&d, facts::K_NET);
+                        f.findings.entry(nf.id).or_insert(nf);
+                        let _ = facts::put(&d, facts::K_NET, &f);
+                        dt.store(true, Ordering::SeqCst);
                     }
-                    // "stop brute force" (scan_skip_source { id: "fuzz" }), Skip or Restart on the stage
-                    let stop_asked = {
-                        let sk = lock(&c.skip);
-                        sk.contains("fuzz") || sk.contains(&format!("{}fuzz", super::control::SKIP_STAGE))
-                    } || c.restart_asked("stage", "fuzz");
-                    if stop_asked && !ctl.is_cancelled() {
-                        tracing::info!(target: "foca::scan", "{}: перебор остановлен пользователем", c.scan_id);
-                        ctl.cancel();
-                    }
-                    if dirty.swap(false, Ordering::SeqCst) {
-                        let new = reanalyze_bg(c).await?;
-                        c.findings_events(&new);
-                    }
-                    if last_emit.elapsed() >= Duration::from_millis(800) {
-                        last_emit = std::time::Instant::now();
+                }
+                _ => {}
+            });
+            let fz = Fuzzer::new(target_net, hc)
+                .with_control(ctl.clone())
+                .with_events(on_event)
+                .with_wordlist_dir(dir)
+                .with_shared_budget(pool);
+            let host = task.base.to_string();
+            let where_ = json!({ "host": host, "hosts": n, "host_index": i });
+            c.fuzz_event("running", &lock(shared).total(), where_.clone());
+            let run = fz.run(task);
+            tokio::pin!(run);
+            // pause and stop reach this host within a tick; counters go out at most every 800 ms
+            let mut tick = tokio::time::interval(Duration::from_millis(150));
+            let rep = loop {
+                tokio::select! {
+                    r = &mut run => break r,
+                    _ = tick.tick() => {
+                        // propagate scan pause/resume and the stage's own Pause button to this host
+                        let held = c.is_held(&["stage:fuzz".to_string(), "source:fuzz".to_string()]);
+                        let paused = c.pause.borrow().is_some() || held;
+                        if paused && !ctl.is_paused() {
+                            ctl.pause();
+                        } else if !paused && ctl.is_paused() {
+                            ctl.resume();
+                        }
+                        if fuzz_stop_asked(c) && !ctl.is_cancelled() {
+                            tracing::info!(target: "foca::scan", "{}: перебор {host} остановлен пользователем", c.scan_id);
+                            ctl.cancel();
+                        }
+                        // one worker re-analyses for all of them
+                        if dirty.swap(false, Ordering::SeqCst) {
+                            let new = reanalyze_bg(c).await?;
+                            c.findings_events(&new);
+                        }
                         if let Some(s) = lock(&latest).clone() {
-                            let mut agg = total.clone();
-                            add_stats(&mut agg, &s);
-                            c.fuzz_event("running", &agg, json!({ "host": host, "hosts": n, "host_index": i }));
                             let frac = if s.planned > 0 { s.checked as f64 / s.planned as f64 } else { 0.0 };
-                            c.progress(idx, ((i as f64 + frac.min(1.0)) / n as f64) * 0.8);
+                            board.set_progress(i, frac.min(1.0) * 0.99);
+                            let agg = {
+                                let mut sh = lock(shared);
+                                sh.live.insert(i, s);
+                                (sh.last_emit.elapsed() >= Duration::from_millis(800)).then(|| {
+                                    sh.last_emit = std::time::Instant::now();
+                                    sh.total()
+                                })
+                            };
+                            if let Some(agg) = agg {
+                                c.fuzz_event("running", &agg, where_.clone());
+                                c.progress(idx, board.fraction() * 0.8);
+                            }
                         }
                     }
                 }
+            };
+            if c.cancel.is_cancelled() {
+                return Err(Stop::Cancelled);
             }
-        };
-        if c.cancel.is_cancelled() {
-            return Err(Stop::Cancelled);
+            {
+                let mut sh = lock(shared);
+                sh.live.remove(&i);
+                add_stats(&mut sh.done, &rep.stats);
+            }
+            annotate_log(c, &rep.filtered);
+            tracing::info!(target: "foca::scan", "{}: поиск на {}, {} ({} запросов, {} находок, {} документов)",
+                c.scan_id, host, rep.stop.message_ru(), rep.stats.requests, rep.hits.len(), rep.documents.len());
+            Ok(HostOut {
+                stop: rep.stop,
+                docs: rep.documents,
+            })
         }
-        add_stats(&mut total, &rep.stats);
-        annotate_log(c, &rep.filtered);
-        budget = budget.saturating_sub(rep.stats.requests);
-        docs.extend(rep.documents.iter().cloned());
-        tracing::info!(target: "foca::scan", "{}: поиск на {}, {} ({} запросов, {} находок, {} документов)",
-            c.scan_id, host, rep.stop.message_ru(), rep.stats.requests, rep.hits.len(), rep.documents.len());
-        if dirty.swap(false, Ordering::SeqCst) {
-            let new = reanalyze_bg(c).await?;
-            c.findings_events(&new);
+    };
+    let outs = match c.each_host(&board, items, work).await {
+        Ok(o) => o,
+        Err(e) => {
+            c.host_board_end(board, "skipped");
+            return Err(e);
         }
-        let stop_all = !matches!(rep.stop, StopReason::Completed);
-        final_stop = rep.stop;
-        if stop_all {
-            break;
-        }
+    };
+    let final_stop = stage_stop(&outs);
+    c.host_board_end(
+        board,
+        if final_stop == StopReason::Cancelled {
+            "skipped"
+        } else {
+            "done"
+        },
+    );
+    if dirty.swap(false, Ordering::SeqCst) {
+        let new = reanalyze_bg(c).await?;
+        c.findings_events(&new);
     }
+    let total = lock(&shared).total();
+    let blocked_hosts = outs
+        .iter()
+        .filter(|o| matches!(o.stop, StopReason::Blocked { .. }))
+        .count();
+    // documents in host order (the order hosts finished in does not matter)
+    let docs: Vec<String> = outs.into_iter().flat_map(|o| o.docs).collect();
     let status = stop_status(&final_stop);
     let detail = final_stop.message_ru();
-    if let StopReason::Blocked { .. } = final_stop {
+    if blocked_hosts > 0 {
         c.warn(
             "fuzz_blocked",
             "Сайт ограничил запросы: перебор остановлен (повторных попыток нет)",
@@ -832,7 +936,8 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
     c.fuzz_event(
         status,
         &total,
-        json!({ "detail": detail, "documents": added, "stop": final_stop }),
+        json!({ "detail": detail, "documents": added, "stop": final_stop,
+            "blocked_hosts": blocked_hosts }),
     );
     if added > 0 {
         download_queue(c, idx).await?;

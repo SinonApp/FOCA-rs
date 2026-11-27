@@ -4,7 +4,7 @@
 //! the standard profile makes no brute-force requests.
 
 #[path = "../../../foca-fuzz/tests/common/mod.rs"]
-mod site;
+pub(super) mod site;
 
 use std::path::Path;
 use std::sync::Arc;

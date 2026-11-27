@@ -320,7 +320,7 @@ impl Engine {
 impl Ctx {
     /// Waits while the user holds any of `keys` (`stage:network`, `source:tls`, ...), honouring
     /// the global pause and stop.
-    pub(crate) async fn hold(&mut self, keys: &[String]) -> Result<(), Stop> {
+    pub(crate) async fn hold(&self, keys: &[String]) -> Result<(), Stop> {
         loop {
             self.gate().await?;
             if !self.is_held(keys) {

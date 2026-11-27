@@ -25,6 +25,7 @@ use foca_core::Severity;
 use foca_net::dns::{DnsLookup, RType};
 use foca_net::tls::{self, AuditConfig, InspectOptions, Issue, StartTls, TlsInspection};
 use foca_net::NetError;
+use futures_util::stream::{self, StreamExt};
 use serde_json::{json, Value};
 
 use super::{Ctx, Stop, RESOLVER_STEPS, SRC_SUBDOMAINS, SRC_TLS};
@@ -1284,16 +1285,30 @@ pub(super) async fn tls_standard(
     let mut sub = c.sub_begin("tls", total);
     let mut checked = 0usize;
     let hold_keys = [format!("source:{SRC_TLS}")];
-    for (host, port) in list {
-        c.hold(&hold_keys).await?;
-        c.sub_tick(&mut sub, checked, total, Value::Null);
-        checked += 1;
-        // "Skip source" (scan_skip_source) takes effect between hosts
-        if lock(&c.skip).contains(SRC_TLS) {
+    // up to `hosts_parallel` handshakes at once; certificates are recorded in list order
+    let checks = {
+        let (c, net, hold_keys) = (&*c, &net, &hold_keys);
+        stream::iter(list)
+            .map(move |(host, port)| async move {
+                c.hold(hold_keys).await?;
+                // "Skip source" (scan_skip_source) takes effect between hosts
+                if lock(&c.skip).contains(SRC_TLS) {
+                    return Ok(None);
+                }
+                let r = tls::inspect_standard(net, &host, port, &opts()).await;
+                Ok::<_, Stop>(Some((host, port, r)))
+            })
+            .buffered(c.hosts_parallel())
+    };
+    tokio::pin!(checks);
+    while let Some(r) = checks.next().await {
+        let Some((host, port, r)) = r? else {
             skipped = true;
             break;
-        }
-        match tls::inspect_standard(&net, &host, port, &opts()).await {
+        };
+        checked += 1;
+        c.sub_tick(&mut sub, checked, total, Value::Null);
+        match r {
             Ok(ins) if !ins.chain.is_empty() => {
                 record_inspection(
                     c,
@@ -1322,6 +1337,27 @@ pub(super) async fn tls_standard(
     );
     c.source_event(SRC_TLS, if skipped { "skipped" } else { "ok" }, Some(n));
     Ok(())
+}
+
+/// One TLS finding of a host probe, recorded once the host is done.
+struct Probe {
+    mode: &'static str,
+    module: &'static str,
+    ins: TlsInspection,
+    extra: Vec<Issue>,
+    legacy: Option<tls::LegacyReport>,
+}
+
+impl Probe {
+    fn new(mode: &'static str, module: &'static str, ins: TlsInspection) -> Probe {
+        Probe {
+            mode,
+            module,
+            ins,
+            extra: Vec::new(),
+            legacy: None,
+        }
+    }
 }
 
 /// Active TLS checks after the ports stage (active level): legacy versions / weak ciphers on TLS
@@ -1359,152 +1395,145 @@ pub(super) async fn tls_active(c: &mut Ctx) -> Result<(), Stop> {
         .collect();
     let mut n = 0usize;
     let cfg = audit_cfg(c);
-    for (host, ip, ports) in &hosts {
-        for (port, svc) in ports {
-            c.gate().await?;
-            let is_tls = tls_ports.contains(port) || svc == "https";
-            if is_tls {
-                // A modern handshake first when the network stage had no port list for this host
-                // yet: ALPN and OCSP are judged only on it, never on the raw legacy hellos below.
-                let have_modern = lock(&c.db)
-                    .infra_get("cert", &format!("{host}:{port}"))
-                    .ok()
-                    .flatten()
-                    .is_some();
-                if !have_modern {
-                    match tls::inspect_standard(&net, host, *port, &opts()).await {
-                        Ok(ins) if !ins.chain.is_empty() => {
-                            record_inspection(
-                                c,
-                                &mut f,
-                                &hosts_known,
-                                "tls",
-                                "tls",
-                                &ins,
-                                vec![],
-                                None,
-                                &now,
-                                &sid,
-                            );
-                            n += 1;
-                        }
-                        Ok(_) => {}
-                        Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
-                        Err(e) => tracing::debug!(target: "foca::scan", "tls {host}:{port}: {e}"),
-                    }
-                }
-                // legacy versions and weak suites
-                match tls::probe_legacy(&net, host, *port, &tls::LegacyConfig::default()).await {
-                    Ok(rep) => {
-                        let have_cert = lock(&c.db)
+    // up to `hosts_parallel` hosts probed at once; what they found is recorded in host order
+    let probes = {
+        let (c, net, cfg, tls_ports, shared, known) =
+            (&*c, &net, &cfg, &tls_ports, &shared, &known);
+        stream::iter(hosts)
+            .map(move |(host, ip, ports)| async move {
+                let mut out: Vec<Probe> = Vec::new();
+                for (port, svc) in &ports {
+                    c.gate().await?;
+                    let is_tls = tls_ports.contains(port) || svc == "https";
+                    if is_tls {
+                        // A modern handshake first when the network stage had no port list for this host
+                        // yet: ALPN and OCSP are judged only on it, never on the raw legacy hellos below.
+                        let mut have_cert = lock(&c.db)
                             .infra_get("cert", &format!("{host}:{port}"))
                             .ok()
                             .flatten()
                             .is_some();
-                        if !rep.issues.is_empty() || (!have_cert && !rep.certs.is_empty()) {
-                            // a server rustls cannot talk to: audit the certificate it sent in clear
-                            let mut extra = rep.issues.clone();
-                            if !have_cert {
-                                if let Ok(a) = tls::audit_chain(&rep.certs, Some(host), &cfg) {
-                                    extra.extend(a.issues);
+                        if !have_cert {
+                            match tls::inspect_standard(net, &host, *port, &opts()).await {
+                                Ok(ins) if !ins.chain.is_empty() => {
+                                    have_cert = true;
+                                    out.push(Probe::new("tls", "tls", ins));
+                                }
+                                Ok(_) => {}
+                                Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
+                                Err(e) => {
+                                    tracing::debug!(target: "foca::scan", "tls {host}:{port}: {e}")
                                 }
                             }
-                            let ins = TlsInspection {
-                                host: host.clone(),
-                                port: *port,
-                                ip: None,
-                                sni: Some(host.clone()),
-                                starttls: None,
-                                version: rep.versions.iter().find(|v| v.supported).and_then(|v| {
-                                    serde_json::to_value(v.version)
-                                        .ok()
-                                        .and_then(|x| x.as_str().map(String::from))
-                                }),
-                                cipher: rep.versions.iter().find_map(|v| v.cipher.clone()),
-                                alpn: None,
-                                ocsp_stapled: false,
-                                // raw hellos offer no ALPN / status_request
-                                alpn_offered: false,
-                                chain: rep
-                                    .certs
-                                    .iter()
-                                    .filter_map(|d| tls::parse_cert(d).ok())
-                                    .collect(),
-                                chain_der: if have_cert { vec![] } else { rep.certs.clone() },
-                                error: None,
-                            };
-                            record_inspection(
-                                c,
-                                &mut f,
-                                &hosts_known,
-                                "legacy",
-                                "tls-legacy",
-                                &ins,
-                                extra,
-                                Some(&rep),
-                                &now,
-                                &sid,
-                            );
-                            n += 1;
+                        }
+                        // legacy versions and weak suites
+                        match tls::probe_legacy(net, &host, *port, &tls::LegacyConfig::default())
+                            .await
+                        {
+                            Ok(rep) => {
+                                if !rep.issues.is_empty() || (!have_cert && !rep.certs.is_empty()) {
+                                    // a server rustls cannot talk to: audit the certificate it sent in clear
+                                    let mut extra = rep.issues.clone();
+                                    if !have_cert {
+                                        if let Ok(a) =
+                                            tls::audit_chain(&rep.certs, Some(&host), cfg)
+                                        {
+                                            extra.extend(a.issues);
+                                        }
+                                    }
+                                    let ins = TlsInspection {
+                                        host: host.clone(),
+                                        port: *port,
+                                        ip: None,
+                                        sni: Some(host.clone()),
+                                        starttls: None,
+                                        version: rep
+                                            .versions
+                                            .iter()
+                                            .find(|v| v.supported)
+                                            .and_then(|v| {
+                                                serde_json::to_value(v.version)
+                                                    .ok()
+                                                    .and_then(|x| x.as_str().map(String::from))
+                                            }),
+                                        cipher: rep.versions.iter().find_map(|v| v.cipher.clone()),
+                                        alpn: None,
+                                        ocsp_stapled: false,
+                                        // raw hellos offer no ALPN / status_request
+                                        alpn_offered: false,
+                                        chain: rep
+                                            .certs
+                                            .iter()
+                                            .filter_map(|d| tls::parse_cert(d).ok())
+                                            .collect(),
+                                        chain_der: if have_cert {
+                                            vec![]
+                                        } else {
+                                            rep.certs.clone()
+                                        },
+                                        error: None,
+                                    };
+                                    let mut p = Probe::new("legacy", "tls-legacy", ins);
+                                    p.extra = extra;
+                                    p.legacy = Some(rep);
+                                    out.push(p);
+                                }
+                            }
+                            Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
+                            Err(_) => {}
                         }
                     }
-                    Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
-                    Err(_) => {}
-                }
-            }
-            if StartTls::for_port(*port).is_some() && !is_tls {
-                match tls::starttls_inspect(&net, host, *port, None, &opts()).await {
-                    Ok(ins) if !ins.chain.is_empty() => {
-                        record_inspection(
-                            c,
-                            &mut f,
-                            &hosts_known,
-                            "starttls",
-                            "starttls",
-                            &ins,
-                            vec![],
-                            None,
-                            &now,
-                            &sid,
-                        );
-                        n += 1;
+                    if StartTls::for_port(*port).is_some() && !is_tls {
+                        match tls::starttls_inspect(net, &host, *port, None, &opts()).await {
+                            Ok(ins) if !ins.chain.is_empty() => {
+                                out.push(Probe::new("starttls", "starttls", ins));
+                            }
+                            Ok(_) => {}
+                            Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
+                            Err(_) => {}
+                        }
                     }
-                    Ok(_) => {}
-                    Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
-                    Err(_) => {}
                 }
-            }
-        }
-        // no-SNI probe of the host's address: only when the address itself is in scope and not shared
-        if rules::ip4(ip).is_some()
-            && !shared.contains(ip)
-            && rules::check(&c.scope, ip, &known).ok
-            && ports.iter().any(|(p, _)| *p == 443)
-        {
-            c.gate().await?;
-            match tls::inspect_no_sni(&net, ip, 443, &opts()).await {
-                Ok(ins) if !ins.chain.is_empty() => {
-                    let extra: Vec<Issue> = tls::handshake::no_sni_issue(&ins, host)
-                        .into_iter()
-                        .collect();
-                    record_inspection(
-                        c,
-                        &mut f,
-                        &hosts_known,
-                        "no_sni",
-                        "tls-no-sni",
-                        &ins,
-                        extra,
-                        None,
-                        &now,
-                        &sid,
-                    );
-                    n += 1;
+                // no-SNI probe of the host's address: only when the address itself is in scope and not shared
+                if rules::ip4(&ip).is_some()
+                    && !shared.contains(&ip)
+                    && rules::check(&c.scope, &ip, known).ok
+                    && ports.iter().any(|(p, _)| *p == 443)
+                {
+                    c.gate().await?;
+                    match tls::inspect_no_sni(net, &ip, 443, &opts()).await {
+                        Ok(ins) if !ins.chain.is_empty() => {
+                            let mut p = Probe::new("no_sni", "tls-no-sni", ins);
+                            p.extra = tls::handshake::no_sni_issue(&p.ins, &host)
+                                .into_iter()
+                                .collect();
+                            out.push(p);
+                        }
+                        Ok(_) => {}
+                        Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
+                        Err(_) => {}
+                    }
                 }
-                Ok(_) => {}
-                Err(e) if cancelled(&e) => return Err(Stop::Cancelled),
-                Err(_) => {}
-            }
+                Ok::<_, Stop>(out)
+            })
+            .buffered(c.hosts_parallel())
+    };
+    tokio::pin!(probes);
+    while let Some(found) = probes.next().await {
+        for p in found? {
+            record_inspection(
+                c,
+                &mut f,
+                &hosts_known,
+                p.mode,
+                p.module,
+                &p.ins,
+                p.extra,
+                p.legacy.as_ref(),
+                &now,
+                &sid,
+            );
+            n += 1;
         }
     }
     // origin candidates: confirmed only when the candidate IP is in scope (never otherwise)

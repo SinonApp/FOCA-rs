@@ -1183,6 +1183,7 @@ dependencies = [
  "foca-report",
  "foca-search",
  "foca-store",
+ "futures-util",
  "regex",
  "ring",
  "rusqlite",

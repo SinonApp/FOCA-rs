@@ -5,7 +5,8 @@
 //! * Hosts: network facts with an address (no dangling CNAMEs), in scope and not excluded
 //!   (`rules::check` here plus `Access::active` in `scan_ports`, a double check). One IP means one
 //!   scan (names with the same address share the result); target domains come first; at most
-//!   `max_hosts` (20) per scan.
+//!   `max_hosts` (20) per scan, `settings.net.hosts_parallel` of them at once (`hosts` sub-step);
+//!   a host that times out ends only itself.
 //! * Ports: top 100 by default, `top: 1000`, or a custom `list` (`22,80,8000-8100`).
 //!   Parameters: `settings.ports`, then the run parameters `scan_start { ports }` (which survive a resume).
 //! * Source `ports` (`source` events: `running` with `host`/`hosts`/`host_index`, final `ok` with `n`
@@ -17,6 +18,7 @@
 //!   outdated HTTP server versions per the `foca-recon` rules (`ports.outdated`).
 
 use std::collections::BTreeMap;
+use std::sync::atomic::Ordering;
 use std::time::Duration;
 
 use foca_core::api::ScopeDto;
@@ -790,6 +792,28 @@ fn store_host(
     Ok(changed)
 }
 
+/// How one host's port scan ended.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+enum HostEnd {
+    #[default]
+    Done,
+    /// The user skipped the port scan.
+    Skipped,
+    /// The host did not finish within the per-host timeout.
+    TimedOut,
+}
+
+/// One host's port scan: open ports, findings and how it ended.
+#[derive(Debug, Default)]
+struct PortsOut {
+    open: usize,
+    new_findings: usize,
+    unreliable: bool,
+    changed: bool,
+    err: Option<String>,
+    end: HostEnd,
+}
+
 pub(super) async fn stage_ports(c: &mut Ctx) -> Result<(), Stop> {
     let idx = STAGES.iter().position(|s| s.0 == "ports").unwrap_or(5);
     if c.level != "active" || !c.module(SOURCE) {
@@ -888,12 +912,6 @@ pub(super) async fn stage_ports(c: &mut Ctx) -> Result<(), Stop> {
     let n = list.len();
     let per_host = c.e.source_timeout().max(Duration::from_secs(30));
     tracing::info!(target: "foca::scan", "{}: порты {n} хост(ов), {spec}", c.scan_id);
-    let mut open_total = 0usize;
-    let mut new_findings = 0usize;
-    let mut status = "ok";
-    let mut err: Option<String> = None;
-    let mut unreliable_hosts = 0usize;
-    let mut changed = false;
     // The device network intercepts TCP (local VPN/AdGuard/proxy): a connection to a non-routable
     // TEST-NET address "succeeded", so a port scan is meaningless and the hosts are not touched.
     let custom_probes = v["intercept_probe"].as_array().map(|a| {
@@ -920,114 +938,155 @@ pub(super) async fn stage_ports(c: &mut Ctx) -> Result<(), Stop> {
     if intercepted {
         tracing::warn!(target: "foca::scan", "{}: порты, сеть устройства перехватывает TCP", c.scan_id);
     }
-    for (i, (ip, names)) in list.iter().enumerate() {
-        c.gate().await?;
-        if lock(&c.skip).contains(SOURCE) {
-            status = "skipped";
-            break;
-        }
-        let host = names[0].clone();
-        c.source_event_x(
-            SOURCE,
-            "running",
-            Some(open_total),
-            None,
-            json!({ "host": host, "ip": ip, "hosts": n, "host_index": i, "spec": spec,
-                    "timeout_s": per_host.as_secs() }),
-        );
-        if intercepted {
-            let r = PortScan {
-                host: host.clone(),
-                ip: Some(ip.clone()),
-                open: Vec::new(),
-                scanned: 0,
-                closed: 0,
-                filtered: 0,
-                ms: 0,
-                batch: 0,
-                cancelled: false,
-                unreliable: Some(UNRELIABLE_INTERCEPT.into()),
-                canaries: 0,
-                canaries_open: 0,
+    let c: &Ctx = c;
+    // open ports so far over all hosts, for the live counter
+    let open_live = std::sync::atomic::AtomicUsize::new(0);
+    let board = c.host_board(n);
+    let items: Vec<(String, (String, Vec<String>))> = list
+        .into_iter()
+        .map(|(ip, names)| (names[0].clone(), (ip, names)))
+        .collect();
+    let work = |i: usize, (ip, names): (String, Vec<String>)| {
+        let (cfg, spec, ports, sid, now, open_live, board) =
+            (&cfg, &spec, &ports, &sid, &now, &open_live, &board);
+        async move {
+            let mut out = PortsOut::default();
+            if lock(&c.skip).contains(SOURCE) {
+                out.end = HostEnd::Skipped;
+                return Ok(out);
+            }
+            let host = names[0].clone();
+            c.source_event_x(
+                SOURCE,
+                "running",
+                Some(open_live.load(Ordering::SeqCst)),
+                None,
+                json!({ "host": host, "ip": ip, "hosts": n, "host_index": i, "spec": spec,
+                        "timeout_s": per_host.as_secs() }),
+            );
+            if intercepted {
+                let r = PortScan {
+                    host: host.clone(),
+                    ip: Some(ip.clone()),
+                    open: Vec::new(),
+                    scanned: 0,
+                    closed: 0,
+                    filtered: 0,
+                    ms: 0,
+                    batch: 0,
+                    cancelled: false,
+                    unreliable: Some(UNRELIABLE_INTERCEPT.into()),
+                    canaries: 0,
+                    canaries_open: 0,
+                };
+                let info = PortsScanInfo {
+                    scan: sid.clone(),
+                    at: now.clone(),
+                    ip: r.ip.clone(),
+                    spec: spec.clone(),
+                    ports: ports.clone(),
+                    unreliable: r.unreliable.clone(),
+                    ..Default::default()
+                };
+                out.unreliable = true;
+                out.changed = store_host(c, &names, &r, info, now, sid, &mut out.new_findings)?;
+                return Ok(out);
+            }
+            let child = c.cancel.child_token();
+            let net = c.group_net("target")?.with_cancel(child.clone());
+            let fut = scan_ports(&net, &host, cfg);
+            tokio::pin!(fut);
+            let deadline = tokio::time::sleep(per_host);
+            tokio::pin!(deadline);
+            let mut tick = tokio::time::interval(Duration::from_millis(300));
+            let mut timed_out = false;
+            let mut skipped = false;
+            let res = loop {
+                tokio::select! {
+                    r = &mut fut => break r,
+                    _ = &mut deadline, if !timed_out => { timed_out = true; child.cancel(); }
+                    _ = c.cancel.cancelled() => { child.cancel(); }
+                    _ = tick.tick() => {
+                        if !skipped && lock(&c.skip).contains(SOURCE) { skipped = true; child.cancel(); }
+                    }
+                }
             };
+            if c.cancel.is_cancelled() {
+                return Err(Stop::Cancelled);
+            }
+            let cut = if skipped {
+                HostEnd::Skipped
+            } else {
+                HostEnd::TimedOut
+            };
+            let r = match res {
+                Ok(r) => r,
+                Err(NetError::Cancelled) => {
+                    out.end = cut;
+                    if timed_out {
+                        out.err = Some(format!("{host}: нет ответа за отведённое время"));
+                    }
+                    return Ok(out);
+                }
+                Err(e) => {
+                    tracing::warn!(target: "foca::scan", "{}: порты {host}: {e}", c.scan_id);
+                    out.err = Some(format!("{host}: {e}"));
+                    return Ok(out);
+                }
+            };
+            if r.unreliable.is_some() {
+                out.unreliable = true;
+            } else {
+                out.open = r.open.len();
+                open_live.fetch_add(out.open, Ordering::SeqCst);
+            }
             let info = PortsScanInfo {
                 scan: sid.clone(),
                 at: now.clone(),
                 ip: r.ip.clone(),
                 spec: spec.clone(),
                 ports: ports.clone(),
+                scanned: r.scanned,
+                closed: r.closed,
+                filtered: r.filtered,
+                ms: r.ms,
+                cancelled: r.cancelled,
+                error: timed_out.then(|| "таймаут хоста".to_string()),
                 unreliable: r.unreliable.clone(),
                 ..Default::default()
             };
-            unreliable_hosts += 1;
-            changed |= store_host(c, names, &r, info, &now, &sid, &mut new_findings)?;
-            c.progress(idx, (i as f64 + 1.0) / n as f64);
-            continue;
+            out.changed = store_host(c, &names, &r, info, now, sid, &mut out.new_findings)?;
+            board.set_progress(i, 1.0);
+            c.progress(idx, board.fraction());
+            if r.cancelled {
+                out.end = cut;
+            }
+            Ok(out)
         }
-        let child = c.cancel.child_token();
-        let net = c.group_net("target")?.with_cancel(child.clone());
-        let fut = scan_ports(&net, &host, &cfg);
-        tokio::pin!(fut);
-        let deadline = tokio::time::sleep(per_host);
-        tokio::pin!(deadline);
-        let mut tick = tokio::time::interval(Duration::from_millis(300));
-        let mut timed_out = false;
-        let mut skipped = false;
-        let res = loop {
-            tokio::select! {
-                r = &mut fut => break r,
-                _ = &mut deadline, if !timed_out => { timed_out = true; child.cancel(); }
-                _ = c.cancel.cancelled() => { child.cancel(); }
-                _ = tick.tick() => {
-                    if !skipped && lock(&c.skip).contains(SOURCE) { skipped = true; child.cancel(); }
-                }
-            }
-        };
-        if c.cancel.is_cancelled() {
-            return Err(Stop::Cancelled);
-        }
-        let r = match res {
-            Ok(r) => r,
-            Err(NetError::Cancelled) => {
-                status = if skipped { "skipped" } else { "timeout" };
-                if timed_out {
-                    err = Some(format!("{host}: нет ответа за отведённое время"));
-                }
-                break;
-            }
-            Err(e) => {
-                tracing::warn!(target: "foca::scan", "{}: порты {host}: {e}", c.scan_id);
-                err = Some(format!("{host}: {e}"));
-                continue;
-            }
-        };
-        if r.unreliable.is_some() {
-            unreliable_hosts += 1;
+    };
+    let outs = c.each_host(&board, items, work).await;
+    c.host_board_end(
+        board,
+        if matches!(&outs, Ok(o) if o.iter().all(|x| x.end != HostEnd::Skipped)) {
+            "done"
         } else {
-            open_total += r.open.len();
-        }
-        let info = PortsScanInfo {
-            scan: sid.clone(),
-            at: now.clone(),
-            ip: r.ip.clone(),
-            spec: spec.clone(),
-            ports: ports.clone(),
-            scanned: r.scanned,
-            closed: r.closed,
-            filtered: r.filtered,
-            ms: r.ms,
-            cancelled: r.cancelled,
-            error: timed_out.then(|| "таймаут хоста".to_string()),
-            unreliable: r.unreliable.clone(),
-            ..Default::default()
-        };
-        changed |= store_host(c, names, &r, info, &now, &sid, &mut new_findings)?;
-        c.progress(idx, (i as f64 + 1.0) / n as f64);
-        if r.cancelled {
-            status = if skipped { "skipped" } else { "timeout" };
-            break;
-        }
-    }
+            "skipped"
+        },
+    );
+    let outs = outs?;
+    let open_total: usize = outs.iter().map(|o| o.open).sum();
+    let new_findings: usize = outs.iter().map(|o| o.new_findings).sum();
+    let unreliable_hosts = outs.iter().filter(|o| o.unreliable).count();
+    let changed = outs.iter().any(|o| o.changed);
+    let mut err: Option<String> = outs.iter().rev().find_map(|o| o.err.clone());
+    // a skip ends every host; a host that timed out ends only itself
+    let mut status = if outs.iter().any(|o| o.end == HostEnd::Skipped) {
+        "skipped"
+    } else if outs.iter().any(|o| o.end == HostEnd::TimedOut) {
+        "timeout"
+    } else {
+        "ok"
+    };
     if status == "ok" && err.is_some() && open_total == 0 {
         status = "error";
     }

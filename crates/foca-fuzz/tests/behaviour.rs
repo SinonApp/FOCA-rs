@@ -1,7 +1,8 @@
 //! Offline tests of the fuzzer core: calibration (soft-404 with a random body, everything
 //! redirected to /login, 403 for everything), auto-stop on a run of 429s, out-of-scope
-//! redirects, the request budget, pause/stop, active requests being denied, and loading a
-//! wordlist from the registry with SHA-256 verification.
+//! redirects, the request budget (also one budget shared by fuzzers running together),
+//! pause/stop, active requests being denied, and loading a wordlist from the registry with
+//! SHA-256 verification.
 
 mod common;
 
@@ -211,6 +212,44 @@ async fn budget_and_denied() {
     );
     assert_eq!(srv.requests().len(), 0);
     assert!(sink.records().is_empty());
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn shared_budget_caps_fuzzers_running_together() {
+    let srv = start_site(SiteOpts::default()).await;
+    let words: String = (0..100).map(|i| format!("p{i}\n")).collect();
+    let pool = Arc::new(std::sync::atomic::AtomicU64::new(0));
+    let run = |pool: Arc<std::sync::atomic::AtomicU64>| {
+        let (net, _sink) = client("127.0.0.1", "", true);
+        let base = format!("{}/", srv.url());
+        let mut task = FuzzTask::new(Url::parse(&base).unwrap(), vec![Module::Content]);
+        task.content = Some(ContentSpec {
+            template: Template::path(&format!("{base}FUZZ")),
+            wordlist: Wordlist::from_text("t", &words),
+            extensions: vec![],
+        });
+        let cfg = FuzzConfig {
+            max_requests: 30,
+            ..fast_cfg()
+        };
+        async move {
+            Fuzzer::new(net, cfg)
+                .with_shared_budget(pool)
+                .run(&task)
+                .await
+        }
+    };
+    let (a, b) = tokio::join!(run(pool.clone()), run(pool.clone()));
+    assert_eq!(a.stop, StopReason::Budget);
+    assert_eq!(b.stop, StopReason::Budget);
+    let n = srv.requests().len();
+    assert!(n <= 30, "two fuzzers spent more than one budget: {n}");
+    assert!(
+        a.stats.requests + b.stats.requests <= 30,
+        "{} + {}",
+        a.stats.requests,
+        b.stats.requests
+    );
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

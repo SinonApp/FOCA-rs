@@ -270,7 +270,7 @@ impl Ctx {
 
     /// Checkpoint inside a stage: waits while the scan or this stage is paused, fails on stop
     /// and on the user's skip/restart of the running stage.
-    async fn gate(&mut self) -> Result<(), Stop> {
+    async fn gate(&self) -> Result<(), Stop> {
         loop {
             self.gate_scan().await?;
             let id = STAGES[lock(&self.st).stage.min(STAGES.len() - 1)].0;
@@ -288,17 +288,19 @@ impl Ctx {
         }
     }
 
-    /// Waits while the whole scan is paused; fails once it is stopped.
-    async fn gate_scan(&mut self) -> Result<(), Stop> {
+    /// Waits while the whole scan is paused; fails once it is stopped. Takes `&self` (with its own
+    /// copy of the pause channel), so host workers running at once can all wait here.
+    async fn gate_scan(&self) -> Result<(), Stop> {
+        let mut pause = self.pause.clone();
         loop {
             if self.cancel.is_cancelled() {
                 return Err(Stop::Cancelled);
             }
-            if self.pause.borrow().is_none() {
+            if pause.borrow_and_update().is_none() {
                 return Ok(());
             }
             tokio::select! {
-                _ = self.pause.changed() => {}
+                _ = pause.changed() => {}
                 _ = self.cancel.cancelled() => return Err(Stop::Cancelled),
             }
         }
@@ -337,6 +339,28 @@ impl Ctx {
             ev["done"] = json!(done);
             ev["total"] = json!(total);
         }
+        self.e.emit(ev);
+    }
+
+    /// Emits a `substep` event of the current stage and mirrors a running one in
+    /// `scan_status.substep`.
+    fn substep_event(&self, id: &str, state: &str, done: usize, total: usize, extra: Value) {
+        let ev = {
+            let mut st = lock(&self.st);
+            let stage = STAGES[st.stage.min(STAGES.len() - 1)].0;
+            let mut ev = json!({ "type": "substep", "scan_id": self.scan_id, "stage": stage,
+                "id": id, "state": state, "done": done, "total": total, "eta_s": null, "slow": false });
+            if let (Some(o), Value::Object(x)) = (ev.as_object_mut(), extra) {
+                o.extend(x);
+            }
+            let mut cur = ev.clone();
+            if let Some(o) = cur.as_object_mut() {
+                o.remove("type");
+                o.remove("scan_id");
+            }
+            st.substep = (state == "running").then_some(cur);
+            ev
+        };
         self.e.emit(ev);
     }
 
@@ -586,6 +610,7 @@ fn sev_of(s: &str) -> Severity {
 pub(crate) mod control;
 mod documents;
 pub(crate) mod fuzz;
+pub(crate) mod hosts;
 pub(crate) mod infra;
 mod network;
 pub(crate) mod plugins;

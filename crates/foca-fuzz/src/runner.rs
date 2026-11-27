@@ -98,6 +98,7 @@ pub struct Fuzzer {
     ctl: FuzzControl,
     events: Option<EventFn>,
     wordlist_dir: Option<std::path::PathBuf>,
+    pool: Option<Arc<AtomicU64>>,
 }
 
 /// Origin and explicit `Host` of a root page.
@@ -110,6 +111,9 @@ struct Shared {
     stop: CancellationToken,
     pause: watch::Receiver<bool>,
     requests: AtomicU64,
+    /// Requests of every fuzzer sharing the budget (several hosts at once), capped by
+    /// `cfg.max_requests` like the run's own counter.
+    pool: Option<Arc<AtomicU64>>,
     deadline: Instant,
     /// Root page per origin and `Host`, fetched once for all contexts.
     roots: tokio::sync::Mutex<HashMap<RootKey, Option<Sample>>>,
@@ -286,6 +290,13 @@ impl Shared {
         if self.requests.fetch_add(1, Ordering::SeqCst) >= self.cfg.max_requests {
             self.requests.fetch_sub(1, Ordering::SeqCst);
             return Err(FetchErr::Budget);
+        }
+        if let Some(pool) = &self.pool {
+            if pool.fetch_add(1, Ordering::SeqCst) >= self.cfg.max_requests {
+                pool.fetch_sub(1, Ordering::SeqCst);
+                self.requests.fetch_sub(1, Ordering::SeqCst);
+                return Err(FetchErr::Budget);
+            }
         }
         self.bucket
             .acquire(&self.stop)
@@ -689,7 +700,16 @@ impl Fuzzer {
             ctl: FuzzControl::new(),
             events: None,
             wordlist_dir: None,
+            pool: None,
         }
+    }
+
+    /// Shares the request budget with other fuzzers: every request of every fuzzer holding the
+    /// same counter counts toward `cfg.max_requests`, so hosts brute-forced at once never spend
+    /// more than one budget together.
+    pub fn with_shared_budget(mut self, pool: Arc<AtomicU64>) -> Self {
+        self.pool = Some(pool);
+        self
     }
 
     pub fn with_control(mut self, ctl: FuzzControl) -> Self {
@@ -785,6 +805,7 @@ impl Fuzzer {
             stop: stop_tok.clone(),
             pause: self.ctl.pause.subscribe(),
             requests: AtomicU64::new(0),
+            pool: self.pool.clone(),
             deadline: Instant::now() + cfg.max_time,
             roots: tokio::sync::Mutex::new(HashMap::new()),
         });
