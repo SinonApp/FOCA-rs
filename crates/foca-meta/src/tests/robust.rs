@@ -41,6 +41,42 @@ fn random_bytes_never_panic() {
     }
 }
 
+/// Image and RAW signatures followed by random bytes.
+#[test]
+fn media_prefixes_never_panic() {
+    let mut rng = Rng(0x5EED_4D45_4449_0002);
+    let prefixes: [&[u8]; 12] = [
+        b"GIF89a",
+        b"RIFF\x40\0\0\0WEBPVP8X",
+        b"\0\0\0\x0cJXL \r\n\x87\n",
+        b"\0\0\0\x0cjP  \r\n\x87\n",
+        &[0xFF, 0x4F, 0xFF, 0x51],
+        b"FUJIFILMCCD-RAW 0201",
+        b"IIRO\x08\0\0\0",
+        b"IIU\0\x08\0\0\0",
+        b"II*\0\x10\0\0\0CR\x02\0",
+        b"\0\0\0\x18ftypcrx \0\0\0\x01crx isom",
+        b"FOVb",
+        b"II\x1a\0\0\0HEAPCCDR",
+    ];
+    let limits = Limits::default();
+    for i in 0..2400 {
+        let len = (rng.next() % 4096) as usize;
+        let mut v: Vec<u8> = prefixes[i % prefixes.len()].to_vec();
+        v.extend((0..len).map(|_| rng.next() as u8));
+        // small values make offsets and lengths point inside the buffer more often
+        if i % 3 == 0 {
+            for b in v.iter_mut().skip(16) {
+                *b %= 16;
+            }
+        }
+        if let Err(MetaError::Malformed { msg, .. }) = extract(&v, Some("x.bin"), &limits) {
+            assert!(!msg.contains("внутренняя"), "panic on case {i}");
+        }
+        let _ = text(&v, &limits);
+    }
+}
+
 #[test]
 fn pdf_garbage_structures() {
     let limits = Limits::default();

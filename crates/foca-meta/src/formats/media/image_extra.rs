@@ -1,6 +1,8 @@
 //! Extra image metadata: generative AI markers (PNG generator parameters, XMP digital source
-//! type, C2PA/JUMBF manifests), ICC profile description and device, and camera maker notes
-//! (Canon, Nikon, Fujifilm, Apple) with internal serial numbers, owner and firmware.
+//! type, C2PA/JUMBF manifests), ICC profile description and device, camera facts kept only in
+//! XMP (serials, DJI drone GPS), and camera maker notes (Canon, Nikon, Fujifilm, Apple, Olympus,
+//! Panasonic, Pentax, Samsung, Sony) with serial numbers, lens, owner and firmware. Maker note
+//! layouts and tag ids follow the ExifTool tag tables (GPL-1+/Artistic).
 
 use std::io::Read;
 
@@ -317,16 +319,113 @@ pub(crate) fn png_iccp(meta: &mut Metadata, data: &[u8], ctx: &Ctx) -> Result<()
     Ok(())
 }
 
+/// Device facts that only live in XMP: camera serial numbers (`aux:`, `exifEX:`, DJI
+/// `drone-dji:`), lens and owner, and the GPS position of drone and XMP-only images
+/// (`drone-dji:GpsLatitude`, `exif:GPSLatitude` written as `50,27.006N`).
+pub(crate) fn xmp_devices(meta: &mut Metadata) {
+    if meta.xmp.is_empty() {
+        return;
+    }
+    let xm = meta.xmp.clone();
+    let get = |k: &str| {
+        xm.get(k)
+            .and_then(|v| clean_str(v.split("; ").next().unwrap_or(v)))
+    };
+    let serial = [
+        "aux:SerialNumber",
+        "exifEX:BodySerialNumber",
+        "drone-dji:DroneSerialNumber",
+        "drone-dji:SerialNumber",
+        "drone-dji:CameraSerialNumber",
+    ]
+    .iter()
+    .find_map(|k| get(k));
+    let lens_serial = ["aux:LensSerialNumber", "exifEX:LensSerialNumber"]
+        .iter()
+        .find_map(|k| get(k));
+    let lens = ["aux:Lens", "exifEX:LensModel"].iter().find_map(|k| get(k));
+    let owner = ["aux:OwnerName", "exifEX:CameraOwnerName"]
+        .iter()
+        .find_map(|k| get(k));
+    let make = get("tiff:Make").or_else(|| get("drone-dji:Make"));
+    let model = get("tiff:Model").or_else(|| get("drone-dji:Model"));
+    if [&serial, &lens_serial, &lens, &owner, &make, &model]
+        .iter()
+        .any(|x| x.is_some())
+    {
+        let cam = meta.camera.get_or_insert_with(Camera::default);
+        let fill = |slot: &mut Option<String>, v: &Option<String>| {
+            if slot.is_none() {
+                *slot = v.as_ref().map(|x| truncate(x, 128));
+            }
+        };
+        fill(&mut cam.serial, &serial);
+        fill(&mut cam.lens_serial, &lens_serial);
+        fill(&mut cam.lens, &lens);
+        fill(&mut cam.owner, &owner);
+        fill(&mut cam.make, &make);
+        fill(&mut cam.model, &model);
+    }
+    if let Some(o) = owner {
+        meta.add_person(&o, PersonRole::Owner, "xmp:OwnerName");
+    }
+    if meta.gps.is_none() {
+        let lat = get("drone-dji:GpsLatitude")
+            .and_then(|v| v.parse::<f64>().ok())
+            .or_else(|| get("exif:GPSLatitude").and_then(|v| xmp_coord(&v)));
+        let lon = get("drone-dji:GpsLongitude")
+            .or_else(|| get("drone-dji:GpsLongtitude"))
+            .and_then(|v| v.parse::<f64>().ok())
+            .or_else(|| get("exif:GPSLongitude").and_then(|v| xmp_coord(&v)));
+        let alt = get("drone-dji:AbsoluteAltitude")
+            .and_then(|v| v.trim_start_matches('+').parse::<f64>().ok());
+        if let (Some(lat), Some(lon)) = (lat, lon) {
+            if (-90.0..=90.0).contains(&lat)
+                && (-180.0..=180.0).contains(&lon)
+                && !(lat == 0.0 && lon == 0.0)
+            {
+                let r = |x: f64| (x * 1e6).round() / 1e6;
+                meta.gps = Some(foca_core::Gps {
+                    lat: r(lat),
+                    lon: r(lon),
+                    alt: alt.map(|a| (a * 100.0).round() / 100.0),
+                });
+            }
+        }
+    }
+}
+
+/// XMP GPS coordinate `DDD,MM.mmk` or `DDD,MM,SSk` (k = N/S/E/W).
+fn xmp_coord(v: &str) -> Option<f64> {
+    let v = v.trim();
+    let hemi = v.chars().last()?;
+    let body = v.get(..v.len() - hemi.len_utf8())?;
+    let parts: Vec<f64> = body
+        .split(',')
+        .map(|x| x.trim().parse().ok())
+        .collect::<Option<_>>()?;
+    let deg = match parts.as_slice() {
+        [d, m] => d + m / 60.0,
+        [d, m, s] => d + m / 60.0 + s / 3600.0,
+        _ => return None,
+    };
+    match hemi {
+        'N' | 'E' => Some(deg),
+        'S' | 'W' => Some(-deg),
+        _ => None,
+    }
+}
+
 // ------------------------------------------------------------------ maker notes
 
-struct Ifd<'a> {
+pub(crate) struct Ifd<'a> {
     /// Buffer that offsets are relative to.
-    base: &'a [u8],
-    le: bool,
+    pub base: &'a [u8],
+    pub le: bool,
 }
 
 impl Ifd<'_> {
-    fn u16(&self, o: usize) -> Option<u16> {
+    pub(crate) fn u16(&self, o: usize) -> Option<u16> {
         if self.le {
             rd_u16le(self.base, o)
         } else {
@@ -336,7 +435,7 @@ impl Ifd<'_> {
         }
     }
 
-    fn u32(&self, o: usize) -> Option<u32> {
+    pub(crate) fn u32(&self, o: usize) -> Option<u32> {
         if self.le {
             rd_u32le(self.base, o)
         } else {
@@ -345,7 +444,7 @@ impl Ifd<'_> {
     }
 
     /// Entries `(tag, type, count, value bytes)` of the IFD at `at`.
-    fn entries(&self, at: usize) -> Vec<(u16, u16, u32, &[u8])> {
+    pub(crate) fn entries(&self, at: usize) -> Vec<(u16, u16, u32, &[u8])> {
         let mut out = Vec::new();
         let n = self.u16(at).unwrap_or(0).min(512) as usize;
         for i in 0..n {
@@ -358,7 +457,7 @@ impl Ifd<'_> {
             let unit = match ty {
                 1 | 2 | 6 | 7 => 1,
                 3 | 8 => 2,
-                4 | 9 | 11 => 4,
+                4 | 9 | 11 | 13 => 4,
                 5 | 10 | 12 => 8,
                 _ => continue,
             };
@@ -379,7 +478,7 @@ impl Ifd<'_> {
         out
     }
 
-    fn num(&self, ty: u16, v: &[u8]) -> Option<u64> {
+    pub(crate) fn num(&self, ty: u16, v: &[u8]) -> Option<u64> {
         match ty {
             3 => self.u16_of(v).map(u64::from),
             4 => self.u32_of(v).map(u64::from),
@@ -387,7 +486,7 @@ impl Ifd<'_> {
         }
     }
 
-    fn u16_of(&self, v: &[u8]) -> Option<u16> {
+    pub(crate) fn u16_of(&self, v: &[u8]) -> Option<u16> {
         let b: [u8; 2] = v.get(..2)?.try_into().ok()?;
         Some(if self.le {
             u16::from_le_bytes(b)
@@ -396,7 +495,7 @@ impl Ifd<'_> {
         })
     }
 
-    fn u32_of(&self, v: &[u8]) -> Option<u32> {
+    pub(crate) fn u32_of(&self, v: &[u8]) -> Option<u32> {
         let b: [u8; 4] = v.get(..4)?.try_into().ok()?;
         Some(if self.le {
             u32::from_le_bytes(b)
@@ -443,6 +542,7 @@ pub(crate) fn maker_note(meta: &mut Metadata, make: &str, tiff: &[u8], off: usiz
         for (tag, ty, _, v) in ifd.entries(first) {
             match tag {
                 0x001D => push(&mut found, "SerialNumber", ascii(v)),
+                0x00A0 => push(&mut found, "InternalSerialNumber", ascii(v)),
                 0x00A7 => push(
                     &mut found,
                     "ShutterCount",
@@ -457,6 +557,89 @@ pub(crate) fn maker_note(meta: &mut Metadata, make: &str, tiff: &[u8], off: usiz
         for (tag, _, _, v) in ifd.entries(first) {
             if tag == 0x0010 {
                 push(&mut found, "InternalSerialNumber", ascii(v));
+            }
+        }
+    } else if make.starts_with("olympus") || make.starts_with("om digital") {
+        if let Some(t) = olympus(&mut found, tiff, off, le) {
+            if meta.thumbnail.is_none() {
+                meta.thumbnail = Some(foca_core::Thumbnail {
+                    mime: "image/jpeg".into(),
+                    data: t,
+                    differs: None,
+                });
+            }
+        }
+    } else if make.starts_with("panasonic") && mn.starts_with(b"Panasonic\0") {
+        // IFD after the 12-byte header, offsets relative to the EXIF TIFF block
+        let ifd = Ifd { base: tiff, le };
+        for (tag, _, _, v) in ifd.entries(off + 12) {
+            match tag {
+                0x0002 => push(&mut found, "FirmwareVersion", ascii(v)),
+                0x0025 => push(&mut found, "InternalSerialNumber", ascii(v)),
+                0x0051 => push(&mut found, "LensModel", ascii(v)),
+                0x0052 => push(&mut found, "LensSerialNumber", ascii(v)),
+                0x0069 => push(&mut found, "Country", ascii(v)),
+                0x006B => push(&mut found, "State", ascii(v)),
+                0x006D => push(&mut found, "City", ascii(v)),
+                0x006F => push(&mut found, "Landmark", ascii(v)),
+                _ => {}
+            }
+        }
+    } else if make.starts_with("pentax")
+        || make.starts_with("ricoh imaging")
+        || make.starts_with("asahi")
+    {
+        // "AOC\0" + byte order (offsets relative to TIFF) or "PENTAX \0" + byte order
+        // (offsets relative to the maker note)
+        let (ifd, at) = if mn.starts_with(b"PENTAX \0") {
+            (
+                Ifd {
+                    base: mn,
+                    le: mn.get(8..10) == Some(b"II"),
+                },
+                10,
+            )
+        } else if mn.starts_with(b"AOC\0") {
+            let le = match mn.get(4..6) {
+                Some(b"II") => true,
+                Some(b"MM") => false,
+                _ => le,
+            };
+            (Ifd { base: tiff, le }, off + 6)
+        } else {
+            (Ifd { base: tiff, le }, off)
+        };
+        for (tag, _, _, v) in ifd.entries(at) {
+            match tag {
+                0x0229 => push(&mut found, "SerialNumber", ascii(v)),
+                0x0230 => push(&mut found, "FirmwareVersion", ascii(v)),
+                _ => {}
+            }
+        }
+    } else if make.starts_with("samsung") && !mn.starts_with(b"SAMSUNG") {
+        // Samsung type 2: a plain IFD with offsets relative to the maker note
+        let ifd = Ifd { base: mn, le };
+        for (tag, _, _, v) in ifd.entries(0) {
+            match tag {
+                0xA002 => push(&mut found, "SerialNumber", ascii(v)),
+                0xA003 => push(&mut found, "LensType", ifd.u16_of(v).map(|n| n.to_string())),
+                _ => {}
+            }
+        }
+    } else if make.starts_with("sony")
+        && (mn.starts_with(b"SONY DSC ")
+            || mn.starts_with(b"SONY CAM ")
+            || mn.starts_with(b"SONY MOBILE"))
+    {
+        let ifd = Ifd { base: tiff, le };
+        for (tag, _, _, v) in ifd.entries(off + 12) {
+            if tag == 0x2031 {
+                // digits stored in reversed pairs (ExifTool Sony.pm)
+                push(
+                    &mut found,
+                    "SerialNumber",
+                    ascii(v).map(|s| sony_serial(&s)),
+                );
             }
         }
     } else if make.starts_with("apple") && mn.starts_with(b"Apple iOS\0") {
@@ -481,6 +664,9 @@ pub(crate) fn maker_note(meta: &mut Metadata, make: &str, tiff: &[u8], off: usiz
             "SerialNumber" | "InternalSerialNumber" if cam.serial.is_none() => {
                 cam.serial = Some(v.clone())
             }
+            "LensSerialNumber" => {
+                cam.lens_serial.get_or_insert(v.clone());
+            }
             "OwnerName" => {
                 cam.owner.get_or_insert(v.clone());
             }
@@ -497,6 +683,82 @@ pub(crate) fn maker_note(meta: &mut Metadata, make: &str, tiff: &[u8], off: usiz
         }
         meta.fields.insert(format!("makernote:{k}"), v);
     }
+}
+
+/// Olympus/OM System maker note: main IFD (camera type, old-style serial) and the Equipment
+/// sub-IFD 0x2010 (body serial, lens model and serial), per ExifTool `Olympus.pm`.
+/// Returns the maker note thumbnail JPEG (0x0100) when present.
+fn olympus(
+    found: &mut Vec<(&'static str, String)>,
+    tiff: &[u8],
+    off: usize,
+    le: bool,
+) -> Option<Vec<u8>> {
+    let mn = tiff.get(off..)?;
+    let mut thumb = None;
+    // new headers keep offsets relative to the maker note, old ones relative to TIFF
+    let (ifd, at) = if mn.starts_with(b"OLYMPUS\0") {
+        (
+            Ifd {
+                base: mn,
+                le: mn.get(8..10) == Some(b"II"),
+            },
+            12,
+        )
+    } else if mn.starts_with(b"OM SYSTEM\0") {
+        (
+            Ifd {
+                base: mn,
+                le: mn.get(12..14) == Some(b"II"),
+            },
+            16,
+        )
+    } else if mn.starts_with(b"OLYMP\0") || mn.starts_with(b"CAMER\0") {
+        (Ifd { base: tiff, le }, off + 8)
+    } else {
+        return None;
+    };
+    for (tag, ty, _, v) in ifd.entries(at) {
+        match tag {
+            0x0100 if v.starts_with(&[0xFF, 0xD8]) => thumb = Some(v.to_vec()),
+            0x0207 => push(found, "CameraType", ascii(v)),
+            0x0404 => push(found, "SerialNumber", ascii(v)),
+            0x2010 => {
+                // a sub-IFD pointer, or the IFD stored inline as undefined data
+                let sub = if ty == 7 {
+                    (v.as_ptr() as usize).checked_sub(ifd.base.as_ptr() as usize)
+                } else {
+                    ifd.u32_of(v).map(|o| o as usize)
+                };
+                let Some(sub) = sub else { continue };
+                for (t2, _, _, v2) in ifd.entries(sub) {
+                    match t2 {
+                        0x0101 => push(found, "SerialNumber", ascii(v2)),
+                        0x0202 => push(found, "LensSerialNumber", ascii(v2)),
+                        0x0203 => push(found, "LensModel", ascii(v2)),
+                        0x0104 => push(
+                            found,
+                            "BodyFirmwareVersion",
+                            ifd.u32_of(v2).map(|n| format!("{n:x}")),
+                        ),
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    thumb
+}
+
+/// Sony 0x2031 serial number: the digit pairs are stored in reverse order.
+fn sony_serial(s: &str) -> String {
+    let d: Vec<char> = s.chars().collect();
+    if d.len() == 8 && d.iter().all(|c| c.is_ascii_digit()) {
+        let out: String = d.chunks(2).rev().flatten().collect();
+        return out.trim_start_matches('0').to_string();
+    }
+    s.to_string()
 }
 
 fn push(v: &mut Vec<(&'static str, String)>, k: &'static str, s: Option<String>) {

@@ -39,7 +39,7 @@ use formats::archive::{compressed, epub, rar, sevenz, tar, zipfile};
 use formats::binary::{jar, pe};
 use formats::detect::detect_with_hint;
 use formats::mail::{eml, ics, msg, vcf};
-use formats::media::{av, image, indesign, isobmff, mp3, postscript, psd, svg};
+use formats::media::{av, image, indesign, isobmff, mp3, postscript, psd, raster, raw, svg};
 use formats::office::{legacy_office, odf, ole, ooxml, publisher, rtf, visio};
 use formats::{cad, dev, geo, lnk, pdf, remote};
 
@@ -401,6 +401,10 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
         DocFormat::SourceMap => dev::extract_sourcemap(bytes)?,
         DocFormat::Ipynb => dev::extract_notebook(bytes)?,
         DocFormat::Rtf => rtf::extract(bytes, ctx)?,
+        DocFormat::Gif | DocFormat::Webp | DocFormat::Jxl | DocFormat::Jp2 => {
+            raster::extract(bytes, format, ctx)?
+        }
+        DocFormat::Raw => raw::extract(bytes, ctx)?,
         DocFormat::Unknown => return Err(MetaError::Unsupported("неизвестная сигнатура".into())),
     };
     meta.format = format;
@@ -501,7 +505,12 @@ fn text_ctx(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
         | DocFormat::Asf
         | DocFormat::Flac
         | DocFormat::Ogg
-        | DocFormat::Kmz => extract_ctx(bytes, None, ctx).map(|m| metadata_text(&m)),
+        | DocFormat::Kmz
+        | DocFormat::Gif
+        | DocFormat::Webp
+        | DocFormat::Jxl
+        | DocFormat::Jp2
+        | DocFormat::Raw => extract_ctx(bytes, None, ctx).map(|m| metadata_text(&m)),
         DocFormat::Unknown => Err(MetaError::Unsupported("неизвестная сигнатура".into())),
     }
 }

@@ -125,6 +125,17 @@ pub enum DocFormat {
     Ipynb,
     /// Rich Text Format document.
     Rtf,
+    /// GIF image (comments, XMP and ICC application extensions).
+    Gif,
+    /// WebP image (RIFF with EXIF/XMP/ICCP chunks).
+    Webp,
+    /// JPEG XL image (container boxes Exif/xml).
+    Jxl,
+    /// JPEG 2000 image or codestream.
+    Jp2,
+    /// Camera RAW container that is not a plain TIFF (CR2, CR3, ORF, RW2, RAF, MRW, X3F); the
+    /// exact type is in `fields["raw:type"]`.
+    Raw,
     #[default]
     Unknown,
 }
@@ -198,6 +209,11 @@ impl DocFormat {
             DocFormat::SourceMap => "map",
             DocFormat::Ipynb => "ipynb",
             DocFormat::Rtf => "rtf",
+            DocFormat::Gif => "gif",
+            DocFormat::Webp => "webp",
+            DocFormat::Jxl => "jxl",
+            DocFormat::Jp2 => "jp2",
+            DocFormat::Raw => "raw",
             DocFormat::Unknown => "bin",
         }
     }
@@ -207,7 +223,17 @@ impl DocFormat {
     }
 
     pub fn is_image(self) -> bool {
-        matches!(self, DocFormat::Jpeg | DocFormat::Png | DocFormat::Tiff)
+        matches!(
+            self,
+            DocFormat::Jpeg
+                | DocFormat::Png
+                | DocFormat::Tiff
+                | DocFormat::Gif
+                | DocFormat::Webp
+                | DocFormat::Jxl
+                | DocFormat::Jp2
+                | DocFormat::Raw
+        )
     }
 }
 

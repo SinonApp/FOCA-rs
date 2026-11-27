@@ -331,6 +331,25 @@ fn png_chunks(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError>
                 image_extra::c2pa(meta, data);
                 continue;
             }
+            b"eXIf" | b"zxIf" => {
+                let tiff = data.strip_prefix(b"Exif\0\0").unwrap_or(data);
+                if !apply_exif_tiff(meta, tiff.to_vec(), ctx) {
+                    meta.warnings.push("PNG: eXIf not parsed".into());
+                }
+                continue;
+            }
+            b"tIME" if data.len() == 7 => {
+                let y = u16::from_be_bytes([data[0], data[1]]);
+                let t = format!(
+                    "{y:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+                    data[2], data[3], data[4], data[5], data[6]
+                );
+                if let Some(d) = normalize_date(&t) {
+                    meta.modified.get_or_insert(d.clone());
+                    meta.fields.insert("png:tIME".into(), d);
+                }
+                continue;
+            }
             b"IEND" => break,
             _ => continue,
         };
@@ -360,8 +379,17 @@ fn png_chunks(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError>
             "Description" => {
                 meta.description.get_or_insert(v.clone());
             }
-            "Creation Time" => {
-                meta.created.get_or_insert(v.clone());
+            "Creation Time" | "create-date" | "date:create" => {
+                meta.created
+                    .get_or_insert(normalize_date(&v).unwrap_or_else(|| v.clone()));
+            }
+            "Copyright" => {
+                meta.custom
+                    .entry("copyright".into())
+                    .or_insert_with(|| truncate(&v, 512));
+            }
+            "Comment" => {
+                meta.description.get_or_insert(truncate(&v, 2048));
             }
             _ => {}
         }
@@ -436,8 +464,20 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
             image_extra::c2pa(&mut meta, &jumbf);
         }
         DocFormat::Png => png_chunks(&mut meta, b, ctx)?,
+        DocFormat::Tiff => {
+            // TIFF-based RAW (NEF, ARW, DNG, PEF, ...) and multi-page TIFF: JPEG previews
+            super::raw::tiff_previews(&mut meta, b, ctx);
+            super::raw::finish_previews(&mut meta);
+            if ex.as_ref().is_some_and(|e| {
+                e.get_field(Tag(Context::Tiff, 0xC612), In::PRIMARY)
+                    .is_some()
+            }) {
+                meta.fields.insert("raw:type".into(), "DNG".into());
+            }
+        }
         _ => {}
     }
+    image_extra::xmp_devices(&mut meta);
     image_extra::xmp_ai(&mut meta);
     // Compare thumbnail and photo pixels; a decoder panic on a broken file must not abort parsing.
     if format == DocFormat::Jpeg {

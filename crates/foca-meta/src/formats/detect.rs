@@ -28,8 +28,14 @@ pub(crate) fn detect_with_hint(bytes: &[u8], name_hint: Option<&str>) -> DocForm
     if b.starts_with(b"\x89PNG\r\n\x1a\n") {
         return DocFormat::Png;
     }
+    if crate::formats::media::raw::is_raw(b) {
+        return DocFormat::Raw;
+    }
     if b.starts_with(b"II*\0") || b.starts_with(b"MM\0*") {
         return DocFormat::Tiff;
+    }
+    if let Some(f) = crate::formats::media::raster::kind(b) {
+        return f;
     }
     if b.starts_with(&[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) {
         return detect_ole(b);
