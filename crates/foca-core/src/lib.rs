@@ -7,6 +7,7 @@
 pub mod api;
 pub mod b64;
 pub mod clock;
+pub mod extractor;
 pub mod forensics;
 pub mod lang;
 pub mod metadata;

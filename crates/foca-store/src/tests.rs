@@ -211,7 +211,7 @@ fn migration_from_v1_keeps_data() {
     let clock: Arc<dyn foca_core::Clock> =
         Arc::new(ManualClock::new(datetime!(2026-11-20 12:00 UTC)));
     let db = ProjectDb::open(&path, clock.clone()).unwrap();
-    assert_eq!(db.schema_version().unwrap(), 10);
+    assert_eq!(db.schema_version().unwrap(), 11);
     // v7: the infrastructure table exists and starts empty in an old project
     assert!(db.infra_all().unwrap().is_empty());
     db.infra_put(
@@ -1271,7 +1271,7 @@ fn migration_v7_to_v8_indexes_existing_text() {
     let clock: Arc<dyn foca_core::Clock> =
         Arc::new(ManualClock::new(datetime!(2026-11-20 12:00 UTC)));
     let db = ProjectDb::open(&path, clock).unwrap();
-    assert_eq!(db.schema_version().unwrap(), 10);
+    assert_eq!(db.schema_version().unwrap(), 11);
     let r = db.search_text("бюджет", &SearchOpts::default()).unwrap();
     assert_eq!(r.total, 1);
     assert_eq!(r.hits[0].name, "old.docx");
@@ -1878,4 +1878,62 @@ fn storage_documents_belong_to_the_linking_site() {
     assert!(names.contains(&"www.contoso.example"), "{names:?}");
     let ui = db.ui_docs().unwrap();
     assert_eq!(ui[0].host, "www.contoso.example");
+}
+
+#[test]
+fn extractor_revision_marks_and_relink() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let db = s.open_project(&new_project(&s).id).unwrap();
+    let a = add_analyzed(
+        &db,
+        1,
+        &meta("Ivan Petrenko", "Microsoft Office Word"),
+        None,
+    );
+    let b = db
+        .add_document(&AddDoc {
+            name: "b.pdf".into(),
+            status: DocStatus::Downloaded,
+            sha256: Some("bb".into()),
+            ..Default::default()
+        })
+        .unwrap()
+        .id;
+    // a document of an older version: no recorded revision
+    db.conn()
+        .execute(
+            "UPDATE documents SET extractor_rev = NULL, extractor_ver = NULL WHERE id = ?1",
+            [a as i64],
+        )
+        .unwrap();
+    db.set_doc_error(b, "broken").unwrap();
+    let revs = db.doc_revs().unwrap();
+    assert_eq!(revs[0].rev, 0);
+    assert_eq!(revs[1].rev, foca_core::extractor::FORMAT_REV);
+    assert_eq!(revs[1].ver.as_deref(), Some(foca_core::extractor::VERSION));
+    // a download failure is not an extraction: it keeps the older revision
+    db.set_doc_error_kind(b, DocErrorKind::Download, "timeout")
+        .unwrap();
+    db.set_analyzed(
+        a,
+        &meta("Ivan Petrenko", "Microsoft Office Word"),
+        Some("t"),
+    )
+    .unwrap();
+    db.set_reextract_mark(a, "run-1").unwrap();
+    let revs = db.doc_revs().unwrap();
+    assert_eq!(revs[0].rev, foca_core::extractor::FORMAT_REV);
+    assert_eq!(revs[0].mark.as_deref(), Some("run-1"));
+    assert!(revs[1].mark.is_none());
+    // a fresh copy keeps the id; a copy equal to another document changes nothing
+    assert!(db.relink_file(b, "cc", 10, "/x/cc.pdf").unwrap());
+    assert!(!db
+        .relink_file(b, &format!("{:064x}", 1), 10, "/x/a.docx")
+        .unwrap());
+    let d = db.documents(true).unwrap();
+    let bd = d.iter().find(|d| d.doc.id == b).unwrap();
+    assert_eq!(bd.local_path.as_deref(), Some("/x/cc.pdf"));
+    assert_eq!(bd.doc.sha256, "cc");
+    assert!(db.finding_states().unwrap().is_empty());
 }

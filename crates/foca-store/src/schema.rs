@@ -209,6 +209,14 @@ UPDATE entities SET json = replace(json, '"' || char(8212) || '"', '"-"');
 UPDATE findings SET data_json = replace(data_json, '"' || char(8212) || '"', '"-"');
 UPDATE infra SET json = replace(json, '"' || char(8212) || '"', '"-"');
 "#,
+    // v11: which extraction revision analysed a document (`foca_core::extractor`) and the mark of
+    // the re-analysis run that last processed it (`project_reextract` resumes after a kill);
+    // rows of older versions keep NULL and count as analysed by an older revision
+    r#"
+ALTER TABLE documents ADD COLUMN extractor_rev INTEGER;
+ALTER TABLE documents ADD COLUMN extractor_ver TEXT;
+ALTER TABLE documents ADD COLUMN reextract_mark TEXT;
+"#,
 ];
 
 /// Migrations of the project index `projects.db`.
