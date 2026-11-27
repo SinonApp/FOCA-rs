@@ -449,7 +449,13 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             let host = d
                 .host
                 .clone()
-                .or_else(|| d.url.as_deref().and_then(util::url_host))
+                // local files (`file://report.pdf`) have no web host
+                .or_else(|| {
+                    d.url
+                        .as_deref()
+                        .filter(|u| !u.trim_start().to_ascii_lowercase().starts_with("file:"))
+                        .and_then(util::url_host)
+                })
                 .filter(|h| !util::is_storage_provider(h))
                 .unwrap_or_default();
             let mut p = Pre {

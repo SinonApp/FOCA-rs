@@ -441,3 +441,23 @@ fn new_format_findings_pdb_ai_geodata_sourcemap_connections() {
         c.evidence.contains("server=sql01.corp.example") && c.evidence.contains("password=***")
     );
 }
+
+#[test]
+fn local_files_without_url_create_no_hosts() {
+    let mut a = doc(
+        1,
+        "a.pdf",
+        office("Olena", "olena", "Microsoft Office Word"),
+    );
+    a.url = Some("file://a.pdf".into());
+    let mut b = doc(
+        2,
+        "b.doc",
+        office("Taras", "taras", "Microsoft Office Word"),
+    );
+    b.url = Some("file:///home/user/b.doc".into());
+    let docs = [a, b];
+    let inputs: Vec<DocInput> = docs.iter().map(DocInput::new).collect();
+    let r = analyze(&inputs, &Scope::default(), &prev_now());
+    assert!(r.hosts.is_empty(), "{:?}", r.hosts);
+}
