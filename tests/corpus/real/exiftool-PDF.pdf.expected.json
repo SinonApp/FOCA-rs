@@ -24,6 +24,7 @@
   "software": [
     "Adobe Photoshop 7.0",
     "Adobe Photoshop for Macintosh",
+    "XMP toolkit 2.8.2-33, framework 1.5",
     "Adobe Photoshop"
   ],
   "stats": {
@@ -50,6 +51,7 @@
     "photoshop:SupplementalCategories": "amazing; image; utilities",
     "photoshop:TransmissionReference": "What is a transmission reference",
     "photoshop:Urgency": "8",
+    "x:xmptk": "XMP toolkit 2.8.2-33, framework 1.5",
     "xapBJ:JobRef/stJob:name": "My Job",
     "xapMM:DocumentID": "adobe:docid:photoshop:cbcc2a62-f127-11d9-ac4d-e8be6f73552e",
     "xapRights:WebStatement": "https://exiftool.org/"

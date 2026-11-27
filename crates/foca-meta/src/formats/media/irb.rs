@@ -185,7 +185,10 @@ fn version_info(meta: &mut Metadata, d: &[u8]) {
         return;
     };
     if let Some(w) = clean_str(&writer) {
-        Metadata::add_unique(&mut meta.software, &truncate(&w, 256));
+        // "Adobe Photoshop" adds nothing next to a versioned "Adobe Photoshop 7.0"
+        if !meta.software.iter().any(|s| s.starts_with(w.as_str())) {
+            Metadata::add_unique(&mut meta.software, &truncate(&w, 256));
+        }
         meta.fields
             .insert("photoshop:WriterName".into(), truncate(&w, 256));
     }
@@ -249,8 +252,8 @@ pub(crate) fn iptc_records(meta: &mut Metadata, d: &[u8]) {
             90 => "City",
             92 => "Sub-location",
             95 => "Province-State",
-            100 => "Country-PrimaryLocationCode",
-            101 => "Country-PrimaryLocationName",
+            100 => "CountryCode",
+            101 => "Country",
             103 => "OriginalTransmissionReference",
             105 => "Headline",
             110 => "Credit",

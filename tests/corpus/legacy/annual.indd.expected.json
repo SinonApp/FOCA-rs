@@ -29,7 +29,8 @@
     }
   ],
   "software": [
-    "Adobe InDesign 19.2 (Windows)"
+    "Adobe InDesign 19.2 (Windows)",
+    "Adobe XMP Core 9.1-c001"
   ],
   "stats": {
     "xmp_packets": 1
@@ -38,6 +39,7 @@
   "xmp": {
     "dc:creator": "Olena Kovalenko",
     "dc:title": "Річний звіт 2023",
+    "x:xmptk": "Adobe XMP Core 9.1-c001",
     "xmp:CreateDate": "2024-03-01T10:00:00+02:00",
     "xmp:CreatorTool": "Adobe InDesign 19.2 (Windows)",
     "xmp:Label": "\\\\FS01.corp.example.test\\design\\annual-2023\\report.indd",

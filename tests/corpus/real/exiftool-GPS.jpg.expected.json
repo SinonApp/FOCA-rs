@@ -6,6 +6,9 @@
     "model": "FinePixS1Pro"
   },
   "created": "2002-07-13T15:58:28",
+  "custom": {
+    "copyright": "Ian Britton"
+  },
   "description": "Communications",
   "fields": {
     "exif:ApertureValue": "8 EV",
@@ -55,13 +58,16 @@
     "iptc:By-line": "Ian Britton",
     "iptc:By-lineTitle": "Photographer",
     "iptc:Caption-Abstract": "Communications",
+    "iptc:Category": "BUS",
     "iptc:CopyrightNotice": "ian Britton - FreeFoto.com",
     "iptc:Country": "United Kingdom",
     "iptc:Credit": "Ian Britton",
+    "iptc:DateCreated": "20020620",
     "iptc:Headline": "Communications",
     "iptc:Keywords": "Communications",
     "iptc:ObjectName": "Communications",
     "iptc:Source": "FreeFoto.com",
+    "iptc:SupplementalCategories": "Communications",
     "iptc:Writer-Editor": "Ian Britton"
   },
   "format": "jpeg",

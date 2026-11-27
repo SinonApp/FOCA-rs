@@ -22,7 +22,7 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     let mut notes: Vec<String> = Vec::new();
     for c in root.comments() {
         // other comments may carry contacts or paths; keep a few for the path/e-mail scan
-        if !c.contains("Generator:") && notes.len() < 20 {
+        if !c.contains("Generator:") && !c.contains("Created with") && notes.len() < 20 {
             if let Some(t) = crate::util::clean_str(c) {
                 notes.push(truncate(&t, 1024));
             }

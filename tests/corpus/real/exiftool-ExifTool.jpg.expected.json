@@ -6,6 +6,9 @@
     "model": "FinePix2400Zoom"
   },
   "created": "2001-05-19T18:36:41",
+  "custom": {
+    "copyright": "My Credit"
+  },
   "description": "A witty caption",
   "fields": {
     "exif:ApertureValue": "3.6 EV",
@@ -54,20 +57,32 @@
     "iptc:By-line": "Phil Harvey",
     "iptc:By-lineTitle": "My Position",
     "iptc:Caption-Abstract": "A witty caption",
+    "iptc:Category": "1",
     "iptc:City": "Kingston",
     "iptc:CopyrightNotice": "Copyright 2004 Phil Harvey",
     "iptc:Country": "Canada",
     "iptc:Credit": "My Credit",
+    "iptc:DateCreated": "20040226",
     "iptc:Headline": "No headline",
     "iptc:Keywords": "jambalaya",
     "iptc:ObjectName": "Test IPTC picture",
+    "iptc:OriginalTransmissionReference": "What is a transmission reference",
     "iptc:Province-State": "Ont",
     "iptc:Source": "I'm the source",
+    "iptc:SpecialInstructions": "What instructions",
+    "iptc:SupplementalCategories": "amazing; image; utilities",
     "iptc:Writer-Editor": "I wrote it",
-    "jpeg:comment": "a comment"
+    "jpeg:comment": "a comment",
+    "photoshop:ReaderName": "Adobe Photoshop 7.0",
+    "photoshop:SlicesGroupName": "IPTC",
+    "photoshop:URL": "https://exiftool.org/",
+    "photoshop:WriterName": "Adobe Photoshop"
   },
   "format": "jpeg",
   "keywords": "jambalaya",
+  "links": [
+    "https://exiftool.org/"
+  ],
   "modified": "2004-02-26T09:36:46",
   "people": [
     {

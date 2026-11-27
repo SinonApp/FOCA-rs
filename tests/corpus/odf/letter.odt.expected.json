@@ -28,6 +28,9 @@
           "serial": "F2LXK0QJQ6"
         },
         "created": "2024-08-02T11:05:33",
+        "custom": {
+          "copyright": "(c) Contoso Energy"
+        },
         "description": "ТЕС-2, будмайданчик",
         "fields": {
           "exif:Artist": "Viktor Tkachenko",

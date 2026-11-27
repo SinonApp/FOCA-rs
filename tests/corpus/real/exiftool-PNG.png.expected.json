@@ -11,7 +11,11 @@
       "source": "xmp:dc:creator"
     }
   ],
+  "software": [
+    "Image::ExifTool 6.51"
+  ],
   "xmp": {
-    "dc:creator": "Phil Harvey"
+    "dc:creator": "Phil Harvey",
+    "x:xmptk": "Image::ExifTool 6.51"
   }
 }

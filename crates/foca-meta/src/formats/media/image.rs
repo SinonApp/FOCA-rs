@@ -388,9 +388,6 @@ fn png_chunks(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError>
                     .entry("copyright".into())
                     .or_insert_with(|| truncate(&v, 512));
             }
-            "Comment" => {
-                meta.description.get_or_insert(truncate(&v, 2048));
-            }
             _ => {}
         }
         meta.fields.insert(format!("png:{key}"), truncate(&v, 1024));
