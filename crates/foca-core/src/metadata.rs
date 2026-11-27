@@ -123,6 +123,8 @@ pub enum DocFormat {
     SourceMap,
     /// Jupyter notebook (JSON).
     Ipynb,
+    /// Rich Text Format document.
+    Rtf,
     #[default]
     Unknown,
 }
@@ -195,6 +197,7 @@ impl DocFormat {
             DocFormat::Gpx => "gpx",
             DocFormat::SourceMap => "map",
             DocFormat::Ipynb => "ipynb",
+            DocFormat::Rtf => "rtf",
             DocFormat::Unknown => "bin",
         }
     }

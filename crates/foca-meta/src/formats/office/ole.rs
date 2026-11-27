@@ -822,9 +822,17 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
             ));
         }
     }
+    let mut ansi_cp: u16 = 1251;
     if let Some(s) = read_stream(&mut cf, "/\u{5}SummaryInformation", ctx)? {
         match parse_property_set(&s) {
-            Some(ps) => summary(&mut meta, &ps),
+            Some(ps) => {
+                if let Some(cp) = ps.sections.first().and_then(|s| s.codepage) {
+                    if cp != 1200 && cp != 65001 {
+                        ansi_cp = cp;
+                    }
+                }
+                summary(&mut meta, &ps)
+            }
             None => meta.warnings.push("SummaryInformation: не разобран".into()),
         }
     }
@@ -883,7 +891,7 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         }
         if *is_stream && lower.ends_with("\u{1}ole10native") {
             if let Ok(Some(native)) = read_stream(&mut cf, path, ctx) {
-                parse_ole10_native(&mut meta, ctx, path, &native)?;
+                parse_ole10_native(&mut meta, ctx, path, &native, ansi_cp)?;
             }
         }
     }
@@ -907,11 +915,12 @@ fn msi_summary(meta: &mut Metadata) {
 
 /// Parses an MS-OLEDS `\x01Ole10Native` embedded package stream: extracts original filename,
 /// source path (`C:\...` / `\\server\...`), temp path, and recursively parses the embedded payload.
-fn parse_ole10_native(
+pub(crate) fn parse_ole10_native(
     meta: &mut Metadata,
     ctx: &Ctx,
     stream_path: &str,
     b: &[u8],
+    codepage: u16,
 ) -> Result<(), MetaError> {
     // Layout: [u32 total_size, u16 flags(2), label\0, source_path\0, u32+u32 unknown(8), temp_path\0, u32 data_size, data...]
     if b.len() < 12 {
@@ -921,7 +930,12 @@ fn parse_ole10_native(
     let read_z = |p: &mut usize| -> Option<String> {
         let rest = b.get(*p..)?;
         let nul = rest.iter().position(|&c| c == 0)?;
-        let s = clean_str(&decode_codepage(&rest[..nul], 1251));
+        let raw = &rest[..nul];
+        // ANSI strings in the system code page; UTF-8 when the bytes are valid UTF-8
+        let s = match std::str::from_utf8(raw) {
+            Ok(u) => clean_str(u),
+            Err(_) => clean_str(&decode_codepage(raw, codepage)),
+        };
         *p += nul + 1;
         s
     };

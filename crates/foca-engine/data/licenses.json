@@ -4,8 +4,8 @@
   "repository": "https://github.com/SinonApp/FOCA-rs",
   "counts": {
     "data_assets": 22,
-    "rust_total": 535,
-    "rust_direct": 44,
+    "rust_total": 538,
+    "rust_direct": 45,
     "android_total": 9,
     "android_play_only": 1,
     "license_texts": 13
@@ -208,6 +208,13 @@
       "license": "MIT OR Apache-2.0",
       "direct": true,
       "repository": "https://github.com/clap-rs/clap"
+    },
+    {
+      "name": "encoding_rs",
+      "version": "0.8.44",
+      "license": "(Apache-2.0 OR MIT) AND BSD-3-Clause",
+      "direct": true,
+      "repository": "https://github.com/hsivonen/encoding_rs"
     },
     {
       "name": "flate2",
@@ -915,6 +922,13 @@
       "license": "MIT OR Apache-2.0",
       "direct": false,
       "repository": "https://github.com/servo/core-foundation-rs"
+    },
+    {
+      "name": "core_detect",
+      "version": "1.0.0",
+      "license": "MIT/Apache-2.0",
+      "direct": false,
+      "repository": "https://github.com/thomcc/core_detect"
     },
     {
       "name": "cpufeatures",
@@ -2056,6 +2070,13 @@
       "license": "Apache-2.0 OR MIT",
       "direct": false,
       "repository": "https://github.com/tauri-apps/muda"
+    },
+    {
+      "name": "multiversion_no_op",
+      "version": "1.0.0",
+      "license": "Apache-2.0 OR MIT",
+      "direct": false,
+      "repository": "https://github.com/hsivonen/multiversion_no_op"
     },
     {
       "name": "mutate_once",

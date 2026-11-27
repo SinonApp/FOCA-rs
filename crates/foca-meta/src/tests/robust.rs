@@ -19,7 +19,7 @@ fn zip_with(entries: &[(&str, &[u8])]) -> Vec<u8> {
 #[test]
 fn random_bytes_never_panic() {
     let mut rng = Rng(0x5EED_1234_ABCD_0001);
-    let prefixes: [&[u8]; 9] = [
+    let prefixes: [&[u8]; 10] = [
         b"",
         b"PK\x03\x04",
         b"%PDF-1.7\n",
@@ -29,6 +29,7 @@ fn random_bytes_never_panic() {
         &[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1],
         b"<svg ",
         b"full address:s:",
+        b"{\\rtf1\\ansi{\\pict ",
     ];
     let limits = Limits::default();
     for i in 0..1500 {

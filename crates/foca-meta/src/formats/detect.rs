@@ -73,6 +73,9 @@ pub(crate) fn detect_with_hint(bytes: &[u8], name_hint: Option<&str>) -> DocForm
     {
         return DocFormat::Mov;
     }
+    if crate::formats::office::rtf::is_rtf(b) {
+        return DocFormat::Rtf;
+    }
     // %PDF may be preceded by up to 1024 bytes of garbage
     let head = &b[..b.len().min(1024)];
     if head.windows(5).any(|w| w == b"%PDF-") {

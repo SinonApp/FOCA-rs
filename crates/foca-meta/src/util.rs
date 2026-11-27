@@ -100,15 +100,53 @@ pub fn decode_codepage(b: &[u8], cp: u16) -> String {
                 _ => char::from_u32(0x0410 + u32::from(c - 0xC0)).unwrap_or('\u{FFFD}'),
             })
             .collect(),
-        _ => b
-            .iter()
-            .map(|&c| match c {
-                0x80..=0x9F => char::from_u32(u32::from(CP1252_80[usize::from(c - 0x80)]))
-                    .unwrap_or('\u{FFFD}'),
-                _ => c as char,
-            })
-            .collect(),
+        _ => match codepage_encoding(cp) {
+            Some(enc) => enc.decode_without_bom_handling(b).0.into_owned(),
+            None => decode_cp1252(b),
+        },
     }
+}
+
+/// Encoding of a Windows code page number other than 1251/1252/UTF (Shift-JIS, GBK, Big5,
+/// EUC-KR, the other cp125x, KOI8, DOS 866 and Mac Roman). `None` falls back to cp1252.
+pub fn codepage_encoding(cp: u16) -> Option<&'static encoding_rs::Encoding> {
+    use encoding_rs as e;
+    Some(match cp {
+        932 => e::SHIFT_JIS,
+        936 | 54936 => e::GBK,
+        949 | 51949 => e::EUC_KR,
+        950 => e::BIG5,
+        866 => e::IBM866,
+        874 => e::WINDOWS_874,
+        1250 => e::WINDOWS_1250,
+        1253 => e::WINDOWS_1253,
+        1254 => e::WINDOWS_1254,
+        1255 => e::WINDOWS_1255,
+        1256 => e::WINDOWS_1256,
+        1257 => e::WINDOWS_1257,
+        1258 => e::WINDOWS_1258,
+        10000 => e::MACINTOSH,
+        10007 => e::X_MAC_CYRILLIC,
+        20866 => e::KOI8_R,
+        21866 => e::KOI8_U,
+        20932 | 51932 => e::EUC_JP,
+        28592 => e::ISO_8859_2,
+        28595 => e::ISO_8859_5,
+        28597 => e::ISO_8859_7,
+        50220..=50222 => e::ISO_2022_JP,
+        _ => return None,
+    })
+}
+
+fn decode_cp1252(b: &[u8]) -> String {
+    b.iter()
+        .map(|&c| match c {
+            0x80..=0x9F => {
+                char::from_u32(u32::from(CP1252_80[usize::from(c - 0x80)])).unwrap_or('\u{FFFD}')
+            }
+            _ => c as char,
+        })
+        .collect()
 }
 
 /// Cleans a metadata string: removes NUL and control characters and trims whitespace. Returns `None` if empty.

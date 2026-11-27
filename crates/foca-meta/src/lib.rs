@@ -18,7 +18,8 @@
 //! parser (quick-xml) does not expand external or custom entities, so `&xxe;` stays literal
 //! text. PDF references are resolved with a depth limit and cycle protection.
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::hash::{Hash, Hasher};
 
 use foca_core::Embedded;
 pub use foca_core::{DocFormat, Metadata};
@@ -39,7 +40,7 @@ use formats::binary::{jar, pe};
 use formats::detect::detect_with_hint;
 use formats::mail::{eml, ics, msg, vcf};
 use formats::media::{av, image, indesign, isobmff, mp3, postscript, psd, svg};
-use formats::office::{legacy_office, odf, ole, ooxml, publisher, visio};
+use formats::office::{legacy_office, odf, ole, ooxml, publisher, rtf, visio};
 use formats::{cad, dev, geo, lnk, pdf, remote};
 
 pub use clean::{
@@ -126,6 +127,15 @@ pub(crate) struct Ctx<'a> {
     depth: u32,
     budget: &'a Cell<u64>,
     embedded: Option<ExtractEmbedded>,
+    /// Hashes of the documents on the current ancestor chain (cycle protection).
+    chain: Option<&'a RefCell<Vec<u64>>>,
+}
+
+/// Content hash used to detect a document embedded inside itself.
+fn content_hash(bytes: &[u8]) -> u64 {
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    bytes.hash(&mut h);
+    h.finish()
 }
 
 impl<'a> Ctx<'a> {
@@ -136,13 +146,20 @@ impl<'a> Ctx<'a> {
             depth: 0,
             budget,
             embedded: None,
+            chain: None,
         }
     }
 
     /// A top-level context that parses embedded documents with `embedded`.
-    fn with_embedded(limits: &'a Limits, budget: &'a Cell<u64>, embedded: ExtractEmbedded) -> Self {
+    fn with_embedded(
+        limits: &'a Limits,
+        budget: &'a Cell<u64>,
+        chain: &'a RefCell<Vec<u64>>,
+        embedded: ExtractEmbedded,
+    ) -> Self {
         Ctx {
             embedded: Some(embedded),
+            chain: Some(chain),
             ..Ctx::standalone(limits, budget)
         }
     }
@@ -154,6 +171,7 @@ impl<'a> Ctx<'a> {
             depth: self.depth + 1,
             budget: self.budget,
             embedded: self.embedded,
+            chain: self.chain,
         }
     }
 
@@ -211,7 +229,18 @@ impl<'a> Ctx<'a> {
             return None;
         }
         let extract = self.embedded?;
-        extract(bytes, name, &self.nested())
+        let Some(chain) = self.chain else {
+            return extract(bytes, name, &self.nested());
+        };
+        // a document that (directly or through another child) embeds itself is parsed once
+        let h = content_hash(bytes);
+        if chain.borrow().contains(&h) {
+            return None;
+        }
+        chain.borrow_mut().push(h);
+        let r = extract(bytes, name, &self.nested());
+        chain.borrow_mut().pop();
+        r
     }
 
     /// Parses an embedded document and attaches it to `meta` under `label` (up to
@@ -269,7 +298,8 @@ pub fn extract(
 ) -> Result<Metadata, MetaError> {
     check_size(bytes, limits)?;
     let budget = Cell::new(limits.max_unzipped_total);
-    let ctx = Ctx::with_embedded(limits, &budget, extract_embedded);
+    let chain = RefCell::new(vec![content_hash(bytes)]);
+    let ctx = Ctx::with_embedded(limits, &budget, &chain, extract_embedded);
     // The whole per-file parse (parser plus path post-processing) runs under catch_unwind.
     guard("документ", || extract_ctx(bytes, name_hint, &ctx))
 }
@@ -351,6 +381,7 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
         DocFormat::Gpx => geo::extract_gpx(bytes, ctx)?,
         DocFormat::SourceMap => dev::extract_sourcemap(bytes)?,
         DocFormat::Ipynb => dev::extract_notebook(bytes)?,
+        DocFormat::Rtf => rtf::extract(bytes, ctx)?,
         DocFormat::Unknown => return Err(MetaError::Unsupported("неизвестная сигнатура".into())),
     };
     meta.format = format;
@@ -376,7 +407,8 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
 pub fn text(bytes: &[u8], limits: &Limits) -> Result<String, MetaError> {
     check_size(bytes, limits)?;
     let budget = Cell::new(limits.max_unzipped_total);
-    let ctx = Ctx::with_embedded(limits, &budget, extract_embedded);
+    let chain = RefCell::new(vec![content_hash(bytes)]);
+    let ctx = Ctx::with_embedded(limits, &budget, &chain, extract_embedded);
     guard("документ", || text_ctx(bytes, &ctx))
 }
 
@@ -417,6 +449,7 @@ fn text_ctx(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
         }
         DocFormat::SourceMap => dev::sourcemap_text(bytes),
         DocFormat::Ipynb => dev::notebook_text(bytes),
+        DocFormat::Rtf => rtf::text(bytes, ctx),
         DocFormat::Vsdx => visio::text_vsdx(bytes, ctx),
         DocFormat::Vsd | DocFormat::Pub | DocFormat::Wps | DocFormat::Msi => ole::text(bytes, ctx),
         DocFormat::Lnk
