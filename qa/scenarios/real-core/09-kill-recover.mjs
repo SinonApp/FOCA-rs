@@ -43,8 +43,10 @@ export default async (page, o) => {
     ok('core: resume of the same record, auto', r.scan_id === rec.id && r.resumed === true && r.auto === true, r);
     e0 = o.errs.length;
     await page.reload(); await wait(300);
+    await until(() => window.FOCA && FOCA.current && FOCA.current(), null, 15000);
+    await t.unlock();
     ok('after UI reload: scan running (from scan_status)', await until(() => window.FOCA && FOCA.scan && FOCA.scan.running && FOCA.coreScan.running, null, 15000));
-    ok('"прерван системой: продолжаю" toast', await until(() => /прерван системой: продолжаю/.test((document.querySelector('#snack, .snack') || {}).innerText || ''), null, 8000));
+    ok('"прерван системой. Продолжаю" toast', await until(() => /прерван системой[.:]\s*продолжаю/i.test((document.querySelector('#snack, .snack') || {}).innerText || ''), null, 8000));
     await ev(() => FOCA.go('/p/scan')); await wait(500);
     ok('sources and stage restored', await ev(() => FOCA.scan.sources.length > 0 && FOCA.scan.stageIdx >= 1), await ev(() => ({ src: FOCA.scan.sources.length, st: FOCA.scan.stageIdx })));
     const c0 = await ev(() => FOCA.sel.counts().docs.downloaded);

@@ -31,7 +31,9 @@ export default async (page, o) => {
     const oos = await api('oos_list', { project: p.id });
     ok('passive: candidate in oos_list (csp)', oos.some(x => x.host === 'cdn.partner-cdn.test'), oos.map(x => x.host));
     const rules = s.findings.map(f => (f.provenance || {}).rule || '');
-    ok('passive: recon.web.* findings (CSP, version)', rules.includes('recon.web.csp_unsafe_inline') && rules.includes('recon.web.csp_domains'), rules.filter(r => r.startsWith('recon.web')));
+    // Headers of an archived copy belong to the archive, so a weak CSP there is not a finding about the live site;
+    // the CSP host list still is.
+    ok('passive: recon.web.csp_domains from the archived CSP, no header findings from the archive', rules.includes('recon.web.csp_domains') && !rules.includes('recon.web.csp_unsafe_inline'), rules.filter(r => r.startsWith('recon.web')));
     ok('insight findings: KEV / org chart / network map', rules.includes('sw.kev') && rules.includes('org.structure') && rules.includes('net.internal_map'), rules.filter(r => /^(sw\.kev|org\.|net\.|doc\.anomaly|doc\.lineage)/.test(r)));
     const kev = s.findings.filter(f => (f.provenance || {}).rule === 'sw.kev');
     ok('KEV wording: possible/likely, verify the version', kev.every(f => /сверьте версию$/.test(f.title) || /^Вероятно уязвимое ПО/.test(f.title)), kev.map(f => f.title));

@@ -23,25 +23,27 @@ export default async (page, o) => {
     ok('reference case: the new project opens', await until(() => FOCA.current() === '/p/overview' && FOCA.db.project && FOCA.db.project.name === 'Эталонный кейс', null, 60000), await route());
     await wait(800);
     const pid = await t.project();
+    // A page load reopens the last ordinary project, never a reference case, so stay in the page from here on.
+    const nav = r => ev(x => FOCA.go(x), r);
     ok('reference case: a new project id', !!pid && !before.includes(pid), pid);
     const s = await api('project_snapshot', { id: pid });
     ok('reference case: documents analysed, findings present, no scan', s.docs.length >= 12 && s.findings.length > 5 && !s.scans.some(x => x.status === 'running'), [s.docs.length, s.findings.length]);
     await step('refcase_overview');
     // 2) Graph, network map, timeline and heat map.
-    await o.go('/p/graph'); await wait(900);
+    await nav('/p/graph'); await wait(900);
     ok('graph: layered nodes drawn', await until(() => document.querySelectorAll('.ins-n').length > 3, null, 15000), await ev(() => document.querySelectorAll('.ins-n').length));
     await step('refcase_graph');
-    await o.go('/p/netmap'); await wait(900);
+    await nav('/p/netmap'); await wait(900);
     ok('network map: nodes from the documents', await until(() => document.querySelectorAll('.ins-nm-r').length > 1, null, 15000), (await text()).slice(0, 200));
     await step('refcase_netmap');
-    await o.go('/p/timeline'); await wait(900);
+    await nav('/p/timeline'); await wait(900);
     ok('timeline: year lanes and the 7×24 heat map', await until(() => document.querySelectorAll('.ins-hg i').length === 168 && document.querySelectorAll('.ins-ln-r').length > 0, null, 15000), await ev(() => [document.querySelectorAll('.ins-hg i').length, document.querySelectorAll('.ins-ln-r').length]));
     await step('refcase_timeline');
     // 3) Standards in a finding card.
     const fs1 = s.findings.find(f => f.standards && (f.standards.cwe.length || f.standards.mitre.length));
     ok('snapshot: findings carry standards from the core', !!fs1, s.findings.map(f => (f.provenance || {}).rule).slice(0, 20));
     if (fs1) {
-      await o.go(`/p/finding/${fs1.id}`); await wait(700);
+      await nav(`/p/finding/${fs1.id}`); await wait(700);
       const chips = await ev(() => [...document.querySelectorAll('.fd-stdc')].map(x => x.textContent));
       ok('finding card: standards chips', chips.length > 0 && chips.some(c => /^(ATT&CK T\d{4}|CWE-\d+)/.test(c)), chips);
       await step('refcase_finding_standards');
@@ -57,7 +59,7 @@ export default async (page, o) => {
     await step('refcase_before_after');
     // 5) Laboratory-work report from the builder.
     const nRep = s.reports.length;
-    await o.go('/p/report-new'); await wait(700);
+    await nav('/p/report-new'); await wait(700);
     await click('rp-d:tpl:lab'); await wait(600);
     ok('report builder: core description of the laboratory work', /Лабораторн/.test(await text()) && !(await ev(() => !!document.querySelector('.rp-secs'))), (await text()).slice(0, 300));
     await click('rp-d:fmt:html'); await wait(300);
