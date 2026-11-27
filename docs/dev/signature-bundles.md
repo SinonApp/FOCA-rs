@@ -205,8 +205,8 @@ hex characters (mode 600).
    differs from the one built into the app (`--allow-foreign-key` is for test bundles only).
 3. Check them: `cargo run -p foca-engine --example sig_bundle -- verify dist/signatures-v3.bundle`
    (the script already verifies both).
-4. Upload each bundle to its release (create them once as normal releases, not pre-releases; replace
-   the asset on every update):
+4. Upload each bundle to its release (create each once with `make_latest: false`, so it never
+   displaces the app release; replace the asset on every update):
    `gh release upload signatures-v3 dist/signatures-v3.bundle --clobber` and
    `gh release upload signatures dist/signatures.bundle --clobber`. Never upload a v3 bundle to the
    `signatures` release: beta.3 rejects it.

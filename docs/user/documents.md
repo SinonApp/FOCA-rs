@@ -49,14 +49,16 @@ Open any file under Data → Documents → `<document>` to view its Forensics se
 | **Broken redaction** | Page number, box fill color, and a short snippet of recoverable text sitting underneath the drawn rectangle |
 | **PDF revisions** | Incremental save history: who saved with which tool, plus removed (`−`) and added (`+`) text lines |
 | **Hidden content** | Hidden Word text (`w:vanish`), hidden Excel rows, columns, and worksheets containing data |
-| **Data connections** | Database connection strings, `.odc` files, pivot tables (refresh author & source), external chart links |
+| **Data connections** | Database connection strings (passwords shown as `***`), `.odc` files, Power Query and mail merge sources, pivot tables (refresh author & source), external chart links |
 | **Mail headers / Shortcut / Calendar / Contacts / Media** | Format-specific artifacts (see table above); internal relays highlighted in `Received` chains |
 | **Personal data (PII)** | Detected categories, counts, and masked values |
 | **Cloud links & tokens** | Google Drive, SharePoint, Notion, Jira, Azure/S3 URLs; embedded tokens are masked, SAS tokens & webhooks flagged Critical |
 | **Edit history (XMP)** | Software lineage (created, converted, saved), `DocumentID`, and `DerivedFrom` |
 | **Attachments / Archive entries** | Nested files and formats; unsafe archive traversal paths (`Zip-Slip`) and `Ole10Native` embedded sources |
+| **Mail path (Received) / Geodata / AI-generated / Form fields / Fonts** | Parsed mail hops with internal ones marked; KML/GPX points; generator, model and prompt of an AI image; PDF form field names with masked values; font names |
+| **Same author or computer** | Other documents that share a full template path, a program build folder, a printer with the same author or a camera serial |
 
-Each forensic indicator generates a typed finding (`doc.bad_redaction`, `doc.modified_after_signing`, `mail.internal_relay`, `pii`, etc.) with a one-line explanation and a Jump to document button. List badges show a shield for forensic hits and a person icon for PII; the Only with findings filter includes both.
+Each forensic indicator generates a typed finding (`doc.bad_redaction`, `doc.modified_after_signing`, `mail.internal_relay`, `pii`, etc.) with a one-line explanation and a Jump to document button. A group of documents by the same author or computer is reported once as `doc.author_cluster`. List badges show a shield for forensic hits and a person icon for PII; the Only with findings filter includes both.
 
 ## Personal Data (PII) & Masking
 

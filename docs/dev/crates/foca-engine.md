@@ -30,7 +30,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 - **IPC Localization Bundles (`services/i18n.rs`)**:
   - Embeds `locales/{en,ru,uk}/{ui,help}.json` and the per-area `locales/<lang>/ui/*.json` dictionaries via `include_str!` and serves them over IPC (`i18n_bundle { lang?, device_locale?, include_help? }`) using `foca_core::Lang::resolve_setting`, so the WebView never requires `fetch()` or a relaxed CSP. Help catalogs load lazily only when `include_help: true`.
 - **Offline License Catalog (`services/licenses.rs`)**:
-  - Embeds `crates/foca-engine/data/licenses.json` (generated and validated by `qa/gen-licenses.py --check`) and serves it to `/settings/licenses` via `licenses_get {}` (536+ Rust crates with direct flags, Android libraries tagged `foss`/`play`/`both`, data/assets, and 10 full open-source license texts).
+  - Embeds `crates/foca-engine/data/licenses.json` (generated and validated by `qa/gen-licenses.py --check`) and serves it to `/settings/licenses` via `licenses_get {}` (535 Rust crates with direct flags, Android libraries tagged `foss`/`play`/`both`, data/assets, and 10 full open-source license texts).
 - **Sandboxed Plugin Engine (`services/plugins.rs`, `scan/plugins.rs`)**:
   - Pure-Rust plugin system ([ADR-0011](../../adr/0011-port-logic-not-binaries.md)) supporting two runtimes:
     - **Declarative** (`"declarative"`): JSON/TOML rules with URL templates, regex extractors (`hosts`, `urls`, `header_finding`, `meta_pattern`), and scoped `NetClient` requests.

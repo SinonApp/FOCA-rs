@@ -46,7 +46,7 @@ The Attack Path Engine (`foca-analysis::attack_paths`, accessible via Analytics 
 
 ## Internal Network Map
 
-`/p/netmap` builds an inferred tree of AD domain → servers by role (domain controller, PKI, file server, mail, print server, database, terminal/RDS) → workstations → users. Reconstructed from `UNC` paths, printers, `LNK` shortcuts, e-mail `Received` chains, `RDP`/`ICA` files, and certificate `CDP`/`AIA` URLs. Tap any node to view provenance (document, path, or header) and confidence level; hosts without an identified domain appear under Unknown domain.
+`/p/netmap` builds an inferred tree of AD domain → servers by role (domain controller, PKI, file server, mail, print server, database, terminal/RDS) → workstations → users. Reconstructed from `UNC` paths, printers, `LNK` shortcuts, e-mail `Received` chains, `RDP`/`ICA` files, certificate `CDP`/`AIA` URLs, database servers from Office data connections and Power Query sources, and build machines from PDB paths in programs. Tap any node to view provenance (document, path, or header) and confidence level; hosts without an identified domain appear under Unknown domain.
 
 ## Timeline & Activity Heatmap
 
