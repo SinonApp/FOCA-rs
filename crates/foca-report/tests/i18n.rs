@@ -308,7 +308,7 @@ const RU_LOG_ERRORS: &[(&str, &str)] = &[
         "network",
     ),
     (
-        "out_of_scope: вне скоупа: mta-sts.sinon.app (нет в целях или в исключениях)",
+        "out_of_scope: вне скоупа: mta-sts.example.com (нет в целях или в исключениях)",
         "out_of_scope",
     ),
 ];
@@ -403,7 +403,7 @@ fn log_export_errors_in_export_language() {
                 "{csv}"
             );
             assert!(
-                csv.contains("out_of_scope: mta-sts.sinon.app (not among the targets or excluded)"),
+                csv.contains("out_of_scope: mta-sts.example.com (not among the targets or excluded)"),
                 "{csv}"
             );
             assert!(

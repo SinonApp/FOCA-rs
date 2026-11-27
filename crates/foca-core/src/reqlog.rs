@@ -151,9 +151,9 @@ mod tests {
                 "сеть: error sending request for url (https://a.example/)",
             ),
             (
-                "out_of_scope: вне скоупа: mta-sts.sinon.app (нет в целях или в исключениях)",
+                "out_of_scope: вне скоупа: mta-sts.example.com (нет в целях или в исключениях)",
                 "out_of_scope",
-                "вне скоупа: mta-sts.sinon.app (нет в целях или в исключениях)",
+                "вне скоупа: mta-sts.example.com (нет в целях или в исключениях)",
             ),
         ] {
             assert_eq!(k(e), (kind, Some(detail.to_string())), "{e}");
