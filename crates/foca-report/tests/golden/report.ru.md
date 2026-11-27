@@ -1445,7 +1445,7 @@ EXAMPLE-BODY-0042
 
 ### F-68 · Раскрыты имена и логины 20 сотрудников - Средний
 
-**Статус:** Новая · **Хост:** \- · **Категория:** people · **MITRE ATT&CK v20:** T1589.003 · Gather Victim Identity Information: Employee Names
+**Статус:** Новая · **Хост:** contoso.example · **Категория:** people · **MITRE ATT&CK v20:** T1589.003 · Gather Victim Identity Information: Employee Names
 
 **Описание.** Метаданные документов раскрывают 20 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.
 
@@ -2179,7 +2179,7 @@ exiftool-PDF2.pdf
 
 ### F-106 · Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name - Инфо
 
-**Статус:** Новая · **Хост:** \- · **Категория:** people · **MITRE ATT&CK v20:** T1087 · Account Discovery
+**Статус:** Новая · **Хост:** contoso.example · **Категория:** people · **MITRE ATT&CK v20:** T1087 · Account Discovery
 
 **Описание.** Документы созданы под общими учётными записями (Administrator, User…): возможна работа с правами администратора и общие пароли.
 

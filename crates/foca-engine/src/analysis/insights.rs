@@ -452,7 +452,7 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
             &id_key,
             title,
             g.sev,
-            "software",
+            "sw",
             if g.kind == foca_analysis::kev::SubjectKind::Tech {
                 "T1190"
             } else {

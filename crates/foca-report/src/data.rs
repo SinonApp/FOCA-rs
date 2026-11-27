@@ -565,7 +565,12 @@ pub fn overview(snap: &Snapshot, lang: crate::Lang) -> Overview {
         eol_software,
         people: snap.people.len() as u32,
         emails: snap.emails.len() as u32,
-        hosts: snap.hosts.len() as u32,
+        // storage providers (Google Drive, S3, ...) hold files, they are not the target's hosts
+        hosts: snap
+            .hosts
+            .iter()
+            .filter(|h| !foca_analysis::util::is_storage_provider(&h.name))
+            .count() as u32,
         hosts_internal: snap.hosts.iter().filter(|h| h.internal).count() as u32,
         pcs: snap.pcs.len() as u32,
         servers: snap.pcs.iter().filter(|p| p.kind == "server").count() as u32,

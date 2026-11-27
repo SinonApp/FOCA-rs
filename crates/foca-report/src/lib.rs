@@ -436,6 +436,35 @@ pub fn tpl_label(t: Template, l: Lang) -> &'static str {
 }
 
 /// Builds a report without a request log (the log section will be empty).
+/// Host shown for a finding without one: the first scope target, else `n/a`.
+pub fn default_host(snap: &Snapshot) -> String {
+    snap.scope
+        .targets
+        .iter()
+        .map(|t| t.v.trim())
+        .find(|v| !v.is_empty())
+        .unwrap_or("n/a")
+        .to_string()
+}
+
+fn needs_labels(f: &Finding) -> bool {
+    matches!(f.host.trim(), "" | "-") || f.category == "software"
+}
+
+/// One category key for software findings (`sw`, older analyses wrote `software`) and a host
+/// label for findings without one.
+pub fn normalize_finding_labels(snap: &mut Snapshot) {
+    let host = default_host(snap);
+    for f in &mut snap.findings {
+        if matches!(f.host.trim(), "" | "-") {
+            f.host = host.clone();
+        }
+        if f.category == "software" {
+            f.category = "sw".into();
+        }
+    }
+}
+
 pub fn build_report(snap: &Snapshot, o: &ReportOptions, now: OffsetDateTime) -> ReportArtifact {
     build_report_with_log(snap, &[], o, now)
 }
@@ -468,15 +497,20 @@ pub fn build_report_with_visuals(
     let repeats =
         |f: &Finding| !f.evidence.trim().is_empty() && f.evidence.trim() == f.description.trim();
     let deduped;
-    let snap = if matches!(
+    let text_fmt = matches!(
         o.fmt,
         ReportFormat::Html | ReportFormat::Md | ReportFormat::Docx
-    ) && snap.findings.iter().any(repeats)
+    );
+    let snap = if (text_fmt && snap.findings.iter().any(repeats))
+        || snap.findings.iter().any(needs_labels)
     {
         let mut s = snap.clone();
-        for f in s.findings.iter_mut().filter(|f| repeats(f)) {
-            f.evidence = f.url.clone().unwrap_or_default();
+        if text_fmt {
+            for f in s.findings.iter_mut().filter(|f| repeats(f)) {
+                f.evidence = f.url.clone().unwrap_or_default();
+            }
         }
+        normalize_finding_labels(&mut s);
         deduped = s;
         &deduped
     } else {

@@ -319,8 +319,26 @@ impl Engine {
                 o.insert("mask".into(), json!(m));
             }
         }
+        // a finding without a host shows the first scope target (or n/a); software findings
+        // of older analyses wrote the category `software`, the UI and reports use `sw`
+        let target = v["scope"]["targets"]
+            .as_array()
+            .and_then(|t| {
+                t.iter()
+                    .filter_map(|x| x["v"].as_str())
+                    .map(str::trim)
+                    .find(|x| !x.is_empty())
+            })
+            .unwrap_or("n/a")
+            .to_string();
         if let Some(arr) = v["findings"].as_array_mut() {
             for f in arr {
+                if matches!(f["host"].as_str().map(str::trim), None | Some("" | "-")) {
+                    f["host"] = json!(target);
+                }
+                if f["category"] == "software" {
+                    f["category"] = json!("sw");
+                }
                 let id = f["id"].as_u64().unwrap_or(0);
                 let (ev, refs) = mask_evidence(f["evidence"].as_str().unwrap_or(""), id);
                 f["evidence"] = json!(ev);

@@ -474,3 +474,40 @@ fn findings_with_one_title_are_told_apart() {
         );
     }
 }
+
+/// A finding without a host shows the first scope target, the old `software` category key is
+/// `sw`, and storage providers are not counted as discovered hosts.
+#[test]
+fn empty_hosts_and_category_keys_are_normalized() {
+    let mut s = fixture().snap.clone();
+    let target = foca_report::default_host(&s);
+    assert_ne!(target, "n/a", "the fixture has a scope target");
+    s.findings[0].host = String::new();
+    s.findings[1].host = "-".into();
+    s.findings[1].category = "software".into();
+    let mut n = s.clone();
+    foca_report::normalize_finding_labels(&mut n);
+    assert_eq!(n.findings[0].host, target);
+    assert_eq!(n.findings[1].host, target);
+    assert_eq!(n.findings[1].category, "sw");
+    let j: serde_json::Value =
+        serde_json::from_str(&text(&build(&s, &opts(ReportFormat::Json)))).unwrap();
+    let fs = j["findings"].as_array().unwrap();
+    assert!(
+        fs.iter()
+            .all(|f| !matches!(f["host"].as_str(), Some("" | "-"))),
+        "{j}"
+    );
+    assert!(fs.iter().all(|f| f["category"] != "software"));
+    let mut none = s.clone();
+    none.scope.targets.clear();
+    foca_report::normalize_finding_labels(&mut none);
+    assert_eq!(none.findings[0].host, "n/a");
+
+    let before = foca_report::data::overview(&s, Lang::En).hosts;
+    s.hosts.push(foca_core::api::Host {
+        name: "drive.google.com".into(),
+        ..Default::default()
+    });
+    assert_eq!(foca_report::data::overview(&s, Lang::En).hosts, before);
+}

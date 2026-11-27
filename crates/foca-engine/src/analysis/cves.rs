@@ -276,7 +276,7 @@ fn new_finding(m: &CveMatch, s: &CveSummary, now: &str, scan: Option<&str>) -> a
         &key,
         title,
         cve::finding_severity(s, cap(m)),
-        "software",
+        "sw",
         if m.kind == SubjectKind::Tech {
             "T1190"
         } else {
