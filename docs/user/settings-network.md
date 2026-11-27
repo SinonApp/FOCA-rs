@@ -115,7 +115,7 @@ FOCA-rs 2.0 provides an optional Cloud AI Summary (`/settings/ai` and `/p/ai`) b
 - **Privacy & redaction preview:** Before anything leaves the phone, secrets, PII, e-mail addresses, and the client name are automatically replaced with `[SECRET]`, `[NAME]`, `[EMAIL]`, `[CLIENT]` and `[CLIENT-DOMAIN]` (the same in every language), and you can inspect the entire prompt in the preview. Your AI API key lives exclusively in Android KeyVault.
 - **Language:** the request and the answer use the interface language (with "System", the device language).
 - **One request at a time:** "Send" stays locked until the answer arrives and the core rejects a second request for the same project; a running request can be cancelled.
-- **History:** every summary is saved with the project; `/p/ai` shows the latest one and the history (date, model, language), and any of them can be copied, deleted or picked for the report. The report puts the client name and domain back in place of `[CLIENT]` and `[CLIENT-DOMAIN]`.
+- **History:** every summary is saved with the project; `/p/ai` shows the latest one and the history (date, model, language), and any of them can be copied, deleted or picked for the report. A failed or cancelled request leaves the history as it was, a new summary appears on top at once, and an answer without text (a reasoning model that spent its tokens on thinking) is shown as an error; reasoning models get up to 10 minutes. The report puts the client name and domain back in place of `[CLIENT]` and `[CLIENT-DOMAIN]`.
 
 ## Sandboxed Plugins
 

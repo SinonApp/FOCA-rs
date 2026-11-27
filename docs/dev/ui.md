@@ -20,6 +20,7 @@ For the `window.FOCA` internal API reference, CSS classes, and UI contributor co
 | `ui/js/main.js` | Overview (`/p/overview`), project search (`/p/search`), `/open/:id` deep links, bottom navigation |
 | `ui/js/api.js` | `F.api.*`, single data boundary: Tauri `invoke("foca")` in-app, demo backend in browser, or `qa/tauri-shim.js` over `foca serve` |
 | `ui/js/demo-backend.js` | Deterministic in-browser mock backend implementing the same commands (including `i18n_bundle` and `licenses_get`) for `qa/shoot.sh` |
+| `ui/js/demo-loader.js` | Loads `demo-backend.js` (0.5 MB) only in a plain browser; inside Tauri the app starts without it |
 | `ui/js/sel.js` | `F.sel` selectors (single source of truth for numbers) and `FOCA_RULES` (reference spec mirrored in `foca-engine/src/rules.rs`) |
 | `ui/js/icons.js` | Inline SVG icon registry |
 | `ui/screens/*.js` + `*.css` | Feature screens (each stylesheet uses a screen-scoped class prefix) |
