@@ -66,13 +66,13 @@ Layout and dependency direction (lower rows never use higher ones):
 | `src/formats/media/svg.rs` | 82 | SVG: RDF metadata, Inkscape/Sodipodi paths and export attributes |
 | `src/formats/office/legacy_office.rs` | 100 | Legacy office formats: WordPerfect (`.wpd`) and Microsoft Works |
 | `src/formats/office/odf.rs` | 255 | ODF (`odt`/`ods`/`odp`/`odg`) and StarOffice 1.x |
-| `src/formats/office/ole.rs` | 1,046 | OLE2 (`doc`/`xls`/`ppt` 97-2003): property sets, user names, OLE cleaning |
+| `src/formats/office/ole/mod.rs` | 1,324 | OLE2 (`doc`/`xls`/`ppt` 97-2003): property sets, user names, OLE cleaning |
 | `src/formats/office/ooxml.rs` | 1,076 | OOXML (`docx`/`xlsx`/`pptx`): core/app/custom props, comments, tracked changes, connections, hidden content |
 | `src/formats/office/rtf.rs` | 1,149 | RTF: `\info`, generator, user properties, revisions, annotations, fields, `\objdata` (OLE1) and `\pict`, code pages |
-| `src/formats/office/biff.rs` | 711 | Excel BIFF5/8 workbook stream: cell text, string pool, names, external books, comments, hidden rows/columns |
+| `src/formats/office/ole/biff.rs` | 711 | Excel BIFF5/8 workbook stream: cell text, string pool, names, external books, comments, hidden rows/columns |
 | `src/formats/office/xlsb.rs` | 259 | Excel binary workbook (BIFF12 records) |
-| `src/formats/office/ole_objects.rs` | 403 | Embedded OLE objects (recursive), OfficeArt pictures and properties, CompObj |
-| `src/formats/office/ppt.rs` | 231 | PowerPoint 97-2003 records: text, comments, links, saves, ExOleObjStg |
+| `src/formats/office/ole/objects.rs` | 403 | Embedded OLE objects (recursive), OfficeArt pictures and properties, CompObj |
+| `src/formats/office/ole/ppt.rs` | 231 | PowerPoint 97-2003 records: text, comments, links, saves, ExOleObjStg |
 | `src/formats/office/publisher.rs` | 38 | Microsoft Publisher (`.pub`, OLE2 property sets) |
 | `src/formats/office/visio.rs` | 179 | Microsoft Visio (`.vsd`, `.vsdx`/`.vsdm`) |
 | `src/formats/pdf/mod.rs` | 1,443 | In-house PDF parser (no `lopdf`): object table, trailers, Info, XMP, revisions, text, signatures |

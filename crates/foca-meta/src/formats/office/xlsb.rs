@@ -6,7 +6,7 @@
 
 use foca_core::{CommentRef, Metadata, PersonRole};
 
-use super::biff::{interesting_number, rk_value};
+use super::ole::biff::{interesting_number, rk_value};
 use crate::util::{clean_str, rd_u16le, rd_u32le, truncate, utf16le};
 use crate::zipx::SafeZip;
 use crate::{Ctx, MetaError};

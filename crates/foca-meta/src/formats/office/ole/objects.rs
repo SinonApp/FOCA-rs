@@ -12,7 +12,7 @@ use std::io::{Cursor, Read, Seek, Write};
 
 use foca_core::{Attachment, DocFormat, Metadata};
 
-use super::ole::read_stream;
+use super::read_stream;
 use crate::util::{clean_str, decode_codepage, rd_u16le, rd_u32le, truncate, utf16le};
 use crate::{Ctx, MetaError, MAX_CHILDREN};
 

@@ -3,6 +3,10 @@
 //! comment authors, Excel WRITEACCESS and hidden sheets, PowerPoint Current User, VBA macros
 //! and embedded objects.
 
+pub(crate) mod biff;
+pub(crate) mod objects;
+pub(crate) mod ppt;
+
 use std::collections::BTreeMap;
 use std::io::{Cursor, Read, Seek};
 
@@ -754,7 +758,7 @@ fn dop_time_zone(meta: &mut Metadata, dop: &[u8]) {
     }
 }
 
-/// Reads the Excel workbook stream (see [`super::biff`]).
+/// Reads the Excel workbook stream (see [`biff`]).
 fn excel_binary<F: Read + Seek>(
     meta: &mut Metadata,
     cf: &mut cfb::CompoundFile<F>,
@@ -767,9 +771,9 @@ fn excel_binary<F: Read + Seek>(
             None => return Ok(()),
         },
     };
-    super::biff::parse(&wb, meta);
-    super::ole_objects::attach_blips(meta, &super::biff::drawing_group(&wb), ctx)?;
-    super::ole_objects::officeart_props(meta, &wb);
+    biff::parse(&wb, meta);
+    objects::attach_blips(meta, &biff::drawing_group(&wb), ctx)?;
+    objects::officeart_props(meta, &wb);
     Ok(())
 }
 
@@ -834,7 +838,7 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
     if let Some(v) = meta.fields.get("ole:AppVersion").cloned() {
         office_info::apply_app_version(&mut meta, &v);
     }
-    if let Some(t) = super::ole_objects::compobj(&mut cf, "/\u{1}CompObj", ctx)? {
+    if let Some(t) = objects::compobj(&mut cf, "/\u{1}CompObj", ctx)? {
         // the product name of the document type (localized: language of the Office UI)
         meta.fields
             .insert("ole:CompObjUserType".into(), truncate(&t, 256));
@@ -843,11 +847,11 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         DocFormat::Doc => {
             word_binary(&mut meta, &mut cf, ctx)?;
             if let Some(data) = read_stream(&mut cf, "/Data", ctx)? {
-                super::ole_objects::attach_blips(&mut meta, &data, ctx)?;
+                objects::attach_blips(&mut meta, &data, ctx)?;
             }
             for t in ["/1Table", "/0Table"] {
                 if let Some(tbl) = read_stream(&mut cf, t, ctx)? {
-                    super::ole_objects::officeart_props(&mut meta, &tbl);
+                    objects::officeart_props(&mut meta, &tbl);
                 }
             }
         }
@@ -855,11 +859,11 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         DocFormat::Ppt => {
             ppt_current_user(&mut meta, &mut cf, ctx)?;
             if let Some(doc) = read_stream(&mut cf, "/PowerPoint Document", ctx)? {
-                super::ppt::parse(&doc, &mut meta, ctx, true)?;
-                super::ole_objects::officeart_props(&mut meta, &doc);
+                ppt::parse(&doc, &mut meta, ctx, true)?;
+                objects::officeart_props(&mut meta, &doc);
             }
             if let Some(pics) = read_stream(&mut cf, "/Pictures", ctx)? {
-                super::ole_objects::attach_blips(&mut meta, &pics, ctx)?;
+                objects::attach_blips(&mut meta, &pics, ctx)?;
             }
         }
         DocFormat::Msi => msi_summary(&mut meta),
@@ -895,7 +899,7 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
     {
         super::vba::scan_ole(b, &mut meta);
     }
-    super::ole_objects::embedded_objects(&mut meta, &mut cf, &entries, format, ctx)?;
+    objects::embedded_objects(&mut meta, &mut cf, &entries, format, ctx)?;
     // macros and Ole10Native packages
     for (path, is_stream, _) in &entries {
         let lower = path.to_ascii_lowercase();
@@ -936,15 +940,15 @@ fn publisher_streams<F: Read + Seek>(
 ) -> Result<(), MetaError> {
     for p in ["/Escher/EscherStm", "/Escher/EscherDelayStm"] {
         if let Some(d) = read_stream(cf, p, ctx)? {
-            super::ole_objects::officeart_props(meta, &d);
+            objects::officeart_props(meta, &d);
             if p.ends_with("DelayStm") {
-                super::ole_objects::attach_blips(meta, &d, ctx)?;
+                objects::attach_blips(meta, &d, ctx)?;
             }
         }
     }
     for p in ["/Contents", "/Quill/QuillSub/CONTENTS"] {
         if let Some(d) = read_stream(cf, p, ctx)? {
-            for l in super::biff::link_strings(&d) {
+            for l in biff::link_strings(&d) {
                 if meta.links.len() < 2000 {
                     Metadata::add_unique(&mut meta.links, &truncate(&l, 2048));
                 }
@@ -1252,16 +1256,11 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
                     }
                 }
                 if s == "/PowerPoint Document" {
-                    out.push_str(&super::ppt::parse(
-                        &data,
-                        &mut Metadata::default(),
-                        ctx,
-                        false,
-                    )?);
+                    out.push_str(&ppt::parse(&data, &mut Metadata::default(), ctx, false)?);
                     continue;
                 }
                 if s == "/Workbook" || s == "/Book" {
-                    out.push_str(&super::biff::parse(&data, &mut Metadata::default()));
+                    out.push_str(&biff::parse(&data, &mut Metadata::default()));
                     continue;
                 }
                 strings(&data, &mut out);

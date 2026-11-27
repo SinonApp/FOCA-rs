@@ -3,7 +3,7 @@
 
 use std::io::{Cursor, Write};
 
-use crate::formats::office::ole_objects::tests::cfb;
+use crate::formats::office::ole::objects::tests::cfb;
 use crate::{extract, Limits};
 
 fn zip(entries: &[(&str, &[u8])]) -> Vec<u8> {

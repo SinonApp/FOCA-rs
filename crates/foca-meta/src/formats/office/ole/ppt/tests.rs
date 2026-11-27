@@ -2,7 +2,7 @@
 
 use std::io::Write;
 
-use crate::formats::office::ole_objects::tests::{cfb, png_blip, workbook};
+use crate::formats::office::ole::objects::tests::{cfb, png_blip, workbook};
 use crate::{extract, text, DocFormat, Limits};
 
 fn atom(ty: u16, inst: u16, body: &[u8]) -> Vec<u8> {
