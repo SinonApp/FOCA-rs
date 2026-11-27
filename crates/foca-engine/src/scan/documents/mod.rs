@@ -48,6 +48,11 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
         (t.queued + t.downloading) as usize
     };
     let conc = c.e.cfg.download_concurrency.max(1);
+    // The queue can grow while it is worked on (late search results, postponed dorks): the total is
+    // re-read after every file, so the counter and the bar use the same pair and the growth is
+    // reported as `added` in the `files` sub-step.
+    let start_total = total;
+    let mut breakdown = json!({});
     let mut finished = 0usize;
     let max_attempts = DownloadConfig::default().max_attempts;
     // images (any source) share a byte budget; past it the rest are skipped, not fetched
@@ -113,23 +118,40 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
                 }
             }
             finished += 1;
+            let pending = {
+                let t = lock(&c.db).task_counts()?;
+                (t.queued + t.downloading) as usize
+            };
+            let total = finished + pending;
+            // Only the download stage shows the file pair on its row; follow-up downloads inside
+            // the metadata stage report through the `files` sub-step alone.
             c.progress_n(
                 stage,
                 finished as f64 / total.max(1) as f64,
-                Some((finished, total.max(finished))),
+                (stage == 1).then_some((finished, total)),
             );
+            // The breakdown reads the task table: refreshed every few files, not on every one.
+            if finished % 10 == 1 || pending == 0 {
+                breakdown = queue_breakdown(c)?;
+            }
+            let mut extra = breakdown.clone();
+            extra["added"] = json!(total.saturating_sub(start_total));
+            c.substep_event("files", "running", finished, total, extra);
         }
         if c.cancel.is_cancelled() {
             return Err(Stop::Cancelled);
         }
     }
+    let mut extra = queue_breakdown(c)?;
+    extra["added"] = json!(finished.saturating_sub(start_total));
+    c.substep_event("files", "done", finished, finished, extra);
     storage_urls.sort();
     storage_urls.dedup();
     crawl::annotate_storage(c, &storage_urls);
     if !storage_urls.is_empty() {
         let got = storage_urls.len().saturating_sub(private);
         let note = storage_note(got, private);
-        tracing::info!(target: "foca::scan", "{}: {note}", c.scan_id);
+        tracing::info!(target: "foca::scan", "{}: внешние хранилища: {note}", c.scan_id);
         c.sub_note("storage", got, storage_urls.len(), &note);
     }
     Ok(())
@@ -159,9 +181,54 @@ pub(crate) fn wayback_fallback(
     Some(foca_search::sources::copy_url(wayback, &year, url))
 }
 
-/// Summary of linked external storage downloads (core message `download.storage`).
+/// What the download queue turned into, for the stage line: `docs` = rows in the project's
+/// document list (the Documents tab count; `images` among them), and this scan's tasks that ended
+/// `failed` (404, timeouts), `private` (closed storage files), `skipped` (image budget) or as a
+/// `duplicates` of a document already in the list (same SHA-256).
+pub(crate) fn queue_breakdown(c: &Ctx) -> Result<Value, Stop> {
+    let db = lock(&c.db);
+    let docs = db.documents(false)?;
+    let images = docs
+        .iter()
+        .filter(|d| crawl::is_image(d.doc.url.as_deref().unwrap_or(&d.doc.name)))
+        .count();
+    let tasks = db.tasks(None)?;
+    drop(db);
+    let (mut failed, mut private, mut skipped, mut dup) = (0usize, 0usize, 0usize, 0usize);
+    let mut seen: HashSet<u64> = HashSet::new();
+    for t in &tasks {
+        let mine = t.scan_id.as_deref() == Some(c.scan_id.as_str());
+        match t.state {
+            foca_store::TaskState::Done => {
+                if let Some(id) = t.doc_id {
+                    if !seen.insert(id) && mine {
+                        dup += 1;
+                    }
+                }
+            }
+            foca_store::TaskState::Failed if mine => {
+                let e = t.last_error.as_deref().unwrap_or("");
+                if e.starts_with("private:") {
+                    private += 1;
+                } else if e.starts_with("skipped:") {
+                    skipped += 1;
+                } else {
+                    failed += 1;
+                }
+            }
+            _ => {}
+        }
+    }
+    Ok(json!({
+        "docs": docs.len(), "images": images, "failed": failed, "private": private,
+        "skipped": skipped, "duplicates": dup,
+    }))
+}
+
+/// Summary of linked external storage downloads (core message `download.storage`). The scan screen
+/// puts the sub-step label ("External storage") in front, so the text does not repeat it.
 pub(crate) fn storage_note(got: usize, private: usize) -> String {
-    format!("внешние хранилища: скачано {got}, без публичного доступа {private}")
+    format!("скачано {got}, без публичного доступа {private}")
 }
 
 /// Task error of a file on external storage that is not public (or was removed).
@@ -189,7 +256,7 @@ pub(super) async fn follow_doc_links(c: &Ctx, stage: usize) -> Result<(), Stop> 
         return Ok(());
     }
     let mut done: HashSet<u64> = HashSet::new();
-    for _ in 0..cfg.doc_link_depth {
+    for round in 0..cfg.doc_link_depth {
         c.gate().await?;
         // the scan's download limit covers documents found inside documents too
         let room = crawl::doc_room(c)?;
@@ -213,9 +280,18 @@ pub(super) async fn follow_doc_links(c: &Ctx, stage: usize) -> Result<(), Stop> 
         if q.added == 0 {
             break;
         }
+        // Visible sub-phase: links found inside documents, round N of the configured depth.
+        c.substep_event(
+            "doclinks",
+            "running",
+            round.into(),
+            cfg.doc_link_depth.into(),
+            json!({ "added": q.added }),
+        );
         download_queue(c, stage).await?;
         meta_pending(c, stage).await?;
     }
+    c.substep_event("doclinks", "done", 0, 0, json!({}));
     Ok(())
 }
 

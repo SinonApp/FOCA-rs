@@ -12,6 +12,9 @@ pub struct ServiceState {
     pub stage: String,
     pub progress: u8,
     pub paused: Option<String>,
+    /// Download stage counter from the `progress` event: (handled, queued), the same pair the scan
+    /// screen, the overview card and the floating bar show.
+    pub files: Option<(u64, u64)>,
 }
 
 impl ServiceState {
@@ -27,8 +30,33 @@ impl ServiceState {
             stage: "Поиск".into(),
             progress: 0,
             paused: None,
+            files: None,
         };
         first
+    }
+
+    /// Stores a new stage label; the file counter belongs to the download stage only.
+    pub fn set_stage(&mut self, label: &str) {
+        self.stage = label.to_string();
+        self.files = None;
+    }
+
+    /// Applies a `progress` event; returns true when the percentage changed (the notification is
+    /// refreshed on that, the file pair rides along).
+    pub fn apply_progress(&mut self, ev: &Value) -> bool {
+        let p = ev["progress"].as_u64().unwrap_or(0).min(100) as u8;
+        self.files = match (
+            ev["stage"].as_str(),
+            ev["done"].as_u64(),
+            ev["total"].as_u64(),
+        ) {
+            (Some("download"), Some(d), Some(t)) => Some((d.min(t), t)),
+            (Some(_), _, _) => None,
+            _ => self.files,
+        };
+        let changed = self.progress != p;
+        self.progress = p;
+        changed
     }
 
     /// Builds the `scan_service_start`/`scan_service_update` arguments in the UI language.
@@ -40,11 +68,18 @@ impl ServiceState {
                 "notify.paused_text",
                 &json!({ "reason": localize(lang, reason_label(r)), "progress": self.progress }),
             ),
-            None => core_text(
-                lang,
-                "notify.stage_text",
-                &json!({ "stage": localize(lang, &self.stage), "progress": self.progress }),
-            ),
+            None => match self.files {
+                Some((done, total)) => core_text(
+                    lang,
+                    "notify.stage_files_text",
+                    &json!({ "stage": localize(lang, &self.stage), "done": done, "total": total, "progress": self.progress }),
+                ),
+                None => core_text(
+                    lang,
+                    "notify.stage_text",
+                    &json!({ "stage": localize(lang, &self.stage), "progress": self.progress }),
+                ),
+            },
         };
         json!({
             "title": core_text(lang, "notify.running_title", &json!({ "title": self.title })),
@@ -108,10 +143,32 @@ mod tests {
             stage: "Поиск".into(),
             progress: 40,
             paused: Some("mobile_cap".into()),
+            files: None,
         };
         assert_eq!(
             s.payload(Lang::En)["text"],
             "Paused: mobile data limit · 40%"
         );
+    }
+
+    #[test]
+    fn download_notification_uses_the_stage_pair() {
+        let mut s = ServiceState::default();
+        s.claim_start("Contoso".into());
+        s.set_stage("Загрузка");
+        // Same pair as the scan screen stage row: handled of queued, not documents in the database.
+        assert!(s.apply_progress(
+            &json!({ "progress": 12, "stage": "download", "done": 127, "total": 800 })
+        ));
+        let t = s.payload(Lang::En)["text"].as_str().unwrap().to_string();
+        assert!(t.contains("127/800") && t.ends_with("12%"), "{t}");
+        // A counter update within the same percent keeps the notification as is but stores the pair.
+        assert!(!s.apply_progress(
+            &json!({ "progress": 12, "stage": "download", "done": 128, "total": 800 })
+        ));
+        assert_eq!(s.files, Some((128, 800)));
+        // Other stages drop the pair.
+        s.set_stage("Метаданные");
+        assert!(!s.payload(Lang::En)["text"].as_str().unwrap().contains('/'));
     }
 }

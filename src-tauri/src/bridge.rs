@@ -1035,22 +1035,12 @@ impl Bridge {
             }
             "stage" => {
                 if let Some(l) = ev.get("label").and_then(Value::as_str) {
-                    lock(&self.svc).stage = l.to_string();
+                    lock(&self.svc).set_stage(l);
                     self.service_update();
                 }
             }
             "progress" => {
-                let p = ev
-                    .get("progress")
-                    .and_then(Value::as_u64)
-                    .unwrap_or(0)
-                    .min(100) as u8;
-                let changed = {
-                    let mut s = lock(&self.svc);
-                    let c = s.progress != p;
-                    s.progress = p;
-                    c
-                };
+                let changed = lock(&self.svc).apply_progress(ev);
                 if changed {
                     self.service_update();
                 }

@@ -375,15 +375,13 @@ fn on_scan_event(ev: &Value) -> bool {
         match ty {
             "stage" => {
                 if let Some(l) = ev.get("label").and_then(Value::as_str) {
-                    c.svc.stage = l.to_string();
+                    c.svc.set_stage(l);
                 }
             }
             "progress" => {
-                let p = ev["progress"].as_u64().unwrap_or(0).min(100) as u8;
-                if p == c.svc.progress {
+                if !c.svc.apply_progress(ev) {
                     return false;
                 }
-                c.svc.progress = p;
             }
             "mobile_cap" => {
                 drop(g);

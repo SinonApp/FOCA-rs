@@ -212,6 +212,44 @@ async fn crawl_finds_deep_sitemap_storage_and_doc_link_documents() {
             .contains("без публичного доступа 1"),
         "{storage_note}"
     );
+    // the note body does not repeat the sub-step label the scan screen puts in front
+    assert!(
+        !storage_note["reason"]
+            .as_str()
+            .unwrap()
+            .starts_with("внешние хранилища"),
+        "{storage_note}"
+    );
+    // download stage counters: one queue pair from running to done, never shrinking, with the
+    // breakdown whose documents number is the snapshot's document count
+    let files: Vec<Value> = e
+        .events()
+        .into_iter()
+        .filter(|x| x["type"] == "substep" && x["id"] == "files" && x["stage"] == "download")
+        .collect();
+    let last = files.last().expect("files sub-step");
+    assert_eq!(last["state"], "done", "{last}");
+    let max_total = files
+        .iter()
+        .map(|x| x["total"].as_u64().unwrap())
+        .max()
+        .unwrap();
+    assert_eq!(last["total"].as_u64().unwrap(), max_total, "{files:?}");
+    assert_eq!(last["done"], last["total"], "{last}");
+    let progress: Vec<Value> = e
+        .events()
+        .into_iter()
+        .filter(|x| x["type"] == "progress" && x["stage"] == "download" && x["total"].is_u64())
+        .collect();
+    let lp = progress.last().expect("download progress pair");
+    assert_eq!(lp["done"], last["done"], "{lp} vs {last}");
+    assert_eq!(lp["total"], last["total"], "{lp} vs {last}");
+    assert!(last["private"].as_u64().unwrap() >= 1, "{last}");
+    let docs_now = e.snap(&id).await["docs"].as_array().unwrap().len() as u64;
+    assert!(
+        last["docs"].as_u64().unwrap() <= docs_now,
+        "{last} vs {docs_now}"
+    );
     // links inside documents: two steps from the crawled page, no third
     for want in ["start.pdf", "l1.pdf", "l2.pdf"] {
         assert!(names.contains(&want), "{want}: {names:?}");
