@@ -508,6 +508,8 @@ impl Core {
             // a narrowed run: the chosen items and the stages it executes
             "only": st.only,
             "stages": selection::Selection::parse(&st.only).map(|s| s.stage_ids()),
+            // postponed dork groups of the project after the search stage (`dorks_pending`)
+            "dorks": st.dorks_pending,
         })
     }
 }
@@ -609,6 +611,7 @@ fn sev_of(s: &str) -> Severity {
 
 pub(crate) mod control;
 mod documents;
+pub(crate) mod dorks;
 pub(crate) mod fuzz;
 pub(crate) mod hosts;
 pub(crate) mod infra;

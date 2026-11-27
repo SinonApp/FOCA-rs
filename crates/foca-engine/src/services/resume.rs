@@ -43,6 +43,9 @@ pub(crate) struct RunState {
     /// file size limit (MB) and UA profile (on top of `settings.net.ua`).
     pub exts: Vec<String>,
     pub crawl_depth: Option<usize>,
+    /// Common Crawl depth of this run (`latest` | `years` | `all`, over `settings.search`).
+    pub cc_depth: Option<String>,
+    pub cc_years: Option<u64>,
     pub max_size_mb: Option<u64>,
     pub ua: Option<String>,
     pub canary: Option<foca_net::canary::CanaryReport>,
@@ -53,6 +56,8 @@ pub(crate) struct RunState {
     pub followup: Vec<String>,
     /// Chosen items of a narrowed run (`scan_start { only }`); empty for a normal scan.
     pub only: Vec<String>,
+    /// Dork groups postponed after captchas everywhere (project total after the search stage).
+    pub dorks_pending: usize,
 }
 
 /// File name of the running scan state (`Engine::run_file`).

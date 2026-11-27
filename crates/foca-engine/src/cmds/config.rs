@@ -19,6 +19,23 @@ impl Engine {
     pub(crate) fn key_set(&self, a: &Value) -> CmdResult {
         let svc = req_str(a, "service")?;
         let v = arg_str(a, "value").unwrap_or("").trim();
+        // own SearXNG: HTTPS on a public host, like other user URLs (any URL on the test bench)
+        if svc == "searx"
+            && !v.is_empty()
+            && self.inner.cfg.endpoints.crtsh.starts_with("https://crt.sh")
+        {
+            let list = foca_search::sources::searx_instances(v);
+            if list.is_empty()
+                || !list
+                    .iter()
+                    .all(|u| foca_search::sources::public_https_url(u))
+            {
+                return Err(CmdError::new(
+                    "bad_args",
+                    foca_search::sources::SEARX_URL_RULE,
+                ));
+            }
+        }
         let keys = self.current_keys();
         if v.is_empty() {
             keys.delete(svc).map_err(|e| CmdError::new("keystore", e))?;
@@ -30,6 +47,66 @@ impl Engine {
             lock(&self.inner.ai_models_cache).clear();
         }
         Ok(self.public_settings()?["keys"][svc].clone())
+    }
+
+    /// `key_check { service: "brave"|"searx", value? }`: checks a Brave key (one query, monthly
+    /// quota from the rate-limit headers) or own SearXNG instances (HTTPS public host, JSON
+    /// answer). Without `value` the saved key is checked.
+    pub(crate) async fn key_check(&self, a: &Value) -> CmdResult {
+        let svc = req_str(a, "service")?;
+        let value = arg_str(a, "value")
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+            .map(String::from)
+            .or_else(|| self.current_keys().get(svc))
+            .unwrap_or_default();
+        if value.is_empty() {
+            return Ok(json!({ "ok": false, "code": "nokey", "service": svc }));
+        }
+        let net = self.net_client(Scope::default(), Arc::new(foca_net::NullSink))?;
+        let ep = &self.inner.cfg.endpoints;
+        match svc {
+            "brave" => {
+                let base = ep
+                    .sources
+                    .get("brave")
+                    .cloned()
+                    .unwrap_or_else(|| foca_search::sources::BRAVE_API.into());
+                let k = foca_search::sources::check_brave(&net, &base, &value).await;
+                let mut v = serde_json::to_value(&k)?;
+                v["service"] = json!("brave");
+                Ok(v)
+            }
+            "searx" => {
+                let local = !ep.crtsh.starts_with("https://crt.sh");
+                let list = foca_search::sources::check_searx(&net, &value, local).await;
+                let ok = !list.is_empty() && list.iter().all(|(_, k)| k.ok);
+                let code = list
+                    .iter()
+                    .map(|(_, k)| k.code.clone())
+                    .find(|c| c != "ok")
+                    .unwrap_or_else(|| {
+                        if list.is_empty() {
+                            "bad_url".into()
+                        } else {
+                            "ok".into()
+                        }
+                    });
+                let items: Vec<Value> = list
+                    .into_iter()
+                    .map(|(url, k)| {
+                        let mut v = serde_json::to_value(&k).unwrap_or_default();
+                        v["url"] = json!(url);
+                        v
+                    })
+                    .collect();
+                let mut out =
+                    json!({ "ok": ok, "code": code, "service": "searx", "instances": items });
+                crate::services::i18n::annotate(&mut out, &["detail"]);
+                Ok(out)
+            }
+            other => Ok(json!({ "ok": false, "code": "unsupported", "service": other })),
+        }
     }
 
     pub(crate) fn key_delete(&self, a: &Value) -> CmdResult {

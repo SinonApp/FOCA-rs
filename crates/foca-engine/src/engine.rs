@@ -69,6 +69,8 @@ pub struct Core {
     pub(crate) ai_models_cache: Mutex<HashMap<String, Vec<Value>>>,
     /// Running `ai_summarize` requests by project id (one per project; `ai_cancel` fires the token).
     pub(crate) ai_jobs: Mutex<HashMap<String, CancellationToken>>,
+    /// Waiting in-scan retries of postponed dorks by project (`dorks_retry` wakes them).
+    pub(crate) dork_jobs: Mutex<HashMap<String, crate::scan::dorks::DorkJob>>,
 }
 
 /// The FOCA-rs engine. Cheap to clone (`Arc` inside); one per application.

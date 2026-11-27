@@ -77,6 +77,7 @@ impl Engine {
                 queue_progress: Mutex::new(None),
                 ai_models_cache: Mutex::new(HashMap::new()),
                 ai_jobs: Mutex::new(HashMap::new()),
+                dork_jobs: Mutex::new(HashMap::new()),
             }),
         };
         if let Ok(s) = e.store().settings_get() {
@@ -203,6 +204,9 @@ impl Engine {
             "licenses_get" => self.licenses_get(),
             "key_set" => self.key_set(&a),
             "key_delete" => self.key_delete(&a),
+            "key_check" => self.key_check(&a).await,
+            "dorks_pending" => self.dorks_pending(&a),
+            "dorks_retry" => self.dorks_retry(&a).await,
             "net_check" => self.net_check().await,
             "net_proxy_check" => self.net_proxy_check(&a).await,
             "report_list" => self.report_list(&a),

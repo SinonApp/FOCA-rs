@@ -501,6 +501,11 @@ mod tests {
         let mut v: Vec<String> = vec![
             foca_search::source::limit_message("crtsh"),
             foca_search::source::limit_message("otx_dns"),
+            foca_search::source::limit_message_status("searx", 503),
+            foca_search::rate::THROTTLED_NOTE.into(),
+            foca_search::sources::SEARX_URL_RULE.into(),
+            "часть индексов недоступна (E-index: HTTP 500): данные из ответивших; проверено снимков 4 из 5: остальные продолжатся в следующем скане".into(),
+            "Часть дорков (2) не выполнил ни один поисковик: все в капче. Они отложены и повторятся сами: позже в этом скане и в следующем скане".into(),
             foca_search::render::NO_RENDER.into(),
             format!("{BLOCKED}: {CAPTCHA_WHY}"),
             format!("{BLOCKED}: {VERIFY_WHY}"),

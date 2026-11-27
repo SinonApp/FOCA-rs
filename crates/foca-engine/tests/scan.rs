@@ -9,6 +9,7 @@ mod scan {
     mod render_sources;
     mod rescan_sources;
     mod scan_steps;
+    mod search_resilience;
     mod source_deadline;
     mod sources;
     mod stages;

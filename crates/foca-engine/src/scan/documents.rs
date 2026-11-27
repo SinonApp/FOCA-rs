@@ -52,8 +52,16 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
         let mut set = tokio::task::JoinSet::new();
         for t in batch {
             let d = d.clone();
+            let wb = c.e.cfg.endpoints.wayback.clone();
             set.spawn(async move {
-                let r = d.download(&t.url).await;
+                let mut r = d.download(&t.url).await;
+                // a Common Crawl URL that is dead now: its Wayback copy (passive, archive.org)
+                if let Err(e) = &r {
+                    if let Some(copy) = wayback_fallback(&t.source, &t.url, e, &wb) {
+                        tracing::info!(target: "foca::scan", "загрузка: {} недоступен ({e}), копия Wayback", t.url);
+                        r = d.download(&copy).await;
+                    }
+                }
                 (t, r)
             });
         }
@@ -84,6 +92,30 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
         }
     }
     Ok(())
+}
+
+/// Wayback copy URL for a failed download of a Common Crawl hit (dead now: 404/410, 5xx, DNS or
+/// connection errors). The nearest capture of the current year is asked (`id_`, original bytes).
+pub(crate) fn wayback_fallback(
+    source: &str,
+    url: &str,
+    e: &foca_net::NetError,
+    wayback: &str,
+) -> Option<String> {
+    use foca_net::NetError as N;
+    if source != "cc" || url.contains("/web/") && url.starts_with(wayback) {
+        return None;
+    }
+    let dead = match e {
+        N::Status(s) => *s == 404 || *s == 410 || *s >= 500,
+        N::Dns(_) | N::Request(_) | N::Timeout => true,
+        _ => false,
+    };
+    if !dead || e.is_scope_denial() {
+        return None;
+    }
+    let year = time::OffsetDateTime::now_utc().year().to_string();
+    Some(foca_search::sources::copy_url(wayback, &year, url))
 }
 
 pub(super) async fn stage_meta(c: &mut Ctx) -> Result<(), Stop> {
@@ -185,4 +217,27 @@ pub(super) async fn stage_analysis(c: &mut Ctx) -> Result<(), Stop> {
     let new = reanalyze_bg(c).await?;
     c.findings_events(&new);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::wayback_fallback;
+    use foca_net::NetError;
+
+    #[test]
+    fn dead_cc_urls_fall_back_to_wayback() {
+        let wb = "https://web.archive.org";
+        let u = "https://www.example.com/a.pdf";
+        let c = wayback_fallback("cc", u, &NetError::Status(404), wb).unwrap();
+        assert!(c.starts_with("https://web.archive.org/web/20"), "{c}");
+        assert!(c.ends_with("id_/https://www.example.com/a.pdf"), "{c}");
+        assert!(wayback_fallback("cc", u, &NetError::Dns("nx".into()), wb).is_some());
+        assert!(wayback_fallback("cc", u, &NetError::Status(503), wb).is_some());
+        // other sources, other errors and archive copies themselves keep the normal path
+        assert!(wayback_fallback("brave", u, &NetError::Status(404), wb).is_none());
+        assert!(wayback_fallback("cc", u, &NetError::Status(403), wb).is_none());
+        assert!(wayback_fallback("cc", u, &NetError::TooLarge { limit: 1 }, wb).is_none());
+        let copy = format!("{wb}/web/2024id_/{u}");
+        assert!(wayback_fallback("cc", &copy, &NetError::Status(404), wb).is_none());
+    }
 }

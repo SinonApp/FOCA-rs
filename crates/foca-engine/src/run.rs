@@ -483,6 +483,12 @@ impl Engine {
         let crawl_depth = pick("crawl_depth")
             .and_then(|v| v.as_u64())
             .map(|d| usize::try_from(d.max(1)).unwrap_or(usize::MAX));
+        let cc_depth = pick("cc_depth")
+            .and_then(|v| v.as_str().map(|s| s.trim().to_string()))
+            .filter(|s| matches!(s.as_str(), "latest" | "years" | "all"));
+        let cc_years = pick("cc_years")
+            .and_then(|v| v.as_u64())
+            .map(|y| y.clamp(1, 20));
         let max_size_mb = pick("max_size_mb")
             .and_then(|v| v.as_u64())
             .map(|m| match m {
@@ -523,6 +529,8 @@ impl Engine {
             trigger: trigger.into(),
             exts: exts.clone(),
             crawl_depth,
+            cc_depth: cc_depth.clone(),
+            cc_years,
             max_size_mb,
             ua: ua.clone(),
             canary: None,
@@ -530,11 +538,13 @@ impl Engine {
             substep: None,
             followup: vec![],
             only: sel.as_ref().map(Selection::keys).unwrap_or_default(),
+            dorks_pending: 0,
         };
         facts::put(
             &lock(&db),
             &opts_key(&scan_id),
-            &json!({ "exts": exts, "crawl_depth": crawl_depth, "max_size_mb": max_size_mb,
+            &json!({ "exts": exts, "crawl_depth": crawl_depth, "cc_depth": cc_depth,
+                "cc_years": cc_years, "max_size_mb": max_size_mb,
                 "ua": ua, "limit": limit_arg, "only": sel.as_ref().map(Selection::keys) }),
         )?;
         // Network: an empty scope for the passive level (nothing may touch the target), a scope without
