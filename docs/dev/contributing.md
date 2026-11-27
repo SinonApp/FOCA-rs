@@ -15,8 +15,8 @@
 
 ## Branches and Commits
 
-- Work happens on `develop`; `main` holds releases and is updated by merging `develop` at release time (tags `vX.Y.Z`, pre-releases like `v2.0.0-beta.1`). Both must build and pass `qa/run-all.sh`.
-- Open pull requests against `develop`.
+- All work happens on `main`; releases are tags on `main` (`vX.Y.Z`, pre-releases like `v2.0.0-beta.3`). `main` must build and pass `qa/run-all.sh`.
+- Open pull requests against `main`.
 - Use Conventional Commits in English with a crate or layer scope:
   `feat(ports): add TCP port scan stage`, `fix(ui): ...`, `docs(adr): ...`. Mark breaking changes with `!` (`feat(core)!: ...`). The subject says what changed, in the imperative, without task or ticket codes.
 - Keep commits focused and stage only your own files (`git add <paths>`, never `git add -A`, and never `stash`/`reset` someone else's work).
