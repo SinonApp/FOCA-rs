@@ -21,12 +21,13 @@ FOCA-rs is an Android app for OSINT and document metadata reconnaissance. You gi
 - Scan profiles: Passive (third-party sources only, no requests to the target), Standard (adds document downloads, DNS/TLS checks, subdomain enumeration and a site crawl), Full (adds active checks inside the scope: path discovery, AXFR, NSEC walking, TCP ports) and Custom.
 - Keyless sources: Wayback Machine, Common Crawl, Arquivo.pt, Certificate Transparency, passive DNS, search engines through the built-in WebView. Optional API keys for VirusTotal, SecurityTrails, Shodan, OTX, GitHub code search and others.
 - Scope rules for domains, `*.domain`, URLs, IPs, CIDR blocks and IP ranges. Exclusions win over targets on every redirect and resolved address.
+- Several hosts of one scan are checked at once (1-8, rate limits stay per host). Each stage can be paused, skipped or restarted, and a single scan can be deleted with everything only it found.
 - Offline analysis of a local folder or ZIP, and files shared to FOCA-rs from other apps through the Android share menu.
 
 ### Analyse
 - Metadata and forensics for OOXML, ODF, PDF (revisions, hidden text, bad redactions), legacy Office, images (EXIF/GPS), video, e-mail, RDP/ICA, LNK and archives.
 - Digital signatures, including Ukrainian qualified signatures (КЕП).
-- People, e-mail patterns, software with end-of-life dates and CVEs (offline CISA KEV), internal hosts and a relationship graph, timeline and org view.
+- People, e-mail patterns, software with end-of-life dates and CVEs (offline CISA KEV), internal hosts and a relationship graph, timeline and org view. The vulnerability and secret databases update from a signed (Ed25519) feed.
 - Every finding has a severity, evidence, a fix and references to the standards listed below.
 
 ### Report

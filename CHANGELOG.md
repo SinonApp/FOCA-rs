@@ -5,6 +5,41 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 ---
 
+## 2.0.0-beta.3: 2026-11-27
+
+Third beta. It fixes the projects that disappeared after an upgrade, makes the stage and captcha controls do what they say, and adds scan deletion, several hosts at once, a saved AI summary history and a real signature database update.
+
+> **Installs over 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects.** All betas are signed with the same key. Coming from 1.x or a 2.0 preview build, you still need to uninstall first (see the beta.1 note below).
+
+### Fixed
+- **Projects missing after an upgrade**: projects created with beta.2 vanished from the Projects list after upgrading to a newer build. The data was never lost: the project index could not be read, and the files stayed intact. The list now reads old index rows and keeps a project whose database fails to open, showing the error only when you open it. A permanent upgrade test opens a beta.2 data folder and checks that every project, its counts, flags and settings are still there.
+- **Stage controls**: Pause, Skip and Restart on a stage now reach a running subdomain brute force instead of waiting for it to finish. A paused stage shows Pause instead of Running, and skipped or paused items are worded more clearly.
+- **Follow-up runs**: re-running selected items runs only the stages those items belong to. Before, it also ran every later stage (network, ports, site recon, brute force).
+- **False "no network"**: when every chosen search source hit a rate limit or a captcha, the scan no longer says the network is down. It names the real reason instead.
+- **Request log in exports**: errors in the request log CSV and in the report are written in the export language, not in Russian.
+- **Reports in English and Ukrainian**: missing security headers and camera labels no longer show Russian words.
+- **MTA-STS**: a policy file that the scope did not allow us to fetch is reported as not checked, not as an unreachable policy (Medium).
+- **Captcha check**: the verification dialog has Cancel and Done, a load progress bar, and an error with Retry when the page fails to load or does not finish within 30 seconds. Only Done on a page without a challenge marks the engine verified. Cancel, Back or leaving the app keep it blocked, and Prepare search engines counts only engines that were actually solved.
+- **Clipboard on Android**: Paste from clipboard works (the WebView never allowed reading it). Copying a secret marks it as sensitive, and the 30-second auto-clear wipes only the value the app wrote. The paste buttons tell an empty clipboard from one the app could not read.
+- **Settings icon**: settings use a real cog, so the icon no longer looks like the theme sun.
+- **Signature database screen**: Check for updates now checks a real update feed instead of only showing the status. The numbers come from the loaded tables: CISA KEV entries in use out of the total, the KEV catalog date with a hint when it is more than 30 days old, software and OS signatures, secret rules and standards references. The fake auto-update switch is gone, and the Ed25519 label and dates no longer wrap.
+- **Form spacing**: a full-width button under a field keeps a gap, so Check key in the API key sheet is no longer glued to the field.
+
+### Changed
+- **Reference cases** stay out of Recent projects and have their own section on the Projects screen. The app no longer reopens a reference case on start.
+- **AI summary**: one request per project at a time. Send shows a spinner and a Cancel button, and repeated taps no longer start extra paid requests. Every summary is saved in the project (up to 50), so you can open, copy, delete one or pick which one goes into the report. The summary is written in the interface language, placeholders are language-neutral (`[CLIENT]`, `[SECRET]`, `[EMAIL]`), and the report puts the client name and domain back.
+- **Pickers**: all drop-down lists (AI provider, model and reasoning level, findings host filter, timeline years, webhook format, plugin settings, User-Agent in the scan wizard) open a themed panel instead of the grey Android dialog.
+- **Clear app logs** in Debug is labelled as such and says the request log stays.
+- **Signature key rotated**: signature bundles are now signed with a new key. Older builds reject bundles from the new feed and keep their built-in databases.
+- **Dependencies**: sha2 0.11, toml 1.2, rusqlite 0.43, url, zip and anyhow updates, and newer GitHub Actions.
+
+### Added
+- **Delete a scan**: from the scan history, a stopped scan or a paused one. A hold-to-confirm sheet shows what goes away first: the scan record, its request log, documents only it downloaded and findings that no other scan backs. Data a later scan also saw stays.
+- **Hosts at once** (Settings → Network and the scan wizard, 1-8, default 4): liveness, TLS, ports, site recon and site search work on several hosts together. The scan screen shows how many hosts are running and done. Rate limits stay per host, and a host that answers 429 stops alone.
+- **Clear the request log**: Debug → Requests and the request log export in Reports can clear the whole log, entries older than 7, 30 or 90 days, or one scan, with counts shown before you confirm. A running or paused scan keeps its entries.
+- **Clear the quick tools log**: Quick tools → Log has a Clear button.
+- **Signature update feed**: the app checks the official feed, verifies the bundle signature and installs a newer one. Each check is saved and shown as "Last checked".
+
 ## 2.0.0-beta.2: 2026-11-26
 
 Second beta. It fixes what phone tests of 2.0.0-beta.1 turned up: false findings from the fuzzer and TLS checks, duplicate findings, Russian text in English and Ukrainian reports, and several interface problems.

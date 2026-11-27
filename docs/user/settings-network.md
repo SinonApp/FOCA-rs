@@ -26,7 +26,7 @@
 | Network & Proxy | `/settings/network` | HTTP/SOCKS5 proxy, Tor (Orbot), v2rayNG preset, proxy health checker, per-group proxy routing, kill switch, browser profile, concurrency/RPS/timeouts, DNS, custom ports |
 | Traffic & Power | `/settings/power` | Wi-Fi only, mobile data cap, battery threshold, thermal pause, charging only |
 | Background Execution | `/settings/battery` | Notifications and battery status, an autostart/battery card on aggressive firmwares, Hide from Recents during scans, vendor-specific guides (Xiaomi/HyperOS, Samsung, Huawei, etc.) |
-| Security | `/settings/security` | PIN asked at launch, auto-lock, biometrics, secrets after fingerprint, panic PIN (wipes all data), clipboard clear after 30 s, Block screenshots (opt-in, `FLAG_SECURE`), auto-delete projects |
+| Security | `/settings/security` | PIN asked at launch, auto-lock, biometrics, secrets after fingerprint, panic PIN (wipes all data), clipboard clear after 30 s (only what the app copied), Block screenshots (opt-in, `FLAG_SECURE`), auto-delete projects |
 | Appearance & Language | `/settings/appearance` | Live interface language (Auto (System) / English / Русский / Українська), dark/light theme, font density |
 | Signature Databases & OCR | `/settings/signatures` | What the analysis matches against (CISA KEV, software and OS signatures, secret rules, standards), catalog age, update check, offline import, rollback + optional on-device ML Kit OCR (`play` flavor only) |
 | Cloud AI | `/settings/ai` | 10 cloud AI providers, live `/models` discovery, Thinking (reasoning) parameters, redaction toggles |
@@ -80,7 +80,7 @@ When tampering is detected, the TCP port scan source is marked Unreliable, bogus
 Search engines rate-limit automated queries. A CAPTCHA / blocked status never halts the scan: remaining sources proceed normally.
 
 - Startpage, Brave Search, Yahoo, public SearXNG instances (and Mojeek when available) run inside a hidden Android WebView that handles JS proof-of-work challenges automatically and uses structural CAPTCHA detection (`detect_captcha_signals`).
-- When a human challenge appears, the source switches to Needs verification with a Complete verification button opening a visible full-screen WebView (`VerifyDialog.kt`) sharing the same cookie jar. Solve the check manually and the source retries within the same scan (`scan_retry_source`).
+- When a human challenge appears, the source switches to Needs verification with a Complete verification button opening a visible full-screen WebView (`VerifyDialog.kt`) sharing the same cookie jar. Solve the check manually and the source retries within the same scan (`scan_retry_source`). The window has Cancel and Done at the top: the engine counts as passed only when the page shows no challenge after Done. Cancel, Back or leaving the app keep it blocked; if the page does not load within 30 s, the window shows an error with Retry.
 - **Automatic CAPTCHA solvers are never included** ([ADR-0012](../adr/0012-no-captcha-solving-no-public-proxies.md)).
 - Shared dork queue: failed queries automatically fail over to healthy engines, similar queries collapse into `OR` groups, results are cached for 24 hours, and randomized delays (6-14 s) pace requests.
 - Multiple blocked engines consolidate into a single Complete verification (N) button; you can also pre-authenticate cookies ahead of time via Settings → Network → Warm up search engines, or run a manual check with Test CAPTCHA (`search_captcha_test`).
