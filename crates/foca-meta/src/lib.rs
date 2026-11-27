@@ -223,6 +223,12 @@ impl<'a> Ctx<'a> {
         self.budget.get()
     }
 
+    /// Whether `bytes` are a document on the current ancestor chain.
+    fn on_chain(&self, bytes: &[u8]) -> bool {
+        self.chain
+            .is_some_and(|c| c.borrow().contains(&content_hash(bytes)))
+    }
+
     /// Parses an embedded document recursively. Returns `None` if the depth limit is reached or the format is unknown.
     pub fn extract_child(&self, bytes: &[u8], name: &str) -> Option<Result<Metadata, MetaError>> {
         if !self.can_descend() {
@@ -254,6 +260,19 @@ impl<'a> Ctx<'a> {
         label: &str,
     ) -> Result<(), MetaError> {
         if meta.embedded.len() >= MAX_CHILDREN {
+            return Ok(());
+        }
+        if self.can_descend() && self.on_chain(bytes) {
+            // a copy of an enclosing document (quine, self-embedding): listed, not parsed again
+            meta.attachments.push(foca_core::Attachment {
+                name: util::truncate(label, 512),
+                size: Some(bytes.len() as u64),
+                mime: None,
+            });
+            meta.warnings.push(format!(
+                "{}: копия вложенного в себя документа пропущена",
+                util::truncate(label, 128)
+            ));
             return Ok(());
         }
         match self.extract_child(bytes, name) {

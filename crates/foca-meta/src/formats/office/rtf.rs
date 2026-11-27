@@ -938,7 +938,7 @@ impl Parser<'_, '_> {
         let Some(native) = native else {
             return Ok(());
         };
-        let before = self.meta.embedded.len();
+        let before = self.meta.embedded.len() + self.meta.attachments.len();
         if class
             .as_deref()
             .is_some_and(|c| c.eq_ignore_ascii_case("Package"))
@@ -952,7 +952,9 @@ impl Parser<'_, '_> {
             self.ctx
                 .attach_child(&mut self.meta, native, &label, &label)?;
         }
-        if self.meta.embedded.len() == before && self.meta.attachments.len() < MAX_ATTACHMENTS {
+        if self.meta.embedded.len() + self.meta.attachments.len() == before
+            && self.meta.attachments.len() < MAX_ATTACHMENTS
+        {
             self.meta.attachments.push(Attachment {
                 name: truncate(&label, 256),
                 size: Some(native.len() as u64),
@@ -974,12 +976,14 @@ impl Parser<'_, '_> {
             cap.pict_kind
         };
         let name = format!("pict{}.{ext}", self.picts);
-        let before = self.meta.embedded.len();
+        let before = self.meta.embedded.len() + self.meta.attachments.len();
         if self.want_children && matches!(ext, "jpg" | "png") {
             self.ctx
                 .attach_child(&mut self.meta, &cap.bytes, &name, &name)?;
         }
-        if self.meta.embedded.len() == before && self.meta.attachments.len() < MAX_ATTACHMENTS {
+        if self.meta.embedded.len() + self.meta.attachments.len() == before
+            && self.meta.attachments.len() < MAX_ATTACHMENTS
+        {
             let mime = match ext {
                 "jpg" => "image/jpeg",
                 "png" => "image/png",

@@ -359,11 +359,13 @@ fn objects(
     for n in names {
         if n == "Thumbnails/thumbnail.png" {
             meta.fields.insert("office:thumbnail".into(), n.clone());
-            let before = meta.embedded.len();
+            let before = meta.embedded.len() + meta.attachments.len();
             if let Some(b) = z.read(n, ctx)? {
                 ctx.attach_child(meta, &b, "thumbnail.png", n)?;
             }
-            if meta.embedded.len() == before && meta.attachments.len() < 500 {
+            if meta.embedded.len() + meta.attachments.len() == before
+                && meta.attachments.len() < 500
+            {
                 meta.attachments.push(Attachment {
                     name: n.clone(),
                     size: z.size(n),
@@ -384,11 +386,13 @@ fn objects(
             }
             None => {
                 // binary OLE object
-                let before = meta.embedded.len();
+                let before = meta.embedded.len() + meta.attachments.len();
                 if let Some(b) = z.read(n, ctx)? {
                     ctx.attach_child(meta, &b, n, n)?;
                 }
-                if meta.embedded.len() == before && meta.attachments.len() < 500 {
+                if meta.embedded.len() + meta.attachments.len() == before
+                    && meta.attachments.len() < 500
+                {
                     meta.attachments.push(Attachment {
                         name: n.clone(),
                         size: z.size(n),

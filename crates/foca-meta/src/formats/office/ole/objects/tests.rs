@@ -125,6 +125,7 @@ fn a_document_on_its_own_ancestor_chain_is_skipped() {
     let mut m = Metadata::default();
     ctx.attach_child(&mut m, &child, "x.xls", "x").unwrap();
     assert!(m.embedded.is_empty());
+    assert_eq!(m.attachments.len(), 1, "the copy is listed, not parsed");
     // a different document on the same chain is parsed
     let other = cfb(&[("/Workbook", workbook("other"))]);
     assert!(ctx.extract_child(&other, "y.xls").is_some());

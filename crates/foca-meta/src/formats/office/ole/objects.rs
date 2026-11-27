@@ -86,7 +86,7 @@ pub(crate) fn embedded_objects<F: Read + Seek>(
         } else {
             path.trim_start_matches('/').to_string()
         };
-        let before = meta.embedded.len();
+        let before = meta.embedded.len() + meta.attachments.len();
         let mut handled = false;
         if !root {
             if let Some(t) = compobj(cf, &format!("{path}/\u{1}CompObj"), ctx)? {
@@ -119,7 +119,10 @@ pub(crate) fn embedded_objects<F: Read + Seek>(
             }
         }
 
-        if !root && meta.embedded.len() == before && meta.attachments.len() < MAX_ATTACHMENTS {
+        if !root
+            && meta.embedded.len() + meta.attachments.len() == before
+            && meta.attachments.len() < MAX_ATTACHMENTS
+        {
             let size = children.iter().filter(|c| c.1).map(|c| c.2).sum();
             meta.attachments.push(Attachment {
                 name: label,
@@ -298,11 +301,13 @@ pub(crate) fn attach_blips(meta: &mut Metadata, data: &[u8], ctx: &Ctx) -> Resul
         }
         n += 1;
         let name = format!("image{n}.{ext}");
-        let before = meta.embedded.len();
+        let before = meta.embedded.len() + meta.attachments.len();
         if matches!(ext, "jpg" | "png" | "tiff") {
             ctx.attach_child(meta, img, &name, &name)?;
         }
-        if meta.embedded.len() == before && meta.attachments.len() < MAX_ATTACHMENTS {
+        if meta.embedded.len() + meta.attachments.len() == before
+            && meta.attachments.len() < MAX_ATTACHMENTS
+        {
             meta.attachments.push(Attachment {
                 name,
                 size: Some(img.len() as u64),
