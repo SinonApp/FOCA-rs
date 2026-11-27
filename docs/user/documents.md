@@ -45,7 +45,7 @@ Open any file under Data → Documents → `<document>` to view its Forensics se
 
 | Section | What it shows |
 |---|---|
-| **Signatures & QES (КЕП)** | Signer name, title, organization, EDRPOU (ЄДРПОУ), RNOKPP (РНОКПП, masked only), CA/ACSK, signing time, RFC 3161 TSA timestamp & skew, "modified after signing", SHA-2 hash check |
+| **Signatures & QES (КЕП)** | Signer name, title, organization, EDRPOU (ЄДРПОУ), RNOKPP (РНОКПП, masked only), CA/ACSK, signing time, RFC 3161 TSA timestamp & skew, "modified after signing" (a PAdES-LTV increment with only DSS, OCSP/CRL/certificates or a document timestamp does not count), SHA-2 hash check; CMS/PKCS#7 wrappers (`.p7s`, or a `.pdf` that is really one) are recognised by content and the signed document inside is parsed |
 | **Broken redaction** | Page number, box fill color, and a short snippet of recoverable text sitting underneath the drawn rectangle |
 | **PDF revisions** | Incremental save history: who saved with which tool, plus removed (`−`) and added (`+`) text lines |
 | **Hidden content** | Hidden Word text (`w:vanish`), hidden Excel rows, columns, and worksheets containing data |
