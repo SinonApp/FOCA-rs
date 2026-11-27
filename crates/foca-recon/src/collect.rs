@@ -30,7 +30,7 @@ impl Default for CollectOptions {
     fn default() -> Self {
         CollectOptions {
             archive: None,
-            max_scripts: 5,
+            max_scripts: 10,
             max_styles: 5,
         }
     }

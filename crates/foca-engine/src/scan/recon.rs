@@ -60,7 +60,7 @@ const MAX_EXTRA_SITES: usize = 6;
 /// Sites (target domains) per scan.
 const MAX_SITES: usize = 3;
 /// External scripts per site.
-const MAX_SCRIPTS: usize = 5;
+const MAX_SCRIPTS: usize = 10;
 /// Number of sitemap URLs and endpoints kept per site (the rest only counted).
 const KEEP_SITEMAP: usize = 300;
 const KEEP_ENDPOINTS: usize = 300;

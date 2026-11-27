@@ -164,7 +164,7 @@
         ver && ver !== port.banner ? esc(ver) : "",
         port.banner ? `<span class="mono">${esc(port.banner)}</span>` : "",
         (port.cert_names || []).length ? `<span class="mono">${esc(port.cert_names.join(", "))}</span>` : "",
-        port.outdated ? esc(port.outdated) : "",
+        port.outdated ? esc(F.ftext ? F.ftext.field(port.outdated, "ports-outdated") : port.outdated) : "",
       ]
         .filter(Boolean)
         .join(" · ");
@@ -648,7 +648,9 @@
       p(c.medium, "warn", "data.cve_medium_n", "средних: {n}") +
       p(c.low, "mute", "data.cve_low_n", "низких: {n}") +
       (c.kev ? `<span class="pill crit">KEV ${c.kev}</span>` : "") +
-      (c.max_epss != null ? `<span class="chip">EPSS ${Number(c.max_epss).toFixed(2)}</span>` : "")
+      (c.max_epss != null
+        ? `<span class="chip" title="${esc(F.t("data.epss_hint", "вероятность эксплуатации в ближайшие 30 дней (макс. среди CVE)"))}">EPSS ${epssPct(c.max_epss)}</span>`
+        : "")
     );
   }
   function sidePill(side) {
@@ -666,7 +668,7 @@
       sub: [
         v != null ? `CVSS ${Number(v).toFixed(1)}` : "",
         r.kev ? "KEV" : "",
-        r.epss != null ? `EPSS ${Number(r.epss).toFixed(2)}` : "",
+        r.epss != null ? `EPSS ${epssPct(r.epss)}` : "",
       ]
         .filter(Boolean)
         .join(" · "),
@@ -988,6 +990,11 @@
     magento: "Magento",
     prestashop: "PrestaShop",
   };
+  // EPSS is a probability (0..1): shown as a percentage, "<1%" for tiny non-zero values.
+  function epssPct(v) {
+    const p = Number(v) * 100;
+    return p > 0 && p < 1 ? "<1%" : `${Math.round(p)}%`;
+  }
   const techCat = c => (F.ftext && F.ftext.techCategory ? F.ftext.techCategory(c) : c);
   function techRow(t) {
     const sigs = (t.signals || []).filter(s => s !== "implied" || (t.signals || []).length === 1);
@@ -995,7 +1002,7 @@
     return ui.row({
       lead: ui.leadIcon(t.plugin_of ? "path" : "app", t.outdated ? "var(--warn)" : ""),
       title: esc(t.name) + (t.version ? ` <span class="mono">${esc(t.version)}</span>` : ""),
-      sub: `${esc(techCat(t.category))} · ${esc(t.host)}<div class="dt-tags">${cvePills(t.cve)}${t.outdated ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.outdated_2", "Устарело"))}</span><span class="muted">${esc(t.outdated)}</span>` : t.version ? `<span class="pill ok">${ic("check")}${esc(F.t("data.current_branch", "Актуальная ветка"))}</span>` : `<span class="pill mute">${esc(F.t("data.version_unknown", "Версия не определена"))}</span>`}${sigs.map(s => `<span class="pill mute" title="${esc(F.t("data.signal_source", "Источник признака"))}">${esc(sigLabel(s))}</span>`).join("")}</div>${ev ? `<small class="muted mono dt-path">${esc(ev)}</small>` : ""}`,
+      sub: `${esc(techCat(t.category))} · ${esc(t.host)}<div class="dt-tags">${cvePills(t.cve)}${t.outdated ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.outdated_2", "Устарело"))}</span><span class="muted">${esc(F.ftext ? F.ftext.field(t.outdated, "recon.outdated_tech") : t.outdated)}</span>` : t.version ? `<span class="pill ok">${ic("check")}${esc(F.t("data.current_branch", "Актуальная ветка"))}</span>` : `<span class="pill mute">${esc(F.t("data.version_unknown", "Версия не определена"))}</span>`}${sigs.map(s => `<span class="pill mute" title="${esc(F.t("data.signal_source", "Источник признака"))}">${esc(sigLabel(s))}</span>`).join("")}</div>${ev ? `<small class="muted mono dt-path">${esc(ev)}</small>` : ""}`,
       tail:
         t.cve && t.cve.version_known && t.cve.matched
           ? ((CVE_SHEETS["tech:" + t.host + ":" + t.name] = t.cve),

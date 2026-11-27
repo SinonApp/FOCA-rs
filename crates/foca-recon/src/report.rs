@@ -157,12 +157,29 @@ pub fn analyze_site(input: &ReconInput) -> ReconReport {
         };
         merge_techs(&mut techs, detect_with(&page, &extra));
     }
+    let bodies: Vec<(&str, &str)> = input
+        .scripts
+        .iter()
+        .map(|s| (s.url.as_str(), s.body.as_str()))
+        .collect();
+    crate::tech::banner_versions(&mut techs, &bodies);
     let parts = crate::tech::cmsparts::find_parts(&input.pages, &techs);
     crate::tech::cmsparts::merge_into(&mut techs, crate::tech::cmsparts::technologies(&parts));
     for s in &input.scripts {
         rep.js.push(analyze_js(&s.url, &s.body));
         ids.extend(extract_analytics_ids(&s.body));
         bucket_lists.push(find_buckets(&s.body, &s.url));
+    }
+    // Scripts that are not fetched (CDN, other sites) still name the library and version in the
+    // URL (`/ajax/libs/jquery/2.2.4/jquery.min.js`): Retire.js checks those by URL.
+    for u in rep
+        .script_candidates
+        .iter()
+        .filter(|u| !have.contains(u.as_str()))
+    {
+        if !crate::retire::detect(u, "").is_empty() {
+            rep.js.push(analyze_js(u, ""));
+        }
     }
     for d in &input.documents {
         bucket_lists.push(find_buckets(&d.text, &d.source));
@@ -642,11 +659,71 @@ mod tests {
     }
 
     #[test]
+    fn script_versions_from_cdn_urls_and_banners() {
+        let input = ReconInput {
+            target: "site.example".into(),
+            pages: vec![PageInput {
+                url: "https://site.example/".into(),
+                headers: vec![],
+                html: r#"<html><head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="/js/slick.min.js"></script>
+<script src="/js/jquery.magnific-popup.min.js"></script></head><body></body></html>"#
+                    .into(),
+            }],
+            scripts: vec![
+                ScriptInput {
+                    url: "https://site.example/js/slick.min.js".into(),
+                    body: "/*\n     _ _      _       _\n Version: 1.8.1\n  Author: Ken Wheeler\n*/\n!function(){}".into(),
+                },
+                ScriptInput {
+                    url: "https://site.example/js/jquery.magnific-popup.min.js".into(),
+                    body: "/*! Magnific Popup - v1.1.0 - 2016-02-20\n* http://dimsemenov.com/plugins/magnific-popup/ */\n!function(){}".into(),
+                },
+            ],
+            ..Default::default()
+        };
+        let r = analyze_site(&input);
+        let v = |n: &str| {
+            r.technologies
+                .iter()
+                .find(|t| t.name == n)
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{n}: {:?}",
+                        r.technologies.iter().map(|t| &t.name).collect::<Vec<_>>()
+                    )
+                })
+                .version
+                .clone()
+        };
+        assert_eq!(v("jQuery").as_deref(), Some("2.2.4"));
+        assert!(r
+            .technologies
+            .iter()
+            .any(|t| t.name == "Google Hosted Libraries"));
+        assert_eq!(v("Slick").as_deref(), Some("1.8.1"));
+        assert_eq!(v("Magnific Popup").as_deref(), Some("1.1.0"));
+        // Retire.js flags the CDN jQuery by its URL
+        let jq =
+            r.js.iter()
+                .flat_map(|j| &j.libraries)
+                .find(|l| l.name == "jquery")
+                .expect("retire jquery");
+        assert_eq!(jq.version, "2.2.4");
+        assert!(jq
+            .vulns
+            .iter()
+            .any(|x| x.cves.contains(&"CVE-2020-11023".into())));
+    }
+
+    #[test]
     fn full_report_and_findings() {
         let mut r = analyze_site(&input());
         assert!(r.technologies.iter().any(|t| t.name == "WordPress"));
         assert!(r.analytics_ids.len() >= 5);
-        assert_eq!(r.js.len(), 2, "inline + app.js");
+        // inline, app.js and the unfetched jquery-1.12.4.min.js checked by URL
+        assert_eq!(r.js.len(), 3, "inline + app.js + jquery by URL");
         assert!(r.favicon.is_some());
         assert_eq!(
             r.icon_links[0].url,

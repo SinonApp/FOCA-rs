@@ -777,6 +777,55 @@ pub struct SiteExtra<'a> {
 }
 
 /// Cuts `s` to at most `max` bytes on a char boundary.
+/// Fills a missing version from the banner comment at the top of the library's own file
+/// (`/*! jQuery v2.2.4`, `Magnific Popup - v1.1.0`, Slick's `Version: 1.8.1`). The file must be
+/// the one the technology was detected by (its URL in the evidence) or carry its name.
+pub(crate) fn banner_versions(techs: &mut [Technology], scripts: &[(&str, &str)]) {
+    static VER: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
+    let ver = VER.get_or_init(|| {
+        Regex::new(r"(?i)\bversion\s*:?\s*v?(\d+\.\d+(?:\.\d+)?)\b").expect("static regex")
+    });
+    for t in techs.iter_mut().filter(|t| t.version.is_none()) {
+        let key: String = t
+            .name
+            .to_ascii_lowercase()
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .collect();
+        if key.len() < 3 {
+            continue;
+        }
+        let Ok(named) = Regex::new(&format!(
+            r"(?i){}[^\n]{{0,24}}?\bv?(\d+\.\d+(?:\.\d+)?)\b",
+            regex::escape(&t.name).replace(r"\ ", r"[\s-]*")
+        )) else {
+            continue;
+        };
+        for (url, body) in scripts {
+            let file = url.rsplit('/').next().unwrap_or(url).to_ascii_lowercase();
+            let file: String = file.chars().filter(|c| c.is_ascii_alphanumeric()).collect();
+            let own = t.evidence.iter().any(|e| e.contains(url));
+            if !own && !file.contains(&key) {
+                continue;
+            }
+            let top = head(body, 2048);
+            let found = named
+                .captures(top)
+                .or_else(|| ver.captures(top))
+                .and_then(|c| c.get(1))
+                .map(|m| m.as_str().to_string());
+            if let Some(v) = found {
+                t.version = Some(v);
+                t.evidence.push(format!("script banner: {url}"));
+                if !t.signals.iter().any(|s| s == "script") {
+                    t.signals.push("script".into());
+                }
+                break;
+            }
+        }
+    }
+}
+
 fn head(s: &str, max: usize) -> &str {
     if s.len() <= max {
         return s;

@@ -270,6 +270,7 @@
   "data.demo": ", demo",
   "data.host_many": "hosts",
   "data.system_many": "systems",
+  "data.epss_hint": "probability of exploitation in the next 30 days (highest among the CVEs)",
   "data.outdated_2": "Outdated",
   "data.line": "· line",
   "data.closed": "Closed",

@@ -270,6 +270,7 @@
   "data.demo": ", демо",
   "data.host_many": "хостов",
   "data.system_many": "систем",
+  "data.epss_hint": "вероятность эксплуатации в ближайшие 30 дней (максимум среди CVE)",
   "data.outdated_2": "Устарело",
   "data.line": "· строка",
   "data.closed": "Закрыт",

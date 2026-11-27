@@ -20,14 +20,15 @@ const cats = demoFindings(ROOT);
 
 const sample = pat => {
   let k = 0;
-  return pat.replace(/\{(n|w)?\}/g, (_, t) => (t === "n" ? String(2 + (k++ % 4) * 3) : t === "w" ? "документов" : `X${++k}`));
+  return pat.replace(/\{(n|w)?\}/g, (_, t) =>
+    t === "n" ? String(2 + (k++ % 4) * 3) : t === "w" ? "документов" : `X${++k}`,
+  );
 };
 const firstRule = spec =>
   spec
     .split(",")
     .map(s => s.trim())
-    .find(s => s && s !== "*" && !s.endsWith("*")) ||
-  spec.split(",")[0].trim().replace(/\*$/, "x");
+    .find(s => s && s !== "*" && !s.endsWith("*")) || spec.split(",")[0].trim().replace(/\*$/, "x");
 
 const vectors = [];
 const ru = JSON.parse(fs.readFileSync(path.join(ROOT, "locales/ru/findings.json"), "utf8")).catalog;
@@ -71,5 +72,32 @@ if (saved.length !== vectors.length) {
   bad++;
   console.log(`FAIL ${saved.length} saved vectors, ${vectors.length} generated (run --write)`);
 }
-console.log(bad ? `FAILED: ${bad} of ${vectors.length}` : `ALL GREEN: ${vectors.length} finding text vectors`);
+// Notes built in Rust with Russian literals (technology end of life, outdated ports) reach the
+// technology and port cards; in UK/EN they must come out without Russian text.
+const RU_ONLY = /[ыэъё]|версия|снята|поддерж/i;
+const notes = [
+  [
+    "recon.outdated_tech",
+    "версия 3.3.5 не поддерживается: ветка 3 снята с поддержки 2019-07-24 (endoflife.date)",
+  ],
+  [
+    "ports-outdated",
+    "версия 1.18.0 не поддерживается: ветка 1.18 снята с поддержки 2021-04-20 (endoflife.date)",
+  ],
+  ["sw.kev", "Версия снята с поддержки (2019-07-24): исправления больше не выходят."],
+  ["sw.kev", "Версия снята с поддержки: исправления больше не выходят."],
+];
+for (const lang of ["en", "uk"]) {
+  FT.setCatalog(lang, cats[lang]);
+  for (const [rule, text] of notes) {
+    const out = FT.field(text, rule);
+    if (RU_ONLY.test(out)) {
+      bad++;
+      console.log(`FAIL ${lang} note stays Russian: ${out}`);
+    }
+  }
+}
+console.log(
+  bad ? `FAILED: ${bad} of ${vectors.length}` : `ALL GREEN: ${vectors.length} finding text vectors`,
+);
 process.exit(bad ? 1 : 0);
