@@ -121,26 +121,41 @@ fn suffix_hit(t: &str, s: &str) -> bool {
 /// The fingerprint table entry for a CNAME target, if any.
 pub fn service_for(target: &str) -> Option<TakeoverService> {
     let t = norm_name(target);
-    services()
-        .iter()
-        .find(|s| s.cname.iter().any(|c| suffix_hit(&t, c)))
-        .cloned()
+    services().iter().find(|s| s.serves(&t)).cloned()
+}
+
+impl TakeoverService {
+    /// The CNAME target (normalized) belongs to this service.
+    fn serves(&self, target: &str) -> bool {
+        self.cname.iter().any(|c| suffix_hit(target, c))
+    }
+
+    /// The service has an HTTP body fingerprint and a released resource can be claimed.
+    pub fn has_body_check(&self) -> bool {
+        self.status != "not_vulnerable" && !self.fingerprint.is_empty()
+    }
+
+    /// Returns the part of `body` that matches the unclaimed-resource fingerprint, if any.
+    pub fn match_body(&self, body: &str) -> Option<String> {
+        if !self.has_body_check() {
+            return None;
+        }
+        // The table keeps the markdown escape of `|` from the upstream README.
+        let pat = self.fingerprint.replace("&#124;", "|");
+        // Some fingerprints are regexes (`Tunnel .*.ngrok.io not found`); plain text is a valid
+        // regex too, and a pattern that does not compile is matched as text.
+        match regex::Regex::new(&pat) {
+            Ok(re) => re.find(body).map(|m| m.as_str().to_string()),
+            Err(_) => body.contains(&pat).then_some(pat),
+        }
+    }
 }
 
 /// Whether an HTTP body served for a CNAME target shows the unclaimed-resource text of its
 /// provider (for a target that still resolves). Returns the service name.
 pub fn body_fingerprint(target: &str, body: &str) -> Option<String> {
     let s = service_for(target)?;
-    if s.status == "not_vulnerable" || s.fingerprint.is_empty() {
-        return None;
-    }
-    // Some fingerprints are regexes (`Tunnel .*.ngrok.io not found`); plain text is a valid
-    // regex too, and a pattern that does not compile is matched as text.
-    let hit = match regex::Regex::new(&s.fingerprint) {
-        Ok(re) => re.is_match(body),
-        Err(_) => body.contains(&s.fingerprint),
-    };
-    hit.then_some(s.service)
+    s.match_body(body).map(|_| s.service)
 }
 
 /// Returns the provider for a CNAME target, if known (hand table first).
@@ -165,37 +180,65 @@ pub struct Dangling {
     pub reason: String,
 }
 
+/// A host whose CNAME chain points at a resolving resource of a service with an HTTP body
+/// fingerprint: fetching the host tells whether the resource is unclaimed.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HttpCandidate {
+    pub host: String,
+    pub chain: Vec<String>,
+    pub service: TakeoverService,
+}
+
+/// What following a host's CNAME chain found: a dangling CNAME (NXDOMAIN target) or a candidate
+/// for the HTTP fingerprint check.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Inspection {
+    pub dangling: Option<Dangling>,
+    pub http: Option<HttpCandidate>,
+}
+
 /// Checks a host by following its CNAME chain (up to 8 steps); if the final target is
 /// NXDOMAIN, the CNAME is dangling.
 pub async fn check_dangling(dns: &dyn DnsLookup, host: &str) -> Option<Dangling> {
+    inspect(dns, host).await.dangling
+}
+
+/// Follows a host's CNAME chain once: a dangling CNAME when the final target is NXDOMAIN, an
+/// HTTP fingerprint candidate when it resolves at a service the fingerprint table can check.
+pub async fn inspect(dns: &dyn DnsLookup, host: &str) -> Inspection {
     let host = norm_name(host);
-    let mut chain = Vec::new();
-    let mut cur = host.clone();
-    for _ in 0..8 {
-        let a = dns.lookup(&cur, RType::CNAME).await.ok()?;
-        if a.nxdomain {
-            break;
-        }
-        let next = a.values(RType::CNAME).into_iter().next()?;
-        let next = norm_name(&next);
-        if chain.contains(&next) {
-            return None;
-        }
-        chain.push(next.clone());
-        cur = next;
-    }
-    let last = chain.last()?.clone();
+    let Some(chain) = cname_chain(dns, &host).await else {
+        return Inspection::default();
+    };
+    let Some(last) = chain.last().cloned() else {
+        return Inspection::default();
+    };
     let mut nx = false;
     for t in [RType::A, RType::AAAA] {
         match dns.lookup(&last, t).await {
             Ok(a) if a.nxdomain => nx = true,
-            Ok(a) if !a.records.is_empty() => return None,
+            Ok(a) if !a.records.is_empty() => {
+                // The target resolves: only the HTTP body can tell an unclaimed resource.
+                let http = chain
+                    .iter()
+                    .find_map(|c| service_for(c))
+                    .filter(TakeoverService::has_body_check)
+                    .map(|service| HttpCandidate {
+                        host,
+                        chain,
+                        service,
+                    });
+                return Inspection {
+                    dangling: None,
+                    http,
+                };
+            }
             Ok(_) => {}
-            Err(_) => return None,
+            Err(_) => return Inspection::default(),
         }
     }
     if !nx {
-        return None;
+        return Inspection::default();
     }
     let hand = chain.iter().find_map(|c| provider_for(c)).map(String::from);
     let table = chain.iter().find_map(|c| service_for(c));
@@ -214,13 +257,40 @@ pub async fn check_dangling(dns: &dyn DnsLookup, host: &str) -> Option<Dangling>
         Some(p) => format!("CNAME → {last} ({p}) не существует: имя можно занять у провайдера"),
         None => format!("CNAME → {last} не существует (NXDOMAIN)"),
     };
-    Some(Dangling {
-        host,
-        chain,
-        provider,
-        sev: sev.into(),
-        reason,
-    })
+    Inspection {
+        dangling: Some(Dangling {
+            host,
+            chain,
+            provider,
+            sev: sev.into(),
+            reason,
+        }),
+        http: None,
+    }
+}
+
+/// The CNAME chain of `host` (up to 8 steps); `None` without a CNAME, on a loop or a lookup
+/// error.
+async fn cname_chain(dns: &dyn DnsLookup, host: &str) -> Option<Vec<String>> {
+    let mut chain = Vec::new();
+    let mut cur = host.to_string();
+    for _ in 0..8 {
+        let a = dns.lookup(&cur, RType::CNAME).await.ok()?;
+        if a.nxdomain {
+            break;
+        }
+        // no further CNAME: the chain ends at an address record (or nothing)
+        let Some(next) = a.values(RType::CNAME).into_iter().next() else {
+            break;
+        };
+        let next = norm_name(&next);
+        if chain.contains(&next) {
+            return None;
+        }
+        chain.push(next.clone());
+        cur = next;
+    }
+    (!chain.is_empty()).then_some(chain)
 }
 
 #[cfg(test)]
@@ -289,5 +359,71 @@ mod tests {
         let y = check_dangling(&d, "lost.contoso.ua").await.unwrap();
         assert_eq!(y.sev, "warn");
         assert!(y.provider.is_none());
+    }
+
+    #[tokio::test]
+    async fn resolving_cname_at_known_service_is_http_candidate() {
+        let d = StaticDns::new()
+            .add(
+                "shop.example.test",
+                RType::CNAME,
+                &["unclaimed-example.s3.amazonaws.com"],
+            )
+            .add(
+                "unclaimed-example.s3.amazonaws.com",
+                RType::A,
+                &["192.0.2.10"],
+            )
+            .add(
+                "api.example.test",
+                RType::CNAME,
+                &["x.eu-west-1.elb.amazonaws.com"],
+            )
+            .add("x.eu-west-1.elb.amazonaws.com", RType::A, &["192.0.2.11"])
+            .add(
+                "help.example.test",
+                RType::CNAME,
+                &["unclaimed-example.helprace.com"],
+            )
+            .add("unclaimed-example.helprace.com", RType::A, &["192.0.2.12"])
+            .add("www.example.test", RType::CNAME, &["web.example.test"])
+            .add("web.example.test", RType::A, &["192.0.2.1"]);
+        let i = inspect(&d, "shop.example.test").await;
+        assert!(i.dangling.is_none());
+        let c = i.http.expect("S3 candidate");
+        assert_eq!(c.host, "shop.example.test");
+        assert_eq!(
+            c.chain,
+            vec!["unclaimed-example.s3.amazonaws.com".to_string()]
+        );
+        assert_eq!(c.service.service, "AWS/S3");
+        // not claimable (ELB), no fingerprint text (Helprace), unknown target: no candidate
+        for h in ["api.example.test", "help.example.test", "www.example.test"] {
+            assert_eq!(inspect(&d, h).await, Inspection::default(), "{h}");
+        }
+    }
+
+    #[test]
+    fn match_body_returns_the_matched_text() {
+        let s3 = service_for("unclaimed-example.s3.amazonaws.com").unwrap();
+        assert_eq!(
+            s3.match_body("<Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message>")
+                .as_deref(),
+            Some("The specified bucket does not exist")
+        );
+        assert_eq!(s3.match_body("<html>shop</html>"), None);
+        // the `&#124;` escape from the upstream table is an alternation
+        let ghost = service_for("unclaimed-example.ghost.io").unwrap();
+        assert_eq!(
+            ghost
+                .match_body("<h1>Failed to resolve DNS path for this host</h1>")
+                .as_deref(),
+            Some("Failed to resolve DNS path for this host")
+        );
+        let ngrok = service_for("a.ngrok.io").unwrap();
+        assert!(ngrok.match_body("Tunnel a.ngrok.io not found").is_some());
+        let elb = service_for("x.eu-west-1.elb.amazonaws.com").unwrap();
+        assert!(!elb.has_body_check());
+        assert_eq!(elb.match_body("anything"), None);
     }
 }

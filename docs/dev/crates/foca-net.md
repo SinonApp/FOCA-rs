@@ -34,7 +34,7 @@ TLS uses `rustls` + `ring` + `webpki-roots`: no OpenSSL dependency and no Androi
 | `src/dns/nsec.rs` | 779 | Active DNSSEC NSEC zone walking (`Access::ZoneInfra`, TCP/53 to target NS; stops on NSEC3/black lies/loops) |
 | `src/dns/permute.rs` | 813 | Smart subdomain permutations (alterx/gotator style) incorporating document metadata tokens |
 | `src/dns/ptr.rs` | 636 | Reverse DNS (PTR) for in-scope IPs, FCrDNS, hosting classification, and host discovery |
-| `src/dns/takeover.rs` | 161 | Dangling CNAME detection for subdomain takeover risk |
+| `src/dns/takeover.rs` | 427 | Dangling CNAME detection and HTTP fingerprint candidates (`inspect`, `TakeoverService::match_body`) for subdomain takeover risk |
 | `src/error.rs` | 87 | Network layer error types (`NetError`) |
 | `src/intel/cdn.rs` | 820 | CDN/WAF/cloud classification (~10.5k CIDR prefixes in `data/cloud_ranges.txt.gz`) and origin IP candidate ranking |
 | `src/intel/hibp.rs` | 258 | Strictly opt-in Have I Been Pwned (Pwned Passwords) k-anonymity client |

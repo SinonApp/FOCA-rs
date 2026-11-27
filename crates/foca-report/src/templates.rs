@@ -117,6 +117,7 @@ fn group(rule: &str) -> usize {
     } else if r.starts_with("recon.")
         || r.starts_with("fuzz-")
         || r == "dangling-cname"
+        || r == "takeover-http"
         || r.starts_with("infra.")
     {
         7

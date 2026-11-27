@@ -601,6 +601,11 @@ wstg = ["WSTG-CONF-10"]
 iso27001 = ["8.9"]
 
 [[rule]]
+id = "takeover-http"
+wstg = ["WSTG-CONF-10"]
+iso27001 = ["8.9"]
+
+[[rule]]
 id = "recon.robots_hidden"
 mitre = ["T1594"]
 wstg = ["WSTG-INFO-03"]

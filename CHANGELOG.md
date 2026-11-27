@@ -41,6 +41,7 @@ Third beta. It fixes the projects that disappeared after an upgrade, makes the s
 - **Clear the quick tools log**: Quick tools → Log has a Clear button.
 - **Signature update feed**: the app checks the official feed, verifies the bundle signature and installs a newer one. Each check is saved and shown as "Last checked".
 - **Monthly mobile data limit is enforced**: the app counts what it really transfers over mobile or metered networks per calendar month and shows it in Traffic & power. When a scan reaches the limit it pauses with a notification and a banner, and resumes by itself on Wi-Fi or after you raise the limit.
+- **Subdomain takeover by HTTP fingerprint**: in the Standard and Full profiles, a subdomain whose CNAME points at a live resource of a known service (26 services from can-i-take-over-xyz) is fetched once, and the answer is matched against the service's "unclaimed resource" text. A match is reported as "Possible subdomain takeover (service X)" with the CNAME and the matched text as evidence. The Passive profile never contacts the subdomain; the DNS-only dangling CNAME check stays.
 
 ## 2.0.0-beta.2: 2026-11-26
 

@@ -27,7 +27,7 @@ Upstream tables that live next to the module that uses them:
 | `crates/foca-net/data/recog.tsv.gz` | Rapid7 Recog (BSD-2-Clause) | `foca-net::recog`: banner product, version and OS in the port scan. |
 | `crates/foca-recon/data/favicons_md5.tsv` | Rapid7 Recog (BSD-2-Clause) | `foca-recon::favicon`: product of a favicon by MD5. |
 | `crates/foca-net/data/public_suffix_list.dat.gz` | Public Suffix List (MPL-2.0, unmodified) | `foca-net::dns::psl`: registrable domains for CT and PTR grouping. |
-| `crates/foca-net/data/takeover.json` | can-i-take-over-xyz (CC-BY-4.0, fields reduced) | `foca-net::takeover`: dangling CNAME providers and claimability. |
+| `crates/foca-net/data/takeover.json` | can-i-take-over-xyz (CC-BY-4.0, fields reduced) | `foca-net::takeover`: dangling CNAME providers, claimability and the HTTP body fingerprints matched by the network stage. |
 
 ## Ingest scripts
 

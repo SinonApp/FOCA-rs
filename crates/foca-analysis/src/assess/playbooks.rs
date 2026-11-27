@@ -390,6 +390,7 @@ fn template_key_for(rule: &str, category: &str) -> &'static str {
         | "remote-file" => "web-exposure",
 
         "dangling-cname"
+        | "takeover-http"
         | "axfr-open"
         | "infra.dns_wildcard"
         | "infra.dns_resolver_hijack"

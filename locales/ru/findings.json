@@ -3731,6 +3731,24 @@
       "rules": "dangling-cname",
       "pattern": "CNAME → {} ({}) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя",
       "text": "CNAME → {} ({}) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя"
+    },
+    {
+      "id": "f623",
+      "rules": "takeover-http",
+      "pattern": "Возможен subdomain takeover (сервис {})",
+      "text": "Возможен subdomain takeover (сервис {})"
+    },
+    {
+      "id": "f624",
+      "rules": "takeover-http",
+      "pattern": "CNAME → {} ({}): ответ {} (HTTP {}) содержит признак незанятого ресурса: «{}»",
+      "text": "CNAME → {} ({}): ответ {} (HTTP {}) содержит признак незанятого ресурса: «{}»"
+    },
+    {
+      "id": "f625",
+      "rules": "takeover-http",
+      "pattern": "Удалить запись CNAME или занять ресурс у провайдера за компанией.",
+      "text": "Удалить запись CNAME или занять ресурс у провайдера за компанией."
     }
   ],
   "tech_cats": {

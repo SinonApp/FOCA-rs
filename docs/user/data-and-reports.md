@@ -27,7 +27,7 @@ Core finding rule families (spanning document metadata, forensics, secrets, infr
 |---|---|---|
 | Documents & Forensics | `rdp-password`, `ica-password`, `internal-paths`, `internal-pcs`, `email-pattern`, `eol-software`, `eol-os`, `sw.kev`, `pdf-revisions`, `doc.bad_redaction`, `doc.modified_after_signing`, `doc.anomaly.*`, `doc.user_rule`, `pii`, `macros`, `hidden-sheets`, `gps` | `foca-analysis` |
 | Secrets | `secret` (passwords, tokens, API keys, webhooks, cloud SAS URLs in document text) | `foca-analysis/src/content/secrets.rs` |
-| Network, DNS & TLS | `axfr-open`, `dangling-cname`, `internetdb-cve`, mail policy & TLS/X.509 findings | `foca-engine`, `foca-net` |
+| Network, DNS & TLS | `axfr-open`, `dangling-cname`, `takeover-http`, `internetdb-cve`, mail policy & TLS/X.509 findings | `foca-engine`, `foca-net` |
 | Ports | `ports-exposed`, `ports-admin`, `ports-outdated`, `ports-unconfirmed` | `foca-engine/src/scan/ports.rs` |
 | Forgotten File Discovery | `fuzz-backup`, `fuzz-db-backup`, `fuzz-exposed`, `fuzz-git`, `fuzz-dsstore`, `fuzz-listing`, `fuzz-path`, `fuzz-vhost` | `foca-fuzz` → `foca-engine` |
 | Site Recon & Web Audit | `recon.favicon`, `recon.outdated_tech`, `recon.js_secret`, `recon.sourcemap`, `recon.robots_hidden`, `recon.bucket_*`, `recon.code_mentions`, `recon.web.*` | `foca-recon` |

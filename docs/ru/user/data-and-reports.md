@@ -27,7 +27,7 @@
 |---|---|---|
 | Документы и форензика | `rdp-password`, `ica-password`, `internal-paths`, `internal-pcs`, `email-pattern`, `eol-software`, `eol-os`, `sw.kev`, `pdf-revisions`, `doc.bad_redaction`, `doc.modified_after_signing`, `doc.anomaly.*`, `doc.user_rule`, `pii`, `macros`, `hidden-sheets`, `gps` | `foca-analysis` |
 | Секреты | `secret` (пароли, токены, ключи, вебхуки, облачные SAS в тексте документов) | `foca-analysis/src/content/secrets.rs` |
-| Сеть, DNS и TLS | `axfr-open`, `dangling-cname`, `internetdb-cve`, почтовые политики, TLS/X.509 | `foca-engine`, `foca-net` |
+| Сеть, DNS и TLS | `axfr-open`, `dangling-cname`, `takeover-http`, `internetdb-cve`, почтовые политики, TLS/X.509 | `foca-engine`, `foca-net` |
 | Порты | `ports-exposed`, `ports-admin`, `ports-outdated`, `ports-unconfirmed` | `foca-engine/src/scan/ports.rs` |
 | Поиск на сайте | `fuzz-backup`, `fuzz-db-backup`, `fuzz-exposed`, `fuzz-git`, `fuzz-dsstore`, `fuzz-listing`, `fuzz-path`, `fuzz-vhost` | `foca-fuzz` → `foca-engine` |
 | Разведка и веб-аудит | `recon.favicon`, `recon.outdated_tech`, `recon.js_secret`, `recon.sourcemap`, `recon.robots_hidden`, `recon.bucket_*`, `recon.code_mentions`, `recon.web.*` | `foca-recon` |

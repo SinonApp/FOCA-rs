@@ -3733,6 +3733,24 @@
  },
  {
   "lang": "en",
+  "rule": "takeover-http",
+  "text": "Возможен subdomain takeover (сервис X1)",
+  "out": "Possible subdomain takeover (service X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "takeover-http",
+  "text": "CNAME → X1 (X2): ответ X3 (HTTP X4) содержит признак незанятого ресурса: «X5»",
+  "out": "CNAME → X1 (X2): the response of X3 (HTTP X4) shows the unclaimed-resource text: “X5”"
+ },
+ {
+  "lang": "en",
+  "rule": "takeover-http",
+  "text": "Удалить запись CNAME или занять ресурс у провайдера за компанией.",
+  "out": "Delete the CNAME record or claim the resource at the provider for the company."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7474,6 +7492,24 @@
   "rule": "dangling-cname",
   "text": "CNAME → X1 (X2) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя",
   "out": "CNAME → X1 (X2) не існує; за даними can-i-take-over-xyz зайняти ім’я в цього провайдера не можна"
+ },
+ {
+  "lang": "uk",
+  "rule": "takeover-http",
+  "text": "Возможен subdomain takeover (сервис X1)",
+  "out": "Можливий subdomain takeover (сервіс X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "takeover-http",
+  "text": "CNAME → X1 (X2): ответ X3 (HTTP X4) содержит признак незанятого ресурса: «X5»",
+  "out": "CNAME → X1 (X2): відповідь X3 (HTTP X4) містить ознаку незайнятого ресурсу: «X5»"
+ },
+ {
+  "lang": "uk",
+  "rule": "takeover-http",
+  "text": "Удалить запись CNAME или занять ресурс у провайдера за компанией.",
+  "out": "Видалити запис CNAME або закріпити ресурс у провайдера за компанією."
  },
  {
   "lang": "uk",

@@ -285,9 +285,15 @@ pub(super) async fn stage_network(c: &mut Ctx) -> Result<(), Stop> {
     )
     .await?;
     let mut hits = 0usize;
-    for dg in checked.iter().flatten() {
+    for dg in checked.iter().filter_map(|i| i.dangling.as_ref()) {
         hits += 1;
         dangling(&mut f, dg, &now, &sid);
+    }
+    // a CNAME to a live resource of a known service: its HTTP answer tells an unclaimed one
+    // (a request to the target host, so never at the passive level)
+    let http: Vec<_> = checked.into_iter().filter_map(|i| i.http).collect();
+    if c.level != "external" && !http.is_empty() {
+        takeover::http_check(c, &mut f, http, &now, &sid).await?;
     }
     c.sub_end(sub, cand.len(), "done", &format!("висячих CNAME: {hits}"));
     // 2b. subdomain enumeration (standard/full): brute force, permutations, NSEC, PTR

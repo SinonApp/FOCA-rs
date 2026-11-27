@@ -9,4 +9,5 @@ mod network {
     mod plugins_scan;
     mod ports;
     mod recon;
+    mod takeover_http;
 }

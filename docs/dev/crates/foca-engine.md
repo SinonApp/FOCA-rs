@@ -71,7 +71,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `scan/network.rs` | 495 | Network stage: DNS, takeover checks, liveness, infrastructure modules |
 | `scan/steps.rs` | 193 | Sub-step progress of long stages (`done/total`, ETA, slow-resolver flag) |
 | `scan/hosts.rs` | 172 | Hosts worked on at once (`settings.net.hosts_parallel`): bounded worker pool, `hosts` sub-step |
-| `scan/takeover.rs` | 214 | Dangling CNAME checks with bounded concurrency |
+| `scan/takeover.rs` | 342 | Dangling CNAME checks with bounded concurrency and the HTTP fingerprint check of live CNAME targets (`takeover-http`, standard/full only) |
 | `scan/infra.rs` | 1,594 | Infrastructure modules inside the stages: CT, DNS brute force/permutations, SaaS/M365, CDN, TLS/X.509 |
 | `scan/plugins.rs` | 328 | Network-stage step that runs enabled sandboxed plugins |
 | `scan/ports.rs` | 1,325 | TCP connect port scan over live in-scope hosts (`foca_net::scan::ports`) |

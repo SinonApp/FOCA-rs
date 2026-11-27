@@ -42,7 +42,7 @@ This guarantee is enforced in the Rust core: at `Access::Passive` (`external`), 
 **Standard** = Passive + direct non-intrusive requests to in-scope targets:
 
 - Downloading public documents directly from target websites;
-- Authoritative DNS summary for target domains: A/AAAA/MX/NS/TXT/SOA, SPF/DMARC/DKIM, dangling CNAMEs (subdomain takeover indicators);
+- Authoritative DNS summary for target domains: A/AAAA/MX/NS/TXT/SOA, SPF/DMARC/DKIM, dangling CNAMEs (subdomain takeover indicators); for a CNAME to a live resource of a known service (can-i-take-over-xyz table) one `GET` of the subdomain matches the service's unclaimed-resource text (finding "Possible subdomain takeover (service X)", never in Passive);
 - Protocol-verified TCP liveness checks (`tcp_alive_checked` on common web/service ports, protected against local-VPN false positives);
 - Website crawler traversing pages within configured depth and limits (wizard → Advanced);
 - **Subdomain brute-force & permutations** (top-1,500 built-in wordlist by default, configurable in the wizard) plus permutations seeded from discovered hostnames and document metadata tokens, PTR lookups on in-scope IPs, and multi-level wildcard DNS filtering;

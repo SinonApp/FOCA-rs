@@ -12170,8 +12170,8 @@
     software: 54,
     os: 19,
     secrets: 221,
-    std_rules: 75,
-    std_refs: 445,
+    std_rules: 76,
+    std_refs: 447,
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
   const DEMO_SIG_TABLES = [
