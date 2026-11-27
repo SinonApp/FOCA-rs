@@ -1,5 +1,13 @@
 //! Dangling CNAMEs: a CNAME pointing to a non-existent host at a known provider indicates a
 //! subdomain takeover risk.
+//!
+//! Providers come from the hand table [`PROVIDERS`] and from the can-i-take-over-xyz
+//! fingerprints (CC-BY-4.0, EdOverflow and contributors; fields reduced by
+//! `foca-analysis/signatures/tools/update_takeover.py`), which also say whether a released name
+//! can really be claimed (`vulnerable`, `edge`, `not_vulnerable`) and which HTTP body text marks
+//! an unclaimed resource.
+
+use std::sync::{Arc, RwLock};
 
 use serde::{Deserialize, Serialize};
 
@@ -51,7 +59,86 @@ pub const PROVIDERS: &[(&str, &[&str])] = &[
     ("Cargo", &["cargocollective.com"]),
 ];
 
-/// Returns the provider for a CNAME target, if known.
+/// can-i-take-over-xyz fingerprints as shipped.
+pub const TAKEOVER_JSON: &str = include_str!("../../data/takeover.json");
+
+/// One service of the fingerprint table.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TakeoverService {
+    pub service: String,
+    /// `vulnerable`, `edge` or `not_vulnerable`.
+    pub status: String,
+    pub cname: Vec<String>,
+    /// NXDOMAIN of the target is the takeover signal.
+    pub nxdomain: bool,
+    /// HTTP body text of an unclaimed resource (empty when NXDOMAIN is the signal).
+    #[serde(default)]
+    pub fingerprint: String,
+}
+
+#[derive(Deserialize)]
+struct TakeoverFile {
+    services: Vec<TakeoverService>,
+}
+
+fn parse_table(json: &str) -> Result<Vec<TakeoverService>, String> {
+    let f: TakeoverFile = serde_json::from_str(json).map_err(|e| e.to_string())?;
+    Ok(f.services)
+}
+
+fn slot() -> &'static RwLock<Option<Arc<Vec<TakeoverService>>>> {
+    static S: RwLock<Option<Arc<Vec<TakeoverService>>>> = RwLock::new(None);
+    &S
+}
+
+/// The fingerprint table in use.
+pub fn services() -> Arc<Vec<TakeoverService>> {
+    if let Some(t) = slot().read().ok().and_then(|g| g.clone()) {
+        return t;
+    }
+    let mut g = slot().write().unwrap_or_else(|e| e.into_inner());
+    g.get_or_insert_with(|| Arc::new(parse_table(TAKEOVER_JSON).unwrap_or_default()))
+        .clone()
+}
+
+/// Replaces the fingerprint table (a signed signature bundle); returns the service count.
+pub fn install(json: &str) -> Result<usize, String> {
+    let t = parse_table(json)?;
+    let n = t.len();
+    *slot().write().unwrap_or_else(|e| e.into_inner()) = Some(Arc::new(t));
+    Ok(n)
+}
+
+fn suffix_hit(t: &str, s: &str) -> bool {
+    t == s || t.ends_with(&format!(".{s}"))
+}
+
+/// The fingerprint table entry for a CNAME target, if any.
+pub fn service_for(target: &str) -> Option<TakeoverService> {
+    let t = norm_name(target);
+    services()
+        .iter()
+        .find(|s| s.cname.iter().any(|c| suffix_hit(&t, c)))
+        .cloned()
+}
+
+/// Whether an HTTP body served for a CNAME target shows the unclaimed-resource text of its
+/// provider (for a target that still resolves). Returns the service name.
+pub fn body_fingerprint(target: &str, body: &str) -> Option<String> {
+    let s = service_for(target)?;
+    if s.status == "not_vulnerable" || s.fingerprint.is_empty() {
+        return None;
+    }
+    // Some fingerprints are regexes (`Tunnel .*.ngrok.io not found`); plain text is a valid
+    // regex too, and a pattern that does not compile is matched as text.
+    let hit = match regex::Regex::new(&s.fingerprint) {
+        Ok(re) => re.is_match(body),
+        Err(_) => body.contains(&s.fingerprint),
+    };
+    hit.then_some(s.service)
+}
+
+/// Returns the provider for a CNAME target, if known (hand table first).
 pub fn provider_for(target: &str) -> Option<&'static str> {
     let t = norm_name(target);
     PROVIDERS.iter().find_map(|(p, sufs)| {
@@ -105,9 +192,20 @@ pub async fn check_dangling(dns: &dyn DnsLookup, host: &str) -> Option<Dangling>
     if !nx {
         return None;
     }
-    let provider = chain.iter().find_map(|c| provider_for(c)).map(String::from);
-    let sev = if provider.is_some() { "crit" } else { "warn" };
+    let hand = chain.iter().find_map(|c| provider_for(c)).map(String::from);
+    let table = chain.iter().find_map(|c| service_for(c));
+    // The fingerprint table may say a released name cannot be claimed at this provider.
+    let not_claimable = table.as_ref().is_some_and(|s| s.status == "not_vulnerable");
+    let provider = hand.or_else(|| table.as_ref().map(|s| s.service.clone()));
+    let sev = if provider.is_some() && !not_claimable {
+        "crit"
+    } else {
+        "warn"
+    };
     let reason = match &provider {
+        Some(p) if not_claimable => format!(
+            "CNAME → {last} ({p}) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя"
+        ),
         Some(p) => format!("CNAME → {last} ({p}) не существует: имя можно занять у провайдера"),
         None => format!("CNAME → {last} не существует (NXDOMAIN)"),
     };
@@ -135,6 +233,35 @@ mod tests {
         assert_eq!(provider_for("user.github.io"), Some("GitHub Pages"));
         assert_eq!(provider_for("evilgithub.io"), None);
         assert_eq!(provider_for("www.contoso.ua"), None);
+    }
+
+    #[test]
+    fn fingerprint_table() {
+        let s = services();
+        assert!(s.len() >= 25, "{}", s.len());
+        let s3 = service_for("contoso.s3.amazonaws.com.").unwrap();
+        assert_eq!(s3.status, "vulnerable");
+        assert_eq!(
+            body_fingerprint(
+                "contoso.s3.amazonaws.com",
+                "<Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message>"
+            ),
+            Some(s3.service.clone())
+        );
+        assert_eq!(body_fingerprint("contoso.s3.amazonaws.com", "hello"), None);
+        // Regex fingerprints and not-claimable providers.
+        assert!(body_fingerprint("a.ngrok.io", "Tunnel a.ngrok.io not found").is_some());
+        assert_eq!(
+            service_for("x.eu-west-1.elb.amazonaws.com").unwrap().status,
+            "not_vulnerable"
+        );
+        assert!(service_for("www.contoso.ua").is_none());
+        // A provider only the table knows is reported with its name.
+        let only_table = s
+            .iter()
+            .find(|x| x.status == "vulnerable" && x.cname.iter().all(|c| provider_for(c).is_none()))
+            .expect("a table-only provider");
+        assert!(service_for(&format!("x.{}", only_table.cname[0])).is_some());
     }
 
     #[tokio::test]

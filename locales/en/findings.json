@@ -3725,6 +3725,12 @@
       "rules": "recon.vuln_js_lib",
       "pattern": "Обновить библиотеку до версии без известных уязвимостей или убрать неиспользуемый код.",
       "text": "Update the library to a version without known vulnerabilities or remove unused code."
+    },
+    {
+      "id": "f622",
+      "rules": "dangling-cname",
+      "pattern": "CNAME → {} ({}) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя",
+      "text": "CNAME → {0} ({1}) does not exist; according to can-i-take-over-xyz the name cannot be claimed at this provider"
     }
   ],
   "tech_cats": {

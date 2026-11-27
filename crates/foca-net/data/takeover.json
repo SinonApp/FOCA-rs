@@ -1,0 +1,255 @@
+{
+ "source": "https://github.com/EdOverflow/can-i-take-over-xyz @ 5bd4e1283791",
+ "license": "CC-BY-4.0",
+ "attribution": "Subdomain takeover fingerprints from can-i-take-over-xyz by EdOverflow and contributors (CC BY 4.0); fields reduced and renamed by FOCA-rs",
+ "services": [
+  {
+   "service": "Agile CRM",
+   "status": "vulnerable",
+   "cname": [
+    "agilecrm.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Sorry, this page is no longer available."
+  },
+  {
+   "service": "Airee.ru",
+   "status": "vulnerable",
+   "cname": [
+    "airee.ru"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Ошибка 402. Сервис Айри.рф не оплачен"
+  },
+  {
+   "service": "Anima",
+   "status": "vulnerable",
+   "cname": [
+    "animaapp.io"
+   ],
+   "nxdomain": false,
+   "fingerprint": "The page you were looking for does not exist."
+  },
+  {
+   "service": "AWS/Elastic Beanstalk",
+   "status": "vulnerable",
+   "cname": [
+    "elasticbeanstalk.com"
+   ],
+   "nxdomain": true,
+   "fingerprint": ""
+  },
+  {
+   "service": "AWS/Load Balancer (ELB)",
+   "status": "not_vulnerable",
+   "cname": [
+    "elb.amazonaws.com"
+   ],
+   "nxdomain": true,
+   "fingerprint": ""
+  },
+  {
+   "service": "AWS/S3",
+   "status": "vulnerable",
+   "cname": [
+    "s3.amazonaws.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "The specified bucket does not exist"
+  },
+  {
+   "service": "Bitbucket",
+   "status": "vulnerable",
+   "cname": [
+    "bitbucket.io"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Repository not found"
+  },
+  {
+   "service": "Discourse",
+   "status": "vulnerable",
+   "cname": [
+    "trydiscourse.com"
+   ],
+   "nxdomain": true,
+   "fingerprint": ""
+  },
+  {
+   "service": "Gemfury",
+   "status": "vulnerable",
+   "cname": [
+    "furyns.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "404: This page could not be found."
+  },
+  {
+   "service": "Ghost",
+   "status": "vulnerable",
+   "cname": [
+    "ghost.io"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Site unavailable\\.&#124;Failed to resolve DNS path for this host"
+  },
+  {
+   "service": "HatenaBlog",
+   "status": "vulnerable",
+   "cname": [
+    "hatenablog.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "404 Blog is not found"
+  },
+  {
+   "service": "Help Juice",
+   "status": "vulnerable",
+   "cname": [
+    "helpjuice.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "We could not find what you're looking for."
+  },
+  {
+   "service": "Help Scout",
+   "status": "vulnerable",
+   "cname": [
+    "helpscoutdocs.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "No settings were found for this company:"
+  },
+  {
+   "service": "Helprace",
+   "status": "vulnerable",
+   "cname": [
+    "helprace.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": ""
+  },
+  {
+   "service": "JetBrains",
+   "status": "vulnerable",
+   "cname": [
+    "youtrack.cloud"
+   ],
+   "nxdomain": false,
+   "fingerprint": "is not a registered InCloud YouTrack"
+  },
+  {
+   "service": "LaunchRock",
+   "status": "vulnerable",
+   "cname": [
+    "launchrock.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": ""
+  },
+  {
+   "service": "Microsoft Azure",
+   "status": "vulnerable",
+   "cname": [
+    "azure-api.net",
+    "azurecontainer.io",
+    "azurecr.io",
+    "azuredatalakestore.net",
+    "azureedge.net",
+    "azurehdinsight.net",
+    "azurewebsites.net",
+    "blob.core.windows.net",
+    "cloudapp.azure.com",
+    "cloudapp.net",
+    "database.windows.net",
+    "redis.cache.windows.net",
+    "search.windows.net",
+    "servicebus.windows.net",
+    "visualstudio.com"
+   ],
+   "nxdomain": true,
+   "fingerprint": ""
+  },
+  {
+   "service": "Ngrok",
+   "status": "vulnerable",
+   "cname": [
+    "ngrok.io"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Tunnel .*.ngrok.io not found"
+  },
+  {
+   "service": "Readme.io",
+   "status": "vulnerable",
+   "cname": [
+    "readme.io"
+   ],
+   "nxdomain": false,
+   "fingerprint": "The creators of this project are still working on making everything perfect!"
+  },
+  {
+   "service": "Strikingly",
+   "status": "vulnerable",
+   "cname": [
+    "s.strikinglydns.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "PAGE NOT FOUND."
+  },
+  {
+   "service": "Surge.sh",
+   "status": "vulnerable",
+   "cname": [
+    "na-west1.surge.sh"
+   ],
+   "nxdomain": false,
+   "fingerprint": "project not found"
+  },
+  {
+   "service": "SurveySparrow",
+   "status": "vulnerable",
+   "cname": [
+    "surveysparrow.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Account not found."
+  },
+  {
+   "service": "Uberflip",
+   "status": "vulnerable",
+   "cname": [
+    "read.uberflip.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "The URL you've accessed does not provide a hub."
+  },
+  {
+   "service": "Uptimerobot",
+   "status": "vulnerable",
+   "cname": [
+    "stats.uptimerobot.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "page not found"
+  },
+  {
+   "service": "Wordpress",
+   "status": "vulnerable",
+   "cname": [
+    "wordpress.com"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Do you want to register .*.wordpress.com?"
+  },
+  {
+   "service": "Worksites",
+   "status": "vulnerable",
+   "cname": [
+    "worksites.net"
+   ],
+   "nxdomain": false,
+   "fingerprint": "Hello! Sorry, but the website you&rsquo;re looking for doesn&rsquo;t exist."
+  }
+ ]
+}

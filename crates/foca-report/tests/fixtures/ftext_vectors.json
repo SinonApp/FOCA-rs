@@ -3727,6 +3727,12 @@
  },
  {
   "lang": "en",
+  "rule": "dangling-cname",
+  "text": "CNAME → X1 (X2) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя",
+  "out": "CNAME → X1 (X2) does not exist; according to can-i-take-over-xyz the name cannot be claimed at this provider"
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7462,6 +7468,12 @@
   "rule": "recon.vuln_js_lib",
   "text": "Обновить библиотеку до версии без известных уязвимостей или убрать неиспользуемый код.",
   "out": "Оновити бібліотеку до версії без відомих вразливостей або прибрати невикористовуваний код."
+ },
+ {
+  "lang": "uk",
+  "rule": "dangling-cname",
+  "text": "CNAME → X1 (X2) не существует; по данным can-i-take-over-xyz занять имя у этого провайдера нельзя",
+  "out": "CNAME → X1 (X2) не існує; за даними can-i-take-over-xyz зайняти ім’я в цього провайдера не можна"
  },
  {
   "lang": "uk",

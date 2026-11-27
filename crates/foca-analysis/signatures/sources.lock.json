@@ -1,6 +1,31 @@
 {
  "_about": "Pinned upstream versions of the ingested signature sources",
  "sources": {
+  "can-i-take-over-xyz": {
+   "repo": "https://github.com/EdOverflow/can-i-take-over-xyz",
+   "commit": "5bd4e12837911c8475486f1da922c9b9c706e632",
+   "license": "CC-BY-4.0",
+   "license_file": "LICENSE",
+   "license_sha256": "f5b745ef98087f531e719ee8ca6a96809444573ecc7173c6fa68eaad39b3cc3f",
+   "attribution": "Subdomain takeover fingerprints from can-i-take-over-xyz by EdOverflow and contributors (CC BY 4.0); fields reduced and renamed by FOCA-rs, https://github.com/EdOverflow/can-i-take-over-xyz",
+   "inputs": {
+    "fingerprints.json": "a108bf6e6d10d4e4861c4293eef8c224a0fd243ec4f3a39de321de69f284c64f",
+    "LICENSE": "f5b745ef98087f531e719ee8ca6a96809444573ecc7173c6fa68eaad39b3cc3f"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-net/data/takeover.json",
+     "bytes": 5256,
+     "sha256": "fdb15553e3a817e5945f23f6628d97400c83f8d4c8ea9270657ce61e5a4f9279"
+    }
+   ],
+   "stats": {
+    "services_upstream": 76,
+    "services_kept": 26,
+    "vulnerable": 25,
+    "nuclei_takeovers": "not ingested (no CNAME suffixes in templates)"
+   }
+  },
   "endoflife": {
    "repo": "https://github.com/endoflife-date/endoflife.date",
    "commit": "32423d8113b6b6cbef02c167ce18a0934203d0fd",
