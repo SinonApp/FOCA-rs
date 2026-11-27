@@ -10747,20 +10747,20 @@
         try {
           b = JSON.parse(bundle_json);
         } catch (e) {
-          throw apiErr("bad_args", "Некорректный JSON бандла сигнатур: " + e.message, {
+          throw apiErr("bad_args", "Некорректный JSON пакета сигнатур: " + e.message, {
             code: "sig.bad_json",
             params: { error: e.message },
           });
         }
       }
       if (!b || b.schema !== "foca-sig-bundle/v1" || !b.version || !b.released_at) {
-        throw apiErr("bad_args", "Пустая версия или дата выпуска бандла сигнатур", {
+        throw apiErr("bad_args", "Пустая версия или дата выпуска пакета сигнатур", {
           code: "sig.no_version",
           params: {},
         });
       }
       if (!b.signature_ed25519) {
-        throw apiErr("bad_signature", "Цифровая подпись Ed25519 бандла сигнатур недействительна", {
+        throw apiErr("bad_signature", "Цифровая подпись Ed25519 пакета сигнатур недействительна", {
           code: "sig.bad_signature",
           params: {},
         });
@@ -12050,7 +12050,7 @@
       updated_at: cur ? cur.released_at : B.released,
       source: cur ? "bundle" : "builtin",
       sha256: cur ? cur.sha256 : demoSha256("builtin-kev-2026.11.20"),
-      pubkey_ed25519: "a3256ddc5bae21f40746663fde1e48a0f4ff8487e95a8bb7469a5602023dc527",
+      pubkey_ed25519: "ad790ce1bc10393132f13c767f8e71149ff88605fe35342a76526c20d3daa246",
       signature_valid: true,
       can_rollback: Boolean(cur || db._sigPrev),
       counts: {

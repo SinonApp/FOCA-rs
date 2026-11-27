@@ -27,8 +27,8 @@ pub const BUNDLE_SCHEMA: &str = "foca-sig-bundle/v1";
 /// 32-byte Ed25519 public key used to verify signature bundles.
 /// The private signing key is kept offline by the release maintainers.
 const OFFICIAL_ED25519_PUBKEY: [u8; 32] = [
-    0xa3, 0x25, 0x6d, 0xdc, 0x5b, 0xae, 0x21, 0xf4, 0x07, 0x46, 0x66, 0x3f, 0xde, 0x1e, 0x48, 0xa0,
-    0xf4, 0xff, 0x84, 0x87, 0xe9, 0x5a, 0x8b, 0xb7, 0x46, 0x9a, 0x56, 0x02, 0x02, 0x3d, 0xc5, 0x27,
+    0xad, 0x79, 0x0c, 0xe1, 0xbc, 0x10, 0x39, 0x31, 0x32, 0xf1, 0x3c, 0x76, 0x7f, 0x8e, 0x71, 0x14,
+    0x9f, 0xf8, 0x86, 0x05, 0xfe, 0x35, 0x34, 0x2a, 0x76, 0x52, 0x6c, 0x20, 0xd3, 0xda, 0xa2, 0x46,
 ];
 
 /// Official update feed: the `signatures.bundle` asset of the rolling `signatures` release.
@@ -336,20 +336,20 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
     if bundle.schema != BUNDLE_SCHEMA {
         return Err(CmdError::new(
             "bad_args",
-            format!("Неизвестная схема бандла сигнатур: {}", bundle.schema),
+            format!("Неизвестная схема пакета сигнатур: {}", bundle.schema),
         ));
     }
     if bundle.version.trim().is_empty() || bundle.released_at.trim().is_empty() {
         return Err(CmdError::new(
             "bad_args",
-            "Пустая версия или дата выпуска бандла сигнатур",
+            "Пустая версия или дата выпуска пакета сигнатур",
         ));
     }
     let payload = canonical_payload(bundle);
     let actual_sha = sha256_hex(&payload);
     if !actual_sha.eq_ignore_ascii_case(bundle.sha256.trim()) {
         return Err(bad_sig(
-            "Контрольная сумма SHA-256 бандла сигнатур не совпадает с содержимым",
+            "Контрольная сумма SHA-256 пакета сигнатур не совпадает с содержимым",
         ));
     }
     let sig_bytes = hex_decode(&bundle.signature_ed25519)
@@ -361,12 +361,12 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
     }
     let pk = UnparsedPublicKey::new(&ED25519, pubkey_bytes);
     pk.verify(&payload, &sig_bytes)
-        .map_err(|_| bad_sig("Цифровая подпись Ed25519 бандла сигнатур недействительна"))?;
+        .map_err(|_| bad_sig("Цифровая подпись Ed25519 пакета сигнатур недействительна"))?;
     for s in &bundle.secret_additions {
         if s.id.trim().is_empty() || s.pattern.trim().is_empty() {
             return Err(CmdError::new(
                 "bad_args",
-                "Пустой идентификатор или шаблон правила секрета в бандле",
+                "Пустой идентификатор или шаблон правила секрета в пакете",
             ));
         }
         // Validate via foca-analysis rules engine so no broken/ReDoS regex is accepted.
@@ -385,7 +385,7 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
         foca_analysis::rules::RuleSet::compile(&cfg).map_err(|e| {
             CmdError::new(
                 "bad_args",
-                format!("Правило секрета {} в бандле не компилируется: {e:?}", s.id),
+                format!("Правило секрета {} в пакете не компилируется: {e:?}", s.id),
             )
         })?;
     }
@@ -707,7 +707,7 @@ fn parse_bundle(bundle_json: &str) -> Result<SigBundleV1, CmdError> {
     serde_json::from_str(bundle_json.trim_start_matches('\u{feff}')).map_err(|e| {
         CmdError::new(
             "bad_args",
-            format!("Некорректный JSON бандла сигнатур: {e}"),
+            format!("Некорректный JSON пакета сигнатур: {e}"),
         )
     })
 }
@@ -1136,7 +1136,7 @@ mod tests {
         assert_eq!(c.error_code.as_deref(), Some("bad_signature"));
         assert!(c.error.unwrap().contains("Ed25519"));
 
-        let net = CmdError::new("net", "Загрузка бандла сигнатур: таймаут");
+        let net = CmdError::new("net", "Загрузка пакета сигнатур: таймаут");
         assert!(apply_feed(dir.path(), "u", Err(net), &pk, now).is_err());
         let c = status_with_pubkey(dir.path(), &pk, TODAY)
             .last_check

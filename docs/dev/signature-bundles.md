@@ -99,6 +99,10 @@ hex characters (mode 600).
 
 ### New signing key
 
+The key was rotated in 2.0.0-beta.3: the earlier private key was not available, so beta.3 ships a
+new built-in public key. Builds up to 2.0.0-beta.2 reject bundles signed with the new key with
+`bad_signature` and keep their built-in databases.
+
 If the private key for the built-in public key is lost, generate a new one and ship it with the next
 app release (older builds keep rejecting bundles signed with the new key):
 

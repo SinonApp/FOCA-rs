@@ -37,7 +37,7 @@ impl Engine {
             serde_json::to_string(obj).map_err(|e| {
                 CmdError::new(
                     "bad_args",
-                    format!("Некорректный JSON бандла сигнатур: {e}"),
+                    format!("Некорректный JSON пакета сигнатур: {e}"),
                 )
             })?
         } else {
@@ -88,7 +88,7 @@ impl Engine {
                 }
                 Err(e) => Err(CmdError::new(
                     "net",
-                    format!("Загрузка бандла сигнатур: {e}"),
+                    format!("Загрузка пакета сигнатур: {e}"),
                 )),
             },
             Err(e) => Err(e),
