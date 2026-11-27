@@ -50,7 +50,7 @@ Columns: Access, whether an API key or embedded browser is needed; Contacts targ
 | `grepapp` | grep.app (public code) | Recon | Keyless | Passive | All | Domain mentions across public code repositories (best-effort; bot protection may apply) |
 | `ports` | TCP port scan | Recon | Keyless | Target (Active) | Full | Open TCP ports, service banners, and versions on live in-scope hosts (with VPN canary protection) |
 | `tls` | TLS/X.509 inspector | Recon | Keyless | Target | Standard, Full | Certificate validity, chain, SANs, CAA, internal PKI; Full adds TLS 1.0/1.1, weak ciphers, STARTTLS, and direct-IP checks without SNI |
-| `crawler` | Site crawler | Crawler | Keyless | Target | Standard, Full | Follows internal links on target websites to discover documents |
+| `crawler` | Site crawler | Crawler | Keyless | Target | Standard, Full | Crawls target websites from their pages and sitemaps; collects documents, photos for EXIF and files on public external storage the site links to |
 | `brave` | Brave Search API | With API key | Key required | Passive | All (if key set) | Official Brave Search API as one more dork engine. No free tier: Brave needs a card and every plan gets a $5 monthly credit (about 1000 queries); 429/quota stops it for the scan |
 | `searx` | Custom SearXNG | With API key | URL required | Passive | All (if URL set) | Your own SearXNG instances (HTTPS, public host, JSON enabled; configured in API Keys), asked before the public pool, see [Own SearXNG instance](searxng.md) |
 | `shodan` | Shodan (banner cache) | With API key | Key required | Passive | All (if key set) | Ports and service banners from Shodan's database without touching the target |
@@ -62,6 +62,19 @@ Columns: Access, whether an API key or embedded browser is needed; Contacts targ
 | `fuzz` | Forgotten file discovery | Active | Keyless | Target (Active) | Full | Wordlist path/backup/vhost discovery (`foca-fuzz`) |
 
 Target-touching sources (`crawler`, `ports`, `subdomains`, `tls`, `fuzz`) are automatically excluded from Passive scans. You can skip `subdomains` and `tls` during a run with Skip source up through the Ports stage. DNS-based infrastructure checks (`infra`: SaaS map, Microsoft 365 tenant, mail policies, CDN/cloud ranges, CT history) run in all profiles via the device resolver and public Microsoft endpoints without contacting target servers. Any source disabled in Settings → Sources is never queried.
+
+## Site Crawler
+
+The crawler runs only in the Standard and Full profiles. It starts from the target home pages, the `Sitemap:` lines of robots.txt and `/sitemap.xml` (sitemap indexes and `.gz` included).
+
+- **Limits** (Settings → Site crawl, or the wizard's Advanced block for one scan): depth 5, 1000 pages and 20 minutes per scan by default. When a limit stops the crawl, the next scan continues from the pages not crawled yet ("Continue an unfinished crawl").
+- **Traps**: calendars, endless filters and session parameters are crawled by URL template with a cap; tracking parameters are stripped; logout and delete links are never opened; `rel=nofollow` is honoured when enabled.
+- **Pace**: the crawler uses the network rate limit. A 429 or 503 answer halves the pace for that host and waits for `Retry-After`; when it keeps happening the host is no longer crawled in this scan and the scan screen says so. FOCA-rs does not get around bot protection or captchas.
+- **App sites** (React, Flutter and similar): when a page is an app shell with almost no links, Android renders it in the hidden built-in browser (up to 30 pages per scan) and the links come from the rendered page. Desktop and CLI builds use the HTML as is.
+- **Files on public external storage**: links from in-scope pages to Google Drive, Google Docs/Sheets/Slides, OneDrive, Dropbox and SharePoint count as target documents. Exactly those items are downloaded (a public folder: up to 200 files, 1000 in total), nothing else on the storage host is browsed, and the request log marks these requests as `linked_storage`. Private files are recorded as private, not as errors. Google Docs/Sheets/Slides come as exports (PDF, DOCX, XLSX): their metadata is written by Google, so analysis never attributes authors from them. Turn this off with "Files on external storage linked from the site".
+- **Photos for EXIF**: up to 300 images and 200 MB per scan (never above the traffic limit), camera formats first; icons and thumbnails are skipped.
+- **Links inside documents**: web links in downloaded documents (for PDF, URI annotations) that point to in-scope documents or linked storage files are downloaded too, up to 2 steps deep, within the document limit.
+- **Provenance**: every document found this way shows where it came from in its card: the page that linked it, the document the link was found in, the storage provider and a Google export note.
 
 ## Source Statuses
 

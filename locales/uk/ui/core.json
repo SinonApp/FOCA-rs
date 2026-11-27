@@ -286,5 +286,8 @@
   "core.sig.empty_rule": "Правило секретів у пакеті має порожній ідентифікатор або шаблон",
   "core.sig.bad_rule": "Правило секретів {id} у пакеті не компілюється: {error}",
   "core.sig.bad_json": "Пакет сигнатур не є коректним JSON: {error}",
-  "core.sig.need_bundle": "Потрібен bundle_json або bundle (foca-sig-bundle/v2)"
+  "core.sig.need_bundle": "Потрібен bundle_json або bundle (foca-sig-bundle/v2)",
+  "core.search.crawl": "обхід: сторінок {pages}, документів {docs}, файлів у сховищах {storage}, зображень {images}",
+  "core.search.crawl_rate_limited": "Обхід зупинено на хостах, які повторно відповідали 429/503: {hosts}. Решта сторінок продовжиться в наступному скані",
+  "core.download.storage": "зовнішні сховища: завантажено {got}, без публічного доступу {private}"
 }

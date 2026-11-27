@@ -425,6 +425,7 @@
   ["chrome", "honest", "custom"].forEach(k => lzField(UAS, k, "launch.ua_" + k));
   const uaOf = v => ({ auto: "chrome", random: "chrome", foca: "honest" })[v] || (UAS[v] ? v : "chrome");
   const NETS = () => (F.db.settings || {}).net || {};
+  const CRAWL = () => ((F.db && F.db.settings) || {}).crawl || {};
 
   // ---------- wizard state ----------
   const wiz = (F.state.launch = F.state.launch || {
@@ -443,7 +444,11 @@
     mode: wiz.mode || "scan",
     newExcl: wiz.newExcl || [],
     docs: wiz.docs || DOC_DEFAULT.slice(),
-    depth: wiz.depth || 2,
+    depth: wiz.depth || CRAWL().max_depth || 5,
+    crawlPages: wiz.crawlPages || CRAWL().max_pages || 1000,
+    crawlMin: wiz.crawlMin || CRAWL().max_minutes || 20,
+    crawlStorage: wiz.crawlStorage != null ? wiz.crawlStorage : CRAWL().storage !== false,
+    crawlResume: wiz.crawlResume != null ? wiz.crawlResume : CRAWL().resume !== false,
     ccDepth: wiz.ccDepth || searchSet().cc_depth || "latest",
     // 0 = no limit, so only a missing value falls back to the default
     maxDocs: wiz.maxDocs ?? 500,
@@ -775,8 +780,13 @@
           .join("")}</div>
       <p class="fhint">${esc(tx("launch.cc_hint", "Глубокий обход идёт в фоне поиска и не задерживает другие источники; недоделанные снимки продолжатся в следующем скане."))}</p>
 
+      <h3 class="sub-h la-h3">${esc(tx("launch.crawler", "Обход сайта"))}</h3>
+      <p class="fhint la-nh">${esc(tx("launch.crawler_hint", "Стандартный и Полный профили: страницы сайта, его sitemap и файлы, на которые он ссылается. Пассивный профиль сайт не обходит."))}</p>
+      <div class="card nfs la-nfs">${nfL("depth", tx("launch.crawl_depth", "Глубина краулера, уровней"), "", "crawl.max_depth", tx("launch.nf_crawl_depth_note", "переходов по ссылкам от главной"), "crawler")}${nfL("crawlPages", tx("launch.nf_crawl_pages", "Страниц за скан, до"), "", "crawl.max_pages", tx("launch.nf_crawl_pages_note", "остаток продолжится в следующем скане"), "crawler", 50)}${nfL("crawlMin", tx("launch.nf_crawl_min", "Время обхода, до"), tx("launch.nf_min", "мин"), "crawl.max_minutes", tx("launch.nf_crawl_min_note", "потом обход останавливается сам"), "crawler")}</div>
+      <div class="list">${ui.row({ lead: ui.leadIcon("folder"), title: esc(tx("launch.crawl_storage", "Файлы во внешних хранилищах по ссылкам с сайта")), sub: esc(tx("launch.crawl_storage_sub", "Google Drive, Docs, OneDrive, Dropbox, SharePoint: только файлы, на которые ссылается сайт")), tail: ui.toggle(!!wiz.crawlStorage, "la-crawl-storage", `aria-label="${esc(tx("launch.crawl_storage", "Файлы во внешних хранилищах по ссылкам с сайта"))}"`) })}${ui.row({ lead: ui.leadIcon("history"), title: esc(tx("launch.crawl_resume", "Продолжить незавершённый обход")), sub: esc(tx("launch.crawl_resume_sub", "Начать с непройденных страниц прошлого скана")), tail: ui.toggle(!!wiz.crawlResume, "la-crawl-resume", `aria-label="${esc(tx("launch.crawl_resume", "Продолжить незавершённый обход"))}"`) })}</div>
+
       <h3 class="sub-h la-h3">${esc(tx("launch.limits", "Лимиты"))}</h3>
-      <div class="card nfs la-nfs">${nfL("depth", tx("launch.crawl_depth", "Глубина краулера, уровней"), "", "scan.crawl_depth", "", "set-limits")}${nfL("maxDocs", tx("launch.nf_maxdocs", "Документов на цель"), "", "scan.max_docs", tx("launch.nf_maxdocs_note", "больше: дольше скачивание"), "set-limits", 50)}${nfL("maxSize", tx("launch.nf_maxsize", "Размер файла, до"), tx("launch.nf_mb", "МБ"), "scan.max_size_mb", tx("launch.nf_maxsize_note", "крупнее: редко документы"), "set-limits", 5)}</div>
+      <div class="card nfs la-nfs">${nfL("maxDocs", tx("launch.nf_maxdocs", "Документов на цель"), "", "scan.max_docs", tx("launch.nf_maxdocs_note", "больше: дольше скачивание"), "set-limits", 50)}${nfL("maxSize", tx("launch.nf_maxsize", "Размер файла, до"), tx("launch.nf_mb", "МБ"), "scan.max_size_mb", tx("launch.nf_maxsize_note", "крупнее: редко документы"), "set-limits", 5)}</div>
 
       <h3 class="sub-h la-h3">${esc(tx("launch.net", "Сеть"))}</h3>
       <p class="fhint la-nh">${esc(tx("launch.net_hint", "Весь трафик скана идёт через прокси из настроек. Один для мастера и скана."))}</p>
@@ -1457,6 +1467,14 @@
       wiz.ccDepth = v;
       F.render(true);
     },
+    "la-crawl-storage": () => {
+      wiz.crawlStorage = !wiz.crawlStorage;
+      F.render(true);
+    },
+    "la-crawl-resume": () => {
+      wiz.crawlResume = !wiz.crawlResume;
+      F.render(true);
+    },
     "la-ports-top": n => {
       wiz.portsTop = +n;
       F.render(true);
@@ -1688,6 +1706,13 @@
           cc_years: ccYears(),
           max_size_mb: wiz.maxSize,
           ua: wiz.ua,
+          crawl: {
+            max_depth: wiz.depth,
+            max_pages: wiz.crawlPages,
+            max_minutes: wiz.crawlMin,
+            storage: !!wiz.crawlStorage,
+            resume: !!wiz.crawlResume,
+          },
         };
     const withRun = fn => {
       const api = F.api,
@@ -1791,6 +1816,27 @@
         <div class="kvr"><div class="k">${esc(tx("launch.notes", "Заметки"))}</div><div class="v la-notes">${p.notes ? esc(p.notes) : `<span class="muted">${esc(tx("launch.none", "нет"))}</span>`}</div></div>
       </div>`;
   }
+  // Scope rule "linked external storage": files on public storage linked from in-scope pages are
+  // downloaded, exactly those items and nothing else on the storage host.
+  function linkedStorageBlock() {
+    const on = CRAWL().storage !== false;
+    const n = (F.db.docs || []).filter(d => d.provenance && d.provenance.storage).length;
+    return `${ui.secH(tx("launch.linked_storage", "Связанные внешние хранилища"))}
+      <div class="list la-lstore">${ui.row({
+        lead: ui.leadIcon("folder", on ? "var(--accent)" : ""),
+        title: esc(tx("launch.linked_storage_rule", "Только файлы по ссылкам со страниц целей")),
+        sub: esc(
+          on
+            ? tx(
+                "launch.linked_storage_on",
+                { n },
+                "Google Drive, Docs, OneDrive, Dropbox, SharePoint: скачиваются только файлы, на которые ссылаются страницы целей; другие материалы хранилища не просматриваются. Таких файлов в проекте: {n}",
+              )
+            : tx("launch.linked_storage_off", "Выключено в «Настройки → Обход сайта»"),
+        ),
+        act: "go:/settings/crawl",
+      })}</div>`;
+  }
   function renderScope() {
     const targets = scope.targets || [],
       excl = scope.excl || [];
@@ -1845,6 +1891,8 @@
               .join("")}</div>`
           : `<p class="la-none">${esc(tx("launch.excl_none", "Исключений нет."))}</p>`
       }
+
+      ${linkedStorageBlock()}
 
       ${projectBlock2()}`;
   }

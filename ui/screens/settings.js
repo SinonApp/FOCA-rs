@@ -420,6 +420,7 @@
       <div class="list">
         ${item("key", "var(--accent)", F.t("settings.keys_opt", "Ключи API (необязательно)"), [F.t("settings.keys_ok", { n: k.ok }, "работают: {n}"), k.err ? F.t("settings.keys_err", { n: k.err }, "с ошибкой: {n}") : "", k.none ? F.t("settings.keys_none", { n: k.none }, "не указаны: {n}") : ""].filter(Boolean).join(" · "), "/settings/keys", k.err ? `<span class="pill bad">${ic("alert")}${esc(F.t("settings.err_pill", "Ошибка"))}</span>` : "")}
         ${item("search", "var(--accent)", F.t("settings.sources", "Источники"), F.t("settings.sources_sub", "Что опрашивает поиск: архивы, поддомены, дорки: без ключа"), "/settings/sources")}
+        ${item("globe", "var(--accent)", F.t("settings.crawl", "Обход сайта"), F.t("settings.crawl_sub", "Глубина, лимиты, файлы во внешних хранилищах, фото для EXIF"), "/settings/crawl")}
         ${item("folder", "var(--accent)", F.t("settings.wordlists", "Словари"), F.t("settings.wordlists_sub", "Поиск забытых файлов на сайте: встроенные, большие, свои; скорость и бюджет"), "/settings/wordlists")}
         ${item("st-sig", "var(--ok)", F.t("settings.sigs_ocr", "Базы сигнатур и OCR"), `${F.t("settings.sigs_sub", "ПО, CVE, секреты")} · ${((F.db.settings || {}).ocr || {}).enabled ? F.t("settings.ocr_on", "Офлайн-OCR вкл.") : F.t("settings.ocr_off", "Офлайн-OCR выкл.")}`, "/settings/signatures")}
         ${item("plug", "var(--info)", F.t("settings.plugins", "Плагины"), F.t("settings.plugins_sub", "Дополнительные модули и источники"), "/settings/plugins")}

@@ -566,5 +566,12 @@
   "debug.rl_no_scans": "No finished scans",
   "debug.rl_kept": "Records of the running scan ({n}) stay",
   "debug.rl_hold": "Hold to clear",
-  "debug.rl_done": "{n} log record deleted|{n} log records deleted"
+  "debug.rl_done": "{n} log record deleted|{n} log records deleted",
+  "docs.prov_short_doc": "from a document",
+  "docs.prov_short_page": "from a page",
+  "docs.prov_doc": "Found in the document “{name}”",
+  "docs.prov_page": "Linked from the page {url}",
+  "docs.prov_storage": "File on external storage {name}: downloaded through a link on the target site",
+  "docs.prov_export": "Exported by Google: the metadata comes from Google, so it does not identify the author",
+  "debug.note_linked_storage": "external storage: only the file linked from the target site"
 }

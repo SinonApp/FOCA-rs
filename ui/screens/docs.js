@@ -118,6 +118,45 @@
           .join("")}</span>`
       : "";
   };
+  // Where the document link came from (Doc.provenance): a crawled page, another document, or a file on
+  // public external storage linked from the site.
+  const STORAGE_NAME = {
+    gdrive: "Google Drive",
+    gdocs: "Google Docs",
+    onedrive: "OneDrive",
+    dropbox: "Dropbox",
+    sharepoint: "SharePoint",
+  };
+  const provShort = p =>
+    !p
+      ? ""
+      : p.storage
+        ? STORAGE_NAME[p.storage] || p.storage
+        : p.kind === "doc"
+          ? F.t("docs.prov_short_doc", "из документа")
+          : F.t("docs.prov_short_page", "со страницы");
+  function provHTML(p) {
+    if (!p) return "";
+    const from =
+      p.kind === "doc"
+        ? p.from_doc
+          ? `<a class="dt-link" data-act="dt-nav:/p/doc/${+p.from_doc}">${esc(p.from)}</a>`
+          : esc(p.from)
+        : `<span class="mono">${esc(F.decode(p.from))}</span>`;
+    const line =
+      p.kind === "doc"
+        ? F.t("docs.prov_doc", { name: "\u0000" }, "Найден в документе «{name}»")
+        : F.t("docs.prov_page", { url: "\u0000" }, "Ссылка со страницы {url}");
+    const [a, b] = line.split("\u0000");
+    const store = p.storage
+      ? `<div class="dt-prov-l">${ic("folder")}<span>${esc(F.t("docs.prov_storage", { name: STORAGE_NAME[p.storage] || p.storage }, "Файл во внешнем хранилище {name}: скачан по ссылке с проверяемого сайта"))}</span></div>`
+      : "";
+    const exp = p.export
+      ? `<div class="banner warn dt-prov-exp">${ic("alert")}<div>${esc(F.t("docs.prov_export", "Экспорт Google: метаданные сформировал Google, автор документа по ним не определяется"))}</div></div>`
+      : "";
+    return `<div class="dt-prov" id="dt-prov">${store}<div class="dt-prov-l">${ic(p.kind === "doc" ? "doc" : "link")}<span>${esc(a || "")}${from}${esc(b || "")}</span></div>${exp}</div>`;
+  }
+  F.docProvenance = { short: provShort, html: provHTML };
   const stPill = d =>
     d.stc === "ok"
       ? ""
@@ -130,7 +169,7 @@
       <span class="ext ${esc(d.ext)}">${esc(d.ext)}</span>
       <div class="body"><span class="ext ${esc(d.ext)} dt-ext-in"
         aria-hidden="true">${esc(d.ext)}</span><div class="t dt-fname">${fname(d.name)}</div>
-        <div class="s">${esc(d.user.login)} · ${esc(d.created.slice(0, 10))} · ${util().fmtSize(d.size)}</div>
+        <div class="s">${esc(d.user.login)} · ${esc(d.created.slice(0, 10))} · ${util().fmtSize(d.size)}${d.provenance ? ` · ${esc(provShort(d.provenance))}` : ""}</div>
         ${d.findings.some(k => k !== "eol") || d.stc !== "ok" || cleanOf(d.id) ? `<div class="dt-dmeta">${stPill(d)}${cleanPill(d.id)}${fIcons(d)}</div>` : ""}
       </div>
     </div>`;
@@ -855,6 +894,7 @@
         <div class="dt-dh-s">${util().fmtSize(doc.size)} · ${esc(F.t("docs.created_at", { d: doc.created }, "создан {d}"))}</div>
         <div class="dt-url"><span class="mono">${esc(F.decode(doc.url))}</span><button class="ib"
           data-act="copy:${esc(doc.url)}" aria-label="${esc(F.t("docs.copy_url", "Копировать URL"))}">${ic("copy")}</button></div>
+        ${provHTML(doc.provenance)}
         <div class="dt-dbtns">
           <button class="btn primary" data-act="dd-open:${doc.id}">${ic("open")}${esc(F.t("common.open", "Открыть"))}</button>
           <button class="btn tonal" data-act="dd-clean:${doc.id}">${ic("eraser")}${esc(F.t("docs.clean_btn", "Очистить метаданные"))}</button>

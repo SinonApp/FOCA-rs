@@ -16,7 +16,7 @@
   // 10: port scan (Host.ports/ports_scan, ports stage); 9: technologies in scan snapshots;
   // 8: site recon (snapshot.recon); 7: Startpage/Brave via the browser; 6: no Google CSE;
   // 5: no allow_active / "active" target marks / confirmation log.
-  const GEN_VERSION = 23;
+  const GEN_VERSION = 24;
   // User rule presets of the core (foca-analysis::rules::presets), same ids, titles and patterns.
   const DEMO_RULE_PRESETS = [
     {
@@ -1721,6 +1721,26 @@
     return out;
   }
 
+  // Where some documents came from (Doc.provenance, as the core records it): a crawled page, a link
+  // inside another document, a file on public storage linked from the site, and a Google export whose
+  // metadata is Google's. Export and storage examples use documents without metadata yet (queued or
+  // downloaded), so authors and software stay consistent.
+  function demoProvenance(st) {
+    const site = "https://www.contoso.example";
+    // The first document stays without provenance: it is the reference doc of the contract shapes.
+    const first = st.docs.filter(d => !d.deleted).reduce((a, d) => (!a || d.id < a.id ? d : a), null);
+    const parent = st.docs.find(
+      d => d !== first && ["pdf", "docx"].includes(d.ext) && d.status === "analyzed",
+    );
+    const child =
+      parent && st.docs.find(d => d !== first && d !== parent && d.status === "analyzed" && d.ext !== "jpg");
+    if (parent) parent.provenance = { kind: "page", from: `${site}/about/documents` };
+    if (child) child.provenance = { kind: "doc", from: parent.name, from_doc: parent.id, depth: 1 };
+    const dl = st.docs.find(d => d.status === "downloaded" && d.id > 9);
+    if (dl) dl.provenance = { kind: "page", from: `${site}/council`, storage: "gdrive" };
+    const q = st.docs.find(d => d.status === "queued" && d.id > 9);
+    if (q) q.provenance = { kind: "page", from: `${site}/council`, storage: "gdocs", export: true };
+  }
   // Document: only parsed ones (status analyzed) have metadata. Software matches the extension and year.
   function makeDoc(ctx, o) {
     const { spec, R, used } = ctx;
@@ -3824,6 +3844,7 @@
     CONTOSO_FX_DOCS.forEach((o, i) =>
       st.docs.push(makeDoc(ctx, { ...o, id: spec.ndocs + 1 + i, status: "analyzed", first_scan: S1 })),
     );
+    demoProvenance(st);
     st.secrets = contosoSecrets(st);
     deriveFlags(st);
     st.extra_pcs = [
@@ -4665,6 +4686,20 @@
         show_paths: false,
       },
       ports: { top: 100, list: "", max_hosts: 20, banners: true },
+      crawl: {
+        max_depth: 5,
+        max_pages: 1000,
+        max_minutes: 20,
+        max_rendered: 30,
+        nofollow: false,
+        resume: true,
+        storage: true,
+        images: true,
+        max_images: 300,
+        max_image_mb: 200,
+        doc_links: true,
+        doc_link_depth: 2,
+      },
       // Secondary-screen state persisted with the demo data: plugins are global, monitoring is per project.
       plugins: {},
       monitor: {},
@@ -6541,8 +6576,14 @@
       +(fz.max_requests ?? 3000) || Infinity,
       fuzz.modules.reduce((a, m) => a + (FZ_PER[m] || 0), 0),
     );
+    // Crawler of the search stage (standard and active levels; the passive level never crawls).
+    const crawlOn =
+      v.lvl !== "external" &&
+      SOURCES.some(x => x.id === "crawler") &&
+      sourceStatus({ id: "crawler" }, settings) !== "off";
     RUN = {
       fuzz,
+      crawl: crawlOn ? { pages: 0 } : null,
       id,
       project: st.project.id,
       profile: prof,
@@ -6711,6 +6752,7 @@
       });
     }
     emit({ type: "progress", scan_id: RUN.id, progress: RUN.progress, stage: STAGES[RUN.stage].id });
+    if (STAGES[RUN.stage].id === "search") crawlTick();
     if (STAGES[RUN.stage].id === "network") subTick();
     if (STAGES[RUN.stage].id === "fuzz") fuzzTick();
     if (HOST_STAGES.includes(STAGES[RUN.stage].id)) hostsTick(STAGES[RUN.stage].id);
@@ -6910,6 +6952,36 @@
       extra || {},
     );
     emit({ type: "source", scan_id: RUN.id, ...x });
+  }
+  // Crawler counters (like the core's `crawl` events): pages grow, the site slows down once with
+  // 429, files on external storage linked from the site appear, and the page limit leaves a rest
+  // for the next scan.
+  function crawlTick() {
+    const c = RUN.crawl;
+    if (!c || c.cut) return;
+    c.pages = Math.min(1000, c.pages + 250);
+    const slowed = c.pages >= 500;
+    const done = c.pages >= 1000;
+    if (done) c.cut = true;
+    const x = {
+      pages: c.pages,
+      queued: Math.max(0, 1340 - c.pages),
+      docs: Math.floor(c.pages / 90),
+      storage: Math.floor(c.pages / 8),
+      images: Math.floor(c.pages / 25),
+      rendered: Math.min(3, Math.floor(c.pages / 300)),
+      render_missing: 0,
+      sitemaps: 2,
+      trap_skipped: Math.floor(c.pages / 40),
+      limited: slowed ? 2 : 0,
+      rate: slowed ? "slowed" : "normal",
+      stopped_hosts: [],
+      resumed: false,
+      finished: false,
+      stop: done ? "pages" : null,
+    };
+    RUN.crawlView = x;
+    emit({ type: "crawl", scan_id: RUN.id, ...x });
   }
   function fuzzTick() {
     const z = RUN.fuzz,
@@ -7408,6 +7480,7 @@
           resumed: !!RUN.resumed,
           egress: RUN.egress,
           substep: RUN.substep || null,
+          crawl: RUN.crawlView || null,
           controls: controlCaps(),
           held: [...(RUN.held || [])].sort(),
           followup: RUN.followup || [],

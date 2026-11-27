@@ -2384,6 +2384,73 @@
         }
        }
       },
+      "crawl": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "max_depth": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_pages": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_minutes": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_rendered": {
+         "t": [
+          "number"
+         ]
+        },
+        "nofollow": {
+         "t": [
+          "bool"
+         ]
+        },
+        "resume": {
+         "t": [
+          "bool"
+         ]
+        },
+        "storage": {
+         "t": [
+          "bool"
+         ]
+        },
+        "images": {
+         "t": [
+          "bool"
+         ]
+        },
+        "max_images": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_image_mb": {
+         "t": [
+          "number"
+         ]
+        },
+        "doc_links": {
+         "t": [
+          "bool"
+         ]
+        },
+        "doc_link_depth": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      },
       "plugins": {
        "t": [
         "map"
@@ -6049,6 +6116,73 @@
         "banners": {
          "t": [
           "bool"
+         ]
+        }
+       }
+      },
+      "crawl": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "max_depth": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_pages": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_minutes": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_rendered": {
+         "t": [
+          "number"
+         ]
+        },
+        "nofollow": {
+         "t": [
+          "bool"
+         ]
+        },
+        "resume": {
+         "t": [
+          "bool"
+         ]
+        },
+        "storage": {
+         "t": [
+          "bool"
+         ]
+        },
+        "images": {
+         "t": [
+          "bool"
+         ]
+        },
+        "max_images": {
+         "t": [
+          "number"
+         ]
+        },
+        "max_image_mb": {
+         "t": [
+          "number"
+         ]
+        },
+        "doc_links": {
+         "t": [
+          "bool"
+         ]
+        },
+        "doc_link_depth": {
+         "t": [
+          "number"
          ]
         }
        }
@@ -12763,6 +12897,73 @@
       }
      }
     },
+    "crawl": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "max_depth": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_pages": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_minutes": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_rendered": {
+       "t": [
+        "number"
+       ]
+      },
+      "nofollow": {
+       "t": [
+        "bool"
+       ]
+      },
+      "resume": {
+       "t": [
+        "bool"
+       ]
+      },
+      "storage": {
+       "t": [
+        "bool"
+       ]
+      },
+      "images": {
+       "t": [
+        "bool"
+       ]
+      },
+      "max_images": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_image_mb": {
+       "t": [
+        "number"
+       ]
+      },
+      "doc_links": {
+       "t": [
+        "bool"
+       ]
+      },
+      "doc_link_depth": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
     "plugins": {
      "t": [
       "map"
@@ -13452,6 +13653,73 @@
       "banners": {
        "t": [
         "bool"
+       ]
+      }
+     }
+    },
+    "crawl": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "max_depth": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_pages": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_minutes": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_rendered": {
+       "t": [
+        "number"
+       ]
+      },
+      "nofollow": {
+       "t": [
+        "bool"
+       ]
+      },
+      "resume": {
+       "t": [
+        "bool"
+       ]
+      },
+      "storage": {
+       "t": [
+        "bool"
+       ]
+      },
+      "images": {
+       "t": [
+        "bool"
+       ]
+      },
+      "max_images": {
+       "t": [
+        "number"
+       ]
+      },
+      "max_image_mb": {
+       "t": [
+        "number"
+       ]
+      },
+      "doc_links": {
+       "t": [
+        "bool"
+       ]
+      },
+      "doc_link_depth": {
+       "t": [
+        "number"
        ]
       }
      }
@@ -16135,6 +16403,43 @@
       }
      }
     },
+    "tables": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "records": {
+        "t": [
+         "number"
+        ]
+       },
+       "version": {
+        "t": [
+         "string"
+        ]
+       },
+       "license": {
+        "t": [
+         "string"
+        ]
+       },
+       "source": {
+        "t": [
+         "string"
+        ]
+       }
+      }
+     }
+    },
     "feed_url": {
      "t": [
       "string"
@@ -16370,6 +16675,43 @@
       }
      }
     },
+    "tables": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "records": {
+        "t": [
+         "number"
+        ]
+       },
+       "version": {
+        "t": [
+         "string"
+        ]
+       },
+       "license": {
+        "t": [
+         "string"
+        ]
+       },
+       "source": {
+        "t": [
+         "string"
+        ]
+       }
+      }
+     }
+    },
     "feed_url": {
      "t": [
       "string"
@@ -16600,6 +16942,43 @@
           ]
          }
         }
+       }
+      }
+     }
+    },
+    "tables": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "records": {
+        "t": [
+         "number"
+        ]
+       },
+       "version": {
+        "t": [
+         "string"
+        ]
+       },
+       "license": {
+        "t": [
+         "string"
+        ]
+       },
+       "source": {
+        "t": [
+         "string"
+        ]
        }
       }
      }
@@ -19037,6 +19416,11 @@
      ]
     },
     "substep": {
+     "t": [
+      "null"
+     ]
+    },
+    "crawl": {
      "t": [
       "null"
      ]

@@ -18,6 +18,7 @@
     calibration: F.t("debug.note_calibration", "калибровка (случайный путь)"),
     filtered: F.t("debug.note_filtered", "отсеян фильтром"),
     rate_limited: F.t("debug.note_rate_limited", "429: лимит частоты"),
+    linked_storage: F.t("debug.note_linked_storage", "внешнее хранилище: только файл по ссылке с сайта цели"),
   });
   const dbg = (F.state.dbg = F.state.dbg || {
     seg: "log",

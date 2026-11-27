@@ -584,6 +584,22 @@
       "body": "\n      <p>Runs only in “Full” (or “Custom” with the module enabled): the “Site search” stage probes the client's website for forgotten documents, backups, service files (<code>.env</code>, <code>.git</code>) and open directory listings, so the owner can remove them.</p>\n      <ul><li><b>Rate</b>: recommended 3-5 req/s (0 removes the limit; above 10 a warning appears next to the field, above 20 or with no limit you confirm once).</li>\n      <li><b>Budget per scan</b> and <b>time per scan</b>: when either runs out, the search stops on its own, and 0 removes the limit. <b>Addresses per scan</b>: any number, 0 = every web address in scope; how many of them run at once is set by “Hosts at once” in “Settings → Network”.</li>\n      <li>If the site starts answering 429/403/5xx, the search on that host stops at once without retries; other hosts go on.</li>\n      <li>Before it starts, the app checks how the site answers non-existent paths (soft 404 calibration) to avoid noisy findings.</li></ul>\n      <h3>Wordlists</h3>\n      <p>“Settings → Wordlists” has three groups: <b>Built-in</b>; <b>Large: download</b> (from SecLists on GitHub, a pinned version with a verified checksum, never from the target site); <b>Custom</b>: a text file with one path per line, up to 64 MB. “Do not request paths” lists paths the search must never touch.</p>"
     },
     {
+      "id": "crawler",
+      "sec": "set",
+      "icon": "globe",
+      "t": "Site crawl",
+      "sub": "crawler, storage, photos",
+      "go": [
+        "Site crawl",
+        "/settings/crawl"
+      ],
+      "rel": [
+        "set-fuzz",
+        "set-limits"
+      ],
+      "body": "\n      <p>In the Standard and Full profiles FOCA-rs crawls the site over the scope hosts. The Passive profile does not touch the site.</p>\n      <ul><li><b>Where it starts</b>: the targets' home pages, <code>Sitemap:</code> lines of robots.txt and /sitemap.xml (indexes and .gz included).</li>\n      <li><b>Limits</b>: depth (5 by default), pages per scan (1000) and time (20 min). Whatever is left, the next scan continues by itself.</li>\n      <li><b>Traps</b>: calendars, endless filters and session parameters are crawled by template with a cap; logout and delete links are never opened.</li>\n      <li><b>Pace</b>: when the site answers 429 or 503 the crawl halves its pace and waits for Retry-After; if it keeps happening, that host is not crawled until the next scan. FOCA-rs does not get around bot protection or captchas.</li>\n      <li><b>App sites</b> (React, Flutter): on the phone the page is rendered in the built-in browser and the links come from the rendered page.</li></ul>\n      <p><b>Files on external storage.</b> Links from the site's pages to Google Drive, Google Docs, OneDrive, Dropbox and SharePoint count as target documents: exactly those files are downloaded (a folder: up to 200 files) and nothing else on the storage is browsed. The request log marks these requests as external storage. A private file is marked as private, which is not an error. Google Docs come as exports: their metadata comes from Google, so it does not identify the author.</p>\n      <p><b>Where a document came from.</b> The document card shows the page that linked it or the document the link was found in. Links in downloaded documents are followed up to 2 steps.</p>\n      <p><b>Photos for EXIF</b>: up to 300 images and 200 MB per scan, camera shots first; icons and thumbnails are skipped.</p>"
+    },
+    {
       "id": "recon-help",
       "sec": "set",
       "icon": "globe",

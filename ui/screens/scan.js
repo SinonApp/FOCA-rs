@@ -350,6 +350,8 @@
     finished: null,
     substep: null,
     subNotes: {},
+    // Crawler counters of the search stage (core `crawl` events and scan_status.crawl).
+    crawl: null,
     held: [],
     caps: null,
     followup: [],
@@ -382,6 +384,7 @@
       startedAt: isNaN(t0) ? Date.now() : Math.min(Date.now(), t0),
       sources: (cs.sources || []).map(x => ({ id: x.id, name: x.name, status: x.status })),
       substep: cs.substep || null,
+      crawl: cs.crawl || null,
       held: cs.held || [],
       caps: cs.controls || null,
       followup: cs.followup || [],
@@ -523,6 +526,8 @@
           const same = scan.running && scan.scanId === st.scan_id;
           if (same && st.controls)
             Object.assign(scan, { held: st.held || [], caps: st.controls, followup: st.followup || [] });
+          if (same && st.crawl && JSON.stringify(st.crawl) !== JSON.stringify(scan.crawl))
+            scan.crawl = st.crawl;
           if (!same) restoreFrom(st);
           else if (JSON.stringify(scan.substep) !== JSON.stringify(st.substep ? subOf(st.substep) : null))
             scan.substep = st.substep ? subOf(st.substep) : null;
@@ -581,6 +586,14 @@
             [ev.id]: { stage: ev.stage, reason: ev.reason, msg: ev.reason_msg || null },
           };
         break;
+      // Crawler counters: pages, frontier, documents, storage files, rendered pages and rate state.
+      case "crawl": {
+        const x = { ...ev };
+        delete x.type;
+        delete x.scan_id;
+        scan.crawl = x;
+        break;
+      }
       case "progress":
         scan.progress = ev.progress;
         if (ev.total != null) scan.stageN = { stage: ev.stage, done: ev.done, total: ev.total };
@@ -888,6 +901,8 @@
     liveness: () => F.t("scan.sub_liveness", "Проверка живости"),
     tls: () => F.t("scan.sub_tls", "Сертификаты TLS"),
     queue: () => F.t("scan.sub_queue", "Очередь загрузки"),
+    crawl: () => F.t("scan.sub_crawl", "Обход сайта"),
+    storage: () => F.t("scan.sub_storage", "Внешние хранилища"),
     hosts: () => F.t("scan.sub_hosts", "Хосты"),
   };
   const subLabel = id => (SUB_LABEL[id] ? SUB_LABEL[id]() : id);
@@ -1047,6 +1062,37 @@
     const held = isHeld(`step:${x.id}`) ? ` · ${F.t("scan.ctl_held", "пауза")}` : "";
     return `<div class="scn-sub" id="scn-sub-${esc(x.id)}">${ic(held ? "pause" : "spin", held ? "" : "spin")}<span>${esc(subLabel(x.id))}${cnt}${esc(held)}</span></div>${slow}${ctl}`;
   }
+  // Crawler card of the search stage: counters, rate state and what happens to the rest of the site.
+  function crawlHTML(def) {
+    const c = F.scan.crawl;
+    if (def.id !== "search" || !c) return "";
+    const n = v => num(v || 0);
+    const parts = [
+      F.t("scan.crawl_pages", { n: n(c.pages) }, "страниц {n}"),
+      F.t("scan.crawl_queued", { n: n(c.queued) }, "в очереди {n}"),
+      F.t("scan.crawl_docs", { n: n(c.docs) }, "документов {n}"),
+      F.t("scan.crawl_storage", { n: n(c.storage) }, "в хранилищах {n}"),
+    ];
+    if (c.images) parts.push(F.t("scan.crawl_images", { n: n(c.images) }, "изображений {n}"));
+    if (c.rendered) parts.push(F.t("scan.crawl_rendered", { n: n(c.rendered) }, "отрисовано {n}"));
+    const rate =
+      c.rate === "stopped"
+        ? `<span class="pill bad">${ic("stop")}${esc(F.t("scan.crawl_rate_stopped", { hosts: (c.stopped_hosts || []).join(", ") }, "остановлен из-за 429: {hosts}"))}</span>`
+        : c.rate === "slowed"
+          ? `<span class="pill warn">${ic("clock")}${esc(F.t("scan.crawl_rate_slowed", "темп снижен: сайт просит реже (429/503)"))}</span>`
+          : "";
+    const notes = [];
+    if (c.resumed) notes.push(F.t("scan.crawl_resumed", "продолжение обхода прошлого скана"));
+    if (!c.finished && c.stop)
+      notes.push(
+        F.t("scan.crawl_rest", { n: n(c.queued) }, "остаток ({n} стр.) продолжится в следующем скане"),
+      );
+    if (c.render_missing && !c.rendered)
+      notes.push(
+        F.t("scan.crawl_no_render", "страницы-приложения на JavaScript без браузера: ссылки только из HTML"),
+      );
+    return `<div class="scn-sub scn-crawl" id="scn-crawl">${ic("globe")}<span>${esc(subLabel("crawl"))}: ${esc(parts.join(" · "))}</span></div>${rate ? `<div class="scn-crawl-r">${rate}</div>` : ""}${notes.map(t => `<div class="scn-subhint">${esc(t)}</div>`).join("")}`;
+  }
   // Skipped sub-steps with a reason, grouped by reason: "Brute force, Permutations: skipped: …" + hint.
   function subNotesHTML(def) {
     const notes = Object.entries(F.scan.subNotes || {}).filter(([, n]) => !n.stage || n.stage === def.id);
@@ -1103,7 +1149,7 @@
         <div class="scn-st-h"><span class="scn-st-t">${esc(stageName(k, scan))}</span>${statusPill(st, paused)}${!opts.static && st === "done" && scan.running ? ctlBtns("stage", def.id, stageName(k, scan), false, ["restart"], true) : ""}${!opts.static && st === "wait" && scan.running ? ctlBtns("stage", def.id, stageName(k, scan), true, ["skip"], true) : ""}</div>
         ${cnt.length ? `<div class="scn-st-m">${cnt.map(c => `<span>${esc(c)}</span>`).join("")}</div>` : ""}
         ${st === "run" && !opts.static ? subHTML(def) : ""}
-        ${(st === "run" || st === "done") && !opts.static ? subNotesHTML(def) : ""}
+        ${(st === "run" || st === "done") && !opts.static ? crawlHTML(def) + subNotesHTML(def) : ""}
         ${!opts.static && st === "run" && scan.running ? ctlBtns("stage", def.id, stageName(k, scan), true) : ""}
 
         ${st === "run" && !opts.static ? `<div class="pbar scn-pb"><i style="width:${Math.round(stageP(k) * 100)}%"></i></div>` : ""}
@@ -2146,6 +2192,7 @@
     if (opts.fuzz && typeof opts.fuzz === "object") args.fuzz = opts.fuzz; // Site file search: modules and rate for this run.
     if (opts.ports && typeof opts.ports === "object") args.ports = opts.ports; // Port scan: top 100/1000 for this run.
     if (opts.subdomains && typeof opts.subdomains === "object") args.subdomains = opts.subdomains; // Brute force wordlist (off/top-1500/top-5000/custom).
+    if (opts.crawl && typeof opts.crawl === "object") args.crawl = opts.crawl; // Crawler limits, external storage, continue crawl.
     F.state.scanPending = { targets: opts.targets, modules: opts.modules, resume_from: opts.resume_from };
     return F.api.scan_start(args).then(
       r => {

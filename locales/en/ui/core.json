@@ -286,5 +286,8 @@
   "core.sig.empty_rule": "A secret rule in the bundle has an empty id or pattern",
   "core.sig.bad_rule": "Secret rule {id} in the bundle does not compile: {error}",
   "core.sig.bad_json": "The signature bundle is not valid JSON: {error}",
-  "core.sig.need_bundle": "bundle_json or bundle (foca-sig-bundle/v2) is required"
+  "core.sig.need_bundle": "bundle_json or bundle (foca-sig-bundle/v2) is required",
+  "core.search.crawl": "crawl: {pages} pages, {docs} documents, {storage} files on storage, {images} images",
+  "core.search.crawl_rate_limited": "Crawling stopped on hosts that kept answering 429/503: {hosts}. The remaining pages continue in the next scan",
+  "core.download.storage": "external storage: {got} downloaded, {private} not public"
 }

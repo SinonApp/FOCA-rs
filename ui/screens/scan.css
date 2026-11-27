@@ -325,6 +325,18 @@ html[data-theme="dark"] .scn-ah > svg.i {
   font-size: 0.8rem;
   overflow-wrap: anywhere;
 }
+/* Crawler card of the search stage: rate state pill under the counters. */
+.scn-crawl-r {
+  margin: 4px 0 0 19px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.scn-crawl-r .pill {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .scn-subhint {
   margin: 2px 0 0 19px;
   color: var(--text-2);

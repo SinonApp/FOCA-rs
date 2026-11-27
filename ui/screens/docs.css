@@ -388,3 +388,30 @@ body.dt-selecting .snack {
     margin-bottom: 4px;
   }
 }
+
+/* Provenance of the document link (crawled page, document, external storage). */
+.dt-prov {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.dt-prov-l {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.86em;
+  color: var(--text-2);
+  min-width: 0;
+}
+.dt-prov-l > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dt-prov-l .i {
+  flex: none;
+  margin-top: 2px;
+}
+.dt-prov-exp {
+  margin: 2px 0 0;
+}
