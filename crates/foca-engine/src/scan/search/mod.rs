@@ -13,6 +13,8 @@ use serde_json::{json, Value};
 use crate::analysis::facts::{self, NetFacts};
 use crate::engine::lock;
 
+pub(crate) mod dorks;
+
 use super::documents::downloader;
 use super::sources::WEB_ENGINES;
 use super::*;
@@ -50,7 +52,7 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
     let mut deep_cc: Option<CommonCrawl> = None;
     if want("cc") {
         let cc = cc_source(c, &settings);
-        if cc.depth.deep() {
+        if cc.is_deep() {
             deep_cc = Some(cc);
         } else {
             list.push(Box::new(cc));
@@ -165,7 +167,7 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
         foca_search::sources::DorkCache::new(Some(c.e.cfg.data_dir.join("dork-cache.json"))),
     ));
     // dork groups postponed by earlier runs go first
-    let pending: PendingDorks = super::dorks::load(&lock(&c.db));
+    let pending: PendingDorks = dorks::load(&lock(&c.db));
     let filter_now = ext_filter.clone().unwrap_or_default();
     for d in &doms {
         let groups = foca_search::sources::dorkpool::ext_groups(|e| filter_now.allows_ext(e));
@@ -365,8 +367,8 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
             .stats()
             .values()
             .any(|st| st.captchas > 0 || st.blocked);
-    let pend = super::dorks::after_search(c, &dork_board, &doms, captcha_seen)?;
-    let retry_min = super::dorks::retry_minutes(&settings);
+    let pend = dorks::after_search(c, &dork_board, &doms, captcha_seen)?;
+    let retry_min = dorks::retry_minutes(&settings);
     if lost > 0 && web.values().any(|b| *b) {
         c.warn(
             "search_dorks_lost",
@@ -377,7 +379,7 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
         );
     }
     if pend > 0 && retry_min > 0.0 {
-        super::dorks::spawn_retry(c, &enq, &known, filter_now.clone(), retry_min);
+        dorks::spawn_retry(c, &enq, &known, filter_now.clone(), retry_min);
     }
     // all queried web search engines showed a captcha or block; a common cause is a VPN or proxy IP
     if web.len() >= 2 && web.values().all(|b| *b) {
@@ -518,17 +520,14 @@ fn cc_source(c: &Ctx, settings: &Value) -> CommonCrawl {
         .starts_with(foca_search::sources::commoncrawl::CC_INDEX_HOST)
     {
         let pace = s["cc_pace_s"].as_f64().unwrap_or(3.0).clamp(3.0, 60.0);
-        cc.pace = Some(std::time::Duration::from_secs_f64(pace));
+        cc = cc.with_pace(std::time::Duration::from_secs_f64(pace));
     }
-    cc.cache_dir = Some(c.e.cfg.data_dir.join("cc-cache"));
-    cc
+    cc.with_cache_dir(c.e.cfg.data_dir.join("cc-cache"))
 }
 
 /// The user's own SearXNG instances (HTTP and local hosts only on the test bench).
 fn own_searx(c: &Ctx, raw: Option<String>) -> foca_search::sources::Searx {
-    let mut s = foca_search::sources::Searx::new(raw);
-    s.allow_local = test_bench(c);
-    s
+    foca_search::sources::Searx::new(raw).with_local(test_bench(c))
 }
 
 /// Download queue of the search stage: scope filter, Wayback copies for the passive profile,

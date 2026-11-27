@@ -314,6 +314,23 @@ impl CommonCrawl {
         self
     }
 
+    /// Minimum spacing between index calls (the public index never goes below 3 s anyway).
+    pub fn with_pace(mut self, pace: Duration) -> Self {
+        self.pace = Some(pace);
+        self
+    }
+
+    /// Directory of the per-domain sweep cache; without it nothing resumes.
+    pub fn with_cache_dir(mut self, dir: PathBuf) -> Self {
+        self.cache_dir = Some(dir);
+        self
+    }
+
+    /// A sweep over years or all snapshots (runs beside the other sources).
+    pub fn is_deep(&self) -> bool {
+        self.depth.deep()
+    }
+
     fn official(&self) -> bool {
         self.index_api
             .as_deref()

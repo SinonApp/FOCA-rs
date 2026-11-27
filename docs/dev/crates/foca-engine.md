@@ -65,7 +65,8 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | **`src/scan/`** | | Scan pipeline |
 | `scan/mod.rs` | 742 | Run context shared by the stages, stage order, stage helpers |
 | `scan/sources.rs` | 287 | Catalog: `STAGES`, source ids grouped by stage, profiles and modules |
-| `scan/search.rs` | 402 | Search stage: document search engines, archives, host sources |
+| `scan/search/mod.rs` | 705 | Search stage: document search engines, archives, host sources; a deep Common Crawl sweep beside them |
+| `scan/search/dorks.rs` | 356 | Dork groups lost to CAPTCHAs: per-project queue, in-scan retry after a cool-down, `dorks_pending` / `dorks_retry` |
 | `scan/documents.rs` | 178 | Download queue, metadata extraction and analysis stages |
 | `scan/network.rs` | 495 | Network stage: DNS, takeover checks, liveness, infrastructure modules |
 | `scan/steps.rs` | 193 | Sub-step progress of long stages (`done/total`, ETA, slow-resolver flag) |

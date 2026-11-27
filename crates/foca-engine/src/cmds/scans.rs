@@ -1,7 +1,9 @@
 //! Deleting one scan of a project (`scan_delete`): the store erases the scan and what only it
 //! produced; this side stops a running scan first, prunes engine state stored per scan (network
 //! facts, history extras, alert log, cleaned copies, queue rows), wipes the files and rewrites
-//! the remaining history so it carries no trace of the deleted scan.
+//! the remaining history so it carries no trace of the deleted scan. Also the postponed dork
+//! groups of a project (`dorks_pending`, `dorks_retry`); their queue and in-scan retry live in
+//! `scan::search::dorks`.
 
 use std::collections::BTreeMap;
 
@@ -12,6 +14,8 @@ use serde_json::{json, Value};
 use crate::analysis::facts::{self, FidMap, NetFacts};
 use crate::analysis::insights;
 use crate::engine::lock;
+use crate::scan::search::dorks::{load, RETRY_ENGINES};
+use crate::scan::sources;
 use crate::util::req_str;
 use crate::{CmdError, CmdResult, Engine};
 
@@ -296,6 +300,74 @@ impl Engine {
             prev = s.snapshot;
         }
         Ok(())
+    }
+}
+
+impl Engine {
+    /// `dorks_pending { project }`: postponed dork groups and the time of the in-scan retry.
+    pub(crate) fn dorks_pending(&self, a: &Value) -> CmdResult {
+        let id = self.project_arg(a)?;
+        let db = self.db(&id)?;
+        let p = load(&lock(&db));
+        let at = lock(&self.dork_jobs).get(&id).map(|j| j.at_ms);
+        Ok(json!({ "project": id, "pending": p.len(), "items": p.0, "retry_at": at }))
+    }
+
+    /// `dorks_retry { project }`: retries the postponed groups now.
+    pub(crate) async fn dorks_retry(&self, a: &Value) -> CmdResult {
+        let id = self.project_arg(a)?;
+        let pdb = self.db(&id)?;
+        let n = load(&lock(&pdb)).len();
+        let active = self.active_scan_id();
+        if let Some(j) = lock(&self.dork_jobs).get(&id) {
+            if active.as_deref() == Some(j.scan_id.as_str()) {
+                j.wake.notify_one();
+                return Ok(json!({ "ok": true, "mode": "now", "pending": n }));
+            }
+        }
+        if n == 0 {
+            return Ok(json!({ "ok": false, "mode": "none", "pending": 0 }));
+        }
+        if active.is_some() {
+            return Ok(json!({ "ok": false, "mode": "busy", "pending": n }));
+        }
+        // no scan runs: a narrowed scan of the dork engines (postponed groups are planned first)
+        let settings = self.store().settings_get()?;
+        let keys = self.current_keys();
+        let mut only: Vec<String> = RETRY_ENGINES
+            .iter()
+            .filter(|s| sources::source_enabled(&settings["sources"], s))
+            .map(|s| format!("source:{s}"))
+            .collect();
+        for k in ["searx", "brave"] {
+            if keys.get(k).is_some() {
+                only.insert(0, format!("source:{k}"));
+            }
+        }
+        let profile = lock(&pdb)
+            .scans()
+            .ok()
+            .and_then(|v| v.last().map(|s| s.profile_id.clone()))
+            .filter(|p| !p.is_empty())
+            .unwrap_or_else(|| "std".into());
+        let profile = if profile == "full" {
+            "std".into()
+        } else {
+            profile
+        };
+        let mut exts: Vec<String> = Vec::new();
+        for p in load(&lock(&pdb)).0 {
+            for e in p.exts {
+                if !exts.contains(&e) {
+                    exts.push(e);
+                }
+            }
+        }
+        let r = self
+            .scan_start(&json!({ "project": id, "profile": profile, "active": false,
+                "only": only, "exts": exts }))
+            .await?;
+        Ok(json!({ "ok": true, "mode": "scan", "pending": n, "scan_id": r["scan_id"] }))
     }
 }
 

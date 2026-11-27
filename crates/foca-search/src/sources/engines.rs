@@ -297,6 +297,12 @@ impl Searx {
         }
     }
 
+    /// Accept plain HTTP and local hosts (the `--test-net` bench).
+    pub fn with_local(mut self, allow: bool) -> Self {
+        self.allow_local = allow;
+        self
+    }
+
     fn usable(&self, ctx: &SearchCtx, base: &str) -> bool {
         self.allow_local || ctx.net.is_local_only() || public_https_url(base)
     }

@@ -15,16 +15,15 @@ use foca_store::ProjectDb;
 use serde_json::{json, Value};
 use tokio::sync::Notify;
 
-use super::search::Enqueuer;
-use super::*;
-use crate::engine::{lock, Core};
-use crate::{CmdResult, Engine};
+use super::Enqueuer;
+use crate::engine::{lock, Core, DorkJob};
+use crate::scan::*;
 
 /// Facts key of the postponed dork groups of a project.
 pub(crate) const K_PENDING: &str = "search.dorks_pending";
 
 /// Keyless dork engines that can take a postponed group.
-const RETRY_ENGINES: &[&str] = &[
+pub(crate) const RETRY_ENGINES: &[&str] = &[
     "mojeek",
     "ddg",
     "bing",
@@ -33,14 +32,6 @@ const RETRY_ENGINES: &[&str] = &[
     "yahoo",
     "searx_pool",
 ];
-
-/// A waiting in-scan retry of a project.
-pub(crate) struct DorkJob {
-    pub scan_id: String,
-    pub wake: Arc<Notify>,
-    /// When the retry starts (unix ms).
-    pub at_ms: i64,
-}
 
 pub(crate) fn load(db: &ProjectDb) -> PendingDorks {
     facts::get(db, K_PENDING)
@@ -113,8 +104,8 @@ fn retry_engines(c: &Ctx) -> Vec<Box<dyn DocumentSource>> {
     let ep = &c.e.cfg.endpoints;
     let mut out: Vec<Box<dyn DocumentSource>> = Vec::new();
     if ids.iter().any(|i| i == "searx") && keys.get("searx").is_some() {
-        let mut s = foca_search::sources::Searx::new(keys.get("searx"));
-        s.allow_local = super::search::test_bench(c);
+        let s =
+            foca_search::sources::Searx::new(keys.get("searx")).with_local(super::test_bench(c));
         out.push(Box::new(s));
     }
     if ids.iter().any(|i| i == "brave") && keys.get("brave").is_some() {
@@ -292,73 +283,5 @@ impl RetryJob {
         let n = load(&lock(&db)).len();
         tracing::info!(target: "foca::scan", "{}: повтор дорков завершён: в загрузку {added}, отложено {n}", self.scan_id);
         emit_pending(&self.e, &self.scan_id, &self.project, n, None);
-    }
-}
-
-impl Engine {
-    /// `dorks_pending { project }`: postponed dork groups and the time of the in-scan retry.
-    pub(crate) fn dorks_pending(&self, a: &Value) -> CmdResult {
-        let id = self.project_arg(a)?;
-        let db = self.db(&id)?;
-        let p = load(&lock(&db));
-        let at = lock(&self.dork_jobs).get(&id).map(|j| j.at_ms);
-        Ok(json!({ "project": id, "pending": p.len(), "items": p.0, "retry_at": at }))
-    }
-
-    /// `dorks_retry { project }`: retries the postponed groups now.
-    pub(crate) async fn dorks_retry(&self, a: &Value) -> CmdResult {
-        let id = self.project_arg(a)?;
-        let pdb = self.db(&id)?;
-        let n = load(&lock(&pdb)).len();
-        let active = self.active_scan_id();
-        if let Some(j) = lock(&self.dork_jobs).get(&id) {
-            if active.as_deref() == Some(j.scan_id.as_str()) {
-                j.wake.notify_one();
-                return Ok(json!({ "ok": true, "mode": "now", "pending": n }));
-            }
-        }
-        if n == 0 {
-            return Ok(json!({ "ok": false, "mode": "none", "pending": 0 }));
-        }
-        if active.is_some() {
-            return Ok(json!({ "ok": false, "mode": "busy", "pending": n }));
-        }
-        // no scan runs: a narrowed scan of the dork engines (postponed groups are planned first)
-        let settings = self.store().settings_get()?;
-        let keys = self.current_keys();
-        let mut only: Vec<String> = RETRY_ENGINES
-            .iter()
-            .filter(|s| sources::source_enabled(&settings["sources"], s))
-            .map(|s| format!("source:{s}"))
-            .collect();
-        for k in ["searx", "brave"] {
-            if keys.get(k).is_some() {
-                only.insert(0, format!("source:{k}"));
-            }
-        }
-        let profile = lock(&pdb)
-            .scans()
-            .ok()
-            .and_then(|v| v.last().map(|s| s.profile_id.clone()))
-            .filter(|p| !p.is_empty())
-            .unwrap_or_else(|| "std".into());
-        let profile = if profile == "full" {
-            "std".into()
-        } else {
-            profile
-        };
-        let mut exts: Vec<String> = Vec::new();
-        for p in load(&lock(&pdb)).0 {
-            for e in p.exts {
-                if !exts.contains(&e) {
-                    exts.push(e);
-                }
-            }
-        }
-        let r = self
-            .scan_start(&json!({ "project": id, "profile": profile, "active": false,
-                "only": only, "exts": exts }))
-            .await?;
-        Ok(json!({ "ok": true, "mode": "scan", "pending": n, "scan_id": r["scan_id"] }))
     }
 }

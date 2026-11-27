@@ -70,7 +70,15 @@ pub struct Core {
     /// Running `ai_summarize` requests by project id (one per project; `ai_cancel` fires the token).
     pub(crate) ai_jobs: Mutex<HashMap<String, CancellationToken>>,
     /// Waiting in-scan retries of postponed dorks by project (`dorks_retry` wakes them).
-    pub(crate) dork_jobs: Mutex<HashMap<String, crate::scan::dorks::DorkJob>>,
+    pub(crate) dork_jobs: Mutex<HashMap<String, DorkJob>>,
+}
+
+/// A waiting in-scan retry of postponed dorks for one project.
+pub(crate) struct DorkJob {
+    pub scan_id: String,
+    pub wake: Arc<tokio::sync::Notify>,
+    /// When the retry starts (unix ms).
+    pub at_ms: i64,
 }
 
 /// The FOCA-rs engine. Cheap to clone (`Arc` inside); one per application.
