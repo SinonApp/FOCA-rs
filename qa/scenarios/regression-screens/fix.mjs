@@ -149,6 +149,10 @@ export default async (page, { out, W, prep }) => {
 
   // Settings: persistence, confirmations, texts.
   await go("/settings/power"); await click('.st-tr[data-act="st-t:power.wifiOnly"] .body');
+  // The mobile data limit is off by default, so turning Wi-Fi only off asks for a one-time confirmation.
+  await page.waitForTimeout(300);
+  ok("UX16: turning Wi-Fi only off without a data limit asks to confirm", await ev(() => !!document.querySelector('[data-act="st-mob-unlim:power.wifiOnly"]')));
+  await click('[data-act="st-mob-unlim:power.wifiOnly"]');
   await page.waitForTimeout(200); await page.reload(); await page.waitForTimeout(500); await prep();
   ok("UX16/logic #24: toggle by row tap survives reload", (await ev(() => FOCA.db.settings.power.wifi_only)) === false);
   // Detected steps (autostart, battery) have no manual Done: mark the first step that is checked by hand.
