@@ -20,7 +20,7 @@ FOCA-rs is an Android app for OSINT and document metadata reconnaissance. You gi
 ### Discover
 - Scan profiles: Passive (third-party sources only, no requests to the target), Standard (adds document downloads, DNS/TLS checks, subdomain enumeration and a site crawl), Full (adds active checks inside the scope: path discovery, AXFR, NSEC walking, TCP ports) and Custom.
 - Keyless sources: Wayback Machine, Common Crawl, Arquivo.pt, Certificate Transparency, passive DNS, search engines through the built-in WebView. Optional API keys for VirusTotal, SecurityTrails, Shodan, OTX, GitHub code search, Brave Search and others, and your own SearXNG instance.
-- The site crawl starts from sitemaps, resumes in the next scan and slows down when the site asks. Files on Google Drive, OneDrive, Dropbox or SharePoint that the site links to are downloaded too, and each document shows where it was found. Common Crawl can be searched over several years in the background, and searches blocked by a captcha are retried later.
+- The site crawl starts from sitemaps, resumes in the next scan and slows down when the site asks. Files on Google Drive, OneDrive, Dropbox or SharePoint that the site links to are downloaded too, as are in-scope documents linked from downloaded documents, and each document shows where it was found. Common Crawl can be searched over several years in the background, and searches blocked by a captcha are retried later.
 - Scope rules for domains, `*.domain`, URLs, IPs, CIDR blocks and IP ranges. Exclusions win over targets on every redirect and resolved address.
 - Several hosts of one scan are checked at once (4 by default, any number with a warning above 8; rate limits stay per host). Each stage can be paused, skipped or restarted, and a single scan can be deleted with everything only it found.
 - Offline analysis of a local folder or ZIP, and files shared to FOCA-rs from other apps through the Android share menu.
@@ -28,11 +28,12 @@ FOCA-rs is an Android app for OSINT and document metadata reconnaissance. You gi
 ### Analyse
 - Metadata and forensics for OOXML, ODF, PDF (revisions, hidden text, bad redactions), legacy Office, images (EXIF/GPS), video, e-mail, RDP/ICA, LNK and archives.
 - Digital signatures, including Ukrainian qualified signatures (КЕП).
-- People, e-mail patterns, software with end-of-life dates and CVEs (offline CISA KEV with EPSS scores), vulnerable JavaScript libraries, internal hosts and a relationship graph, timeline and org view. The vulnerability and secret databases update from a signed (Ed25519) feed.
+- People, e-mail patterns, software with end-of-life dates and CVEs (offline CISA KEV with EPSS scores), vulnerable JavaScript libraries, internal hosts and a relationship graph, timeline and org view. Detection data comes from pinned open sources (webappanalyzer technology fingerprints, gitleaks secret rules, endoflife.date, Retire.js, Recog, can-i-take-over-xyz) and updates from a signed (Ed25519) feed.
 - Every finding has a severity, evidence, a fix and references to the standards listed below.
 
 ### Report
 - HTML, PDF, DOCX, Markdown, JSON and CSV in English, Ukrainian and Russian, from six templates (full, brief, data, executive, compliance, lab).
+- Your own logo (PNG, JPEG or WebP) on the title page and in the header of the report.
 - Exports for STIX 2.1, Nuclei, httpx, Maltego and GraphML.
 - Report hashes and an optional device-key signature for chain of custody.
 - Scheduled rescans with "what changed" notifications.

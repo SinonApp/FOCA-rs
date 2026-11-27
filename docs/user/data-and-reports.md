@@ -82,6 +82,19 @@ Open Reports (`/p/reports`) → New report (`/p/report-new`) → Preview (`/p/re
 
 Risk scores and counters inside a report are always calculated strictly from the findings included in that report. Every generated report is saved in history with an immutable data snapshot and can be exported via Android's Share sheet.
 
+### Contractor Logo
+
+The Header block of the report builder has a Contractor logo row:
+
+- **Choose** opens the Android file picker. PNG, JPEG and WebP files up to 2 MB are accepted; SVG and other formats are refused. A picture larger than 512 px on its long side is scaled down to 512 px. The row then shows a thumbnail with the file name, size in pixels and file size, and the button turns into **Replace**.
+- The logo is saved in the app settings, not in a project: one logo is used for every project until you replace or remove it. Wiping the settings deletes it too.
+- With **Logo in the report** on, the logo appears in the preview header and on its title page, on the HTML and PDF cover and in the page headers of the templates, and above the title in DOCX. A WebP logo is left out of DOCX. Markdown, CSV and JSON reports have no logo.
+- **Remove** deletes the saved picture. With Logo in the report still on and no picture saved, reports show the company initials (from Contractor in the footer) instead.
+
+### Report Preview
+
+Preview (`/p/report-preview`) lays the report out as A4 sheets. Every finding included by the builder settings is shown: a long table continues on the next sheet with its header repeated, and nothing is cut off with a "more" line. The footer numbers the preview sheets. The preview holds the summary tables only, so the last sheet ends with a note that gives the estimated page count of the report file, which contains every section chosen in the builder. Finding titles in the preview are in the app language; in the file they are in the report language. At large font sizes the title block grows with the text, and the last sheet stays clear of the gesture bar.
+
 ## PDF Export
 
 Choosing PDF builds the self-contained HTML report and renders it straight into an A4 PDF file on the phone (off-screen WebView without JS or network, command `platform_pdf`). The file can be shared or saved to Downloads. If rendering fails, the app falls back to Android's print dialog (`platform_print`), where you pick Save as PDF. Outside Android (browser QA) an HTML file with print styles is saved instead.
@@ -122,6 +135,19 @@ Ready-to-use templates live in `scenarios/`:
 | `scenarios/kszi-audit.toml` | `offline` / scoped | Compliance / KSZI report (`uk`, Chain of Custody) with severity & risk gates |
 
 Each scenario file defines targets, exclusions, offline `inputs`, `[rules]` presets, `[report]` format/template/language/custody, and `[gate]` thresholds (`fail_on_severity = "high"`, `max_risk = 70`) that exit non-zero when violated in CI/CD pipelines.
+
+### One scan from the command line (`foca scan`)
+
+`foca scan --project <id> --profile passive|std|full|custom [--wait]` runs one scan of an existing project with the same stages and rules as the app. Crawl and Common Crawl settings can be changed for that run only; without these flags the stored settings apply:
+
+| Flag | What it sets |
+|---|---|
+| `--crawl-depth`, `--crawl-pages`, `--crawl-minutes` | Crawl depth, pages and minutes per scan |
+| `--crawl-storage true\|false` | Files on public external storage linked from the site |
+| `--crawl-doc-links true\|false` | Links inside downloaded documents |
+| `--crawl-images true\|false`, `--max-images`, `--max-image-mb` | Photos for EXIF and their limits |
+| `--cc-depth latest\|years\|all`, `--cc-years` | Common Crawl search depth |
+| `--control` | Reads `pause`, `resume`, `stop`, `status` and `skip <source>` from stdin while the scan runs |
 
 ## Headless Monitoring & Event Alerts
 

@@ -19,11 +19,12 @@ Besides collecting raw OSINT artifacts, FOCA-rs shows how documents relate to pe
 
 ## Reference Case
 
-To test all analytics, visualization, sanitization, and reporting features without scanning any live domain, tap Open reference case, available on Projects, in Analyze files offline, or under Help → Getting started → First steps: reference case.
+To test all analytics, visualization, sanitization, and reporting features without scanning any live domain, tap Open the reference case, available on Projects, in Analyze files offline, or under Help → Getting started → First steps: reference case.
 
 - Bundles 12 synthetic documents for the fictional company ТОВ «Приклад» (Pryklad LLC): Word document version lineage (RSID), Ukrainian QES (КЕП) signature, broken PDF redaction, incremental PDF revisions, hidden Excel worksheet and data connection, Windows `LNK` shortcut, e-mail with a `Received` relay chain, GPS-tagged photo, ODT file, `ICS` calendar invite, and `VCF` contact card. All names, addresses, and keys are fictional.
 - Imports locally on your phone with zero network requests (project request log remains empty) and opens a ready-to-explore Reference case project within seconds.
 - Tapping again lets you open the existing project or re-import the reference case cleanly.
+- Reference cases are kept out of Recent projects and listed in their own Reference cases section on the Projects screen. The app does not reopen a reference case on start.
 
 ## Link Graph & Evidence Chain
 

@@ -65,7 +65,7 @@ Scope defines exactly what FOCA-rs is allowed to assess and what it must never t
 
 No API keys are required out of the box: search engines, web archives, Certificate Transparency logs, subdomain aggregators, and passive reconnaissance all work without keys ([sources](sources.md)).
 
-To explore FOCA-rs before scanning any real target, tap Open reference case on the Projects screen: 12 synthetic documents belonging to the fictional company ТОВ «Приклад» (Pryklad LLC) are analyzed locally without a single network request ([details](analytics-and-hygiene.md#reference-case)).
+To explore FOCA-rs before scanning any real target, tap Open the reference case on the Projects screen: 12 synthetic documents belonging to the fictional company ТОВ «Приклад» (Pryklad LLC) are analyzed locally without a single network request ([details](analytics-and-hygiene.md#reference-case)).
 
 On Xiaomi, Samsung, Huawei, Oppo and vivo firmwares the launch screen may show Keep the firmware from stopping the scan with autostart and battery checks. Fix them before a long scan; see [FAQ → Scan Stops in the Background](faq.md#scan-stops-in-the-background-xiaomi-hyperos).
 

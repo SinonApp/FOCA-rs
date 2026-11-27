@@ -47,6 +47,10 @@ Keep the instance for yourself: an open instance attracts bots, and its upstream
 
 During a scan the `searx` card on the scan screen shows its status; a 429 or 503 from the instance slows the source down and, if it repeats, stops it for this scan with the "rate limit" status.
 
+## Brave Search API
+
+The same screen takes an optional Brave Search API key: one more dork engine, and an API does not show CAPTCHAs. Its check button shows how many queries are left this month. Brave has no free tier: it needs a card, and every plan includes a $5 monthly credit (about 1000 queries). See [Sources](sources.md#source-table).
+
 ## Related
 
 - [Sources](sources.md): all document and subdomain sources, statuses and keys.

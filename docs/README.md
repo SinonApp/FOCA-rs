@@ -15,6 +15,7 @@ FOCA-rs 2.0.0-beta.3 is an Android application (Tauri v2 + Rust core) for author
 | [Data, Findings, Reports & Monitoring](user/data-and-reports.md) | Findings triage, Attack Paths, playbooks, reports (HTML/PDF/DOCX/MD/JSON/CSV), Chain of Custody, exports, monitoring |
 | [Documents & Forensics](user/documents.md) | Supported formats (20+), digital signatures & Ukrainian QES (КЕП), redaction checks, PII masking, FTS5 search, custom rules, offline import |
 | [Analytics, Web Audit & Document Hygiene](user/analytics-and-hygiene.md) | Reference case, layered graph, internal network map, timeline/heatmap, CISA KEV, web audit, hygiene & Before/After cleaning, Share Target |
+| [Own SearXNG instance](user/searxng.md) | Self-hosted SearXNG for dorks, JSON output, connecting it in Settings → API keys, Brave Search API key |
 | [Settings & Network](user/settings-network.md) | Browser UA profiles, proxy/Tor/v2rayNG, VPN/AdGuard port canaries, CAPTCHA verification, Cloud AI, plugins, localization, offline licenses |
 | [FAQ & Troubleshooting](user/faq.md) | Xiaomi/HyperOS background limits, 0 documents, CAPTCHA handling, diagnostic logs |
 | [Glossary](user/glossary.md) | Key OSINT, metadata, forensics, and security terms |

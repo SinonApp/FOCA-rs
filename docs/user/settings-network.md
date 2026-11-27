@@ -24,6 +24,7 @@
 | Plugins | `/settings/plugins` | Manage built-in & custom sandboxed plugins (declarative JSON/TOML & WASM), passive dry-run test |
 | Wordlists | `/settings/wordlists` | Path discovery & subdomain wordlists (built-in, SecLists downloads, custom), fuzzing rate & budget |
 | Network & Proxy | `/settings/network` | HTTP/SOCKS5 proxy, Tor (Orbot), v2rayNG preset, proxy health checker, per-group proxy routing, kill switch, browser profile, concurrency/RPS/timeouts, DNS, custom ports |
+| Site crawl | `/settings/crawl` | Crawl limits (depth `5`, `1000` pages, `20` min per scan by default), App pages through the browser (`30`), Continue an unfinished crawl, Honour rel=nofollow, Files on external storage linked from the site, Photos for EXIF (`300` images, `200 MB`), Links inside documents (depth `2`), see [Site Crawler](sources.md#site-crawler) |
 | Traffic & Power | `/settings/power` | Wi-Fi only, mobile data cap, battery threshold, thermal pause, charging only |
 | Background Execution | `/settings/battery` | Notifications and battery status, an autostart/battery card on aggressive firmwares, Hide from Recents during scans, vendor-specific guides (Xiaomi/HyperOS, Samsung, Huawei, etc.) |
 | Security | `/settings/security` | PIN asked at launch, auto-lock, biometrics, secrets after fingerprint, panic PIN (wipes all data), clipboard clear after 30 s (only what the app copied), Block screenshots (opt-in, `FLAG_SECURE`), auto-delete projects |
@@ -32,6 +33,8 @@
 | Cloud AI | `/settings/ai` | 10 cloud AI providers, live `/models` discovery, Thinking (reasoning) parameters, redaction toggles |
 | Debug & diagnostics | `/settings/debug` | Core log, request log, crash reports, Share logs; Clear app logs (core, Android, crashes) and Clear request log (project: all, older than 7/30/90 days, or one finished scan); Search tab with WebView fingerprint check & per-engine stats |
 | About, Licenses & Terms | `/settings/about`, `/settings/licenses`, `/settings/terms` | App version & build flavor (`foss`/`play`), auto-generated offline license inventory, Terms of Use |
+
+Drop-down lists across the app (AI provider, model and reasoning level, findings host filter, timeline years, webhook format, plugin settings, User-Agent in the scan wizard) open a panel in the app theme instead of the grey Android dialog.
 
 ## Browser Profile (User-Agent)
 
