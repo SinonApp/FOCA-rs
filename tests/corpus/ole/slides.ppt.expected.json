@@ -3,6 +3,7 @@
   "author": "Marina Shevchuk",
   "created": "2019-11-05T10:00:00Z",
   "fields": {
+    "ole:CodePage": "1252 (Windows Latin 1)",
     "ppt:CurrentUser": "m.shevchuk"
   },
   "format": "ppt",

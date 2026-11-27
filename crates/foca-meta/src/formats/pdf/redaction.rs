@@ -189,13 +189,28 @@ fn last_n<const N: usize>(ops: &[Obj]) -> Option<[f64; N]> {
     Some(out)
 }
 
-/// Interprets a page content stream. `image_names` are `/XObject` resource names that refer
-/// to images; `page_box` is the MediaBox (boxes larger than 80 % of it are ignored).
+/// Decodes the bytes of a shown string with the page font of that resource name; `None`
+/// falls back to the plain string decoding.
+pub(crate) type FontDecode<'a> = &'a dyn Fn(&str, &[u8]) -> Option<String>;
+
+#[cfg(test)]
 pub(crate) fn scan_page(
     data: &[u8],
     image_names: &HashSet<String>,
     page_box: Option<[f64; 4]>,
     extra: &[ExtraBox],
+) -> PageScan {
+    scan_page_with(data, image_names, page_box, extra, &|_, _| None)
+}
+
+/// Interprets a page content stream. `image_names` are `/XObject` resource names that refer
+/// to images; `page_box` is the MediaBox (boxes larger than 80 % of it are ignored).
+pub(crate) fn scan_page_with(
+    data: &[u8],
+    image_names: &HashSet<String>,
+    page_box: Option<[f64; 4]>,
+    extra: &[ExtraBox],
+    decode: FontDecode,
 ) -> PageScan {
     let mut out = PageScan::default();
     let mut gs = Gs {
@@ -216,6 +231,7 @@ pub(crate) fn scan_page(
     let mut lx = Lex::new(data, 0, 8);
     let mut nops = 0usize;
     let mut line_open = false;
+    let mut font: Option<String> = None;
 
     // Shows a run of strings/kerning numbers.
     let show = |items: &[Obj],
@@ -228,6 +244,7 @@ pub(crate) fn scan_page(
                 char_sp: f64,
                 word_sp: f64,
                 seq: usize,
+                font: Option<&str>,
                 out: &mut PageScan,
                 texts: &mut Vec<TextItem>| {
         let mut run = String::new();
@@ -236,7 +253,9 @@ pub(crate) fn scan_page(
         for it in items {
             match it {
                 Obj::Str(s) => {
-                    let t = content_str(s);
+                    let t = font
+                        .and_then(|f| decode(f, s))
+                        .unwrap_or_else(|| content_str(s));
                     let n = t.chars().count() as f64;
                     let spaces = t.chars().filter(|c| *c == ' ').count() as f64;
                     width += (n * (0.5 * fs + char_sp) + spaces * word_sp) * th;
@@ -362,6 +381,9 @@ pub(crate) fn scan_page(
                 line_open = false;
             }
             "Tf" => {
+                if let [.., Obj::Name(f), _] = ops.as_slice() {
+                    font = Some(f.clone());
+                }
                 if let Some(Obj::Num(n)) = ops.last() {
                     if n.is_finite() {
                         fs = n.abs().min(10_000.0);
@@ -455,7 +477,18 @@ pub(crate) fn scan_page(
                 };
                 if !items.is_empty() {
                     show(
-                        &items, &mut tm, &gs, fs, th, rise, mode, char_sp, word_sp, seq, &mut out,
+                        &items,
+                        &mut tm,
+                        &gs,
+                        fs,
+                        th,
+                        rise,
+                        mode,
+                        char_sp,
+                        word_sp,
+                        seq,
+                        font.as_deref(),
+                        &mut out,
                         &mut texts,
                     );
                     line_open = true;

@@ -1,5 +1,5 @@
 {
-  "application": "Microsoft PowerPoint",
+  "application": "Microsoft PowerPoint 2002 (XP)",
   "author": "author",
   "category": "category",
   "company": "company",
@@ -13,7 +13,9 @@
   "description": "comments",
   "edit_time_secs": 266,
   "fields": {
+    "office:release": "2002 (XP)",
     "ole:AppVersion": "10.2418",
+    "ole:CodePage": "10000 (Mac Roman)",
     "ole:TitlesOfParts": "Times",
     "ppt:CurrentUser": "user name"
   },
@@ -37,7 +39,7 @@
   ],
   "revision": "1",
   "software": [
-    "Microsoft PowerPoint"
+    "Microsoft PowerPoint 10.0000"
   ],
   "stats": {
     "hidden_slides": 0,

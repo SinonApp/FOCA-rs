@@ -17,8 +17,11 @@ use foca_core::{
 use crate::util::{find, normalize_date, truncate};
 use crate::{formats::signature, xmp, Ctx, MetaError};
 
+mod fonts;
+mod glyphs;
 mod redaction;
 pub(crate) mod syntax;
+mod text;
 
 use redaction::{ExtraBox, Fill, PageScan};
 use syntax::{content_str, dget, dname, is_delim, is_ws, pdf_str, Dict, Lex, Obj};
@@ -382,6 +385,15 @@ impl<'a> Pdf<'a> {
             })
     }
 
+    /// The file identifier array (`/ID`) of the newest trailer that has one.
+    pub(crate) fn file_id(&self) -> Option<&Obj> {
+        self.trailers
+            .iter()
+            .rev()
+            .find_map(|(_, t)| dget(t, "ID"))
+            .map(|i| self.resolve(i))
+    }
+
     /// Returns `true` if any trailer declares encryption.
     pub(crate) fn is_encrypted(&self) -> bool {
         self.trailers
@@ -718,6 +730,7 @@ fn scan_pages(
     with_annots: bool,
 ) -> Result<Vec<PageScan>, MetaError> {
     let mut out = Vec::new();
+    let fonts = std::cell::RefCell::new(fonts::FontCache::default());
     for p in pages_at(pdf, before) {
         let data = page_content(pdf, &p, before, ctx, cache)?;
         let images = page_images(pdf, &p, before);
@@ -726,7 +739,13 @@ fn scan_pages(
         } else {
             Vec::new()
         };
-        out.push(redaction::scan_page(&data, &images, p.media, &extra));
+        let decode = |name: &str, s: &[u8]| {
+            let f = fonts.borrow_mut().get(pdf, p.res, name, ctx)?;
+            Some(f.show(s).text)
+        };
+        out.push(redaction::scan_page_with(
+            &data, &images, p.media, &extra, &decode,
+        ));
     }
     Ok(out)
 }
@@ -1149,6 +1168,7 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
         if dget(c, "Collection").is_some() {
             meta.fields.insert("pdf:portfolio".into(), "true".into());
         }
+        catalog_facts(&pdf, c, &mut meta);
         if let Some(Obj::Dict(pages)) = dget(c, "Pages").map(|p| pdf.resolve(p)) {
             if let Some(cnt) = dget(pages, "Count").and_then(Obj::num) {
                 if (0.0..1e9).contains(&cnt) {
@@ -1388,6 +1408,94 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     Ok(meta)
 }
 
+/// Named paper size of a page box in points (either orientation), within 3 pt.
+fn paper_name(w: f64, h: f64) -> Option<&'static str> {
+    const SIZES: [(&str, f64, f64); 7] = [
+        ("A4", 595.0, 842.0),
+        ("Letter", 612.0, 792.0),
+        ("Legal", 612.0, 1008.0),
+        ("A3", 842.0, 1191.0),
+        ("A5", 420.0, 595.0),
+        ("Tabloid", 792.0, 1224.0),
+        ("Executive", 522.0, 756.0),
+    ];
+    let (a, b) = (w.min(h), w.max(h));
+    SIZES
+        .iter()
+        .find(|(_, sw, sh)| (a - sw).abs() <= 3.0 && (b - sh).abs() <= 3.0)
+        .map(|(n, _, _)| *n)
+}
+
+fn hex_upper(b: &[u8]) -> String {
+    b.iter().map(|c| format!("{c:02X}")).collect()
+}
+
+/// Catalog and trailer facts: document language (`/Lang`), tagged PDF (`/MarkInfo`), first
+/// page size with its paper name and the trailer file identifier (`/ID`, which stays the same
+/// across revisions and copies of one file).
+fn catalog_facts(pdf: &Pdf, c: &Dict, meta: &mut Metadata) {
+    if !meta.encrypted {
+        if let Some(Obj::Str(l)) = dget(c, "Lang").map(|l| pdf.resolve(l)) {
+            if let Some(l) = crate::util::clean_str(&pdf_str(l)).filter(|l| {
+                l.len() <= 35 && l.chars().all(|ch| ch.is_ascii_alphanumeric() || ch == '-')
+            }) {
+                meta.fields.insert("pdf:Lang".into(), l.clone());
+                if meta.language.is_none() {
+                    meta.language = Some(l);
+                }
+            }
+        }
+    }
+    let marked = dget(c, "MarkInfo")
+        .map(|m| pdf.resolve(m))
+        .and_then(Obj::dict)
+        .is_some_and(|m| matches!(dget(m, "Marked"), Some(Obj::Bool(true))));
+    if marked || dget(c, "StructTreeRoot").is_some() {
+        meta.fields.insert("pdf:tagged".into(), "true".into());
+    }
+    if let Some(p) = pages_at(pdf, usize::MAX).first() {
+        let bx = dget(p.dict, "CropBox")
+            .and_then(|r| rect_of(pdf.resolve(r)))
+            .or(p.media);
+        if let Some([x0, y0, x1, y1]) = bx {
+            let (mut w, mut h) = (x1 - x0, y1 - y0);
+            let rot = dget(p.dict, "Rotate")
+                .and_then(|r| pdf.resolve(r).num())
+                .unwrap_or(0.0) as i64;
+            if rot.rem_euclid(180) == 90 {
+                std::mem::swap(&mut w, &mut h);
+            }
+            if w > 0.0 && h > 0.0 && w < 1e5 && h < 1e5 {
+                meta.fields
+                    .insert("pdf:page_size".into(), format!("{w:.0}x{h:.0} pt"));
+                if let Some(n) = paper_name(w, h) {
+                    let n = if w > h {
+                        format!("{n} landscape")
+                    } else {
+                        n.to_string()
+                    };
+                    meta.fields.insert("pdf:paper".into(), n);
+                }
+            }
+        }
+    }
+    if let Some(Obj::Arr(ids)) = pdf.file_id() {
+        let hex: Vec<String> = ids
+            .iter()
+            .filter_map(|x| match x {
+                Obj::Str(s) if !s.is_empty() && s.len() <= 64 => Some(hex_upper(s)),
+                _ => None,
+            })
+            .collect();
+        if let Some(first) = hex.first() {
+            meta.fields.insert("pdf:ID".into(), first.clone());
+        }
+        if let Some(second) = hex.get(1).filter(|s| Some(*s) != hex.first()) {
+            meta.fields.insert("pdf:ID_instance".into(), second.clone());
+        }
+    }
+}
+
 /// Font names (subset prefix `ABCDEF+` removed), form fields, page-piece application names and
 /// output intents of one dictionary.
 #[allow(clippy::too_many_arguments)]
@@ -1469,7 +1577,8 @@ fn piece_app(k: &str) -> Option<&'static str> {
     })
 }
 
-/// Returns page text: strings from Tj/TJ/'/" operators plus annotation comments.
+/// Returns page text plus annotation comments. Page strings are decoded through each font's
+/// ToUnicode CMap or encoding; without a page tree the raw content streams are scanned.
 pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
     let pdf = Pdf::parse(b, ctx)?;
     let mut out = String::new();
@@ -1499,6 +1608,23 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
             }
         }
     }
+    if let Some(t) = text::pages_text(&pdf, ctx)? {
+        if t.chars().any(char::is_alphanumeric) {
+            out.push_str(&t);
+            return Ok(out);
+        }
+    }
+    raw_stream_text(&pdf, content_refs, ctx, &mut out)?;
+    Ok(out)
+}
+
+/// Legacy fallback: strings of the page content streams without font decoding.
+fn raw_stream_text(
+    pdf: &Pdf,
+    mut content_refs: Vec<u32>,
+    ctx: &Ctx,
+    out: &mut String,
+) -> Result<(), MetaError> {
     content_refs.sort_unstable();
     content_refs.dedup();
     for n in content_refs {
@@ -1548,7 +1674,7 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
         }
         out.push('\n');
     }
-    Ok(out)
+    Ok(())
 }
 
 #[cfg(test)]

@@ -1,10 +1,12 @@
 {
-  "application": "Microsoft Excel",
+  "application": "Microsoft Excel 2007",
   "author": "Nick Burch",
   "created": "2008-01-04T11:51:36Z",
   "description": "This is a sample spreadsheet, for use when testing things",
   "fields": {
+    "office:release": "2007",
     "ole:AppVersion": "12.0000",
+    "ole:CodePage": "1252 (Windows Latin 1)",
     "ole:Security": "0",
     "ole:TitlesOfParts": "First Sheet; Sheet Number 2",
     "xls:WriteAccess": "Nick Burch"
@@ -27,7 +29,7 @@
     }
   ],
   "software": [
-    "Microsoft Excel"
+    "Microsoft Excel 12.0000"
   ],
   "subject": "Spreadsheet for testing",
   "title": "Sample Spreadsheet"

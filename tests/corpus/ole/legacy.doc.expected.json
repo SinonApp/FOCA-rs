@@ -1,5 +1,5 @@
 {
-  "application": "Microsoft Office Word",
+  "application": "Microsoft Office Word 2010",
   "attachments": [
     {
       "name": "ObjectPool/_1234567890",
@@ -18,7 +18,9 @@
   "description": "Чернетка для юристів",
   "edit_time_secs": 3600,
   "fields": {
+    "office:release": "2010",
     "ole:AppVersion": "14.0000",
+    "ole:CodePage": "1251 (Windows Cyrillic)",
     "ole:Security": "0"
   },
   "format": "doc",
@@ -114,7 +116,7 @@
     }
   ],
   "software": [
-    "Microsoft Office Word"
+    "Microsoft Office Word 14.0000"
   ],
   "stats": {
     "characters": 7034,

@@ -84,6 +84,9 @@
     }
   ],
   "fields": {
+    "pdf:ID": "0123456789ABCDEF0123456789ABCDEF",
+    "pdf:page_size": "612x792 pt",
+    "pdf:paper": "Letter",
     "pdf:version": "1.7"
   },
   "fonts": [

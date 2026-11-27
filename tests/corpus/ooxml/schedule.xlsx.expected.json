@@ -1,5 +1,5 @@
 {
-  "application": "Microsoft Excel",
+  "application": "Microsoft Excel 2010",
   "author": "s.lysenko",
   "comments": [
     {
@@ -36,6 +36,7 @@
     "app:AppVersion": "14.0300",
     "app:DocSecurity": "0",
     "app:LinksUpToDate": "false",
+    "office:release": "2010",
     "persons:Сергій Лисенко": "s.lysenko@contoso.example",
     "xl:connection:billing:command": "SELECT * FROM tariffs",
     "xl:connection:billing:connection": "Provider=SQLOLEDB.1;Password=***;User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing",

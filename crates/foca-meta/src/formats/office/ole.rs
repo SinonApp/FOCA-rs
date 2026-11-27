@@ -8,6 +8,7 @@ use std::io::{Cursor, Read, Seek};
 
 use foca_core::{DocFormat, Metadata, OldVersion, PersonRole};
 
+use super::office_info;
 use crate::util::{
     clean_str, decode_codepage, filetime_to_iso, rd_u16le, rd_u32le, rd_u64le, truncate, utf16le,
 };
@@ -25,6 +26,8 @@ pub(crate) enum PropValue {
 
 pub(crate) struct Section {
     pub fmtid: [u8; 16],
+    /// Declared code page of the section strings (property 1).
+    pub codepage: Option<u16>,
     pub props: Vec<(u32, PropValue)>,
     pub dict: BTreeMap<u32, String>,
 }
@@ -182,11 +185,11 @@ pub(crate) fn parse_property_set(b: &[u8]) -> Option<PropertySet> {
             };
             ids.push((pid, off as usize));
         }
-        let codepage = ids
+        let declared = ids
             .iter()
             .find(|(pid, _)| *pid == 1)
-            .and_then(|(_, off)| off.checked_add(4).and_then(|o| rd_u16le(sec, o)))
-            .unwrap_or(1252);
+            .and_then(|(_, off)| off.checked_add(4).and_then(|o| rd_u16le(sec, o)));
+        let codepage = declared.unwrap_or(1252);
         let mut props = Vec::new();
         let mut dict = BTreeMap::new();
         for (pid, off) in &ids {
@@ -244,7 +247,12 @@ pub(crate) fn parse_property_set(b: &[u8]) -> Option<PropertySet> {
             }
             props.push((*pid, read_value(sec, *off, codepage, 0)));
         }
-        sections.push(Section { fmtid, props, dict });
+        sections.push(Section {
+            fmtid,
+            codepage: declared,
+            props,
+            dict,
+        });
     }
     Some(PropertySet { os, sections })
 }
@@ -284,6 +292,11 @@ fn summary(meta: &mut Metadata, ps: &PropertySet) {
     let Some(sec) = ps.sections.first() else {
         return;
     };
+    if let Some(cp) = sec.codepage {
+        let name = office_info::codepage_name(cp)
+            .map_or_else(|| cp.to_string(), |n| format!("{cp} ({n})"));
+        meta.fields.insert("ole:CodePage".into(), name);
+    }
     for (pid, v) in &sec.props {
         match pid {
             2 => meta.title = as_str(v),
@@ -485,6 +498,109 @@ fn parse_sttb(b: &[u8]) -> Vec<String> {
     out
 }
 
+/// Entry `i` of the FIB `FibRgFcLcb` array: offset and size in the table stream (empty
+/// entries give `None`).
+fn fib_fc_lcb(wd: &[u8], i: usize) -> Option<(usize, usize)> {
+    let csw = rd_u16le(wd, 32)?;
+    let p_lw = 34 + usize::from(csw) * 2;
+    let cslw = rd_u16le(wd, p_lw)?;
+    let p_fc = p_lw + 2 + usize::from(cslw) * 4;
+    let cb = rd_u16le(wd, p_fc)?;
+    if i >= usize::from(cb) {
+        return None;
+    }
+    let base = p_fc + 2;
+    let fc = rd_u32le(wd, base + i * 8)? as usize;
+    let lcb = rd_u32le(wd, base + i * 8 + 4)? as usize;
+    (lcb > 0).then_some((fc, lcb))
+}
+
+/// Characters of Word text kept per document.
+const MAX_WORD_TEXT: usize = 16 << 20;
+
+/// Text of a Word binary document from the piece table (CLX `PlcPcd`): body, footnotes,
+/// headers, comments and text boxes in character order. Compressed pieces are Windows-1252,
+/// the others UTF-16LE. `None` when the FIB or the piece table cannot be read.
+fn word_text<F: Read + Seek>(
+    cf: &mut cfb::CompoundFile<F>,
+    wd: &[u8],
+    ctx: &Ctx,
+) -> Result<Option<String>, MetaError> {
+    if rd_u16le(wd, 0) != Some(0xA5EC) {
+        return Ok(None);
+    }
+    let flags = rd_u16le(wd, 0x0A).unwrap_or(0);
+    if flags & 0x0100 != 0 {
+        // encrypted: the pieces are ciphertext
+        return Ok(Some(String::new()));
+    }
+    let table = if flags & 0x0200 != 0 {
+        "/1Table"
+    } else {
+        "/0Table"
+    };
+    let Some((fc, lcb)) = fib_fc_lcb(wd, 33) else {
+        return Ok(None);
+    };
+    let Some(tbl) = read_stream(cf, table, ctx)? else {
+        return Ok(None);
+    };
+    let Some(clx) = tbl.get(fc..fc.saturating_add(lcb).min(tbl.len())) else {
+        return Ok(None);
+    };
+    Ok(piece_table_text(wd, clx))
+}
+
+/// Decodes the pieces listed in a CLX against the WordDocument stream.
+fn piece_table_text(wd: &[u8], clx: &[u8]) -> Option<String> {
+    // skip Prc entries (0x01 + cbGrpprl), then the Pcdt (0x02 + lcb + PlcPcd)
+    let mut p = 0usize;
+    let plc = loop {
+        match clx.get(p)? {
+            1 => p = p.checked_add(3 + usize::from(rd_u16le(clx, p + 1)?))?,
+            2 => {
+                let lcb = rd_u32le(clx, p + 1)? as usize;
+                break clx.get(p + 5..p.checked_add(5 + lcb)?)?;
+            }
+            _ => return None,
+        }
+    };
+    if plc.len() < 16 {
+        return None;
+    }
+    let n = (plc.len() - 4) / 12;
+    let mut out = String::new();
+    for i in 0..n.min(100_000) {
+        let (cp0, cp1) = (rd_u32le(plc, i * 4)?, rd_u32le(plc, i * 4 + 4)?);
+        let len = cp1.saturating_sub(cp0) as usize;
+        let fc = rd_u32le(plc, 4 * (n + 1) + 8 * i + 2)?;
+        let (fcv, compressed) = ((fc & 0x3FFF_FFFF) as usize, fc & 0x4000_0000 != 0);
+        let piece = if compressed {
+            wd.get(fcv / 2..(fcv / 2).saturating_add(len).min(wd.len()))
+                .map(|b| decode_codepage(b, 1252))
+        } else {
+            wd.get(fcv..fcv.saturating_add(len.saturating_mul(2)).min(wd.len()))
+                .map(utf16le)
+        };
+        for c in piece.unwrap_or_default().chars() {
+            match c {
+                '\r' | '\u{0B}' | '\u{0C}' => out.push('\n'),
+                '\u{07}' => out.push('\t'),
+                '\u{1E}' => out.push('-'),
+                // field begin/separator/end
+                '\u{13}' | '\u{14}' | '\u{15}' => out.push(' '),
+                '\t' | '\n' => out.push(c),
+                c if c.is_control() || c == '\u{1F}' => {}
+                c => out.push(c),
+            }
+        }
+        if out.len() > MAX_WORD_TEXT {
+            break;
+        }
+    }
+    Some(out)
+}
+
 /// Reads Word data: FIB, then the table stream with SttbSavedBy (71), SttbfAssoc (32), SttbfRMark (51) and GrpXstAtnOwners (36).
 fn word_binary<F: Read + Seek>(
     meta: &mut Metadata,
@@ -509,31 +625,28 @@ fn word_binary<F: Read + Seek>(
     } else {
         "/0Table"
     };
-    let Some(csw) = rd_u16le(&wd, 32) else {
-        return Ok(());
-    };
-    let p_lw = 34 + usize::from(csw) * 2;
-    let Some(cslw) = rd_u16le(&wd, p_lw) else {
-        return Ok(());
-    };
-    let p_fc = p_lw + 2 + usize::from(cslw) * 4;
-    let Some(cb) = rd_u16le(&wd, p_fc) else {
-        return Ok(());
-    };
-    let base = p_fc + 2;
-    let pair = |i: usize| -> Option<(usize, usize)> {
-        if i >= usize::from(cb) {
-            return None;
+    let pair = |i: usize| fib_fc_lcb(&wd, i);
+    if let Some(lid) = rd_u16le(&wd, 6).filter(|l| *l != 0) {
+        let tag = office_info::lcid_tag(lid);
+        meta.fields.insert(
+            "doc:lid".into(),
+            match tag {
+                Some(t) => format!("0x{lid:04X} ({t})"),
+                None => format!("0x{lid:04X}"),
+            },
+        );
+        if let (Some(t), None) = (tag, &meta.language) {
+            meta.language = Some(t.to_string());
         }
-        let fc = rd_u32le(&wd, base + i * 8)? as usize;
-        let lcb = rd_u32le(&wd, base + i * 8 + 4)? as usize;
-        (lcb > 0).then_some((fc, lcb))
-    };
+    }
     let Some(tbl) = read_stream(cf, table, ctx)? else {
         return Ok(());
     };
     let slice =
         |p: Option<(usize, usize)>| p.and_then(|(fc, lcb)| tbl.get(fc..fc.checked_add(lcb)?));
+    if let Some(dop) = slice(pair(31)) {
+        dop_time_zone(meta, dop);
+    }
     if let Some(s) = slice(pair(71)) {
         let v = parse_sttb(s);
         for (i, ch) in v.chunks(2).enumerate() {
@@ -584,6 +697,25 @@ fn word_binary<F: Read + Seek>(
         }
     }
     Ok(())
+}
+
+/// Derives the author's UTC offset: the DOP keeps creation, save and print times in the
+/// local time of the machine, the summary information keeps the same moments in UTC.
+fn dop_time_zone(meta: &mut Metadata, dop: &[u8]) {
+    let mut pairs = Vec::new();
+    for (off, utc) in [
+        (0x14, meta.created.as_deref()),
+        (0x18, meta.modified.as_deref()),
+        (0x1C, meta.printed.as_deref()),
+    ] {
+        let local = rd_u32le(dop, off).and_then(office_info::dttm_minutes);
+        if let (Some(l), Some(u)) = (local, utc.and_then(office_info::iso_minutes)) {
+            pairs.push((l, u));
+        }
+    }
+    if let Some(tz) = office_info::tz_offset(&pairs) {
+        meta.fields.insert("doc:tz_offset".into(), tz);
+    }
 }
 
 /// Reads Excel BIFF8 records: WRITEACCESS (last saved by), BOUNDSHEET (hidden sheets), FILEPASS.
@@ -700,6 +832,9 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         if let Some(ps) = parse_property_set(&s) {
             doc_summary(&mut meta, &ps);
         }
+    }
+    if let Some(v) = meta.fields.get("ole:AppVersion").cloned() {
+        office_info::apply_app_version(&mut meta, &v);
     }
     match format {
         DocFormat::Doc => word_binary(&mut meta, &mut cf, ctx)?,
@@ -1002,7 +1137,8 @@ pub(crate) fn clean_ole(bytes: &[u8], limits: &crate::Limits) -> Result<(Vec<u8>
     Ok((out_bytes, removed_sigs))
 }
 
-/// Returns the text of an OLE document: printable strings (ASCII and UTF-16LE) from the main streams.
+/// Returns the text of an OLE document: Word text from the piece table, otherwise printable
+/// strings (ASCII and UTF-16LE) from the main streams.
 pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
     crate::guard("ole", || {
         let mut cf =
@@ -1015,6 +1151,13 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
             "/PowerPoint Document",
         ] {
             if let Some(data) = read_stream(&mut cf, s, ctx)? {
+                if s == "/WordDocument" {
+                    if let Some(t) = word_text(&mut cf, &data, ctx)? {
+                        out.push_str(&t);
+                        out.push('\n');
+                        continue;
+                    }
+                }
                 strings(&data, &mut out);
             }
         }

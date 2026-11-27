@@ -231,6 +231,8 @@ fn structural_field(k: &str) -> bool {
             | "png:color_type"
             | "png:bit_depth"
             | "ole:Security"
+            | "ole:CodePage"
+            | "doc:lid"
             | "visio:file_version"
             | "pub:quill_version"
             | "media:major_brand"
@@ -241,6 +243,8 @@ fn structural_field(k: &str) -> bool {
         // a scanner or camera
         || (k.starts_with("icc:") && !k.starts_with("icc:device_model"))
         || matches!(k, "pdf:xfa" | "pdf:portfolio" | "pdf:OutputIntent")
+        // page geometry, tagging and language describe layout
+        || matches!(k, "pdf:page_size" | "pdf:paper" | "pdf:tagged" | "pdf:Lang")
         // hidden sheets are content (graded as hidden content), query text is content
         || k.starts_with("xl:veryHidden:")
         || k.starts_with("xl:hidden:")
@@ -401,6 +405,10 @@ fn flatten_into(m: &Metadata, prefix: &str, f: &mut Flat, depth: u32) {
         put(&format!("xmp.{k}"), v.clone(), true);
     }
     for (k, v) in &m.fields {
+        // the cleaner always writes a new content-derived file identifier
+        if matches!(k.as_str(), "pdf:ID" | "pdf:ID_instance") {
+            continue;
+        }
         // an external workbook reference without a directory is a plain formula
         let bare_ref = k.starts_with("chart:")
             && k.ends_with(":externalRef")

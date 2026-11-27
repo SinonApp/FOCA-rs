@@ -199,6 +199,9 @@ fn app_props(meta: &mut Metadata, el: &Element) {
         };
         Metadata::add_unique(&mut meta.software, &sw);
     }
+    if let Some(v) = &app_version {
+        super::office_info::apply_app_version(meta, v);
+    }
 }
 
 fn custom_props(meta: &mut Metadata, el: &Element) {

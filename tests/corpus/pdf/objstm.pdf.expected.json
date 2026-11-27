@@ -3,6 +3,8 @@
   "author": "m.shevchuk",
   "created": "2020-01-05T12:00:00Z",
   "fields": {
+    "pdf:page_size": "595x842 pt",
+    "pdf:paper": "A4",
     "pdf:version": "1.5"
   },
   "format": "pdf",

@@ -4,6 +4,7 @@
   "company": "ТОВ «Контосо Енерджі»",
   "created": "2018-12-20T08:00:00Z",
   "fields": {
+    "ole:CodePage": "1252 (Windows Latin 1)",
     "xls:WriteAccess": "s.lysenko"
   },
   "format": "xls",

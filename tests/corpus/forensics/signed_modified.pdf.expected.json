@@ -6,6 +6,8 @@
   ],
   "fields": {
     "pdf:acroform": "true",
+    "pdf:page_size": "612x792 pt",
+    "pdf:paper": "Letter",
     "pdf:version": "1.7"
   },
   "fonts": [

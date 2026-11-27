@@ -1,5 +1,5 @@
 {
-  "application": "Microsoft Office PowerPoint",
+  "application": "Microsoft Office PowerPoint (2016 or newer)",
   "author": "Марина Шевчук",
   "comments": [
     {
@@ -81,7 +81,8 @@
   "fields": {
     "app:AppVersion": "16.0000",
     "app:DocSecurity": "0",
-    "app:LinksUpToDate": "false"
+    "app:LinksUpToDate": "false",
+    "office:release": "2016 or newer"
   },
   "format": "pptx",
   "language": "uk-UA",

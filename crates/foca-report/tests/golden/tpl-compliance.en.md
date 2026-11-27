@@ -6,7 +6,7 @@ date: 2026-11-20
 template: compliance
 lang: en
 risk: 100
-findings: 102
+findings: 107
 ---
 
 # КСЗІ / Standards compliance
@@ -95,36 +95,41 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | 70 | Medium | Microsoft Office Word 2013 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
 | 71 | Medium | Names and logins of 20 employees exposed | T1589.003 | CWE-359, A01:2025 | WSTG-INFO-01 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
 | 72 | Low | Microsoft Excel 2010 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 73 | Low | Reviewer comments kept in schedule.xlsx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 74 | Low | Adobe Photoshop 7.0 (EOL) in 3 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 75 | Low | Internal addresses and host names in the document (2) · budget.msg | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 76 | Low | Reviewer comments kept in report.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 77 | Low | Old PDF revisions kept in report.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 78 | Low | Old PDF revisions kept in signed\_modified.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 79 | Low | Reviewer comments kept in strategy.pptx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 80 | Low | Internal addresses and host names in the document (1) · contract.docx | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 81 | Low | Internal paths and logins in the metadata of 17 documents | T1592 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 82 | Low | Internal addresses and host names in the document (1) · buh.ica | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 83 | Low | Outdated OS Windows 7 / Server 2008 R2 in 1 document | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 84 | Low | Outdated OS Windows XP in 2 documents | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 85 | Low | Microsoft 365 tenant ID in the message (budget.eml) | \- | \- | \- | \- | \- | \- | \- |
-| 86 | Low | Reviewer comments kept in network.vsdx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 87 | Low | Internal addresses and host names in the document (4) | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 88 | Low | Microsoft 365 tenant ID in the message (backup.zip) | \- | \- | \- | \- | \- | \- | \- |
-| 89 | Low | Microsoft Word 2008 for Mac (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 90 | Low | Old PDF revisions kept in revisions.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 91 | Low | Previous metadata versions kept in legacy.doc | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 92 | Low | LibreOffice 7.2.5.2 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 93 | Low | Internal addresses and host names in the document (2) · budget.eml | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 94 | Low | Names of 9 computers and servers of the internal network | T1590 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 95 | Low | Signing time and TSA time stamp differ by more than a day (signed\_hidden.docx) | \- | \- | \- | 8.24 | \- | НА | \- |
-| 96 | Low | Remote access settings exposed in the file SRV-TS01.rdp | T1590.002 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 97 | Low | OpenOffice.org 3.2 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 98 | Low | Remote access settings exposed in the file buh.ica | T1590.002 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 99 | Low | Internal addresses and host names in the document (1) · network.vsdx | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 100 | Info | Corporate e-mail pattern identified: {f}.{last}@contoso.example | T1589.002 | \- | WSTG-INFO-01 | 6.3 | AT-2(3) | \- | 6.1.2.7 |
-| 101 | Info | Links to cloud workspaces and URLs with tokens in meeting.ics | T1213.003 | \- | \- | \- | \- | \- | \- |
-| 102 | Info | Shared/service accounts in metadata: Administrator, admin, author, scan, user name | T1087 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.7 |
+| 73 | Low | Microsoft PowerPoint 2002 (XP) (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 74 | Low | Reviewer comments kept in schedule.xlsx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 75 | Low | Adobe Photoshop 7.0 (EOL) in 3 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 76 | Low | Internal addresses and host names in the document (2) · budget.msg | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 77 | Low | Reviewer comments kept in report.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 78 | Low | Old PDF revisions kept in report.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 79 | Low | Microsoft Office PowerPoint 2003 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 80 | Low | Microsoft Word 2010 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 81 | Low | Old PDF revisions kept in signed\_modified.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 82 | Low | Reviewer comments kept in strategy.pptx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 83 | Low | Internal addresses and host names in the document (1) · contract.docx | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 84 | Low | Internal paths and logins in the metadata of 17 documents | T1592 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 85 | Low | Internal addresses and host names in the document (1) · buh.ica | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 86 | Low | Outdated OS Windows 7 / Server 2008 R2 in 1 document | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 87 | Low | Outdated OS Windows XP in 2 documents | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 88 | Low | Microsoft 365 tenant ID in the message (budget.eml) | \- | \- | \- | \- | \- | \- | \- |
+| 89 | Low | Reviewer comments kept in network.vsdx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 90 | Low | Internal addresses and host names in the document (4) | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 91 | Low | Microsoft Office Word 2007 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 92 | Low | Microsoft 365 tenant ID in the message (backup.zip) | \- | \- | \- | \- | \- | \- | \- |
+| 93 | Low | Microsoft Word 2008 for Mac (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 94 | Low | Old PDF revisions kept in revisions.pdf | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 95 | Low | Previous metadata versions kept in legacy.doc | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 96 | Low | LibreOffice 7.2.5.2 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 97 | Low | Internal addresses and host names in the document (2) · budget.eml | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 98 | Low | Names of 9 computers and servers of the internal network | T1590 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 99 | Low | Microsoft Office Excel 2007 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 100 | Low | Signing time and TSA time stamp differ by more than a day (signed\_hidden.docx) | \- | \- | \- | 8.24 | \- | НА | \- |
+| 101 | Low | Remote access settings exposed in the file SRV-TS01.rdp | T1590.002 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 102 | Low | OpenOffice.org 3.2 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 103 | Low | Remote access settings exposed in the file buh.ica | T1590.002 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 104 | Low | Internal addresses and host names in the document (1) · network.vsdx | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 105 | Info | Corporate e-mail pattern identified: {f}.{last}@contoso.example | T1589.002 | \- | WSTG-INFO-01 | 6.3 | AT-2(3) | \- | 6.1.2.7 |
+| 106 | Info | Links to cloud workspaces and URLs with tokens in meeting.ics | T1213.003 | \- | \- | \- | \- | \- | \- |
+| 107 | Info | Shared/service accounts in metadata: Administrator, admin, author, scan, user name | T1087 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.7 |
 
 НД ТЗІ 2.5-004-99 and НД ТЗІ 3.7-003-05 are given for systems certified under КСЗІ. НД ТЗІ 3.6-006-24 measure codes are the NIST SP 800-53 codes.
 
@@ -135,7 +140,7 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | AC-22 | Publicly Accessible Content | 55 |
 | AT-2(3) | Literacy Training and Awareness \| Social Engineering and Mining | 3 |
 | IA-5(7) | Authenticator Management \| No Embedded Unencrypted Static Authenticators | 7 |
-| SA-22 | Unsupported System Components | 14 |
+| SA-22 | Unsupported System Components | 19 |
 | SC-18 | Mobile Code | 5 |
 | SI-10 | Information Input Validation | 1 |
 | SI-12(1) | Information Management and Retention \| Limit Personally Identifiable Information Elements | 15 |
@@ -166,7 +171,7 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | A.5.34 | Privacy and protection of PII | 12 |
 | A.6.3 | Information security awareness, education and training | 3 |
 | A.8.7 | Protection against malware | 6 |
-| A.8.8 | Management of technical vulnerabilities | 14 |
+| A.8.8 | Management of technical vulnerabilities | 19 |
 | A.8.10 | Information deletion | 20 |
 | A.8.11 | Data masking | 6 |
 | A.8.12 | Data leakage prevention | 56 |
@@ -177,7 +182,7 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 
 | Clause | Work | Findings |
 | --- | --- | --- |
-| 6.1.2.4 | Survey of the ITS computing system | 38 |
+| 6.1.2.4 | Survey of the ITS computing system | 43 |
 | 6.1.2.5 | Survey of the information environment | 32 |
 | 6.1.2.7 | Survey of the user environment | 13 |
 

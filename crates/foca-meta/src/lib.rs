@@ -347,14 +347,16 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
         pe::finish(&mut meta);
     }
     paths::finalize(&mut meta);
+    formats::office::office_info::locale_hint(&mut meta);
     if matches!(format, DocFormat::Eml | DocFormat::Msg) {
         eml::drop_message_ids(&mut meta);
     }
     Ok(meta)
 }
 
-/// Returns the plain text of a document for secret scanning: OOXML, ODF, PDF (strings from
-/// content streams, ignoring font encodings), SVG, RDP/ICA and OLE2 (text strings in streams).
+/// Returns the plain text of a document for secret scanning: OOXML, ODF, PDF (page text decoded
+/// through the fonts' ToUnicode maps and encodings), SVG, RDP/ICA, Word 97-2003 (piece table)
+/// and other OLE2 files (text strings in streams).
 /// For images, returns the EXIF/XMP text fields.
 ///
 /// # Errors
