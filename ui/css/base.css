@@ -1079,6 +1079,12 @@ html[data-theme="light"] .seg button.on {
 .btnrow .btn {
   flex: 1 1 auto;
 }
+/* Button rows stacked under each other (finding screen: To the document, Relation chain) keep a gap. */
+.btnrow + .btnrow,
+:is(.card, .list, .banner) + .btnrow,
+.btnrow + :is(.card, .list, .banner) {
+  margin-top: var(--form-gap);
+}
 
 /* Fields. */
 .field {

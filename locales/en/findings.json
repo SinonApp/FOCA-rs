@@ -1813,6 +1813,12 @@
       "text": "A confidential fragment is covered by a black or white rectangle drawn over the text, but the text itself stays in the document: any PDF viewer can copy or extract it."
     },
     {
+      "id": "f666",
+      "rules": "doc.bad_redaction",
+      "pattern": "Конфиденциальный фрагмент закрыт тёмным прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
+      "text": "A confidential fragment is covered by a dark rectangle drawn over the text, but the text itself stays in the document: any PDF viewer can copy or extract it."
+    },
+    {
       "id": "f296",
       "rules": "doc.bad_redaction",
       "pattern": "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.",

@@ -51,8 +51,10 @@ fn forensic_findings_from_fixtures() {
             .iter()
             .find(|f| f.provenance.rule == rule && f.title.contains(doc))
     };
+    // the covered text holds a passport number (masked in storage): critical, CVSS in the band
     let br = has("doc.bad_redaction", "redacted.pdf").expect("bad redaction");
     assert_eq!(br.sev, Severity::Critical);
+    assert!(br.cvss.is_some_and(|c| c >= 9.0), "{:?}", br.cvss);
     assert!(has("doc.modified_after_signing", "signed_modified.pdf").is_some());
     let kep = has("doc.signer_identity", "signed.pdf").expect("signer");
     assert!(

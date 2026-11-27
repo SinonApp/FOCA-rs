@@ -102,16 +102,21 @@ impl Fill {
         }
     }
 
+    /// Classifies a fill colour: `Black` covers every dark colour (luminance at most 0.2, the
+    /// only fills that hide text), `White` near-white, everything else `Other`.
     pub(crate) fn from_components(v: &[f64]) -> Fill {
-        let lo = |x: &f64| *x <= 0.05;
-        let hi = |x: &f64| *x >= 0.95;
-        match v {
-            [g] if lo(g) => Fill::Black,
-            [g] if hi(g) => Fill::White,
-            [r, g, b] if lo(r) && lo(g) && lo(b) => Fill::Black,
-            [r, g, b] if hi(r) && hi(g) && hi(b) => Fill::White,
-            [c, m, y, k] if hi(k) || (hi(c) && hi(m) && hi(y)) => Fill::Black,
-            [c, m, y, k] if lo(c) && lo(m) && lo(y) && lo(k) => Fill::White,
+        let lum = match v {
+            [g] => Some(*g),
+            [r, g, b] => Some(0.2126 * r + 0.7152 * g + 0.0722 * b),
+            [c, m, y, k] => {
+                let ch = |x: f64| (1.0 - x) * (1.0 - k);
+                Some(0.2126 * ch(*c) + 0.7152 * ch(*m) + 0.0722 * ch(*y))
+            }
+            _ => None,
+        };
+        match lum {
+            Some(l) if l <= 0.2 => Fill::Black,
+            Some(l) if l >= 0.95 => Fill::White,
             _ => Fill::Other,
         }
     }
@@ -492,10 +497,15 @@ pub(crate) fn scan_page(
         if ta <= 0.0 {
             continue;
         }
-        let hit = all_boxes.iter().enumerate().find(|(_, b)| {
+        // Only dark fills hide text; white and light boxes under or over text are table cells,
+        // highlights, form fields and backgrounds. Unapplied /Redact annotations count with any
+        // fill (the author meant to redact there).
+        let hit = all_boxes.iter().enumerate().find(|(i, b)| {
             b.seq > t.seq
+                && (b.fill == Fill::Black || b.seq == usize::MAX)
                 && page_area.is_none_or(|pa| area(&b.rect) < pa * 0.8)
                 && intersection(&t.rect, &b.rect) / ta >= 0.6
+                && !table_cell(&all_boxes, *i)
         });
         if let Some((bi, _)) = hit {
             match grouped.iter_mut().find(|(i, _)| *i == bi) {
@@ -511,7 +521,9 @@ pub(crate) fn scan_page(
     }
     for (bi, text) in grouped {
         let text: String = text.split_whitespace().collect::<Vec<_>>().join(" ");
-        if text.chars().filter(|c| c.is_alphanumeric()).count() < 2 {
+        // Text that does not decode to words (a font with its own encoding and no ToUnicode map
+        // gives single shifted glyphs) is not readable, so nothing leaks.
+        if !readable(&text) {
             continue;
         }
         let Some(b) = all_boxes.get(bi) else { continue };
@@ -525,6 +537,55 @@ pub(crate) fn scan_page(
         });
     }
     out
+}
+
+/// A dark box that is part of three or more edge-adjacent dark boxes is a table cell (a dark
+/// header row or grid), not a redaction.
+fn table_cell(boxes: &[BoxItem], i: usize) -> bool {
+    let dark = |b: &BoxItem| b.fill == Fill::Black && b.seq != usize::MAX;
+    if !boxes.get(i).is_some_and(dark) {
+        return false;
+    }
+    let near = |x: f64, y: f64| (x - y).abs() <= 1.0;
+    let overlap = |a0: f64, a1: f64, b0: f64, b1: f64| a0.max(b0) < a1.min(b1);
+    let touch = |r: [f64; 4], q: [f64; 4]| {
+        ((near(r[2], q[0]) || near(r[0], q[2])) && overlap(r[1], r[3], q[1], q[3]))
+            || ((near(r[3], q[1]) || near(r[1], q[3])) && overlap(r[0], r[2], q[0], q[2]))
+    };
+    let mut seen = vec![i];
+    let mut k = 0;
+    while k < seen.len() && seen.len() < 3 {
+        let r = boxes[seen[k]].rect;
+        for (j, o) in boxes.iter().enumerate() {
+            if !seen.contains(&j) && dark(o) && touch(r, o.rect) {
+                seen.push(j);
+            }
+        }
+        k += 1;
+    }
+    seen.len() >= 3
+}
+
+/// Whether covered text reads as words: most letters and digits sit in tokens of three or more,
+/// and stray symbols are rare. Undecoded glyph runs (`j h n _ k c g h`) fail.
+pub(crate) fn readable(text: &str) -> bool {
+    let alnum = |w: &str| w.chars().filter(|c| c.is_alphanumeric()).count();
+    let total = alnum(text);
+    if total < 3 {
+        return false;
+    }
+    let in_words: usize = text.split_whitespace().map(alnum).filter(|n| *n >= 3).sum();
+    let visible = text.chars().filter(|c| !c.is_whitespace()).count().max(1);
+    let junk = text
+        .chars()
+        .filter(|c| {
+            matches!(
+                c,
+                '\\' | '}' | '{' | '^' | '_' | '|' | '~' | '`' | '[' | ']'
+            )
+        })
+        .count();
+    in_words * 2 >= total && junk * 10 <= visible
 }
 
 #[cfg(test)]
@@ -558,13 +619,19 @@ mod tests {
 
     #[test]
     fn matrices_and_colours() {
-        // text placed via cm + Tm, white rectangle in a scaled coordinate system
+        // text placed via cm + Tm, dark rectangle in a scaled coordinate system
+        let p = scan(
+            "q 2 0 0 2 0 0 cm BT /F1 6 Tf 1 0 0 1 36 350 Tm [(Hidden)-250(text)] TJ ET Q \
+             q 0.1 0.1 0.1 rg 4 0 0 4 0 0 cm 17 174 30 5 re f Q",
+        );
+        assert_eq!(p.hits.len(), 1, "{:?}", p.text);
+        assert_eq!(p.hits[0].fill, Fill::Black);
+        // the same box in white is a background, never a redaction
         let p = scan(
             "q 2 0 0 2 0 0 cm BT /F1 6 Tf 1 0 0 1 36 350 Tm [(Hidden)-250(text)] TJ ET Q \
              q 1 1 1 rg 4 0 0 4 0 0 cm 17 174 30 5 re f Q",
         );
-        assert_eq!(p.hits.len(), 1, "{:?}", p.text);
-        assert_eq!(p.hits[0].fill, Fill::White);
+        assert!(p.hits.is_empty());
         // coloured box: not a redaction
         let p = scan("BT /F1 12 Tf 72 700 Td (abc def) Tj ET 1 0 0 rg 70 695 200 20 re f");
         assert!(p.hits.is_empty());
@@ -573,6 +640,43 @@ mod tests {
         assert!(p.hits.is_empty());
         assert_eq!(p.images, 1);
         assert_eq!(p.invisible_chars, 7);
+    }
+
+    #[test]
+    fn white_table_cells_are_not_redactions() {
+        // survey table: text, then white cell backgrounds painted over it
+        let p = scan(
+            "BT /F1 10 Tf 72 700 Td (Respondents agree) Tj ET \
+             BT /F1 10 Tf 272 700 Td (Respondents disagree) Tj ET \
+             1 g 70 695 200 18 re f 270 695 200 18 re f",
+        );
+        assert!(p.hits.is_empty());
+    }
+
+    #[test]
+    fn dark_grid_cells_are_a_table() {
+        let p = scan(
+            "BT /F1 10 Tf 72 700 Td (Header one) Tj ET \
+             0 g 70 695 100 18 re f 170 695 100 18 re f 270 695 100 18 re f",
+        );
+        assert!(
+            p.hits.is_empty(),
+            "{:?}",
+            p.hits.iter().map(|h| &h.text).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn undecoded_glyphs_are_not_readable() {
+        // a font with its own encoding: Cyrillic shifted into single Latin codes
+        let p = scan(
+            "BT /F1 10 Tf 72 700 Td [(j)-300(h)-300(n)-300(_)-300(k)-300(c)-300(g)-300(h)-300(})] TJ ET \
+             0 g 70 695 200 18 re f",
+        );
+        assert!(p.hits.is_empty());
+        assert!(!readable("j h n _ k c g h h j } g l h \\ Z g Z"));
+        assert!(readable("Secret name Ivan Petrenko"));
+        assert!(readable("UA213223130000026007233566001"));
     }
 
     #[test]

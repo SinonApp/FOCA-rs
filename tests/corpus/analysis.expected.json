@@ -3117,50 +3117,6 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 7.5,
-      "description": "Конфиденциальный фрагмент закрыт чёрным или белым прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
-      "doc": 5,
-      "evidence": "стр. 1 (black): «Passport AB123456 Ivan Petrenko»\nстр. 1 (white): «Phone +380 44 000 00 00»\nстр. 2 (black): «Account UA00 0000 0000 secret»",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 1457178891231802,
-      "mitre": "T1213 · Data from Information Repositories",
-      "module": "forensics",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          5
-        ],
-        "fields": [
-          "bad_redactions"
-        ],
-        "rule": "doc.bad_redaction"
-      },
-      "recommendation": "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.",
-      "rel": {
-        "docs": [
-          5
-        ],
-        "pcs": [],
-        "people": []
-      },
-      "request": "",
-      "sev": "crit",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [
-        "forensics"
-      ],
-      "time": "2026-11-20T12:00:00",
-      "title": "Плохое замазывание: текст под закраской читается (redacted.pdf)",
-      "url": "https://files.contoso.example/corpus/forensics/redacted.pdf"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
       "cvss": null,
       "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
       "doc": 4,
@@ -3745,50 +3701,6 @@
     },
     {
       "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": 5.3,
-      "description": "Фото отредактировано в графическом редакторе, но встроенная миниатюра EXIF сохранена: она может показывать исходный (необрезанный, незамазанный) кадр.",
-      "doc": 12,
-      "evidence": "Apple iPhone 13 Pro\nПО: ios166, ps2019",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 6228698033732004,
-      "mitre": "T1591 · Gather Victim Org Information",
-      "module": "meta",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          12
-        ],
-        "fields": [
-          "thumbnail"
-        ],
-        "rule": "thumbnail"
-      },
-      "recommendation": "Удалять EXIF и миниатюры перед публикацией; сравнить миниатюру с изображением.",
-      "rel": {
-        "docs": [
-          12
-        ],
-        "pcs": [],
-        "people": [
-          "v.tkachenko"
-        ]
-      },
-      "request": "",
-      "sev": "high",
-      "source": "Метаданные",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Миниатюра EXIF может отличаться от фото (photo.jpg)",
-      "url": "https://files.contoso.example/corpus/images/photo.jpg"
-    },
-    {
-      "active": false,
       "category": "people",
       "cve": [],
       "cvss": null,
@@ -4022,6 +3934,50 @@
       "time": "2026-11-20T12:00:00",
       "title": "Пароль в тексте документа",
       "url": "https://files.contoso.example/corpus/pdf/objstm.pdf"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": 7.5,
+      "description": "Конфиденциальный фрагмент закрыт тёмным прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
+      "doc": 5,
+      "evidence": "стр. 1 (black): «Passport AB123456 Ivan Petrenko»\nстр. 2 (black): «Account UA00 0000 0000 secret»",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 1457178891231802,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "forensics",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          5
+        ],
+        "fields": [
+          "bad_redactions"
+        ],
+        "rule": "doc.bad_redaction"
+      },
+      "recommendation": "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.",
+      "rel": {
+        "docs": [
+          5
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "high",
+      "source": "Форензика документов",
+      "status": "new",
+      "tags": [
+        "forensics"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Плохое замазывание: текст под закраской читается (redacted.pdf)",
+      "url": "https://files.contoso.example/corpus/forensics/redacted.pdf"
     },
     {
       "active": false,
@@ -5595,6 +5551,50 @@
       "time": "2026-11-20T12:00:00",
       "title": "Личные контакты в визитных карточках (contacts.vcf)",
       "url": "https://files.contoso.example/corpus/pim/contacts.vcf"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": 5.3,
+      "description": "Фото отредактировано в графическом редакторе, но встроенная миниатюра EXIF сохранена: она может показывать исходный (необрезанный, незамазанный) кадр.",
+      "doc": 12,
+      "evidence": "Apple iPhone 13 Pro\nПО: ios166, ps2019",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 6228698033732004,
+      "mitre": "T1591 · Gather Victim Org Information",
+      "module": "meta",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          12
+        ],
+        "fields": [
+          "thumbnail"
+        ],
+        "rule": "thumbnail"
+      },
+      "recommendation": "Удалять EXIF и миниатюры перед публикацией; сравнить миниатюру с изображением.",
+      "rel": {
+        "docs": [
+          12
+        ],
+        "pcs": [],
+        "people": [
+          "v.tkachenko"
+        ]
+      },
+      "request": "",
+      "sev": "warn",
+      "source": "Метаданные",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Миниатюра EXIF может отличаться от фото (photo.jpg)",
+      "url": "https://files.contoso.example/corpus/images/photo.jpg"
     },
     {
       "active": false,
@@ -7320,7 +7320,7 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 4.3,
+      "cvss": 3.7,
       "description": "Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.",
       "doc": 64,
       "evidence": "full address: SRV-TS01.corp.contoso.example:3389\nusername: CONTOSO\\i.petrenko\ngateway: rdgw.contoso.example",
@@ -7368,7 +7368,7 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 4.3,
+      "cvss": 3.7,
       "description": "Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.",
       "doc": 65,
       "evidence": "full address: 10.10.1.40:1494\nusername: o.kovalenko\ngateway: ctx.contoso.example:8080",

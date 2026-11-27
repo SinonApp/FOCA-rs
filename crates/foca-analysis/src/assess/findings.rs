@@ -241,12 +241,7 @@ pub fn build(ctx: &Ctx) -> Vec<Finding> {
         f.source = "Секреты в документах";
         f.module = "secrets";
         f.mitre = "T1552.001 · Unsecured Credentials: Credentials In Files";
-        f.cvss = Some(match sev {
-            Severity::Critical => 9.1,
-            Severity::High => 7.5,
-            Severity::Medium => 5.3,
-            _ => 3.7,
-        });
+        f.cvss = Some(super::draft::band_cvss(sev));
         f.description = format!(
             "В публично доступном документе «{}» найден секрет ({}): {}.",
             d.name, s.title, s.secret.location
@@ -310,7 +305,7 @@ pub fn build(ctx: &Ctx) -> Vec<Finding> {
             Severity::Low,
         );
         f.mitre = "T1590.002 · Gather Victim Network Information: DNS";
-        f.cvss = Some(4.3);
+        f.cvss = Some(3.7);
         f.description = "Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.".into();
         f.recommendation = "Удалить файл с сайта, не публиковать служебные файлы конфигурации.";
         f.evidence = format!(
@@ -578,7 +573,7 @@ pub fn build(ctx: &Ctx) -> Vec<Finding> {
                 "thumbnail",
                 d.key.clone(),
                 format!("Миниатюра EXIF может отличаться от фото ({})", d.name),
-                Severity::High,
+                Severity::Medium,
             );
             f.mitre = "T1591 · Gather Victim Org Information";
             f.cvss = Some(5.3);
@@ -788,6 +783,15 @@ fn finalize(drafts: Vec<Draft>, ctx: &Ctx, by_id: &BTreeMap<u64, &DocFacts>) -> 
         if out.iter().any(|f| f.id == id) {
             continue;
         }
+        // Every rule's severity label matches its CVSS band (one mapping, checked by every
+        // analysis test in debug builds).
+        debug_assert!(
+            d.cvss.is_none_or(|c| super::draft::cvss_band(c) == d.sev),
+            "{}: severity {:?} does not match CVSS {:?}",
+            d.rule,
+            d.sev,
+            d.cvss
+        );
         let doc = d.docs.first().copied();
         let dfacts = doc.and_then(|i| by_id.get(&i));
         let host = d

@@ -612,11 +612,30 @@ fn sig_line(s: &SignerFacts) -> String {
     parts.join("\n")
 }
 
+/// Severity of a bad redaction: high; critical only when the recovered text itself holds
+/// personal data (the stored text is already PII-masked, `********90`) or an e-mail address.
+fn redaction_severity(lines: &[String]) -> Severity {
+    let sensitive = lines.iter().any(|t| {
+        t.contains("****")
+            || !crate::content::pii::scan(t, "").is_empty()
+            || t.split_whitespace().any(|w| {
+                let w = w.trim_matches(|c: char| !c.is_alphanumeric());
+                w.contains('@') && w.rsplit('@').next().is_some_and(|h| h.contains('.'))
+            })
+    });
+    if sensitive {
+        Severity::Critical
+    } else {
+        Severity::High
+    }
+}
+
 /// Adds the forensic findings of the analysed documents.
 pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
     for d in an {
         let x = &d.fx;
         if !x.bad_redactions.is_empty() {
+            let sev = redaction_severity(&x.bad_redactions);
             let mut f = base(
                 "doc.bad_redaction",
                 d,
@@ -624,11 +643,11 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                     "Плохое замазывание: текст под закраской читается ({})",
                     d.name
                 ),
-                Severity::Critical,
+                sev,
             );
             f.mitre = "T1213 · Data from Information Repositories";
-            f.cvss = Some(7.5);
-            f.description = "Конфиденциальный фрагмент закрыт чёрным или белым прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.".into();
+            f.cvss = Some(super::draft::band_cvss(sev));
+            f.description = "Конфиденциальный фрагмент закрыт тёмным прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.".into();
             f.recommendation = "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.";
             f.evidence = x
                 .bad_redactions
@@ -1224,6 +1243,39 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn redaction_severity_follows_the_recovered_text() {
+        let l = |s: &str| vec![s.to_string()];
+        assert_eq!(
+            redaction_severity(&l("стр. 1 (black): «Salary review notes»")),
+            Severity::High
+        );
+        assert_eq!(
+            redaction_severity(&l("стр. 1 (black): «contact ivan.petrenko@example.com»")),
+            Severity::Critical
+        );
+        assert_eq!(
+            redaction_severity(&l("стр. 2 (black): «IBAN UA213223130000026007233566001»")),
+            Severity::Critical
+        );
+        assert_eq!(
+            redaction_severity(&l("стр. 1 (black): «паспорт ******56»")),
+            Severity::Critical
+        );
+        // the shown CVSS always sits in the severity band
+        for sev in [
+            Severity::Critical,
+            Severity::High,
+            Severity::Medium,
+            Severity::Low,
+        ] {
+            assert_eq!(
+                super::super::draft::cvss_band(super::super::draft::band_cvss(sev)),
+                sev
+            );
+        }
+    }
 
     #[test]
     fn day_difference() {

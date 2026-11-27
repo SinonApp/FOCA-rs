@@ -24,13 +24,13 @@ export default async (page, { out, W, fsc, theme }) => {
     ev(min => {
       const page = FOCA.page();
       if (!page) return [];
-      const isBlock = el => el.matches(".card, .list, .banner");
+      const isBlock = el => el.matches(".card, .list, .banner, .btnrow");
       const vis = el => {
         const r = el.getBoundingClientRect();
         return r.height > 0 && r.width > 0 && getComputedStyle(el).visibility !== "hidden";
       };
       const bad = [];
-      for (const el of page.querySelectorAll(".card, .list, .banner")) {
+      for (const el of page.querySelectorAll(".card, .list, .banner, .btnrow")) {
         const nx = el.nextElementSibling;
         if (!nx || !isBlock(nx) || !vis(el) || !vis(nx)) continue;
         const ps = getComputedStyle(el.parentElement);
@@ -52,6 +52,29 @@ export default async (page, { out, W, fsc, theme }) => {
             b: (nx.className || "").toString().slice(0, 60) + " | " + nx.textContent.trim().slice(0, 40),
           });
       }
+      // Buttons never overlap each other (stacked rows or wrapped buttons inside one row).
+      // Fixed or sticky bars float over the scrolled content by design: only in-flow buttons count.
+      const floating = el => {
+        for (let e = el; e && e !== page; e = e.parentElement) {
+          const pos = getComputedStyle(e).position;
+          if (pos === "fixed" || pos === "sticky") return true;
+        }
+        return false;
+      };
+      const btns = [...page.querySelectorAll(".btn")].filter(b => vis(b) && !floating(b));
+      for (let i = 0; i < btns.length && bad.length < 20; i++)
+        for (let j = i + 1; j < btns.length; j++) {
+          const a = btns[i].getBoundingClientRect(),
+            b = btns[j].getBoundingClientRect();
+          const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left),
+            oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (ox > 2 && oy > 2 && !btns[i].contains(btns[j]) && !btns[j].contains(btns[i]))
+            bad.push({
+              gap: -Math.round(oy),
+              a: "btn | " + btns[i].textContent.trim().slice(0, 30),
+              b: "btn | " + btns[j].textContent.trim().slice(0, 30),
+            });
+        }
       return bad;
     }, MIN);
   try {
@@ -84,6 +107,31 @@ export default async (page, { out, W, fsc, theme }) => {
       const bad = await tight();
       ok(`doc card (${st}): stacked blocks keep >= ${MIN} px`, bad.length === 0, bad.slice(0, 3));
       if (st === "downloaded") await page.screenshot({ path: `${out}/block-gaps_doc_${st}_${tag}.png` });
+    }
+    // Finding screens with both "To the document" and "Relation chain".
+    const fids = await ev(() =>
+      (FOCA.db.findings || [])
+        .filter(f => f.provenance && f.provenance.doc && /^doc\./.test(f.provenance.rule || ""))
+        .slice(0, 4)
+        .map(f => f.id),
+    );
+    ok("there are document findings to check", fids.length > 0, fids);
+    for (const id of fids) {
+      await ev(id => FOCA.reset(["/p/findings", `/p/finding/${id}`]), id);
+      await wait(400);
+      const bad = await tight();
+      ok(`finding ${id}: stacked button rows keep a gap, no overlap`, bad.length === 0, bad.slice(0, 3));
+    }
+    if (fids[0] != null) {
+      await ev(id => FOCA.reset(["/p/findings", `/p/finding/${id}`]), fids[0]);
+      await wait(400);
+      await ev(
+        () =>
+          document.querySelector(".fd-todoc-r") &&
+          document.querySelector(".fd-todoc-r").scrollIntoView({ block: "center" }),
+      );
+      await wait(200);
+      await page.screenshot({ path: `${out}/block-gaps_finding_${tag}.png` });
     }
     await ev(() => FOCA.reset(["/settings", "/settings/crawl"]));
     await wait(400);
