@@ -792,6 +792,14 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 .join("\n");
             f.fields = vec!["bad_redactions".into()];
             f.tags = vec!["forensics"];
+            // The covered text holds a real secret (not only personal data): a credential.
+            let rules = crate::content::secrets::Rules::builtin();
+            if x.bad_redactions
+                .iter()
+                .any(|l| !rules.scan(l, "").is_empty())
+            {
+                f.tags.push("credential");
+            }
             out.push(f);
         }
         if let Some(s) = x.signers.iter().find(|s| s.modified_after) {

@@ -4105,6 +4105,42 @@
  },
  {
   "lang": "en",
+  "rule": "attack-path",
+  "text": "Документ (X1)",
+  "out": "Document (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "attack-path",
+  "text": "Отозвать или сменить учётные данные и убрать файл из открытого доступа.",
+  "out": "Revoke or change the credentials and remove the file from public access."
+ },
+ {
+  "lang": "en",
+  "rule": "attack-path",
+  "text": "Убрать документ из открытого доступа и очистить метаданные.",
+  "out": "Remove the document from public access and clean its metadata."
+ },
+ {
+  "lang": "en",
+  "rule": "attack-path",
+  "text": "Удалить или обезличить данные в документе и убрать его из открытого доступа.",
+  "out": "Delete or anonymise the data in the document and remove it from public access."
+ },
+ {
+  "lang": "en",
+  "rule": "attack-path",
+  "text": "Установить обновления безопасности на узле и проверить его находки.",
+  "out": "Install security updates on the host and review its findings."
+ },
+ {
+  "lang": "en",
+  "rule": "attack-path",
+  "text": "Закрыть лишние сервисы и порты узла по его находкам, усилить фильтрацию на периметре.",
+  "out": "Close the unneeded services and ports named in the host findings and tighten perimeter filtering."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -8218,6 +8254,42 @@
   "rule": "sw.cve",
   "text": "Документы отданы хостами в скоупе: X1.",
   "out": "Документи віддали хости в скоупі: X1."
+ },
+ {
+  "lang": "uk",
+  "rule": "attack-path",
+  "text": "Документ (X1)",
+  "out": "Документ (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "attack-path",
+  "text": "Отозвать или сменить учётные данные и убрать файл из открытого доступа.",
+  "out": "Відкликати або змінити облікові дані та прибрати файл із відкритого доступу."
+ },
+ {
+  "lang": "uk",
+  "rule": "attack-path",
+  "text": "Убрать документ из открытого доступа и очистить метаданные.",
+  "out": "Прибрати документ із відкритого доступу та очистити метадані."
+ },
+ {
+  "lang": "uk",
+  "rule": "attack-path",
+  "text": "Удалить или обезличить данные в документе и убрать его из открытого доступа.",
+  "out": "Видалити або знеособити дані в документі та прибрати його з відкритого доступу."
+ },
+ {
+  "lang": "uk",
+  "rule": "attack-path",
+  "text": "Установить обновления безопасности на узле и проверить его находки.",
+  "out": "Встановити оновлення безпеки на вузлі та перевірити його знахідки."
+ },
+ {
+  "lang": "uk",
+  "rule": "attack-path",
+  "text": "Закрыть лишние сервисы и порты узла по его находкам, усилить фильтрацию на периметре.",
+  "out": "Закрити зайві сервіси та порти вузла за його знахідками, посилити фільтрацію на периметрі."
  },
  {
   "lang": "uk",

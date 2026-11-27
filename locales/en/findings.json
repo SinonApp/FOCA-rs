@@ -4103,6 +4103,42 @@
       "rules": "sw.cve,sw.kev,eol-software,eol-os",
       "pattern": "Документы отданы хостами в скоупе: {}.",
       "text": "Documents were served by hosts in the scope: {0}."
+    },
+    {
+      "id": "f685",
+      "rules": "attack-path",
+      "pattern": "Документ ({})",
+      "text": "Document ({0})"
+    },
+    {
+      "id": "f686",
+      "rules": "attack-path",
+      "pattern": "Отозвать или сменить учётные данные и убрать файл из открытого доступа.",
+      "text": "Revoke or change the credentials and remove the file from public access."
+    },
+    {
+      "id": "f687",
+      "rules": "attack-path",
+      "pattern": "Убрать документ из открытого доступа и очистить метаданные.",
+      "text": "Remove the document from public access and clean its metadata."
+    },
+    {
+      "id": "f688",
+      "rules": "attack-path",
+      "pattern": "Удалить или обезличить данные в документе и убрать его из открытого доступа.",
+      "text": "Delete or anonymise the data in the document and remove it from public access."
+    },
+    {
+      "id": "f689",
+      "rules": "attack-path",
+      "pattern": "Установить обновления безопасности на узле и проверить его находки.",
+      "text": "Install security updates on the host and review its findings."
+    },
+    {
+      "id": "f690",
+      "rules": "attack-path",
+      "pattern": "Закрыть лишние сервисы и порты узла по его находкам, усилить фильтрацию на периметре.",
+      "text": "Close the unneeded services and ports named in the host findings and tighten perimeter filtering."
     }
   ],
   "tech_cats": {

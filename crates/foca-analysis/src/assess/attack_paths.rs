@@ -81,23 +81,83 @@ fn sev_weight(s: Severity) -> u8 {
     }
 }
 
-fn is_credential_or_leak_rule(rule: &str, f: &Finding) -> bool {
-    if is_perimeter_or_vuln_finding(rule, f) {
-        return false;
+/// Node kind of a leak finding: `credential` (a real secret, token or credential file),
+/// `exposure` (personal data, internal names and paths: helps an attacker, grants nothing by
+/// itself) or `None` (not a path step).
+fn leak_kind(f: &Finding) -> Option<&'static str> {
+    let rule = f.provenance.rule.as_str();
+    if is_perimeter_or_vuln_finding(rule, f) || rule == "doc.meeting_passcode" {
+        return None;
     }
-    rule.contains("secret")
+    let credential_tag = f.tags.iter().any(|t| t == "credential");
+    let medium_up = matches!(
+        f.sev,
+        Severity::Critical | Severity::High | Severity::Medium
+    );
+    match rule {
+        // A link is a credential only with a real token parameter (signature, SAS, access
+        // token); a public share link is context. Recovered text of a bad redaction is a
+        // credential only when the secret scanner found one in it, else data exposure.
+        "doc.links" => return credential_tag.then_some("credential"),
+        "doc.bad_redaction" => {
+            return Some(if credential_tag {
+                "credential"
+            } else {
+                "exposure"
+            })
+        }
+        _ => {}
+    }
+    if credential_tag
+        || rule.contains("secret")
         || rule.contains("password")
         || rule.contains("remote-file")
         || rule.contains("artifact.")
-        || rule == "internal-paths"
+        || (f.module == "secrets" && medium_up)
+    {
+        Some("credential")
+    } else if rule == "internal-paths"
         || rule == "internal-addresses"
         || rule == "internal-pcs"
         || rule.starts_with("lnk.")
-        || (matches!(f.module.as_str(), "secrets" | "forensics")
-            && matches!(
-                f.sev,
-                Severity::Critical | Severity::High | Severity::Medium
-            ))
+        || (matches!(f.module.as_str(), "forensics" | "pii") && medium_up)
+    {
+        Some("exposure")
+    } else {
+        None
+    }
+}
+
+/// Storage providers (Google Drive, OneDrive, SharePoint, Dropbox) host files of the target but
+/// are not its hosts: never a node, target or choke point.
+fn usable_host(h: &str) -> bool {
+    let h = h.trim();
+    !h.is_empty() && h != "-" && !crate::util::is_storage_provider(h)
+}
+
+/// Path severity: the band of its score (the shared CVSS-style bands), never above its
+/// strongest component; the score is clipped into the band of the final severity.
+fn path_severity(score: u8, components: &[Severity]) -> (u8, &'static str, &'static str) {
+    let band = crate::assess::draft::cvss_band(f32::from(score) / 10.0);
+    let top = components
+        .iter()
+        .copied()
+        .max_by_key(|s| s.rank())
+        .unwrap_or(Severity::Low);
+    let sev = if band.rank() > top.rank() { top } else { band };
+    let max = match sev {
+        Severity::Critical => 99,
+        Severity::High => 89,
+        Severity::Medium => 69,
+        _ => 39,
+    };
+    let (name, likelihood) = match sev {
+        Severity::Critical => ("critical", "high"),
+        Severity::High => ("high", "high"),
+        Severity::Medium => ("medium", "medium"),
+        _ => ("low", "low"),
+    };
+    (score.min(max), name, likelihood)
 }
 
 fn is_perimeter_or_vuln_finding(rule: &str, f: &Finding) -> bool {
@@ -108,18 +168,6 @@ fn is_perimeter_or_vuln_finding(rule: &str, f: &Finding) -> bool {
         || rule.starts_with("mail.")
         || rule.starts_with("infra.")
         || !f.cve.is_empty()
-}
-
-fn score_to_severity(score: u8) -> (&'static str, &'static str) {
-    if score >= 85 {
-        ("critical", "high")
-    } else if score >= 65 {
-        ("high", "high")
-    } else if score >= 45 {
-        ("medium", "medium")
-    } else {
-        ("low", "low")
-    }
 }
 
 fn host_entry_rank(h: &Host) -> u8 {
@@ -182,7 +230,7 @@ pub fn build_attack_paths_from_parts(
             !matches!(
                 f.status,
                 foca_core::FindingStatus::FalsePositive | foca_core::FindingStatus::Fixed
-            ) && is_credential_or_leak_rule(&f.provenance.rule, f)
+            ) && leak_kind(f).is_some()
         })
         .collect();
     leak_findings.sort_by(|a, b| {
@@ -199,6 +247,7 @@ pub fn build_attack_paths_from_parts(
                 f.status,
                 foca_core::FindingStatus::FalsePositive | foca_core::FindingStatus::Fixed
             ) && is_perimeter_or_vuln_finding(&f.provenance.rule, f)
+                && usable_host(&f.host)
         })
         .collect();
     target_findings.sort_by(|a, b| {
@@ -207,7 +256,7 @@ pub fn build_attack_paths_from_parts(
             .then_with(|| a.id.cmp(&b.id))
     });
 
-    let mut ranked_hosts: Vec<&Host> = hosts.iter().filter(|h| !h.name.trim().is_empty()).collect();
+    let mut ranked_hosts: Vec<&Host> = hosts.iter().filter(|h| usable_host(&h.name)).collect();
     ranked_hosts.sort_by(|a, b| {
         host_entry_rank(b)
             .cmp(&host_entry_rank(a))
@@ -267,18 +316,16 @@ pub fn build_attack_paths_from_parts(
     for (idx, lf) in leak_findings.iter().take(10).enumerate() {
         let doc_id = lf.doc.or_else(|| lf.provenance.docs.first().copied());
         let doc_opt = doc_id.and_then(|id| doc_by_id.get(&id).copied());
+        let kind = leak_kind(lf).unwrap_or("exposure");
         let preferred_host = secrets
             .iter()
             .find(|s| s.finding == Some(lf.id))
             .and_then(|s| s.host.as_deref())
+            .filter(|h| usable_host(h))
             .or_else(|| doc_opt.and_then(|d| d.rdp.as_ref().map(|r| r.full_address.as_str())))
-            .or_else(|| {
-                if lf.host != "-" && !lf.host.is_empty() {
-                    Some(lf.host.as_str())
-                } else {
-                    None
-                }
-            });
+            .or_else(|| usable_host(&lf.host).then_some(lf.host.as_str()))
+            // A file on a storage provider: the site that links it.
+            .or_else(|| doc_opt.map(|d| d.host.as_str()).filter(|h| usable_host(h)));
 
         let (target_host, vuln_opt) = resolve_target(preferred_host);
         if target_host == "perimeter" && vuln_opt.is_none() && ranked_hosts.is_empty() {
@@ -291,14 +338,18 @@ pub fn build_attack_paths_from_parts(
 
         if let Some(doc) = doc_opt {
             d_ids.push(doc.id);
+            let host = usable_host(&doc.host).then(|| doc.host.clone());
             steps.push(AttackStep {
                 kind: "document".into(),
                 node_id: format!("doc:{}", doc.id),
                 label: doc.name.clone(),
-                detail: format!("Документ ({}) на хосте {}", doc.ext, doc.host),
+                detail: match &host {
+                    Some(h) => format!("Документ ({}) на хосте {h}", doc.ext),
+                    None => format!("Документ ({})", doc.ext),
+                },
                 finding_id: Some(lf.id),
                 doc_id: Some(doc.id),
-                host: Some(doc.host.clone()),
+                host,
             });
         }
 
@@ -310,7 +361,7 @@ pub fn build_attack_paths_from_parts(
             .map(|s| format!("Тип: {} (значение: {})", s.kind, s.value.masked()))
             .unwrap_or_else(|| lf.title.clone());
         steps.push(AttackStep {
-            kind: "credential".into(),
+            kind: kind.into(),
             node_id: format!("finding:{}", lf.id),
             label: lf.title.clone(),
             detail: cred_detail,
@@ -356,15 +407,16 @@ pub fn build_attack_paths_from_parts(
             });
         }
 
-        let mut score = sev_weight(lf.sev) + 15;
+        let mut score = sev_weight(lf.sev) + if kind == "credential" { 15 } else { 5 };
+        let mut parts = vec![lf.sev];
         if let Some(vf) = vuln_opt {
             score = score.saturating_add(sev_weight(vf.sev) / 2 + 12);
+            parts.push(vf.sev);
         }
         if identity_anchor.is_some() {
             score = score.saturating_add(10);
         }
-        let score = score.min(99);
-        let (severity, likelihood) = score_to_severity(score);
+        let (score, severity, likelihood) = path_severity(score.min(99), &parts);
 
         let sig = format!("{target_host}::{}", lf.provenance.rule);
         if seen_signatures.insert(sig) {
@@ -393,8 +445,8 @@ pub fn build_attack_paths_from_parts(
                     .map(|h| h.name.clone())
                     .unwrap_or_else(|| "perimeter".into())
             };
-            let score = (sev_weight(vf.sev) + 35).min(95);
-            let (severity, likelihood) = score_to_severity(score);
+            let (score, severity, likelihood) =
+                path_severity((sev_weight(vf.sev) + 35).min(95), &[vf.sev]);
             built_paths.push(AttackPath {
                 id: format!("ap-net-{}", idx + 1),
                 title: format!("Прямой вход: {} ({})", host_name, vf.title),
@@ -475,11 +527,18 @@ pub fn build_attack_paths_from_parts(
                 .saturating_add((broken.min(5) as u8) * 5)
                 .min(100);
             let rec = match a.kind.as_str() {
-                "credential" | "document" => {
-                    "Отозвать/сменить скомпрометированные учётные данные, удалить файл из открытого доступа и очистить метаданные."
+                "credential" => {
+                    "Отозвать или сменить учётные данные и убрать файл из открытого доступа."
                 }
-                "vulnerability" | "perimeter" => {
-                    "Установить обновления безопасности / закрыть лишние порты и усилить периметровую фильтрацию."
+                "document" => "Убрать документ из открытого доступа и очистить метаданные.",
+                "exposure" => {
+                    "Удалить или обезличить данные в документе и убрать его из открытого доступа."
+                }
+                "vulnerability" => {
+                    "Установить обновления безопасности на узле и проверить его находки."
+                }
+                "perimeter" => {
+                    "Закрыть лишние сервисы и порты узла по его находкам, усилить фильтрацию на периметре."
                 }
                 _ => "Ограничить раскрытие учётных имён и проверить права доступа на целевом узле.",
             }
@@ -633,6 +692,94 @@ mod tests {
 
         let serialized = serde_json::to_string(&report).unwrap();
         assert!(!serialized.contains(raw_secret));
+    }
+
+    fn host(name: &str) -> Host {
+        Host {
+            name: name.into(),
+            services: vec![("443".into(), "https".into(), "".into())],
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn storage_providers_public_links_and_pii_are_classified() {
+        let docs = vec![Doc {
+            id: 1,
+            ext: "pdf".into(),
+            name: "order.pdf".into(),
+            host: "www.example.com".into(),
+            ..Default::default()
+        }];
+        let hosts = vec![host("drive.google.com"), host("www.example.com")];
+        // a public share link (no token): not a credential, no path at all
+        let mut link = sample_finding(
+            1,
+            "doc.links",
+            "Links",
+            Severity::Info,
+            "drive.google.com",
+            Some(1),
+        );
+        link.module = "forensics".into();
+        // a SAS link with a real token: credential node, target is the linking site
+        let mut sas = sample_finding(
+            2,
+            "doc.links",
+            "SAS",
+            Severity::High,
+            "drive.google.com",
+            Some(1),
+        );
+        sas.module = "forensics".into();
+        sas.tags = vec!["credential".into()];
+        // bad redaction with personal data only: data exposure node
+        let mut red = sample_finding(
+            3,
+            "doc.bad_redaction",
+            "Redaction",
+            Severity::Critical,
+            "www.example.com",
+            Some(1),
+        );
+        red.module = "forensics".into();
+        let rep =
+            build_attack_paths_from_parts(&[link, sas, red], &docs, &hosts, &[], &[], &[], &[]);
+        let kinds: Vec<(u64, &str)> = rep
+            .paths
+            .iter()
+            .flat_map(|p| p.steps.iter())
+            .filter_map(|s| s.finding_id.map(|f| (f, s.kind.as_str())))
+            .filter(|(_, k)| *k != "document")
+            .collect();
+        assert!(kinds.contains(&(2, "credential")), "{kinds:?}");
+        assert!(kinds.contains(&(3, "exposure")), "{kinds:?}");
+        assert!(!kinds.iter().any(|(f, _)| *f == 1), "{kinds:?}");
+        let json = serde_json::to_string(&rep).unwrap();
+        assert!(!json.contains("drive.google.com"), "{json}");
+        assert!(rep.paths.iter().all(|p| p.target_host == "www.example.com"));
+        // severity never above the strongest component, score inside its band
+        for p in &rep.paths {
+            let comp: Vec<Severity> = p
+                .finding_ids
+                .iter()
+                .map(|id| {
+                    if *id == 2 {
+                        Severity::High
+                    } else {
+                        Severity::Critical
+                    }
+                })
+                .collect();
+            assert!(!(p.severity == "critical" && !comp.contains(&Severity::Critical)));
+            assert!(p.severity != "high" || p.score < 90, "{}", p.score);
+        }
+        let cp = rep
+            .choke_points
+            .iter()
+            .find(|c| c.kind == "document")
+            .unwrap();
+        assert!(cp.recommendation.starts_with("Убрать документ"));
     }
 
     #[test]

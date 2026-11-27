@@ -898,8 +898,46 @@
     if (!chips.length) return "";
     return `<div class="fd-std"><div class="fd-std-h"><small>${esc(F.t("findings.std", "Стандарты"))}</small>${F.helpBtn ? F.helpBtn("standards", F.t("findings.std_help", "Соответствие стандартам")) : ""}</div><div class="chips wrap fd-stdl">${chips.join("")}</div></div>`;
   }
+  const ftx = t => (F.ftext && t ? F.ftext.field(t, "") : t);
+  // Closest current finding to an old title: shared words (file names count), ties by severity.
+  function closestFinding(title) {
+    const words = t =>
+      new Set(
+        String(t || "")
+          .toLowerCase()
+          .split(/[^\p{L}\p{N}._-]+/u)
+          .filter(w => w.length > 2),
+      );
+    const a = words(title);
+    let best = null,
+      bestScore = 0;
+    for (const f of F.db.findings || []) {
+      const b = words(f.title);
+      let n = 0;
+      for (const w of a) if (b.has(w)) n++;
+      const score = n / Math.max(1, Math.min(a.size, b.size));
+      if (score > bestScore) {
+        bestScore = score;
+        best = f;
+      }
+    }
+    return bestScore >= 0.3 ? best : null;
+  }
+  F.closestFinding = closestFinding;
   function renderDetail(params) {
     const finding = byId(params.id);
+    // A link from an attack path or a report to a finding that a later analysis replaced
+    // (merged per product, renamed): show its old title and offer the closest current one.
+    const gone = !finding && F.findingTitles && F.findingTitles[params.id];
+    if (gone) {
+      const near = closestFinding(ftx(gone));
+      return ui.empty({
+        icon: "bug",
+        title: F.t("findings.replaced", "Находка изменилась после повторного анализа"),
+        text: F.t("findings.replaced_text", { t: ftx(gone) }, "«{t}» больше нет в текущем анализе."),
+        action: `${near ? `<button class="btn" data-act="go:/p/finding/${near.id}">${esc(F.t("findings.closest", { t: near.title }, "Ближайшая: {t}"))}</button>` : ""}<button class="btn tonal" data-act="go:/p/findings">${esc(F.t("findings.to_list", "К списку находок"))}</button>`,
+      });
+    }
     if (!finding)
       return ui.empty({
         icon: "bug",

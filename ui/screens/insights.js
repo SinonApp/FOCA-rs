@@ -917,6 +917,26 @@
       });
     }
     const apSev = s => ui.sev(s === "medium" ? "warn" : s === "critical" ? "crit" : s || "info");
+    // Node kinds and likelihood are engine codes: shown in the UI language.
+    const KIND = {
+      document: F.t("insights.ap_kind_document", "документ"),
+      credential: F.t("insights.ap_kind_credential", "учётные данные"),
+      exposure: F.t("insights.ap_kind_exposure", "раскрытие данных"),
+      identity: F.t("insights.ap_kind_identity", "учётная запись"),
+      perimeter: F.t("insights.ap_kind_perimeter", "периметр"),
+      vulnerability: F.t("insights.ap_kind_vulnerability", "уязвимость"),
+    };
+    const LIKE = {
+      high: F.t("insights.ap_like_high", "вероятность высокая"),
+      medium: F.t("insights.ap_like_medium", "вероятность средняя"),
+      low: F.t("insights.ap_like_low", "вероятность низкая"),
+    };
+    // Titles of linked findings: a finding replaced by a later analysis still shows its title.
+    F.findingTitles = F.findingTitles || {};
+    for (const p of paths)
+      for (const st of p.steps || [])
+        if (st.finding_id && st.kind !== "document" && st.kind !== "perimeter")
+          F.findingTitles[st.finding_id] = st.kind === "vulnerability" ? st.detail : st.label;
     return `
       <div class="card pad ins-ap-sum">
         <div class="ins-ap-stats">
@@ -956,7 +976,7 @@
           p => `<div class="card pad ins-ap-card">
             <div class="ins-ap-hd">
               ${apSev(p.severity)}
-              <span class="pill mute">${p.score || 0}/100 · ${esc(p.likelihood || "")}</span>
+              <span class="pill mute">${p.score || 0}/100 · ${esc(LIKE[p.likelihood] || p.likelihood || "")}</span>
               ${p.target_host ? `<span class="chip mono">${esc(p.target_host)}</span>` : ""}
             </div>
             <h4 class="ins-ap-t">${esc(apTitle(p.title))}</h4>
@@ -970,7 +990,7 @@
                       ? `go:${entityPath(st.node_id)}`
                       : "";
                 return `${idx > 0 ? `<div class="ins-ap-ar">↓</div>` : ""}<div class="ins-ap-st ${link ? "tap" : ""}" ${link ? `data-act="${esc(link)}"` : ""}>
-                  <span class="pill mute">${esc(st.kind)}</span>
+                  <span class="pill mute">${esc(KIND[st.kind] || st.kind)}</span>
                   <div class="body"><div class="t">${esc(ftx(st.label, ""))}</div>${st.detail ? `<div class="s">${esc(ftx(st.detail, ""))}</div>` : ""}</div>
                   ${link ? ic("chev", "chev") : ""}
                 </div>`;
