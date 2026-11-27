@@ -837,9 +837,27 @@
       ],
       "rel": [
         "formats-help",
-        "forensics-help"
+        "forensics-help",
+        "reextract-help"
       ],
       "body": "\n      <p>Documents provided by a client or collected manually can be analyzed without running a network scan: “Projects → Analyze files offline” or via the ⋮ menu.</p>\n      <ul><li><b>No network access is used.</b> Files are copied into the app's private storage, parsed locally on your phone, and never leave the device; temporary import copies are deleted once parsing completes.</li>\n      <li>Select an entire folder (including subfolders), individual files, or a ZIP archive. Limits: up to 500 files and 512 MB per batch, up to 100 MB per file; any file taking longer than 30 seconds to parse is skipped.</li>\n      <li>Produces a new project (or adds to the current one) complete with metadata, forensics, and findings. Re-imported files are deduplicated automatically.</li>\n      <li>You can cancel analysis at any time. Files already parsed remain in the project.</li></ul>"
+    },
+    {
+      "id": "reextract-help",
+      "sec": "docs",
+      "icon": "refresh",
+      "t": "Re-analyse documents",
+      "sub": "no new search, uses downloaded files",
+      "act": [
+        "Re-analyse",
+        "rx-open",
+        "refresh"
+      ],
+      "rel": [
+        "offline-help",
+        "formats-help"
+      ],
+      "body": "\n      <p>New versions read more from the same files: PDF text, people and contacts from text, new formats. Re-analyse documents on the project overview or in Data → Documents applies them to documents already in the project. No new search runs.</p>\n      <ul><li><b>Downloaded files only:</b> no network, documents without a file are skipped.</li>\n      <li><b>Download missing files:</b> from their saved links, within the scope, the network settings, Wi-Fi only and the mobile data limit. The sheet shows the expected traffic.</li>\n      <li>Finding statuses, notes, deleted documents and document ids stay. The result compares before and after: documents with text, people, e-mails, phones and findings by severity.</li>\n      <li>Stop ends the run after the current file; the next start continues from there, also after the app was closed. Re-analysis does not start during a scan.</li>\n      <li>After an update the overview shows a banner when documents were analysed by an older version. Not now hides it for the project until the next parser change.</li></ul>"
     },
     {
       "id": "graph-chain",

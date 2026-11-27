@@ -402,6 +402,7 @@
   "settings.chg_2_0_0_beta_4_1_4": "Cyrillic PDF text from Word reads correctly, an LTV signature is no longer seen as modified",
   "settings.chg_2_0_0_beta_4_1_5": "AI summary history stays, errors are visible, pick the summary for the report",
   "settings.chg_2_0_0_beta_4_1_6": "Phone test fixes: lock screen progress, download counters, background guide",
+  "settings.chg_2_0_0_beta_4_1_7": "Re-analyse a project's documents with the new version without a new search, with a before/after summary",
   "settings.chg_2_0_0_beta_4_0": "7,604 site technologies: JS files, stylesheets, page text and browser signals on Android",
   "settings.chg_2_0_0_beta_4_1": "WordPress, Drupal, Joomla, Magento and PrestaShop plugins, themes and modules with versions",
   "settings.chg_2_0_0_beta_4_2": "Offline CVE database: 108,019 CVEs from NVD, a finding only when the version is known",

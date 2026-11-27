@@ -10,6 +10,7 @@ FOCA-rs parses a wide matrix of office, archive, messaging, publishing, and medi
 - [Full-Text Document Search](#full-text-document-search)
 - [Custom Search Rules](#custom-search-rules)
 - [Offline File & Folder Analysis](#offline-file--folder-analysis)
+- [Re-analyse Documents](#re-analyse-documents)
 - [Optional Offline OCR (Play Flavor)](#optional-offline-ocr-play-flavor)
 - [Limitations](#limitations)
 
@@ -96,6 +97,18 @@ Open Projects → Analyze files offline (or from the ⋮ menu anywhere):
 4. Review the summary (added, duplicates, skipped files and reasons) → Open project.
 
 Zero network requests are made: selected files are copied into private app storage, parsed locally on the phone, and temporary import copies are deleted once analysis completes. Limits: up to 500 files and 512 MB per batch, 100 MB per file, 30-second per-file parse timeout.
+
+## Re-analyse Documents
+
+New versions read more from the same files (better PDF text, people and contacts from text, new formats). To apply them to a project without a new search, use Re-analyse documents on the project overview or in Data → Documents (or select documents and tap Re-analyse):
+
+1. Choose what to parse: downloaded files only (no network), or also download missing files from their saved links. The sheet shows how many files are missing and the expected traffic; downloads follow the project scope, the network settings, Wi-Fi only and the mobile data limit.
+2. Tap Start. Progress shows the current file; Stop ends the run after the current file, and the next start continues from there (also after the app was closed or killed).
+3. The result compares before and after: documents with text, people, e-mails, phones and findings by severity, with a link to new findings.
+
+Finding statuses, notes, deleted documents and document ids stay. Findings the new analysis no longer produces stay in the list with their status. A running scan has priority: re-analysis cannot start during a scan and pauses when one starts.
+
+After an update the overview shows a banner when documents were analysed by an older version ("The new version extracts more data from documents"). Not now hides it for this project until the next parser change.
 
 ## Optional Offline OCR (Play Flavor)
 

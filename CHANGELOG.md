@@ -13,6 +13,7 @@ Patch release after phone testing of 2.0.0-beta.4.
 
 ### Fixed
 
+- Document files are found again when the app data directory moved since they were stored (restored backup, copied data): Share, Save and re-analysis used the old absolute path.
 - Background guide: the MIUI/HyperOS step for a background pop-up permission is gone (the app never opens windows from the background); the lock screen step is detected automatically; Samsung paths match One UI 6 and later.
 - Scan progress shows on the lock screen again (new silent progress channel; the public version hides the project name).
 - Search engines: after a passed check the card reads Queued again instead of Check needed.
@@ -58,6 +59,8 @@ Patch release after phone testing of 2.0.0-beta.4.
 ### Added
 - Privacy policy (docs/PRIVACY.md, Russian in docs/ru/PRIVACY.md): what stays on the device, which requests leave it and why, and the optional ML Kit OCR in the play build.
 
+- Re-analyse documents (overview, Data → Documents, selection mode): documents already in a project are parsed again with the current parsers without a new search, optionally downloading missing files from their saved links within the scope, network settings, Wi-Fi only and the mobile data limit. Progress with stop, a run that continues after a stop or a killed app, and a before/after summary of documents with text, people, e-mails, phones and findings by severity; triage, notes and deletions stay. Every document records the extraction revision that analysed it, and after an update the overview offers to re-analyse documents of an older one (`project_reextract`, `reextract_status`, `reextract_cancel`, project schema v11).
+- Upgrade check: a data directory written by the 2.0.0-beta.4 binary is part of the tests; projects, documents, triage, settings, AI summaries and encrypted exports must survive the update.
 - People from document text in 22 languages and scripts (Cyrillic with case forms and patronymics, Latin with particles, titles and suffixes, Arabic, Hebrew, CJK family-first, Georgian, Armenian, Kazakh), with per-language data files under `signatures/people/`; positions, units and signature blocks are attached to the person; authors named only in bibliography entries get the role "cited author".
 - Contacts and identifiers by country: E.164 and national phone formats, obfuscated e-mails (at/dot, собака, arroba, Klammeraffe), RU INN/SNILS/OGRN, PL PESEL/NIP, DE Steuer-ID, UK NINO, ES DNI/NIE, IT codice fiscale, IBAN of all countries with checksums; US SSN, FR NIR and passports only with context. Values stay masked.
 - Data → Phones, title/unit/contacts on person cards, `text_people`/`text_contacts` per document and an aggregated Medium finding for people whose contacts are published next to their names.
