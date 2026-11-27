@@ -359,10 +359,8 @@ fn apply_frame(meta: &mut Metadata, ctx: &Ctx, id: &[u8], fdata: &[u8]) -> Resul
                 if k == "TOWN" {
                     meta.add_person(&v, PersonRole::Owner, "id3v2:TOWN");
                 }
-                if k == "TDRL" || k == "TDOR" {
-                    if meta.created.is_none() {
-                        meta.created = crate::util::normalize_date(&v).or(Some(truncate(&v, 64)));
-                    }
+                if (k == "TDRL" || k == "TDOR") && meta.created.is_none() {
+                    meta.created = crate::util::normalize_date(&v).or(Some(truncate(&v, 64)));
                 }
                 meta.fields.insert(format!("id3:{k}"), truncate(&v, 512));
             }

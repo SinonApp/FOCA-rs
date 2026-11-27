@@ -417,7 +417,7 @@ fn walk(
 /// `hdlr` name: a Pascal string in QuickTime, a C string in MP4.
 fn handler_name(raw: &[u8]) -> Option<String> {
     let l = usize::from(*raw.first()?);
-    let s = if l > 0 && l + 1 <= raw.len() && raw.len() <= l + 2 {
+    let s = if l > 0 && l < raw.len() && raw.len() <= l + 2 {
         &raw[1..1 + l]
     } else {
         raw

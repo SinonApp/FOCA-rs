@@ -62,7 +62,7 @@ pub(crate) fn blocks(b: &[u8]) -> Vec<Resource<'_>> {
         let nlen = usize::from(b[p + 6]);
         let name = b
             .get(p + 7..p + 7 + nlen)
-            .map(|n| decode_text(n))
+            .map(decode_text)
             .unwrap_or_default();
         // the Pascal name (length byte included) is padded to an even size
         let q = p + 6 + (1 + nlen).next_multiple_of(2);
