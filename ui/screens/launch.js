@@ -381,7 +381,11 @@
     ["Схемы и вёрстка", ["vsdx", "vsd", "pub", "indd", "svg", "wpd", "wps"]],
     ["Почта, календари, контакты", ["eml", "msg", "ics", "vcf"]],
     ["Фото и видео", ["jpg", "png", "tiff", "heic", "mp4", "mov"]],
-    ["Подключения, ярлыки, архивы", ["rdp", "ica", "lnk", "zip"]],
+    ["Подключения, ярлыки, архивы", ["rdp", "ica", "lnk", "zip", "7z", "rar", "tar"]],
+    ["Программы и пакеты", ["exe", "msi", "jar", "apk"]],
+    ["Чертежи и файлы печати", ["dwg", "dxf", "eps", "emf"]],
+    ["Аудио и видео", ["mp3", "wav", "avi", "mkv", "wmv", "flac", "ogg"]],
+    ["Геоданные и файлы разработчиков", ["kml", "gpx", "map", "ipynb"]],
   ];
   const DOC_TYPES = DOC_GROUPS.flatMap(g => g[1]);
   const DOC_DEFAULT = [
@@ -410,6 +414,11 @@
     "vcf",
     "heic",
     "zip",
+    // 2.0.0-beta.4 formats: drawings, geodata and notebooks are small and rich in metadata.
+    "dwg",
+    "kml",
+    "gpx",
+    "ipynb",
   ];
   DOC_GROUPS.forEach((g, i) => lzField(g, 0, `launch.docgrp_${i}`));
   // User-Agent profiles: same ids as the core and Settings → Network (foca-net::ua); the value goes to

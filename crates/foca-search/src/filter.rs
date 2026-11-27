@@ -9,7 +9,11 @@ pub const DEFAULT_EXTS: &[&str] = &[
     "doc", "docx", "docm", "dot", "dotx", "xls", "xlsx", "xlsm", "xlsb", "ppt", "pptx", "pptm",
     "pps", "ppsx", "pdf", "odt", "ods", "odp", "odg", "sxw", "sxc", "sxi", "wpd", "rtf", "svg",
     "indd", "rdp", "ica", "jpg", "jpeg", "png", "tif", "tiff", "heic", "vsd", "vsdx", "pub", "wps",
-    "wks", "eml", "msg", "ics", "vcf", "lnk", "mp4", "mov", "zip",
+    "wks", "eml", "msg", "ics", "vcf", "lnk", "mp4", "mov", "zip", "7z", "epub", "mp3", "psd",
+    // executables and packages, CAD and print files, archives, media, geodata, developer files
+    "exe", "dll", "msi", "jar", "war", "ear", "apk", "aab", "dwg", "dxf", "eps", "ps", "ai", "emf",
+    "wmf", "tar", "gz", "tgz", "bz2", "xz", "rar", "wav", "avi", "mkv", "webm", "wmv", "wma",
+    "flac", "ogg", "opus", "kml", "kmz", "gpx", "map", "ipynb",
 ];
 
 /// Extension filter.
@@ -21,7 +25,8 @@ pub struct ExtFilter {
 /// Image extensions (EXIF/XMP metadata). Sources give them a separate, smaller quota so images
 /// do not crowd out documents.
 pub const IMAGE_EXTS: &[&str] = &[
-    "jpg", "jpeg", "png", "tif", "tiff", "heic", "gif", "svg", "webp", "mp4", "mov",
+    "jpg", "jpeg", "png", "tif", "tiff", "heic", "gif", "svg", "webp", "mp4", "mov", "m4v", "wav",
+    "avi", "mkv", "webm", "wmv", "wma", "flac", "ogg", "opus", "mp3",
 ];
 
 /// Returns `true` for an image extension (as opposed to a document).
@@ -46,7 +51,10 @@ pub fn mime_fits(mime: Option<&str>, ext: &str) -> bool {
         return false;
     }
     if is_image_ext(ext) {
-        return m.starts_with("image/") || m.contains("octet-stream");
+        return m.starts_with("image/")
+            || m.starts_with("video/")
+            || m.starts_with("audio/")
+            || m.contains("octet-stream");
     }
     true
 }
@@ -242,6 +250,28 @@ mod tests {
         let p = ExtFilter::parse("pdf, .DOCX");
         assert!(p.allows_ext("docx") && !p.allows_ext("xls"));
         assert_eq!(ExtFilter::parse(""), ExtFilter::default());
+        for (u, e) in [
+            ("https://a.ua/dl/setup.msi", "msi"),
+            ("https://a.ua/app/Billing.DLL", "dll"),
+            ("https://a.ua/lib/app.jar", "jar"),
+            ("https://a.ua/m/field.apk", "apk"),
+            ("https://a.ua/cad/plan.dwg", "dwg"),
+            ("https://a.ua/print/logo.eps", "eps"),
+            ("https://a.ua/b/site.tar", "tar"),
+            ("https://a.ua/b/site.tgz", "tgz"),
+            ("https://a.ua/b/x.rar", "rar"),
+            ("https://a.ua/geo/depots.kmz", "kmz"),
+            ("https://a.ua/geo/run.gpx", "gpx"),
+            ("https://a.ua/js/app.js.map", "map"),
+            ("https://a.ua/nb/report.ipynb", "ipynb"),
+            ("https://a.ua/v/tour.webm", "webm"),
+        ] {
+            assert_eq!(f.matches(u).as_deref(), Some(e), "{u}");
+        }
+        assert!(is_image_ext("webm") && !is_image_ext("dwg"));
+        assert!(mime_fits(Some("video/webm"), "webm"));
+        assert!(mime_fits(Some("audio/x-wav"), "wav"));
+        assert!(!mime_fits(Some("text/html"), "wav"));
         assert_eq!(
             file_name_of_url("https://a.ua/x/%D0%B7%D0%B2%D1%96%D1%82%201.docx"),
             "звіт 1.docx"

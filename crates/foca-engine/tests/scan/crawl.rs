@@ -815,3 +815,54 @@ async fn passive_profile_sends_no_crawl_requests() {
         .iter()
         .any(|r| r["module"] == "crawler" || r["module"] == "storage"));
 }
+
+/// Files in the formats added in 2.0.0-beta.4 linked from a page.
+fn new_formats_site(_port: Arc<std::sync::OnceLock<u16>>, r: &TestRequest) -> TestResponse {
+    const KML: &str = r#"<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Depots</name><Placemark><Point><coordinates>30.5,50.4</coordinates></Point></Placemark></Document></kml>"#;
+    const GPX: &str = r#"<gpx version="1.1" creator="Example Tracker"><trk><trkseg><trkpt lat="50.4" lon="30.5"/></trkseg></trk></gpx>"#;
+    const DXF: &str =
+        "  0\nSECTION\n  2\nHEADER\n  9\n$LASTSAVEDBY\n  1\nmkovalenko\n  0\nENDSEC\n  0\nEOF\n";
+    const NB: &str = r#"{"cells":[],"metadata":{"kernelspec":{"display_name":"Python 3","name":"python3"}},"nbformat":4,"nbformat_minor":5}"#;
+    const MAP: &str =
+        r#"{"version":3,"sources":["file:///home/jdev/app/src/a.ts"],"mappings":"AAAA"}"#;
+    match r.path() {
+        "/" => html(
+            r#"<a href="/files/depots.kml">kml</a><a href="/files/run.gpx">gpx</a>
+               <a href="/files/plan.dxf">dxf</a><a href="/files/report.ipynb">nb</a>
+               <a href="/files/app.js.map">map</a><a href="/files/page.php">php</a>"#,
+        ),
+        "/files/depots.kml" => TestResponse::ok(KML),
+        "/files/run.gpx" => TestResponse::ok(GPX),
+        "/files/plan.dxf" => TestResponse::ok(DXF),
+        "/files/report.ipynb" => TestResponse::ok(NB),
+        "/files/app.js.map" => TestResponse::ok(MAP),
+        "/files/page.php" => html("<p>x</p>"),
+        _ => TestResponse::status(404),
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn crawl_downloads_the_new_document_formats() {
+    let (e, site) = env_with_site(new_formats_site).await;
+    let id = e.project("newfmt").await;
+    crawl_scan(&e, &id, json!({})).await;
+    let s = e.snap(&id).await;
+    for want in [
+        "depots.kml",
+        "run.gpx",
+        "plan.dxf",
+        "report.ipynb",
+        "app.js.map",
+    ] {
+        let d = doc(&s, want).unwrap_or_else(|| panic!("{want}: {}", s["docs"]));
+        assert_ne!(d["status"], "error", "{d}");
+    }
+    assert!(doc(&s, "page.php").is_none());
+    // the wizard's "kml" choice also brings KMZ, but not the other new formats
+    let id2 = e.project("newfmt2").await;
+    crawl_scan(&e, &id2, json!({ "exts": ["kml"] })).await;
+    let s2 = e.snap(&id2).await;
+    assert!(doc(&s2, "depots.kml").is_some());
+    assert!(doc(&s2, "plan.dxf").is_none());
+    assert!(site.hits("/files/depots.kml") >= 1);
+}

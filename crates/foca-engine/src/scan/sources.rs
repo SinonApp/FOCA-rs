@@ -238,6 +238,16 @@ pub(crate) fn expand_exts(v: &[String]) -> Vec<String> {
             "mp4" => &["m4v"],
             "mov" => &["qt"],
             "wps" => &["wks"],
+            "exe" => &["dll"],
+            "jar" => &["war", "ear"],
+            "apk" => &["aab"],
+            "eps" => &["ps", "ai"],
+            "emf" => &["wmf"],
+            "tar" => &["tgz", "gz", "bz2", "xz"],
+            "mkv" => &["webm"],
+            "wmv" => &["wma"],
+            "ogg" => &["opus"],
+            "kml" => &["kmz"],
             _ => &[],
         };
         for x in std::iter::once(e.as_str()).chain(rel.iter().copied()) {
