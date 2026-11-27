@@ -239,7 +239,7 @@ fn looks_like_link(s: &str) -> bool {
 
 /// Strings of 4+ characters that look like URLs or file paths (HLINK records): UTF-16 for
 /// URL monikers, ANSI for the short path of file monikers.
-fn link_strings(d: &[u8]) -> Vec<String> {
+pub(crate) fn link_strings(d: &[u8]) -> Vec<String> {
     let mut out = Vec::new();
     for shift in [0usize, 1] {
         let mut cur = String::new();
@@ -649,6 +649,27 @@ pub(crate) fn parse(wb: &[u8], meta: &mut Metadata) -> String {
     }
     text.push('\n');
     text
+}
+
+/// The Office drawing group (MSODRAWINGGROUP with its CONTINUE records) holding the
+/// workbook pictures.
+pub(crate) fn drawing_group(wb: &[u8]) -> Vec<u8> {
+    let mut out = Vec::new();
+    let mut in_group = false;
+    for r in records(wb) {
+        match r.ty {
+            0x00EB => {
+                in_group = true;
+                out.extend_from_slice(r.data);
+            }
+            0x003C if in_group => out.extend_from_slice(r.data),
+            _ => in_group = false,
+        }
+        if out.len() > 256 << 20 {
+            break;
+        }
+    }
+    out
 }
 
 /// Records hidden rows of one sheet as `Sheet!5:7` ranges.

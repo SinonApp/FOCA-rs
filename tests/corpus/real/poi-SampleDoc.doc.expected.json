@@ -10,6 +10,7 @@
     "office:release": "2007",
     "ole:AppVersion": "12.0000",
     "ole:CodePage": "1252 (Windows Latin 1)",
+    "ole:CompObjUserType": "Microsoft Office Word 97-2003 Document (Word.Document.8)",
     "ole:Security": "0",
     "ole:TitlesOfParts": "Test Document"
   },

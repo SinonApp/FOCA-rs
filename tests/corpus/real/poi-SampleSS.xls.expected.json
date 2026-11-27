@@ -7,6 +7,7 @@
     "office:release": "2007",
     "ole:AppVersion": "12.0000",
     "ole:CodePage": "1252 (Windows Latin 1)",
+    "ole:CompObjUserType": "Microsoft Office Excel 2003 Worksheet (Excel.Sheet.8)",
     "ole:Security": "0",
     "ole:TitlesOfParts": "First Sheet; Sheet Number 2",
     "xls:Sheets": "First Sheet; Sheet Number 2; Sheet3",

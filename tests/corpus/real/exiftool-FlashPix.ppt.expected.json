@@ -12,6 +12,14 @@
   },
   "description": "comments",
   "edit_time_secs": 266,
+  "embedded": [
+    {
+      "metadata": {
+        "format": "ole"
+      },
+      "name": "ExOleObjStg1"
+    }
+  ],
   "fields": {
     "office:release": "2002 (XP)",
     "ole:AppVersion": "10.2418",
@@ -45,7 +53,9 @@
     "hidden_slides": 0,
     "mm_clips": 0,
     "notes": 0,
+    "objects": 1,
     "paragraphs": 4,
+    "saves": 1,
     "slides": 1,
     "words": 4
   },

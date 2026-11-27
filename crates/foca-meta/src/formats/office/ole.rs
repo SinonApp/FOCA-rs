@@ -440,7 +440,7 @@ fn doc_summary(meta: &mut Metadata, ps: &PropertySet) {
     }
 }
 
-fn read_stream<F: Read + Seek>(
+pub(crate) fn read_stream<F: Read + Seek>(
     cf: &mut cfb::CompoundFile<F>,
     path: &str,
     ctx: &Ctx,
@@ -732,6 +732,8 @@ fn excel_binary<F: Read + Seek>(
         },
     };
     super::biff::parse(&wb, meta);
+    super::ole_objects::attach_blips(meta, &super::biff::drawing_group(&wb), ctx)?;
+    super::ole_objects::officeart_props(meta, &wb);
     Ok(())
 }
 
@@ -796,10 +798,34 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
     if let Some(v) = meta.fields.get("ole:AppVersion").cloned() {
         office_info::apply_app_version(&mut meta, &v);
     }
+    if let Some(t) = super::ole_objects::compobj(&mut cf, "/\u{1}CompObj", ctx)? {
+        // the product name of the document type (localized: language of the Office UI)
+        meta.fields
+            .insert("ole:CompObjUserType".into(), truncate(&t, 256));
+    }
     match format {
-        DocFormat::Doc => word_binary(&mut meta, &mut cf, ctx)?,
+        DocFormat::Doc => {
+            word_binary(&mut meta, &mut cf, ctx)?;
+            if let Some(data) = read_stream(&mut cf, "/Data", ctx)? {
+                super::ole_objects::attach_blips(&mut meta, &data, ctx)?;
+            }
+            for t in ["/1Table", "/0Table"] {
+                if let Some(tbl) = read_stream(&mut cf, t, ctx)? {
+                    super::ole_objects::officeart_props(&mut meta, &tbl);
+                }
+            }
+        }
         DocFormat::Xls => excel_binary(&mut meta, &mut cf, ctx)?,
-        DocFormat::Ppt => ppt_current_user(&mut meta, &mut cf, ctx)?,
+        DocFormat::Ppt => {
+            ppt_current_user(&mut meta, &mut cf, ctx)?;
+            if let Some(doc) = read_stream(&mut cf, "/PowerPoint Document", ctx)? {
+                super::ppt::parse(&doc, &mut meta, ctx, true)?;
+                super::ole_objects::officeart_props(&mut meta, &doc);
+            }
+            if let Some(pics) = read_stream(&mut cf, "/Pictures", ctx)? {
+                super::ole_objects::attach_blips(&mut meta, &pics, ctx)?;
+            }
+        }
         DocFormat::Msi => msi_summary(&mut meta),
         _ => {}
     }
@@ -809,8 +835,9 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
     {
         super::vba::scan_ole(b, &mut meta);
     }
-    // macros and embedded objects
-    for (path, is_stream, len) in &entries {
+    super::ole_objects::embedded_objects(&mut meta, &mut cf, &entries, format, ctx)?;
+    // macros and Ole10Native packages
+    for (path, is_stream, _) in &entries {
         let lower = path.to_ascii_lowercase();
         if lower.starts_with("/macros")
             || lower.starts_with("/_vba_project_cur")
@@ -830,16 +857,6 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
             {
                 Metadata::add_unique(&mut meta.macro_modules, name);
             }
-        }
-        if (lower.starts_with("/objectpool/") || lower.starts_with("/mbd"))
-            && path.matches('/').count() == 2
-            && !is_stream
-        {
-            meta.attachments.push(foca_core::Attachment {
-                name: path.trim_start_matches('/').to_string(),
-                size: Some(*len),
-                mime: None,
-            });
         }
         if *is_stream && lower.ends_with("\u{1}ole10native") {
             if let Ok(Some(native)) = read_stream(&mut cf, path, ctx) {
@@ -1123,6 +1140,15 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
                         out.push('\n');
                         continue;
                     }
+                }
+                if s == "/PowerPoint Document" {
+                    out.push_str(&super::ppt::parse(
+                        &data,
+                        &mut Metadata::default(),
+                        ctx,
+                        false,
+                    )?);
+                    continue;
                 }
                 if s == "/Workbook" || s == "/Book" {
                     out.push_str(&super::biff::parse(&data, &mut Metadata::default()));

@@ -251,6 +251,8 @@ fn structural_field(k: &str) -> bool {
         // sheet and defined names are workbook content, code pages are encoding
         || matches!(k, "xls:Sheets" | "xls:DefinedNames" | "xls:CodePage" | "rtf:CodePage")
         || k == "ooxml:binary_workbook"
+        || k == "ole:CompObjUserType"
+        || (k.starts_with("ole:object:") && k.ends_with(":type"))
         || k.starts_with("xl:hidden:")
         || (k.starts_with("xl:connection:") && k.ends_with(":command"))
         || (k.starts_with("xl:pivotCache")
