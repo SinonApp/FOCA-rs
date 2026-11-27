@@ -169,6 +169,9 @@ pub struct CrawlStats {
     pub limited: usize,
     pub rate: RateState,
     pub stopped_hosts: Vec<String>,
+    /// Start hosts that serve the same site as an earlier one (`www.` and the bare domain, a
+    /// redirect, or an identical start page): crawled once under the earlier host.
+    pub mirrors: usize,
     /// The crawl continued the frontier of an earlier scan.
     pub resumed: bool,
     /// The frontier is empty: the site was crawled within the limits.
@@ -187,6 +190,10 @@ pub struct Frontier {
     pub seen: Vec<String>,
     /// Pages fetched over all runs of this frontier.
     pub pages: usize,
+    /// Mirror host to the host it is crawled under.
+    pub mirrors: BTreeMap<String, String>,
+    /// Scheme each start host answered on.
+    pub schemes: BTreeMap<String, String>,
 }
 
 impl Frontier {
@@ -235,6 +242,26 @@ pub(crate) fn junk_link(u: &Url) -> bool {
 /// Returns the visited-page key (the normalized URL, or the URL as is).
 fn visit_key(u: &Url) -> String {
     normalize_url(u.as_str()).unwrap_or_else(|| u.to_string())
+}
+
+/// Start pages shorter than this (after normalisation) are too generic to call two hosts mirrors.
+const MIRROR_MIN_TEXT: usize = 200;
+
+/// Fingerprint of a start page for mirror detection: the host's own name, digits (dates,
+/// counters, cache busters) and whitespace do not count. `None` for a near-empty page.
+fn page_print(body: &[u8], host: &str) -> Option<u64> {
+    use std::hash::{Hash, Hasher};
+    let text = text_of(body).to_ascii_lowercase().replace(host, "\u{0}");
+    let norm: String = text
+        .split_whitespace()
+        .flat_map(|w| w.chars().filter(|c| !c.is_ascii_digit()).chain([' ']))
+        .collect();
+    if norm.len() < MIRROR_MIN_TEXT {
+        return None;
+    }
+    let mut h = std::collections::hash_map::DefaultHasher::new();
+    norm.hash(&mut h);
+    Some(h.finish())
 }
 
 fn looks_like_page(u: &Url) -> bool {
@@ -370,11 +397,35 @@ struct State<'a> {
     trap: TrapGuard,
     pace: Pace,
     deadline: Instant,
+    /// Mirror host to the host it is crawled under.
+    mirrors: BTreeMap<String, String>,
+    /// Scheme each start host answered on (`http://` links to an https site are the same page).
+    schemes: BTreeMap<String, String>,
 }
 
 impl<'a> State<'a> {
     fn stats(&mut self) -> &mut CrawlStats {
         &mut self.out.stats
+    }
+
+    /// The URL under its canonical host and scheme (mirrors and scheme variants of start hosts).
+    fn canon(&self, u: &Url) -> Url {
+        let mut v = u.clone();
+        let h = host(u).to_ascii_lowercase();
+        if let Some(c) = self.mirrors.get(&h) {
+            let _ = v.set_host(Some(c));
+        }
+        if let Some(s) = self.schemes.get(&host(&v).to_ascii_lowercase()) {
+            if v.scheme() != s && matches!(v.scheme(), "http" | "https") {
+                let _ = v.set_scheme(s);
+            }
+        }
+        v
+    }
+
+    /// Visited-page key: the same page on a mirror or under the other scheme shares one key.
+    fn key(&self, u: &Url) -> String {
+        visit_key(&self.canon(u))
     }
 
     fn out_of_time(&self) -> bool {
@@ -402,7 +453,11 @@ impl<'a> State<'a> {
             return true;
         }
         let n = normalize_url(u.as_str()).unwrap_or_else(|| u.to_string());
-        if self.found_set.insert(crate::filter::dedup_key(&n)) {
+        // the same file on a mirror host is one document
+        if self
+            .found_set
+            .insert(crate::filter::dedup_key(self.canon(u).as_str()))
+        {
             let mut f = FoundUrl::new(&n, "crawler");
             f.hint_ext = Some(ext);
             // documents downloaded in earlier scans do not count against the limit
@@ -443,7 +498,7 @@ impl<'a> State<'a> {
             self.out.stats.scope_skipped += 1;
             return;
         }
-        let key = visit_key(&u);
+        let key = self.key(&u);
         if self.seen.contains(&key) {
             return;
         }
@@ -598,6 +653,8 @@ impl Crawler {
             trap: TrapGuard::new(self.per_template, self.query_variants),
             pace: Pace::new(self.pace_base, self.limit_stop),
             deadline: Instant::now() + self.max_time,
+            mirrors: BTreeMap::new(),
+            schemes: BTreeMap::new(),
         };
         let r = self.crawl_inner(&mut st, domain).await;
         // the frontier and the counters survive a cancellation, so the next scan can continue
@@ -615,6 +672,8 @@ impl Crawler {
                 v
             },
             pages: st.out.frontier.pages + st.out.stats.pages,
+            mirrors: st.mirrors.clone(),
+            schemes: st.schemes.clone(),
         };
         st.out.stats.finished = st.queue.is_empty() && r.is_ok();
         st.progress(self);
@@ -635,6 +694,8 @@ impl Crawler {
     async fn seed_hosts(&self, st: &mut State<'_>, domain: &str) -> Result<(), NetError> {
         let ctx = st.ctx;
         let mut sitemap_origins: HashSet<String> = HashSet::new();
+        // start page fingerprint to the first host that served it
+        let mut prints: HashMap<u64, String> = HashMap::new();
         let mut first_pages: Vec<(Url, Vec<u8>)> = Vec::new();
         let mut hosts: Vec<String> = Vec::new();
         for h in seed_order(domain, &ctx.hosts, self.max_hosts) {
@@ -679,15 +740,42 @@ impl Crawler {
             }
             // the host was already reached as another host's redirect target (test. -> www.test.), skip it
             if ["https", "http"].iter().any(|s| {
-                Url::parse(&format!("{s}://{h}/")).is_ok_and(|u| st.seen.contains(&visit_key(&u)))
+                Url::parse(&format!("{s}://{h}/")).is_ok_and(|u| st.seen.contains(&st.key(&u)))
             }) {
                 continue;
             }
             let Some((o, page)) = probe.origin else {
                 continue;
             };
-            st.seen.insert(visit_key(&o));
-            st.fetched.insert(visit_key(&o));
+            st.schemes
+                .entry(h.to_ascii_lowercase())
+                .or_insert_with(|| o.scheme().to_string());
+            if let Some((fu, body)) = &page {
+                let to = host(fu).to_ascii_lowercase();
+                // the scheme the start page finally came from wins (http -> https redirects)
+                st.schemes.insert(to.clone(), fu.scheme().to_string());
+                if to != h && !to.is_empty() {
+                    // a redirect to another start host: links to this one are the same pages
+                    if !st.mirrors.contains_key(&to) {
+                        st.mirrors.insert(h.clone(), to.clone());
+                    }
+                } else if let Some(p) = page_print(body, &h) {
+                    // the same start page as an earlier host: a mirror, crawled under that host
+                    match prints.get(&p) {
+                        Some(first) => {
+                            tracing::info!(target: "foca::source", "crawler: {h} отдаёт тот же сайт, что и {first}: обход один раз");
+                            st.mirrors.insert(h.clone(), first.clone());
+                            st.out.stats.mirrors += 1;
+                            continue;
+                        }
+                        None => {
+                            prints.insert(p, h.clone());
+                        }
+                    }
+                }
+            }
+            st.seen.insert(st.key(&o));
+            st.fetched.insert(st.key(&o));
             // robots.txt/sitemap.xml are fetched once per origin, from the final origin after redirects
             // (www. -> bare domain)
             let eff = match &page {
@@ -699,8 +787,8 @@ impl Crawler {
             }
             sitemap_origins.insert(origin(&o));
             if let Some(p) = page {
-                st.fetched.insert(visit_key(&p.0));
-                if st.seen.insert(visit_key(&p.0)) || p.0 == o {
+                st.fetched.insert(st.key(&p.0));
+                if st.seen.insert(st.key(&p.0)) || p.0 == o {
                     st.stats().pages += 1;
                     first_pages.push(p);
                 }
@@ -721,10 +809,12 @@ impl Crawler {
         if let Some(f) = resume {
             st.out.stats.resumed = true;
             st.out.frontier.pages = f.pages;
+            st.mirrors = f.mirrors.clone();
+            st.schemes = f.schemes.clone();
             st.seen.extend(f.seen.iter().cloned());
             for (u, d) in &f.queue {
                 if let Ok(u) = Url::parse(u) {
-                    st.seen.insert(visit_key(&u));
+                    st.seen.insert(st.key(&u));
                     st.queue.push_back((u, *d, 0));
                 }
             }
@@ -736,7 +826,7 @@ impl Crawler {
                 if self.use_sitemap && origins.insert(origin(&s)) {
                     self.origin_aux(st, &s).await?;
                 }
-                if st.seen.insert(visit_key(&s)) {
+                if st.seen.insert(st.key(&s)) {
                     st.queue.push_front((s, 0, 0));
                 }
             }
@@ -811,11 +901,11 @@ impl Crawler {
                     }
                     Fetch::Body(final_url, body) => {
                         st.pace.ok(&h);
-                        st.fetched.insert(visit_key(&u));
+                        st.fetched.insert(st.key(&u));
                         // the final URL after a redirect also counts as visited (canonical dedup)
                         if final_url != u {
-                            st.seen.insert(visit_key(&final_url));
-                            if !st.fetched.insert(visit_key(&final_url)) {
+                            st.seen.insert(st.key(&final_url));
+                            if !st.fetched.insert(st.key(&final_url)) {
                                 continue;
                             }
                         }
@@ -852,7 +942,7 @@ impl Crawler {
                 keep.push_back((u, depth, tries));
                 break;
             }
-            if st.fetched.contains(&visit_key(&u)) {
+            if st.fetched.contains(&st.key(&u)) {
                 continue;
             }
             let h = host(&u);

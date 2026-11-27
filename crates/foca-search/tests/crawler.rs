@@ -375,3 +375,106 @@ async fn crawl_waits_while_the_scan_is_paused() {
     assert_eq!(st.pages, 2);
     assert!(st.finished);
 }
+
+/// Two start hosts on one server, routed by the Host header.
+async fn two_hosts(www_page: &'static str) -> (TestServer, SearchCtx, Arc<MemorySink>) {
+    let srv = TestServer::start(move |r| {
+        let html =
+            |b: String| TestResponse::ok(b).header("Content-Type", "text/html; charset=utf-8");
+        let host = r.headers.get("host").cloned().unwrap_or_default();
+        let name = host.split(':').next().unwrap_or("").to_string();
+        let port = host.split(':').nth(1).unwrap_or("80").to_string();
+        let page = |own: &str| {
+            format!(
+                r#"<html><head><title>Example</title></head><body><h1>Welcome</h1>
+                <p>Departments, news and documents of the example organisation.</p>
+                <a href="http://{own}:{port}/a">a</a><a href="/b">b</a><a href="/c">c</a>
+                <a href="/files/x.pdf">x</a><p>Updated {}</p></body></html>"#,
+                if own.starts_with("www.") {
+                    "2026-11-27 10:01"
+                } else {
+                    "2026-11-27 10:00"
+                }
+            )
+        };
+        match (name.as_str(), r.path()) {
+            ("www.example.test", "/") if www_page == "mirror" => html(page("www.example.test")),
+            ("www.example.test", "/") => html(
+                r#"<html><body><h2>Staff portal</h2><a href="/staff">staff</a></body></html>"#
+                    .into(),
+            ),
+            ("www.example.test", "/staff") => html("<p>staff</p>".into()),
+            (_, "/") => html(page("example.test")),
+            (_, "/a" | "/b" | "/c") => html("<p>leaf</p>".into()),
+            _ => TestResponse::status(404),
+        }
+    })
+    .await;
+    let (scope, _) = Scope::from_lines("example.test", "");
+    let sink = Arc::new(MemorySink::new());
+    let mut cfg = NetConfig {
+        global_rps: None,
+        source_rps: Default::default(),
+        retries: 0,
+        ..Default::default()
+    };
+    for h in ["example.test", "www.example.test"] {
+        cfg.host_overrides
+            .insert(h.into(), vec!["127.0.0.1".parse().unwrap()]);
+    }
+    let net = NetClient::new(cfg, scope, sink.clone()).unwrap();
+    let mut ctx = SearchCtx::new(net);
+    ctx.filter = ExtFilter::parse("pdf");
+    ctx.hosts = vec!["www.example.test".into()];
+    (srv, ctx, sink)
+}
+
+fn seeded(port: u16) -> Crawler {
+    Crawler {
+        start_urls: vec![],
+        site_port: Some(port),
+        respect_robots: false,
+        use_sitemap: false,
+        ..Default::default()
+    }
+}
+
+fn host_paths(srv: &TestServer, host: &str) -> Vec<String> {
+    srv.requests()
+        .iter()
+        .filter(|r| {
+            r.headers
+                .get("host")
+                .is_some_and(|h| h.split(':').next() == Some(host))
+        })
+        .map(|r| r.path().to_string())
+        .collect()
+}
+
+/// The `www.` name serving the same site as the domain is a mirror: only its start page is
+/// fetched, its links count as the domain's, and the document is found once.
+#[tokio::test]
+async fn www_mirror_is_crawled_once() {
+    let (srv, ctx, _sink) = two_hosts("mirror").await;
+    let cr = seeded(srv.port());
+    let (f, st) = cr.crawl(&ctx, "example.test").await.unwrap();
+    assert_eq!(host_paths(&srv, "www.example.test"), vec!["/"]);
+    let mut apex = host_paths(&srv, "example.test");
+    apex.sort();
+    assert_eq!(apex, vec!["/", "/a", "/b", "/c"]);
+    assert_eq!(f.urls.len(), 1, "{:?}", f.urls);
+    assert_eq!(st.mirrors, 1);
+    assert_eq!(st.pages, 4);
+}
+
+/// A `www.` name with its own content is a separate site and is crawled.
+#[tokio::test]
+async fn different_www_site_is_still_crawled() {
+    let (srv, ctx, _sink) = two_hosts("own").await;
+    let cr = seeded(srv.port());
+    let (_, st) = cr.crawl(&ctx, "example.test").await.unwrap();
+    let mut www = host_paths(&srv, "www.example.test");
+    www.sort();
+    assert_eq!(www, vec!["/", "/staff"]);
+    assert_eq!(st.mirrors, 0);
+}

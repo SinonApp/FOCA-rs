@@ -128,7 +128,7 @@ fn stats_json(s: &CrawlStats) -> Value {
         "pages": s.pages, "queued": s.queued, "docs": s.docs, "storage": s.storage,
         "images": s.images, "rendered": s.rendered, "render_missing": s.render_missing,
         "sitemaps": s.sitemaps, "trap_skipped": s.trap_skipped, "limited": s.limited,
-        "rate": s.rate, "stopped_hosts": s.stopped_hosts, "resumed": s.resumed,
+        "rate": s.rate, "stopped_hosts": s.stopped_hosts, "mirrors": s.mirrors, "resumed": s.resumed,
         "finished": s.finished, "stop": s.stop,
     })
 }
