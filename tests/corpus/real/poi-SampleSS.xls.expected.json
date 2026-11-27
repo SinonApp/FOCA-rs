@@ -9,6 +9,7 @@
     "ole:CodePage": "1252 (Windows Latin 1)",
     "ole:Security": "0",
     "ole:TitlesOfParts": "First Sheet; Sheet Number 2",
+    "xls:Sheets": "First Sheet; Sheet Number 2; Sheet3",
     "xls:WriteAccess": "Nick Burch"
   },
   "format": "xls",

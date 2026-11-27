@@ -247,6 +247,10 @@ fn structural_field(k: &str) -> bool {
         || matches!(k, "pdf:page_size" | "pdf:paper" | "pdf:tagged" | "pdf:Lang")
         // hidden sheets are content (graded as hidden content), query text is content
         || k.starts_with("xl:veryHidden:")
+        || k.starts_with("xls:veryHidden:")
+        // sheet and defined names are workbook content, code pages are encoding
+        || matches!(k, "xls:Sheets" | "xls:DefinedNames" | "xls:CodePage" | "rtf:CodePage")
+        || k == "ooxml:binary_workbook"
         || k.starts_with("xl:hidden:")
         || (k.starts_with("xl:connection:") && k.ends_with(":command"))
         || (k.starts_with("xl:pivotCache")

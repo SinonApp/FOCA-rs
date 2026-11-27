@@ -5,7 +5,9 @@
   "created": "2018-12-20T08:00:00Z",
   "fields": {
     "ole:CodePage": "1252 (Windows Latin 1)",
-    "xls:WriteAccess": "s.lysenko"
+    "xls:Sheets": "Лист1; Зарплати; Службовий",
+    "xls:WriteAccess": "s.lysenko",
+    "xls:veryHidden:Службовий": "true"
   },
   "format": "xls",
   "has_macros": true,

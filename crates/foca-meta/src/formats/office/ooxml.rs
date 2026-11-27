@@ -481,6 +481,11 @@ fn xlsx(
     ctx: &Ctx,
     meta: &mut Metadata,
 ) -> Result<(), MetaError> {
+    if names.iter().any(|n| n == "xl/workbook.bin") {
+        meta.fields
+            .insert("ooxml:binary_workbook".into(), "xlsb".into());
+        super::xlsb::parse(z, names, ctx, meta)?;
+    }
     if let Some(wb) = read_xml(z, "xl/workbook.xml", ctx, meta)? {
         ooxml_data::external_defined_names(meta, &wb);
         for s in wb.descendants("sheet") {
@@ -1031,6 +1036,9 @@ pub fn text(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
             0,
         );
         out.push('\n');
+    }
+    if names.iter().any(|n| n == "xl/workbook.bin") {
+        out.push_str(&super::xlsb::parse(&mut z, &names, ctx, &mut dummy)?);
     }
     for n in names
         .iter()

@@ -718,7 +718,7 @@ fn dop_time_zone(meta: &mut Metadata, dop: &[u8]) {
     }
 }
 
-/// Reads Excel BIFF8 records: WRITEACCESS (last saved by), BOUNDSHEET (hidden sheets), FILEPASS.
+/// Reads the Excel workbook stream (see [`super::biff`]).
 fn excel_binary<F: Read + Seek>(
     meta: &mut Metadata,
     cf: &mut cfb::CompoundFile<F>,
@@ -731,55 +731,7 @@ fn excel_binary<F: Read + Seek>(
             None => return Ok(()),
         },
     };
-    let mut p = 0;
-    let mut n = 0;
-    while let (Some(ty), Some(len)) = (rd_u16le(&wb, p), rd_u16le(&wb, p + 2)) {
-        let len = usize::from(len);
-        let Some(data) = wb.get(p + 4..p + 4 + len) else {
-            break;
-        };
-        p += 4 + len;
-        n += 1;
-        match ty {
-            0x002F => {
-                meta.encrypted = true;
-                break;
-            }
-            0x005C => {
-                let cch = rd_u16le(data, 0).unwrap_or(0) as usize;
-                let hi = data.get(2).copied().unwrap_or(0) & 1 != 0;
-                let s = if hi {
-                    data.get(3..3 + cch * 2).map(utf16le)
-                } else {
-                    data.get(3..3 + cch).map(|r| decode_codepage(r, 1252))
-                };
-                if let Some(u) = s.and_then(|s| clean_str(&s)) {
-                    meta.add_person(&u, PersonRole::LastModifiedBy, "xls:WRITEACCESS");
-                    meta.fields.insert("xls:WriteAccess".into(), u);
-                }
-            }
-            0x0085 => {
-                let state = data.get(4).copied().unwrap_or(0) & 0x03;
-                let cch = usize::from(data.get(6).copied().unwrap_or(0));
-                let hi = data.get(7).copied().unwrap_or(0) & 1 != 0;
-                let name = if hi {
-                    data.get(8..8 + cch * 2).map(utf16le)
-                } else {
-                    data.get(8..8 + cch).map(|r| decode_codepage(r, 1252))
-                };
-                if state != 0 {
-                    if let Some(nm) = name {
-                        Metadata::add_unique(&mut meta.hidden_sheets, &nm);
-                    }
-                }
-            }
-            0x000A => break, // EOF of the globals substream
-            _ => {}
-        }
-        if n > 100_000 {
-            break;
-        }
-    }
+    super::biff::parse(&wb, meta);
     Ok(())
 }
 
@@ -1171,6 +1123,10 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
                         out.push('\n');
                         continue;
                     }
+                }
+                if s == "/Workbook" || s == "/Book" {
+                    out.push_str(&super::biff::parse(&data, &mut Metadata::default()));
+                    continue;
                 }
                 strings(&data, &mut out);
             }
