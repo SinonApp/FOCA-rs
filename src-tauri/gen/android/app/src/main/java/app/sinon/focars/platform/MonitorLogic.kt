@@ -55,6 +55,15 @@ object MonitorLogic {
   /** Route for tapping the "scan finished" notification: opens the project. */
   fun openRoute(project: String): String? = safeId(project)?.let { "/open/$it" }
 
+  /**
+   * Notification id of a status notice from the core (`status_notify { tag }`): one fixed id per
+   * known tag, so a repeated notice replaces the previous one; `null` for an unknown tag.
+   */
+  fun statusId(tag: String): Int? = when (tag) {
+    "mobile_cap" -> 4190
+    else -> null
+  }
+
   /** Route for tapping the rescan reminder: opens the project and the new scan wizard. */
   fun reminderRoute(project: String): String? = safeId(project)?.let { "/open/$it/scan" }
 

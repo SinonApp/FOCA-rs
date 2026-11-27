@@ -183,6 +183,7 @@ pub fn start(
         handed_over: false,
     };
     c.svc.claim_start(project_name(rt, &engine, &out.project));
+    crate::devstate::sync_mobile(&mut c.env, &c.engine);
     let actions = c.policy.scan_started(active, &c.env, &c.settings);
     *lock(control()) = Some(c);
     apply(actions);
@@ -231,6 +232,7 @@ pub fn on_event(ev: &Value) -> bool {
                 _ => vec![],
             },
             _ if crate::devstate::apply_device(&mut c.env, ev) => {
+                crate::devstate::sync_mobile(&mut c.env, &c.engine);
                 c.policy.on_env(&c.env, &c.settings)
             }
             _ => return true,
@@ -278,6 +280,9 @@ fn apply(actions: Vec<Action>) {
                 Action::Pause(r) => {
                     c.engine.pause(r);
                     c.svc.paused = Some(r.to_string());
+                    if *r == "mobile_cap" {
+                        notify_mobile_cap(c);
+                    }
                 }
                 Action::Resume => {
                     c.engine.resume();
@@ -298,6 +303,31 @@ fn apply(actions: Vec<Action>) {
             }
         }
     }
+}
+
+/// Posts the "mobile data limit reached" notification.
+fn notify_mobile_cap(c: &Control) {
+    let usage = runtime()
+        .ok()
+        .and_then(|rt| rt.block_on(c.engine.invoke("mobile_usage", json!({}))).ok())
+        .unwrap_or_default();
+    let note = crate::scan_note::mobile_cap_note(c.engine.ui_lang(), &usage);
+    if let Err(e) = c.native.call("status_notify", note) {
+        awarn!("resume: status_notify: {e}");
+    }
+}
+
+/// Feeds the engine's `mobile_cap` event (monthly mobile data limit crossed) to the policy.
+fn on_mobile_cap() {
+    let actions = {
+        let mut g = lock(control());
+        let Some(c) = g.as_mut().filter(|c| !c.handed_over) else {
+            return;
+        };
+        crate::devstate::sync_mobile(&mut c.env, &c.engine);
+        c.policy.on_env(&c.env, &c.settings)
+    };
+    apply(actions);
 }
 
 /// Pushes the current notification text to the scan service.
@@ -354,6 +384,10 @@ fn on_scan_event(ev: &Value) -> bool {
                     return false;
                 }
                 c.svc.progress = p;
+            }
+            "mobile_cap" => {
+                drop(g);
+                on_mobile_cap();
             }
             "done" | "stopped" => {
                 alog!(
@@ -629,5 +663,70 @@ mod tests {
             "the bridge owns the service after the handover: {:?}",
             calls.names()
         );
+    }
+
+    #[test]
+    fn mobile_cap_pauses_on_mobile_data_until_wifi() {
+        let _g = guard();
+        mark_ui_open(false);
+        let rt = runtime().unwrap();
+        let srv = rt.block_on(mock_server(400));
+        let dir = tempfile::tempdir().unwrap();
+        interrupted(dir.path(), &srv.url());
+        // 2 MB of mobile data already used this month
+        let now = time::OffsetDateTime::now_utc();
+        std::fs::write(
+            dir.path().join("mobile_usage.json"),
+            json!({
+                "month": format!("{:04}-{:02}", now.year(), u8::from(now.month())),
+                "bytes": 2 * 1024 * 1024
+            })
+            .to_string(),
+        )
+        .unwrap();
+        let calls = Arc::new(Calls::default());
+        let out = start(
+            offline_cfg(dir.path(), &srv.url()),
+            Arc::new(MemoryKeys::new()),
+            calls.clone(),
+        );
+        assert_eq!(out.status, "resumed", "{out:?}");
+        let en = lock(live_slot()).as_ref().unwrap().engine.clone();
+        // a 1 MB monthly limit
+        rt.block_on(en.invoke(
+            "settings_set",
+            json!({ "patch": { "power": { "lim_on": true, "mob_limit": 1 } } }),
+        ))
+        .unwrap();
+        // "Wi-Fi only" (on by default) would win over the cap on mobile data
+        lock(control()).as_mut().unwrap().settings.wifi_only = false;
+        // Wi-Fi: the cap does not apply
+        assert!(on_event(
+            &json!({ "kind": "net", "online": true, "transport": "wifi", "metered": false })
+        ));
+        let st = rt.block_on(en.invoke("scan_status", json!({}))).unwrap();
+        assert_eq!(st["paused"], false, "{st}");
+        // mobile data: paused with `mobile_cap` and a notification with the usage
+        assert!(on_event(
+            &json!({ "kind": "net", "online": true, "transport": "cellular", "metered": true })
+        ));
+        let st = rt.block_on(en.invoke("scan_status", json!({}))).unwrap();
+        assert_eq!(st["pause_reason"], "mobile_cap", "{st}");
+        let note = lock(&calls.0)
+            .iter()
+            .find(|(c, _)| c == "status_notify")
+            .map(|(_, a)| a.clone())
+            .expect("status_notify posted");
+        assert_eq!(note["tag"], "mobile_cap");
+        assert!(note["text"].as_str().unwrap().contains("2"), "{note}");
+        // back on Wi-Fi: resumed by itself
+        assert!(on_event(
+            &json!({ "kind": "net", "online": true, "transport": "wifi", "metered": false })
+        ));
+        let st = rt.block_on(en.invoke("scan_status", json!({}))).unwrap();
+        assert_eq!(st["paused"], false, "{st}");
+        drop(en);
+        wait_idle();
+        mark_ui_open(false);
     }
 }

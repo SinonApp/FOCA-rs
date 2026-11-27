@@ -519,6 +519,7 @@ impl Bridge {
                             settings,
                             ..
                         } = &mut *g;
+                        crate::devstate::sync_mobile(env, &engine);
                         policy.scan_started(active, env, settings)
                     };
                     self.apply(actions);
@@ -999,9 +1000,38 @@ impl Bridge {
                         settings,
                         ..
                     } = &mut *st;
+                    if let Some(engine) = self.engine.get() {
+                        crate::devstate::sync_mobile(env, &engine);
+                    }
                     policy.scan_started(active, env, settings)
                 };
                 self.apply(actions);
+            }
+            // The engine's monthly mobile data counter crossed `power.mob_limit`.
+            "mobile_cap" => {
+                alog!(
+                    "лимит мобильного трафика: {} из {} МБ",
+                    ev["used_mb"],
+                    ev["limit_mb"]
+                );
+                let actions = {
+                    let mut st = lock(&self.policy);
+                    let PolicyState {
+                        policy,
+                        env,
+                        settings,
+                        ..
+                    } = &mut *st;
+                    if let Some(engine) = self.engine.get() {
+                        crate::devstate::sync_mobile(env, &engine);
+                    }
+                    policy.on_env(env, settings)
+                };
+                let action = actions.last().cloned();
+                self.apply(actions);
+                if action.is_some() {
+                    self.emit_net(action);
+                }
             }
             "stage" => {
                 if let Some(l) = ev.get("label").and_then(Value::as_str) {
@@ -1076,6 +1106,9 @@ impl Bridge {
             if kind != "service" && !crate::devstate::apply_device(&mut st.env, ev) {
                 return;
             }
+            if let Some(engine) = self.engine.get() {
+                crate::devstate::sync_mobile(&mut st.env, &engine);
+            }
             let PolicyState {
                 policy,
                 env,
@@ -1139,6 +1172,10 @@ impl Bridge {
                 settings,
                 ..
             } = &mut *st;
+            // a raised or removed limit lifts the mobile data cap
+            if let Some(engine) = self.engine.get() {
+                crate::devstate::sync_mobile(env, &engine);
+            }
             (policy.on_env(env, settings), secure_changed)
         };
         if secure_changed {
@@ -1168,6 +1205,9 @@ impl Bridge {
                 Action::Pause(r) => {
                     engine.pause(r);
                     lock(&self.svc).paused = Some(r.to_string());
+                    if r == "mobile_cap" {
+                        self.notify_mobile_cap(&engine);
+                    }
                 }
                 Action::Resume => {
                     engine.resume();
@@ -1261,6 +1301,18 @@ impl Bridge {
 
     /// Posts the "scan finished · <project>" notification with a summary; tapping it opens the
     /// project.
+    /// Posts the "mobile data limit reached" notification (the scan stays paused until Wi-Fi or a
+    /// raised limit).
+    fn notify_mobile_cap(&self, engine: &Engine) {
+        let usage = tauri::async_runtime::block_on(engine.invoke("mobile_usage", json!({})))
+            .unwrap_or_default();
+        let note = crate::scan_note::mobile_cap_note(self.lang(), &usage);
+        alog!("уведомление: {}", note["text"].as_str().unwrap_or(""));
+        if let Err(e) = self.native.call("status_notify", note) {
+            awarn!("status_notify: {e}");
+        }
+    }
+
     fn notify_done(&self, ev: &Value) {
         let project = ev["project"].as_str().unwrap_or("").to_string();
         let name = self

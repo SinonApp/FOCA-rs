@@ -10701,6 +10701,21 @@
       save();
       return clone(s.keys[service]);
     },
+    // Monthly mobile data counter of the core (bytes on mobile/metered networks, local calendar month).
+    mobile_usage: () => {
+      const p = load().settings.power || {};
+      const limit = p.lim_on ? +p.mob_limit || 0 : 0;
+      const used = 312.4;
+      const d = new Date();
+      return {
+        month: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+        bytes: Math.round(used * 1048576),
+        used_mb: used,
+        limit_mb: limit,
+        reached: limit > 0 && used >= limit,
+        metered: false,
+      };
+    },
     net_check: () => {
       const n = load().settings.net;
       const canary = { tcp_intercept: false, dns_hijack: false, tls_mitm: false, unreliable: false };

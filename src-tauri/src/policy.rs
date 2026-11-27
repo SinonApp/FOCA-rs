@@ -54,6 +54,15 @@ pub struct Env {
     pub charging: bool,
     /// PowerManager.THERMAL_STATUS_*: 0 none … 3 SEVERE … 6 SHUTDOWN.
     pub thermal: u8,
+    /// This month's mobile traffic has reached `power.mob_limit` (the engine's counter).
+    pub mobile_cap: bool,
+}
+
+impl Env {
+    /// The device is on a mobile or metered network (traffic counts against the monthly limit).
+    pub fn on_mobile(&self) -> bool {
+        self.online && (self.transport == Transport::Cellular || self.metered)
+    }
 }
 
 impl Default for Env {
@@ -66,6 +75,7 @@ impl Default for Env {
             battery: None,
             charging: false,
             thermal: 0,
+            mobile_cap: false,
         }
     }
 }
@@ -131,7 +141,8 @@ impl Policy {
         self.scanning
     }
 
-    /// Returns the current environment pause reason (`offline`/`vpn`/`battery`/`wifi`/`android`).
+    /// Returns the current environment pause reason
+    /// (`offline`/`vpn`/`battery`/`thermal`/`wifi`/`mobile_cap`/`android`).
     pub fn env_reason(&self) -> Option<&'static str> {
         self.env_reason
     }
@@ -141,7 +152,7 @@ impl Policy {
     }
 
     /// Returns what the environment demands as `(reason, stop?)`. Priority: network > tunnel >
-    /// battery > overheating > Wi-Fi.
+    /// battery > overheating > Wi-Fi > monthly mobile data limit.
     pub fn demand(&self, env: &Env, s: &PolicySettings) -> Option<(&'static str, bool)> {
         if !env.online || env.transport == Transport::None {
             return Some(("offline", false));
@@ -164,6 +175,10 @@ impl Policy {
         }
         if s.wifi_only && env.transport == Transport::Cellular {
             return Some(("wifi", false));
+        }
+        // The monthly limit only holds on mobile data: Wi-Fi lifts it, so does a raised limit.
+        if env.mobile_cap && env.on_mobile() {
+            return Some(("mobile_cap", false));
         }
         None
     }
@@ -468,6 +483,73 @@ mod tests {
         assert_eq!(p.on_env(&off, &s), vec![]);
         assert_eq!(p.on_fgs_timeout(), vec![]);
         assert_eq!(p.user_pause(None), vec![Action::Pause("user")]);
+    }
+
+    #[test]
+    fn mobile_cap_pauses_on_mobile_and_resumes_on_wifi() {
+        let s = PolicySettings::default();
+        let cell = Env {
+            transport: Transport::Cellular,
+            metered: true,
+            ..Env::default()
+        };
+        let capped = Env {
+            mobile_cap: true,
+            ..cell.clone()
+        };
+        let mut p = Policy::new();
+        assert!(p.scan_started(false, &cell, &s).is_empty());
+        assert_eq!(p.on_env(&capped, &s), vec![Action::Pause("mobile_cap")]);
+        assert_eq!(p.on_env(&capped, &s), vec![]);
+        // the user cannot resume over the cap while still on mobile data
+        assert_eq!(p.user_resume(None), Err("mobile_cap"));
+        // Wi-Fi: the counter stays reached, but the cap no longer applies
+        let wifi_capped = Env {
+            mobile_cap: true,
+            ..wifi()
+        };
+        assert_eq!(p.on_env(&wifi_capped, &s), vec![Action::Resume]);
+        // back on mobile data: paused again
+        assert_eq!(p.on_env(&capped, &s), vec![Action::Pause("mobile_cap")]);
+        // a raised limit clears the cap
+        assert_eq!(p.on_env(&cell, &s), vec![Action::Resume]);
+    }
+
+    #[test]
+    fn mobile_cap_on_start_and_metered_wifi() {
+        let s = PolicySettings::default();
+        let metered_wifi = Env {
+            metered: true,
+            mobile_cap: true,
+            ..wifi()
+        };
+        assert!(metered_wifi.on_mobile());
+        let mut p = Policy::new();
+        assert_eq!(
+            p.scan_started(false, &metered_wifi, &s),
+            vec![Action::Pause("mobile_cap")]
+        );
+        // Wi-Fi only wins over the cap: the reason stays `wifi`
+        let s = PolicySettings {
+            wifi_only: true,
+            ..Default::default()
+        };
+        let capped_cell = Env {
+            transport: Transport::Cellular,
+            mobile_cap: true,
+            ..Env::default()
+        };
+        let mut p = Policy::new();
+        assert_eq!(
+            p.scan_started(false, &capped_cell, &s),
+            vec![Action::Pause("wifi")]
+        );
+        // offline is not mobile
+        let off = Env {
+            online: false,
+            ..capped_cell
+        };
+        assert!(!off.on_mobile());
     }
 
     #[test]

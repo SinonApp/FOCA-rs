@@ -174,6 +174,7 @@ object FocaDirect {
         JSObject().put("ok", true).toString()
       }
       "monitor_schedule" -> MonitorWorker.schedule(app, a).toString()
+      "status_notify" -> JSObject().put("ok", MonitorWorker.notifyStatus(app, a)).toString()
       // Long blocking hidden WebView script (up to minutes); the calling Rust thread waits.
       "render_fetch" -> RenderFetcher.call(app, json)
       "report_sign", "report_sig_verify" -> ReportSigner.call(cmd, a).toString()

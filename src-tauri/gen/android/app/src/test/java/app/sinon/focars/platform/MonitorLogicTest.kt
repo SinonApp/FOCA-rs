@@ -33,6 +33,13 @@ class MonitorLogicTest {
   }
 
   @Test
+  fun statusNoticeIds() {
+    assertEquals(4190, MonitorLogic.statusId("mobile_cap"))
+    assertNull(MonitorLogic.statusId("other"))
+    assertNull(MonitorLogic.statusId(""))
+  }
+
+  @Test
   fun routesSafe() {
     assertEquals("/open/contoso.example", MonitorLogic.openRoute("contoso.example"))
     assertEquals("/open/example.test/scan", MonitorLogic.reminderRoute("example.test"))

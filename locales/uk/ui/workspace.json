@@ -110,6 +110,7 @@
   "api.demo_reset_available_demo_mode": "demo_reset доступний лише в демо",
   "api.stage_search": "Пошук",
   "api.scan": "До скану",
+  "api.mobile_cap_settings": "Ліміт",
   "core.scan_running": "Триває скан",
   "core.resume": "Продовжити",
   "core.pause": "Пауза",

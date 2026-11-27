@@ -88,6 +88,14 @@ class MonitorWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
       }
     }
 
+    /** Posts a status notice from the core (`status_notify { tag, title, text, route }`), e.g. the monthly mobile data limit. */
+    fun notifyStatus(ctx: Context, a: JSObject): Boolean {
+      val id = MonitorLogic.statusId(a.getString("tag", null) ?: "") ?: return false
+      val title = a.getString("title", null) ?: return false
+      notify(ctx, id, title, a.getString("text", null) ?: "", a.getString("route", null))
+      return true
+    }
+
     /** Posts the scan result (`scan_done_notify` from Rust) with document and finding counts; tapping opens the project. */
     fun notifyDone(ctx: Context, a: JSObject) {
       val project = a.getString("project", null) ?: ""

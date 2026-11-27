@@ -40,6 +40,7 @@ Third beta. It fixes the projects that disappeared after an upgrade, makes the s
 - **Clear the request log**: Debug → Requests and the request log export in Reports can clear the whole log, entries older than 7, 30 or 90 days, or one scan, with counts shown before you confirm. A running or paused scan keeps its entries.
 - **Clear the quick tools log**: Quick tools → Log has a Clear button.
 - **Signature update feed**: the app checks the official feed, verifies the bundle signature and installs a newer one. Each check is saved and shown as "Last checked".
+- **Monthly mobile data limit is enforced**: the app counts what it really transfers over mobile or metered networks per calendar month and shows it in Traffic & power. When a scan reaches the limit it pauses with a notification and a banner, and resumes by itself on Wi-Fi or after you raise the limit.
 
 ## 2.0.0-beta.2: 2026-11-26
 

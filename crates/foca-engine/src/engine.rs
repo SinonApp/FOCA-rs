@@ -40,7 +40,9 @@ pub struct Core {
     pub(crate) store: Arc<Mutex<Store>>,
     pub(crate) dbs: Mutex<HashMap<String, SharedDb>>,
     pub(crate) keys: Mutex<Arc<dyn KeyProvider>>,
-    pub(crate) events: Mutex<Arc<dyn EventSink>>,
+    pub(crate) events: Arc<Mutex<Arc<dyn EventSink>>>,
+    /// Monthly mobile data counter fed by every request sink of the engine.
+    pub(crate) mobile: Arc<crate::services::mobile::MobileMeter>,
     pub(crate) render: Mutex<Option<Arc<dyn foca_search::RenderFetch>>>,
     pub(crate) signer: Mutex<Option<Arc<dyn crate::ReportSigner>>>,
     pub(crate) ocr: Mutex<Option<Arc<dyn crate::OcrProvider>>>,
@@ -233,7 +235,18 @@ impl Engine {
         &self.inner.cfg
     }
 
-    /// Pauses the scan from outside (`offline` / `battery` / `wifi` / `vpn` / `user`).
+    /// Reports whether the device is on a mobile or metered network (request bytes count against
+    /// the monthly mobile data limit only then) and returns whether this month's limit is reached.
+    pub fn mobile_network(&self, on_mobile: bool) -> bool {
+        self.inner.mobile.network(on_mobile)
+    }
+
+    /// The monthly mobile data limit is set and this month's mobile traffic has reached it.
+    pub fn mobile_cap_reached(&self) -> bool {
+        self.inner.mobile.reached()
+    }
+
+    /// Pauses the scan from outside (`offline` / `battery` / `wifi` / `vpn` / `mobile_cap` / `user`).
     /// Emits `paused { scan_id, project, reason }` when the reason changes (not on a repeated reason).
     pub fn pause(&self, reason: &str) -> bool {
         let ev = {

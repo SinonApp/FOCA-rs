@@ -56,6 +56,19 @@ impl ServiceState {
     }
 }
 
+/// The `status_notify` arguments for a scan paused by the monthly mobile data limit; `usage` is
+/// the engine's `mobile_usage` result.
+pub fn mobile_cap_note(lang: Lang, usage: &Value) -> Value {
+    use foca_engine::i18n::core_text;
+    let p = json!({ "used": usage["used_mb"], "limit": usage["limit_mb"] });
+    json!({
+        "tag": "mobile_cap",
+        "title": core_text(lang, "notify.mobile_cap_title", &p),
+        "text": core_text(lang, "notify.mobile_cap_text", &p),
+        "route": "/p/scan",
+    })
+}
+
 pub fn reason_label(r: &str) -> &'static str {
     match r {
         "offline" => "нет сети",
@@ -64,7 +77,41 @@ pub fn reason_label(r: &str) -> &'static str {
         "battery" => "питание",
         "thermal" => "перегрев",
         "android" => "ограничение Android",
+        "mobile_cap" => "лимит мобильного трафика",
         "user" => "вручную",
         _ => "пауза",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mobile_cap_note_names_usage_and_limit() {
+        let n = mobile_cap_note(Lang::En, &json!({ "used_mb": 1000.4, "limit_mb": 1000 }));
+        assert_eq!(n["title"], "Mobile data limit reached");
+        assert_eq!(
+            n["text"],
+            "Mobile data limit reached: 1000.4 of 1000 MB this month. Resume on Wi-Fi or raise the limit"
+        );
+        assert_eq!(n["tag"], "mobile_cap");
+        let ru = mobile_cap_note(Lang::Ru, &json!({ "used_mb": 12, "limit_mb": 10 }));
+        assert!(ru["text"].as_str().unwrap().contains("12 из 10 МБ"), "{ru}");
+    }
+
+    #[test]
+    fn paused_notification_names_mobile_cap() {
+        let s = ServiceState {
+            running: true,
+            title: "Contoso".into(),
+            stage: "Поиск".into(),
+            progress: 40,
+            paused: Some("mobile_cap".into()),
+        };
+        assert_eq!(
+            s.payload(Lang::En)["text"],
+            "Paused: mobile data limit · 40%"
+        );
     }
 }

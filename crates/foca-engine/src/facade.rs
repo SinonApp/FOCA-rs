@@ -54,6 +54,12 @@ impl Engine {
         let ocr = cfg.ocr.clone();
         let screenshotter = cfg.screenshotter.clone();
         let headless = cfg.headless;
+        let events = Arc::new(Mutex::new(events));
+        let mobile = Arc::new(crate::services::mobile::MobileMeter::open(
+            cfg.data_dir.join(crate::services::mobile::FILE),
+            clock.clone(),
+            events.clone(),
+        ));
         let e = Engine {
             inner: Arc::new(Core {
                 cfg,
@@ -61,7 +67,8 @@ impl Engine {
                 store: Arc::new(Mutex::new(store)),
                 dbs: Mutex::new(HashMap::new()),
                 keys: Mutex::new(keys),
-                events: Mutex::new(events),
+                events,
+                mobile,
                 render: Mutex::new(render),
                 signer: Mutex::new(signer),
                 ocr: Mutex::new(ocr),
@@ -84,6 +91,7 @@ impl Engine {
         };
         if let Ok(s) = e.store().settings_get() {
             crate::services::logs::set_level(s["debug"]["level"].as_str().unwrap_or("info"));
+            e.mobile.set_limit(crate::services::mobile::limit_bytes(&s));
         }
         e.recover_run()?;
         // continue the scan queue left by the previous process (needs a tokio runtime)
@@ -202,6 +210,7 @@ impl Engine {
             "secret_hibp_check" => self.secret_hibp_check(&a).await,
             "settings_get" => self.public_settings(),
             "settings_set" => self.settings_set(&a),
+            "mobile_usage" => Ok(self.mobile.status()),
             "i18n_bundle" => self.i18n_bundle(&a),
             "licenses_get" => self.licenses_get(),
             "key_set" => self.key_set(&a),

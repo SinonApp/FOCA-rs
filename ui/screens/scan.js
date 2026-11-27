@@ -215,6 +215,24 @@
         pause: true,
         label: F.t("scan.reason_wifi_label", "Пауза: нет Wi-Fi"),
       },
+      // Monthly mobile data limit (power.mob_limit): the core counts mobile traffic and the policy pauses.
+      mobile_cap: (() => {
+        const cap = (F.scan && F.scan.mobileCap) || {};
+        const limit = cap.limit ?? (pw.lim_on ? pw.mob_limit : null) ?? "-";
+        return {
+          chip: F.t("scan.reason_mobile_cap_chip", "Лимит трафика"),
+          icon: "st-phone",
+          color: "var(--warn)",
+          title: F.t("scan.reason_mobile_cap_title", "Лимит мобильного трафика исчерпан"),
+          text: F.t(
+            "scan.reason_mobile_cap_text",
+            { used: cap.used ?? limit, limit },
+            "Лимит мобильного трафика достигнут: {used} из {limit} МБ в этом месяце. Продолжите в Wi-Fi или увеличьте лимит",
+          ),
+          pause: true,
+          label: F.t("scan.reason_mobile_cap_label", "Пауза: лимит трафика"),
+        };
+      })(),
       offline: {
         chip: F.t("scan.reason_offline_title", "Нет сети"),
         icon: "wifi-off",
@@ -605,6 +623,10 @@
         scan.paused = true;
         scan.pauseReason = ev.reason || scan.pauseReason || "user";
         F.emit("db", { kind: "net" });
+        break;
+      // The core's monthly mobile data counter crossed the limit; the pause itself comes as "paused".
+      case "mobile_cap":
+        scan.mobileCap = { used: ev.used_mb, limit: ev.limit_mb };
         break;
       case "resumed":
         if (!scan.running) return;

@@ -42,7 +42,7 @@ impl Native for NoNative {
             }
             "toast" => Ok(json!({ "ok": false })),
             // Monitoring: no notifications or WorkManager on desktop.
-            "scan_done_notify" | "monitor_schedule" => Ok(json!({ "ok": false })),
+            "scan_done_notify" | "monitor_schedule" | "status_notify" => Ok(json!({ "ok": false })),
             "permissions_status" => {
                 Ok(json!({ "notifications": true, "battery": true, "oem": "pixel", "stub": true }))
             }
@@ -186,8 +186,10 @@ impl<R: Runtime> Native for AndroidNative<R> {
         match cmd {
             // Monitoring (scan result and WorkManager schedule), report signing and on-device OCR are JNI only:
             // there may be no Activity when a scheduled scan runs in the background.
-            "scan_done_notify" | "monitor_schedule" | "report_sign" | "report_sig_verify"
-            | "ocr_recognize" | "web_screenshot" => timed(cmd, "jni", || direct::call(cmd, &args)),
+            "scan_done_notify" | "status_notify" | "monitor_schedule" | "report_sign"
+            | "report_sig_verify" | "ocr_recognize" | "web_screenshot" => {
+                timed(cmd, "jni", || direct::call(cmd, &args))
+            }
             // These work without an Activity (it may have been destroyed during a scan): direct JNI.
             "scan_service_update" | "scan_service_stop" | "toast" | "keystore_get" => {
                 match timed(cmd, "jni", || direct::call(cmd, &args)) {

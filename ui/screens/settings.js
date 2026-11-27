@@ -1372,13 +1372,39 @@
     n >= 1024
       ? (n / 1024).toFixed(1).replace(".", isEn() ? "." : ",") + "\u00a0" + F.t("settings.gb", "ГБ")
       : n + "\u00a0" + F.t("settings.mb", "МБ");
+  // Mobile data measured by the core this calendar month (mobile_usage); null until loaded.
+  let mobUsage = null,
+    mobUsageKey = "";
+  function loadMobUsage() {
+    if (!F.api.mobile_usage) return;
+    F.api.mobile_usage().then(
+      u => {
+        const k = JSON.stringify(u || null);
+        // a re-render mounts the screen again: re-render only when the counter changed
+        if (!u || k === mobUsageKey) return;
+        mobUsageKey = k;
+        mobUsage = u;
+        F.render(true);
+      },
+      () => {},
+    );
+  }
+  const mbx = n => {
+    const v = Math.round((+n || 0) * 10) / 10;
+    return v >= 1024
+      ? mb(v)
+      : String(v).replace(".", isEn() ? "." : ",") + "\u00a0" + F.t("settings.mb", "МБ");
+  };
   function renderPower() {
     const power = state.power;
     const usage = traffic(power.period);
     const tm = traffic("month");
+    // the core's counter wins over the estimate from scan history
+    const monthMob = mobUsage ? +mobUsage.used_mb || 0 : tm.mob;
     // 0 MB or the switch off = no mobile traffic limit
     const capped = power.limOn && +power.mobLimit > 0;
-    const pct = capped ? Math.min(100, Math.round((tm.mob / power.mobLimit) * 100)) : 0;
+    const pct = capped ? Math.min(100, Math.round((monthMob / power.mobLimit) * 100)) : 0;
+    const mobReached = capped && monthMob >= +power.mobLimit;
     return `
       ${h3(F.t("settings.traffic_counter", "Счётчик трафика"))}
       ${seg(
@@ -1392,13 +1418,13 @@
       ${
         usage.n
           ? `<div class="grid g2 st-tstats">
-        <div class="card stat"><div class="k">${ic("st-phone")}${esc(F.t("settings.mobile", "Мобильный"))}</div><div class="v">${mb(usage.mob)}</div><div class="d">${capped ? F.t("settings.pct_limit", { pct }, "{pct}% лимита за месяц") : F.t("settings.no_limit", "без лимита")}</div></div>
+        <div class="card stat"><div class="k">${ic("st-phone")}${esc(F.t("settings.mobile", "Мобильный"))}</div><div class="v">${power.period === "month" && mobUsage ? mbx(monthMob) : mb(usage.mob)}</div><div class="d">${capped ? F.t("settings.pct_limit", { pct }, "{pct}% лимита за месяц") : F.t("settings.no_limit", "без лимита")}</div></div>
         <div class="card stat"><div class="k">${ic("st-wifi")}Wi-Fi</div><div class="v">${mb(usage.wifi)}</div><div class="d">${esc(usage.when)}</div></div>
       </div>
       ${
         capped
-          ? `<div class="card pad st-lim"><div class="st-lim-h"><span>${esc(F.t("settings.mob_month", "Мобильный трафик за месяц"))}</span><b>${F.t("settings.a_of_b", { a: mb(tm.mob), b: mb(power.mobLimit) }, "{a} из {b}")}</b></div><div class="pbar"><i style="width:${Math.min(100, (tm.mob / power.mobLimit) * 100)}%"
-        class="${tm.mob / power.mobLimit > 0.8 ? "st-pw" : ""}"></i></div></div>`
+          ? `<div class="card pad st-lim"><div class="st-lim-h"><span>${esc(F.t("settings.mob_month", "Мобильный трафик за месяц"))}</span><b>${F.t("settings.a_of_b", { a: mbx(monthMob), b: mb(power.mobLimit) }, "{a} из {b}")}</b></div><div class="pbar"><i style="width:${Math.min(100, (monthMob / power.mobLimit) * 100)}%"
+        class="${monthMob / power.mobLimit > 0.8 ? "st-pw" : ""}"></i></div></div>`
           : ""
       }
       <div class="list st-mods">${usage.mods.map(([n, v]) => `<div class="st-mod"><span class="st-mod-n">${esc(modL(n))}</span><span class="st-mod-b"><i style="width:${v}%"></i></span><span class="st-mod-v">${v}%</span></div>`).join("")}</div>`
@@ -1411,6 +1437,7 @@
         ${tRow("power.limOn", F.t("settings.mob_limit", "Лимит мобильного трафика"), F.t("settings.mob_limit_sub", "При достижении: пауза и уведомление"), ui.leadIcon("st-phone"))}
         ${!power.limOn && !power.wifiOnly ? `<div class="st-in st-pad nf-warn st-mob-warn" role="status">${ic("alert")}<span>${esc(F.limits.warning("power.mob_limit", 0))}</span></div>` : ""}
         ${power.limOn ? `<div class="st-in nfs st-steps2">${nf("power.mobLimit", F.t("settings.limit_month", "Лимит в месяц"), F.t("settings.mb", "МБ"), "power.mob_limit", F.t("settings.of_mobile", "мобильного трафика"), "set-limits", 100, { riskCtx: () => ({ zeroRisky: !state.power.wifiOnly }) })}</div>` : ""}
+        ${mobUsage ? `<div class="st-in st-pad st-mob-used${mobReached ? " nf-warn" : ""}" role="status">${ic(mobReached ? "alert" : "st-phone")}<span>${esc(capped ? F.t("settings.mob_used_of", { a: mbx(monthMob), b: mb(power.mobLimit) }, "Мобильный трафик в этом месяце: {a} из {b}") : F.t("settings.mob_used", { a: mbx(monthMob) }, "Мобильный трафик в этом месяце: {a}"))}${mobReached ? " · " + esc(F.t("settings.mob_used_reached", "лимит достигнут, скан ждёт Wi-Fi")) : ""}</span></div>` : ""}
       </div>
 
       ${h3(F.t("settings.power_h", "Питание"))}
@@ -1450,6 +1477,7 @@
     mount: page => {
       pg(page);
       bindRanges(page);
+      loadMobUsage();
     },
   });
   function bindRanges(page) {

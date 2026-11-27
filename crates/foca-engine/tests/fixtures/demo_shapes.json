@@ -14150,6 +14150,43 @@
     }
    }
   },
+  "mobile_usage": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "month": {
+     "t": [
+      "string"
+     ]
+    },
+    "bytes": {
+     "t": [
+      "number"
+     ]
+    },
+    "used_mb": {
+     "t": [
+      "number"
+     ]
+    },
+    "limit_mb": {
+     "t": [
+      "number"
+     ]
+    },
+    "reached": {
+     "t": [
+      "bool"
+     ]
+    },
+    "metered": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
   "key_check": {
    "t": [
     "object"

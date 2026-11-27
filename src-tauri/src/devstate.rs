@@ -30,6 +30,12 @@ pub fn policy_settings(s: &Value) -> PolicySettings {
     }
 }
 
+/// Tells the engine's monthly mobile data counter whether the device is on mobile data and reads
+/// back whether this month's limit is reached (`env.mobile_cap`).
+pub fn sync_mobile(env: &mut Env, engine: &foca_engine::Engine) {
+    env.mobile_cap = engine.mobile_network(env.on_mobile());
+}
+
 /// Applies a `net` or `power` device event to `env`; returns `false` for other kinds.
 pub fn apply_device(env: &mut Env, ev: &Value) -> bool {
     let b = |k: &str, d: bool| ev.get(k).and_then(Value::as_bool).unwrap_or(d);

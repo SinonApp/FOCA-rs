@@ -930,6 +930,8 @@
     dorks_pending: () => run("dorks_pending", { project: cur() }),
     dorks_retry: () => run("dorks_retry", { project: cur() }),
     net_check: () => run("net_check", {}),
+    // Monthly mobile data counter: { month, bytes, used_mb, limit_mb, reached, metered }.
+    mobile_usage: () => run("mobile_usage", {}),
     net_proxy_check: args => run("net_proxy_check", args || {}),
     // --- reports ---
     report_list: () => run("report_list", { project: cur() }),
@@ -1129,6 +1131,17 @@
       if (ev.project && ev.project === cur()) reload("scan");
       refreshList();
     } else if (ev.type === "progress" && cs.running) liveCounts();
+    // Monthly mobile data limit reached during a scan: a snackbar on any screen (the scan screen shows
+    // the full banner from the "paused" reason).
+    if (ev.type === "mobile_cap" && cs.running && F.snack && F.t)
+      F.snack(
+        F.t(
+          "scan.reason_mobile_cap_text",
+          { used: ev.used_mb, limit: ev.limit_mb },
+          "Лимит мобильного трафика достигнут: {used} из {limit} МБ в этом месяце. Продолжите в Wi-Fi или увеличьте лимит",
+        ),
+        { ms: 10000, label: tr("api.mobile_cap_settings", "Лимит"), action: () => F.go("/settings/power") },
+      );
     if (ev.type !== "db") F.emit("scan", ev);
   }
   // Native "net" event (src-tauri: network/power monitor + pause policy): { online, transport, vpn, metered,

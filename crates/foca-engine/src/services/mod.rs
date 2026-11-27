@@ -6,6 +6,7 @@ pub(crate) mod ai_text;
 pub mod i18n;
 pub mod licenses;
 pub mod logs;
+pub(crate) mod mobile;
 pub mod ocr;
 pub mod plugins;
 #[cfg(feature = "report")]

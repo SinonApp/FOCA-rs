@@ -159,6 +159,18 @@
   height: 16px;
   margin-top: 2px;
 }
+/* Mobile data the core measured this month (Settings → Traffic & power). */
+.st-mob-used {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.st-mob-used svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
 .nf.bad .nf-box {
   border-color: var(--bad);
   box-shadow: 0 0 0 3px var(--bad-soft);

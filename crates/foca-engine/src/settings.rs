@@ -184,7 +184,9 @@ impl Core {
             ai.remove("local");
         }
         foca_store::settings::strip_secrets(&mut p);
-        self.store().settings_set(&p)?;
+        let saved = self.store().settings_set(&p)?;
+        self.mobile
+            .set_limit(crate::services::mobile::limit_bytes(&saved));
         if let Some(l) = p["debug"]["level"].as_str() {
             crate::services::logs::set_level(l);
         }
@@ -280,6 +282,11 @@ impl Core {
         ua_override: Option<&str>,
         group: Option<&str>,
     ) -> Result<NetClient, CmdError> {
+        // every request of the engine feeds the monthly mobile data counter
+        let sink: Arc<dyn foca_net::RequestSink> = Arc::new(crate::services::mobile::MeterSink {
+            meter: self.mobile.clone(),
+            inner: sink,
+        });
         let mut s = self.store().settings_get()?;
         if let Some(ua) = ua_override {
             s["net"]["ua"] = json!(ua);
