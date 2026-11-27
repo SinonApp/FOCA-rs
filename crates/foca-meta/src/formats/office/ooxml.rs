@@ -12,6 +12,7 @@ use foca_core::{
     RevisionRef,
 };
 
+use super::{ooxml_data, vba};
 use crate::util::{clean_str, normalize_date, truncate, utf16le_z};
 use crate::xml::{self, Element};
 use crate::zipx::SafeZip;
@@ -371,6 +372,7 @@ pub fn extract(bytes: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, M
             for m in vba_modules(&b) {
                 Metadata::add_unique(&mut meta.macro_modules, &m);
             }
+            vba::scan_ole(&b, &mut meta);
         }
     }
 
@@ -433,6 +435,9 @@ fn docx(
     if let Some(e) = read_xml(z, "word/comments.xml", ctx, meta)? {
         word_comments(meta, &e, "word/comments.xml");
     }
+    if let Some(e) = read_xml(z, "word/fontTable.xml", ctx, meta)? {
+        ooxml_data::fonts(meta, &e);
+    }
     if let Some(e) = read_xml(z, "word/people.xml", ctx, meta)? {
         for p in e.descendants("person") {
             if let Some(a) = p.attr_local("author") {
@@ -455,6 +460,7 @@ fn docx(
                 }
             }
         }
+        ooxml_data::word_settings(meta, &e);
         for prot in ["documentProtection", "writeProtection"] {
             if let Some(p) = e.child(prot) {
                 let edit = p.attr_local("edit").unwrap_or("on");
@@ -473,6 +479,7 @@ fn xlsx(
     meta: &mut Metadata,
 ) -> Result<(), MetaError> {
     if let Some(wb) = read_xml(z, "xl/workbook.xml", ctx, meta)? {
+        ooxml_data::external_defined_names(meta, &wb);
         for s in wb.descendants("sheet") {
             if let (Some(state), Some(name)) = (s.attr("state"), s.attr("name")) {
                 if state == "hidden" || state == "veryHidden" {
@@ -532,34 +539,12 @@ fn xlsx(
     hidden_cells(z, ctx, meta)?;
     pivot_caches(z, names, ctx, meta)?;
     if let Some(e) = read_xml(z, "xl/connections.xml", ctx, meta)? {
-        for c in e.descendants("connection") {
-            let name = c.attr("name").unwrap_or("connection").to_string();
-            for attr in ["odcFile", "credentialsFile"] {
-                if let Some(v) = c.attr(attr) {
-                    meta.fields
-                        .insert(format!("xl:connection:{name}:{attr}"), truncate(v, 2048));
-                }
-            }
-            if let Some(cs) = c.child("dbPr").and_then(|d| d.attr("connection")) {
-                connection_string(meta, cs, &name);
-            }
-            for (child, attr) in [
-                ("dbPr", "connection"),
-                ("dbPr", "command"),
-                ("webPr", "url"),
-                ("olapPr", "connection"),
-            ] {
-                if let Some(v) = c.child(child).and_then(|d| d.attr(attr)) {
-                    meta.fields
-                        .insert(format!("xl:connection:{name}:{attr}"), truncate(v, 2048));
-                }
-            }
-            if let Some(f) = c.attr("sourceFile") {
-                meta.fields
-                    .insert(format!("xl:connection:{name}:sourceFile"), f.to_string());
-            }
-        }
+        ooxml_data::spreadsheet_connections(meta, &e);
     }
+    if let Some(e) = read_xml(z, "xl/styles.xml", ctx, meta)? {
+        ooxml_data::fonts(meta, &e);
+    }
+    ooxml_data::power_query(z, names, ctx, meta)?;
     Ok(())
 }
 
@@ -927,34 +912,6 @@ fn pivot_caches(
     Ok(())
 }
 
-/// Server, database and account from an OLE DB/ODBC connection string.
-fn connection_string(meta: &mut Metadata, cs: &str, name: &str) {
-    for part in cs.split(';').take(64) {
-        let Some((k, v)) = part.split_once('=') else {
-            continue;
-        };
-        let v = v.trim().trim_matches('"');
-        if v.is_empty() {
-            continue;
-        }
-        match k.trim().to_ascii_lowercase().as_str() {
-            "data source" | "server" | "address" | "addr" | "dsn" | "location" => {
-                meta.add_server(v, &format!("xl/connections.xml:{name}"));
-            }
-            // kept as a field, not a person: data connections survive metadata cleaning
-            "user id" | "uid" | "user" | "username" => {
-                meta.fields
-                    .insert(format!("xl:connection:{name}:user"), truncate(v, 256));
-            }
-            "initial catalog" | "database" => {
-                meta.fields
-                    .insert(format!("xl:connection:{name}:database"), truncate(v, 256));
-            }
-            _ => {}
-        }
-    }
-}
-
 /// Charts: external workbook references in series formulas (`c:f`).
 fn charts(
     z: &mut SafeZip,
@@ -1057,7 +1014,7 @@ pub fn text(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
         if p == "xl/connections.xml" {
             for c in e.descendants("dbPr") {
                 if let Some(v) = c.attr("connection") {
-                    out.push_str(v);
+                    out.push_str(&ooxml_data::parse_conn(v).redacted);
                     out.push('\n');
                 }
             }
@@ -1071,6 +1028,17 @@ pub fn text(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
             0,
         );
         out.push('\n');
+    }
+    for n in names
+        .iter()
+        .filter(|n| n.to_ascii_lowercase().ends_with("vbaproject.bin"))
+    {
+        if let Some(b) = z.read(n, ctx)? {
+            for l in vba::scan_ole(&b, &mut dummy) {
+                out.push_str(&l);
+                out.push('\n');
+            }
+        }
     }
     Ok(out)
 }

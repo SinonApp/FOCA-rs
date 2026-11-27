@@ -490,6 +490,9 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
                             ("Пароль в открытом виде в .ica-файле", Severity::Critical)
                         }
                         "rdp_password_51" => ("Сохранённый пароль в .rdp-файле", Severity::High),
+                        "connection_password" => {
+                            ("Пароль в строке подключения к данным", Severity::High)
+                        }
                         _ => ("Пароль в метаданных", Severity::High),
                     };
                     hits.retain(|h| h.value.expose() != s.value);

@@ -560,6 +560,56 @@ pub(crate) fn parse_received(v: &str) -> Hop {
     hop
 }
 
+/// One `Received:` header as a structured hop: the `from` and `by` names, the first sending
+/// IP and the date after the last `;`.
+pub(crate) fn mail_hop(v: &str) -> foca_core::MailHop {
+    let (main, date) = match v.rsplit_once(';') {
+        Some((a, d)) => (a, crate::util::normalize_date(d.trim())),
+        None => (v, None),
+    };
+    let toks: Vec<&str> = main.split_whitespace().collect();
+    let mut hop = foca_core::MailHop {
+        date: date.map(|d| truncate(&d, 64)),
+        ..Default::default()
+    };
+    let mut i = 0;
+    let mut section = "";
+    while i < toks.len() {
+        let t = toks[i];
+        let lower = t.to_ascii_lowercase();
+        if (lower == "from" || lower == "by") && i + 1 < toks.len() {
+            let name = toks[i + 1].trim_matches(['(', ')', '[', ']', ';']);
+            let name = truncate(name, 255);
+            if lower == "from" {
+                hop.from = Some(name);
+            } else {
+                hop.by = Some(name);
+            }
+            section = if lower == "from" { "from" } else { "by" };
+            i += 2;
+            continue;
+        }
+        if section == "from" && hop.ip.is_none() {
+            if let Some(ip) = t.find('[').and_then(|a| t.get(a..)).and_then(parse_ip) {
+                hop.ip = Some(ip.to_string());
+            }
+        }
+        i += 1;
+    }
+    let ip_internal = hop
+        .ip
+        .as_deref()
+        .and_then(|x| x.parse::<IpAddr>().ok())
+        .is_some_and(|ip| is_internal_ip(&ip) && !ip.is_loopback());
+    let from_internal = hop.from.as_deref().is_some_and(|f| {
+        f.parse::<IpAddr>()
+            .map(|ip| is_internal_ip(&ip))
+            .unwrap_or_else(|_| is_internal_host(f))
+    });
+    hop.internal = ip_internal || from_internal;
+    hop
+}
+
 fn push_host(hop: &mut Hop, h: String) {
     if !hop.hosts.iter().any(|x| x.eq_ignore_ascii_case(&h)) {
         hop.hosts.push(h);
@@ -793,6 +843,9 @@ pub(crate) fn apply_headers(meta: &mut Metadata, h: &[(String, String)], prefix:
         if hops as usize <= MAX_RECEIVED {
             meta.fields
                 .insert(format!("{prefix}:received.{hops:02}"), truncate(v, 512));
+        }
+        if meta.mail_hops.len() < MAX_RECEIVED {
+            meta.mail_hops.push(mail_hop(v));
         }
         let hop = parse_received(v);
         for host in hop.hosts {

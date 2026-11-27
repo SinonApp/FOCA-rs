@@ -708,6 +708,12 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         DocFormat::Msi => msi_summary(&mut meta),
         _ => {}
     }
+    if entries
+        .iter()
+        .any(|(p, s, _)| *s && p.to_ascii_lowercase().ends_with("/vba/dir"))
+    {
+        super::vba::scan_ole(b, &mut meta);
+    }
     // macros and embedded objects
     for (path, is_stream, len) in &entries {
         let lower = path.to_ascii_lowercase();
@@ -1011,6 +1017,10 @@ pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
             if let Some(data) = read_stream(&mut cf, s, ctx)? {
                 strings(&data, &mut out);
             }
+        }
+        for l in super::vba::scan_ole(b, &mut Metadata::default()) {
+            out.push_str(&l);
+            out.push('\n');
         }
         Ok(out)
     })

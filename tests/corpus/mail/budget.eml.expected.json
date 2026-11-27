@@ -63,6 +63,15 @@
           "eml:x-mailer": "Microsoft Outlook 16.0"
         },
         "format": "eml",
+        "mail_hops": [
+          {
+            "by": "EXCH02.corp.example.test",
+            "date": "Mon, 11 Mar 2024 09:00:00 +0200",
+            "from": "ws-017.corp.example.test",
+            "internal": true,
+            "ip": "192.168.10.17"
+          }
+        ],
         "people": [
           {
             "name": "Olena Kovalenko <o.kovalenko@example.com>",
@@ -127,6 +136,27 @@
   "links": [
     "https://intranet.example.test/finance/budget?id=42",
     "https://contoso-my.sharepoint.example.test/personal/i_petrenko/Documents/budget.xlsx"
+  ],
+  "mail_hops": [
+    {
+      "by": "mail.example.org",
+      "date": "Thu, 14 Mar 2024 16:42:10 +0000",
+      "from": "mx1.example.org",
+      "ip": "198.51.100.25"
+    },
+    {
+      "by": "mx1.example.org",
+      "date": "Thu, 14 Mar 2024 16:42:09 +0000",
+      "from": "EXCH01.corp.example.test",
+      "internal": true,
+      "ip": "203.0.113.10"
+    },
+    {
+      "by": "EXCH01.corp.example.test",
+      "date": "Thu, 14 Mar 2024 18:42:07 +0200",
+      "from": "ws-042.corp.example.test",
+      "internal": true
+    }
   ],
   "people": [
     {

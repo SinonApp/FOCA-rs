@@ -1164,3 +1164,152 @@ fn random_bytes_behind_new_magics() {
         }
     }
 }
+
+// ---------------------------------------------------------------- Office data sources
+
+fn b64(data: &[u8]) -> String {
+    const T: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::new();
+    for c in data.chunks(3) {
+        let n = (u32::from(c[0]) << 16)
+            | (u32::from(*c.get(1).unwrap_or(&0)) << 8)
+            | u32::from(*c.get(2).unwrap_or(&0));
+        for i in 0..4 {
+            if i <= c.len() {
+                out.push(T[(n >> (18 - 6 * i)) as usize & 63] as char);
+            } else {
+                out.push('=');
+            }
+        }
+    }
+    out
+}
+
+/// MS-OVBA container with literal-only chunks.
+fn ovba(data: &[u8]) -> Vec<u8> {
+    let mut out = vec![1u8];
+    for chunk in data.chunks(4096) {
+        let mut body = Vec::new();
+        for group in chunk.chunks(8) {
+            body.push(0);
+            body.extend_from_slice(group);
+        }
+        let h = 0xB000u16 | ((body.len() - 1) as u16 & 0x0FFF);
+        out.extend(h.to_le_bytes());
+        out.extend(body);
+    }
+    out
+}
+
+fn vba_project(source: &str) -> Vec<u8> {
+    let mut dir = Vec::new();
+    let rec = |dir: &mut Vec<u8>, id: u16, data: &[u8]| {
+        dir.extend(id.to_le_bytes());
+        dir.extend((data.len() as u32).to_le_bytes());
+        dir.extend_from_slice(data);
+    };
+    rec(&mut dir, 0x0019, b"Module1");
+    rec(&mut dir, 0x001A, b"Module1");
+    rec(&mut dir, 0x0032, &utf16z("Module1")[..14]);
+    rec(&mut dir, 0x0031, &0u32.to_le_bytes());
+    rec(&mut dir, 0x002B, &[]);
+    let cur = Cursor::new(Vec::new());
+    let mut cf = cfb::CompoundFile::create(cur).unwrap();
+    cf.create_storage("/VBA").unwrap();
+    let mut d = cf.create_stream("/VBA/dir").unwrap();
+    d.write_all(&ovba(&dir)).unwrap();
+    drop(d);
+    let mut m = cf.create_stream("/VBA/Module1").unwrap();
+    m.write_all(&ovba(source.as_bytes())).unwrap();
+    drop(m);
+    cf.into_inner().into_inner()
+}
+
+#[test]
+fn office_connections_power_query_mail_merge_vba() {
+    let mashup_zip = zip_of(&[(
+        "Formulas/Section1.m",
+        b"section Section1;\nshared Sales = let Source = Sql.Database(\"sql02.corp.example\", \"Finance\") in Source;",
+    )]);
+    let mut mashup = 0u32.to_le_bytes().to_vec();
+    mashup.extend((mashup_zip.len() as u32).to_le_bytes());
+    mashup.extend(&mashup_zip);
+    let custom = format!(
+        r#"<?xml version="1.0"?><DataMashup xmlns="http://schemas.microsoft.com/DataMashup">{}</DataMashup>"#,
+        b64(&mashup)
+    );
+    let vba = vba_project(
+        "Attribute VB_Name = \"Module1\"\nSub Push()\n  u = \"https://intranet.corp.example/api\"\n  cn.Open \"Provider=SQLOLEDB;Data Source=sql01;User ID=sa;Password=Hunter22\"\nEnd Sub\n",
+    );
+    let xlsx = zip_of(&[
+        ("[Content_Types].xml", b"<Types/>"),
+        (
+            "xl/workbook.xml",
+            br#"<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheets><sheet name="S" sheetId="1"/></sheets><definedNames><definedName name="Rates">'\\fs01\fin\[rates.xlsx]Sheet1'!$A$1</definedName></definedNames></workbook>"#,
+        ),
+        (
+            "xl/connections.xml",
+            br#"<connections xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><connection id="1" name="Sales DB" type="5" savePassword="1"><dbPr connection="Provider=SQLOLEDB.1;Password=S3cret!;User ID=report_ro;Initial Catalog=Sales;Data Source=sql01.corp.example" command="SELECT * FROM t"/></connection><connection id="2" name="Feed" type="4"><webPr url="http://intranet.corp.example/feed.csv"/></connection></connections>"#,
+        ),
+        (
+            "xl/styles.xml",
+            br#"<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts><font><name val="Aptos Narrow"/></font></fonts></styleSheet>"#,
+        ),
+        ("customXml/item1.xml", custom.as_bytes()),
+        ("xl/vbaProject.bin", &vba),
+    ]);
+    assert_eq!(detect(&xlsx), DocFormat::Xlsx);
+    let m = run(&xlsx, "book.xlsm");
+    let js = serde_json::to_string(&m).unwrap();
+    for secret in ["S3cret", "Hunter22"] {
+        assert!(!js.contains(secret), "{secret} leaked: {js}");
+    }
+    let c = &m.connections[0];
+    assert_eq!(c.server.as_deref(), Some("sql01.corp.example"));
+    assert_eq!(c.user.as_deref(), Some("report_ro"));
+    assert!(c.has_password);
+    assert!(m.secrets.iter().any(|s| s.kind == "connection_password"));
+    assert!(m
+        .connections
+        .iter()
+        .any(|c| c.target.as_deref() == Some("http://intranet.corp.example/feed.csv")));
+    assert!(m
+        .connections
+        .iter()
+        .any(|c| c.kind == "powerquery:sql" && c.server.as_deref() == Some("sql02.corp.example")));
+    assert!(
+        m.servers.iter().any(|s| s.name == "fs01"),
+        "{:?}",
+        m.servers
+    );
+    assert_eq!(m.fonts, vec!["Aptos Narrow"]);
+    assert!(m
+        .links
+        .iter()
+        .any(|l| l == "https://intranet.corp.example/api"));
+    assert!(m.has_macros && m.macro_modules.contains(&"Module1".to_string()));
+    let t = text(&xlsx, &Limits::default()).unwrap();
+    assert!(t.contains("Password=***") && !t.contains("S3cret"), "{t}");
+    assert!(t.contains("Hunter22"), "VBA lines feed the secret scanner");
+
+    let docx = zip_of(&[
+        ("[Content_Types].xml", b"<Types/>"),
+        ("word/document.xml", br#"<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body/></w:document>"#),
+        (
+            "word/settings.xml",
+            br#"<w:settings xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:mailMerge><w:mainDocumentType w:val="formLetters"/><w:connectString w:val="Provider=Microsoft.ACE.OLEDB.12.0;User ID=Admin;Data Source=C:\Users\hr.clerk\Documents\staff.xlsx;Jet OLEDB:Database Password=pw1"/><w:query w:val="SELECT * FROM `Sheet1$`"/></w:mailMerge><w:docVars><w:docVar w:name="CaseNo" w:val="HR-2024-17"/></w:docVars></w:settings>"#,
+        ),
+        (
+            "word/fontTable.xml",
+            br#"<w:fonts xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:font w:name="Calibri"/><w:font w:name="PT Astra Serif"/></w:fonts>"#,
+        ),
+    ]);
+    let m = run(&docx, "letter.docx");
+    let mm = &m.connections[0];
+    assert_eq!(mm.kind, "mailmerge");
+    assert!(mm.has_password);
+    assert!(m.people.iter().any(|p| p.name == "hr.clerk"));
+    assert_eq!(m.custom["docVar:CaseNo"], "HR-2024-17");
+    assert_eq!(m.fonts, vec!["Calibri", "PT Astra Serif"]);
+    assert!(!serde_json::to_string(&m).unwrap().contains("pw1"));
+}

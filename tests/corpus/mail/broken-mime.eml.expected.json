@@ -8,6 +8,12 @@
     "eml:received.01": "from [999.1.1.1] by (((( with ;"
   },
   "format": "eml",
+  "mail_hops": [
+    {
+      "by": "",
+      "from": "999.1.1.1"
+    }
+  ],
   "people": [
     {
       "name": "John Doe <john.doe@example.org>",

@@ -46,6 +46,14 @@
           "msg:received.01": "from buh-pc-07.corp.example.test (192.168.10.7) by EXCH02.corp.example.test (10.20.0.16); Wed, 13 Mar 2024 10:00:00 +0200"
         },
         "format": "msg",
+        "mail_hops": [
+          {
+            "by": "EXCH02.corp.example.test",
+            "date": "Wed, 13 Mar 2024 10:00:00 +0200",
+            "from": "buh-pc-07.corp.example.test",
+            "internal": true
+          }
+        ],
         "people": [
           {
             "name": "Olena Kovalenko <o.kovalenko@example.com>",
@@ -100,6 +108,14 @@
   "last_modified_by": "John Doe",
   "links": [
     "https://intranet.example.test/finance/2024"
+  ],
+  "mail_hops": [
+    {
+      "by": "EXCH01.corp.example.test",
+      "date": "Thu, 14 Mar 2024 18:42:07 +0200",
+      "from": "ws-042.corp.example.test",
+      "internal": true
+    }
   ],
   "modified": "2024-03-14T16:42:09Z",
   "people": [

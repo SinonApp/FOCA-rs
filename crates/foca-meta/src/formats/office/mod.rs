@@ -5,5 +5,7 @@ pub(crate) mod legacy_office;
 pub(crate) mod odf;
 pub(crate) mod ole;
 pub(crate) mod ooxml;
+pub(crate) mod ooxml_data;
 pub(crate) mod publisher;
+pub(crate) mod vba;
 pub(crate) mod visio;

@@ -361,8 +361,10 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
         fx.scan_without_text = true;
     }
     // Data connections (XLSX connections/pivot caches, Visio data, chart external refs).
+    let modelled = !m.connections.is_empty();
     for (k, v) in f {
-        let conn = (k.starts_with("xl:connection:")
+        let conn = (!modelled
+            && k.starts_with("xl:connection:")
             && (k.ends_with(":odcFile")
                 || k.ends_with(":database")
                 || k.ends_with(":user")

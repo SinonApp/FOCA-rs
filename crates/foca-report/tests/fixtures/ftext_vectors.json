@@ -3823,6 +3823,12 @@
  },
  {
   "lang": "en",
+  "rule": "secret",
+  "text": "Пароль в строке подключения к данным",
+  "out": "Password in a data connection string"
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7654,6 +7660,12 @@
   "rule": "doc.sourcemap",
   "text": "Не выкладывать .map в продуктив или закрыть к ним доступ; собирать без sourcesContent и абсолютных путей.",
   "out": "Не викладати .map у продуктив або закрити до них доступ; збирати без sourcesContent і абсолютних шляхів."
+ },
+ {
+  "lang": "uk",
+  "rule": "secret",
+  "text": "Пароль в строке подключения к данным",
+  "out": "Пароль у рядку підключення до даних"
  },
  {
   "lang": "uk",

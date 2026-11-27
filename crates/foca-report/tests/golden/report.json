@@ -1492,44 +1492,6 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 7.5,
-      "description": "В публично доступном документе «schedule.xlsx» найден секрет (Пароль в тексте документа): текст, строка 4.",
-      "documents": [
-        {
-          "id": 43,
-          "name": "schedule.xlsx"
-        }
-      ],
-      "evidence": "текст, строка 4:\nProvider=SQLOLEDB.1;Password=[скрыто];User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing",
-      "first_scan": "s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 1844032805376125,
-      "mitre": "T1552.001 · Unsecured Credentials: Credentials In Files",
-      "module": "secrets",
-      "notes": [],
-      "provenance": {
-        "fields": [
-          "текст, строка 4"
-        ],
-        "rule": "secret"
-      },
-      "recommendation": "Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.",
-      "severity": "high",
-      "severity_label": "Высокий",
-      "source": "Секреты в документах",
-      "status": "new",
-      "tags": [
-        "secret"
-      ],
-      "time": "2026-11-20T12:00:00",
-      "title": "Пароль в тексте документа",
-      "url": "https://files.contoso.example/corpus/ooxml/schedule.xlsx"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
       "cvss": null,
       "description": "Ярлык Windows хранит NetBIOS-имя компьютера, MAC-адрес сетевой карты и серийный номер тома, на котором он создан.",
       "documents": [
@@ -1972,6 +1934,42 @@
       "active": false,
       "category": "docs",
       "cve": [],
+      "cvss": null,
+      "description": "Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.",
+      "documents": [
+        {
+          "id": 43,
+          "name": "schedule.xlsx"
+        }
+      ],
+      "evidence": "billing (odbc): server=SRV-SQL02; database=billing; user=billing_ro; provider=SQLOLEDB.1; password=***",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 6174048165863137,
+      "mitre": "T1590 · Gather Victim Network Information",
+      "module": "forensics",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "connections"
+        ],
+        "rule": "doc.data_connection"
+      },
+      "recommendation": "Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).",
+      "severity": "high",
+      "severity_label": "Высокий",
+      "source": "Форензика документов",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Внешние источники данных в schedule.xlsx",
+      "url": "https://files.contoso.example/corpus/ooxml/schedule.xlsx"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
       "cvss": 7.5,
       "description": "В публично доступном документе «legacy.doc» найден секрет (Пароль в тексте документа): текст, строка 1.",
       "documents": [
@@ -2077,6 +2075,44 @@
       "time": "2026-11-20T12:00:00",
       "title": "Внутренние почтовые серверы и адреса в заголовках письма (backup.zip)",
       "url": "https://files.contoso.example/corpus/archive/backup.zip"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": 7.5,
+      "description": "В публично доступном документе «schedule.xlsx» найден секрет (Пароль в строке подключения к данным): поле xl/connections.xml.",
+      "documents": [
+        {
+          "id": 43,
+          "name": "schedule.xlsx"
+        }
+      ],
+      "evidence": "поле xl/connections.xml:\nxl/connections.xml: [скрыто]",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 7153783704734486,
+      "mitre": "T1552.001 · Unsecured Credentials: Credentials In Files",
+      "module": "secrets",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "поле xl/connections.xml"
+        ],
+        "rule": "secret"
+      },
+      "recommendation": "Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.",
+      "severity": "high",
+      "severity_label": "Высокий",
+      "source": "Секреты в документах",
+      "status": "new",
+      "tags": [
+        "secret"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Пароль в строке подключения к данным",
+      "url": "https://files.contoso.example/corpus/ooxml/schedule.xlsx"
     },
     {
       "active": false,
@@ -3258,7 +3294,7 @@
           "name": "hidden.xlsx"
         }
       ],
-      "evidence": "chart:xl/charts/chart1.xml:externalRef: 'C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1'!$A$1:$A$5\nxl:connection:srv-sql01 Payroll:database: Payroll\nxl:connection:srv-sql01 Payroll:odcFile: C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc\nxl:connection:srv-sql01 Payroll:user: svc_report\nxl:pivotCache1:refreshedBy: Ivan Petrenko\nxl:pivotCache1:source: Payroll!A1:D10",
+      "evidence": "chart:xl/charts/chart1.xml:externalRef: 'C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1'!$A$1:$A$5\nxl:pivotCache1:refreshedBy: Ivan Petrenko\nxl:pivotCache1:source: Payroll!A1:D10\nsrv-sql01 Payroll (odbc): server=srv-sql01.corp.example.com; database=Payroll; user=svc_report; provider=SQLOLEDB.1; target=C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -3353,42 +3389,6 @@
       "time": "2026-11-20T12:00:00",
       "title": "Личные контакты в визитных карточках (backup.zip)",
       "url": "https://files.contoso.example/corpus/archive/backup.zip"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
-      "description": "Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.",
-      "documents": [
-        {
-          "id": 43,
-          "name": "schedule.xlsx"
-        }
-      ],
-      "evidence": "xl:connection:billing:database: billing\nxl:connection:billing:user: billing_ro",
-      "first_scan": "s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 6174048165863137,
-      "mitre": "T1590 · Gather Victim Network Information",
-      "module": "forensics",
-      "notes": [],
-      "provenance": {
-        "fields": [
-          "connections"
-        ],
-        "rule": "doc.data_connection"
-      },
-      "recommendation": "Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).",
-      "severity": "warn",
-      "severity_label": "Средний",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Внешние источники данных в schedule.xlsx",
-      "url": "https://files.contoso.example/corpus/ooxml/schedule.xlsx"
     },
     {
       "active": false,
@@ -4287,7 +4287,7 @@
           "name": "network.vsdx"
         }
       ],
-      "evidence": "\\\\FS01.corp.example.test\\finance$ by i.petrenko\nC:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1\nC:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc\n\\\\SRV-FILE01\\photo\\TES2\n\\\\SRV-FILE01\\scan$\\2023-11\nC:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png",
+      "evidence": "\\\\FS01.corp.example.test\\finance$ by i.petrenko\nC:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc\nC:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1\n\\\\SRV-FILE01\\photo\\TES2\n\\\\SRV-FILE01\\scan$\\2023-11\nC:\\Users\\m.shevchuk\\Pictures\\Screenshots\\portal.png",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -6428,9 +6428,9 @@
     },
     {
       "doc": 43,
-      "finding": 1844032805376125,
-      "id": 8919109377650141,
-      "location": "текст, строка 4",
+      "finding": 7153783704734486,
+      "id": 1020571948307856,
+      "location": "поле xl/connections.xml",
       "severity": "high",
       "type": "pass",
       "value": "[скрыто]"
@@ -6729,10 +6729,10 @@
   "summary": {
     "counts": {
       "crit": 4,
-      "high": 25,
+      "high": 26,
       "info": 3,
       "low": 28,
-      "warn": 42
+      "warn": 41
     },
     "fixed": 1,
     "pages": null,

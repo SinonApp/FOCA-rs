@@ -195,10 +195,16 @@ fn text_for_secrets() {
         "deleted text is searchable too"
     );
     let t = text(&load("ooxml/schedule.xlsx"), &l).unwrap();
+    // connection string passwords are redacted; metadata keeps only a marker secret
     assert!(
-        t.contains("AKIAIOSFODNN7EXAMPLE") && t.contains("Bill!ng2023"),
+        t.contains("AKIAIOSFODNN7EXAMPLE")
+            && t.contains("Password=***")
+            && !t.contains("Bill!ng2023"),
         "{t}"
     );
+    let m = extract(&load("ooxml/schedule.xlsx"), None, &l).unwrap();
+    assert!(m.secrets.iter().any(|s| s.kind == "connection_password"));
+
     let t = text(&load("pdf/objstm.pdf"), &l).unwrap();
     assert!(t.contains("password=Winter2024!"), "{t}");
     let t = text(&load("odf/letter.odt"), &l).unwrap();

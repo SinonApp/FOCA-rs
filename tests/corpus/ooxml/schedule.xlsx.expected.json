@@ -14,6 +14,18 @@
     }
   ],
   "company": "ТОВ «Контосо Енерджі»",
+  "connections": [
+    {
+      "database": "billing",
+      "has_password": true,
+      "kind": "odbc",
+      "name": "billing",
+      "provider": "SQLOLEDB.1",
+      "server": "SRV-SQL02",
+      "source": "xl/connections.xml",
+      "user": "billing_ro"
+    }
+  ],
   "created": "2023-10-01T07:00:00Z",
   "description": "Внутрішній документ",
   "edit_time_secs": 0,
@@ -26,7 +38,7 @@
     "app:LinksUpToDate": "false",
     "persons:Сергій Лисенко": "s.lysenko@contoso.example",
     "xl:connection:billing:command": "SELECT * FROM tariffs",
-    "xl:connection:billing:connection": "Provider=SQLOLEDB.1;Password=Bill!ng2023;User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing",
+    "xl:connection:billing:connection": "Provider=SQLOLEDB.1;Password=***;User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing",
     "xl:connection:billing:database": "billing",
     "xl:connection:billing:user": "billing_ro",
     "xl:veryHidden:Паролі": "true"
@@ -87,10 +99,17 @@
     "HP LaserJet Pro M404 (BUH)"
   ],
   "revision": "3",
+  "secrets": [
+    {
+      "kind": "connection_password",
+      "source": "xl/connections.xml",
+      "value": "[redacted password: billing]"
+    }
+  ],
   "servers": [
     {
       "name": "SRV-SQL02",
-      "source": "xl/connections.xml:billing"
+      "source": "xl/connections.xml"
     },
     {
       "name": "NAS02",

@@ -1,5 +1,17 @@
 {
   "author": "John Doe",
+  "connections": [
+    {
+      "database": "Payroll",
+      "kind": "odbc",
+      "name": "srv-sql01 Payroll",
+      "provider": "SQLOLEDB.1",
+      "server": "srv-sql01.corp.example.com",
+      "source": "xl/connections.xml",
+      "target": "C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc",
+      "user": "svc_report"
+    }
+  ],
   "fields": {
     "chart:xl/charts/chart1.xml:externalRef": "'C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1'!$A$1:$A$5",
     "xl:connection:srv-sql01 Payroll:command": "SELECT * FROM salaries",
@@ -28,14 +40,14 @@
   "paths": [
     {
       "kind": "windows",
-      "path": "C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1",
-      "source": "chart:xl/charts/chart1.xml:externalRef",
+      "path": "C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc",
+      "source": "xl/connections.xml",
       "user": "ipetrenko"
     },
     {
       "kind": "windows",
-      "path": "C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc",
-      "source": "xl:connection:srv-sql01 Payroll:odcFile",
+      "path": "C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1",
+      "source": "chart:xl/charts/chart1.xml:externalRef",
       "user": "ipetrenko"
     }
   ],
@@ -53,13 +65,13 @@
     {
       "name": "ipetrenko",
       "role": "path_user",
-      "source": "C:\\Users\\ipetrenko\\Desktop\\[budget.xlsx]Sheet1"
+      "source": "C:\\Users\\ipetrenko\\Documents\\My Data Sources\\srv-sql01 Payroll.odc"
     }
   ],
   "servers": [
     {
       "name": "srv-sql01.corp.example.com",
-      "source": "xl/connections.xml:srv-sql01 Payroll"
+      "source": "xl/connections.xml"
     }
   ]
 }

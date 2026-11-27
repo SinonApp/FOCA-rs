@@ -46,6 +46,12 @@
     "app:SharedDoc": "false",
     "app:TitlesOfParts": "The document title"
   },
+  "fonts": [
+    "Cambria",
+    "Times New Roman",
+    "Arial",
+    "Calibri"
+  ],
   "format": "docx",
   "keywords": "keyword 1, keyword 2, keyword 3",
   "last_modified_by": "Jeff",

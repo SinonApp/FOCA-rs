@@ -3821,6 +3821,12 @@
       "rules": "doc.sourcemap",
       "pattern": "Не выкладывать .map в продуктив или закрыть к ним доступ; собирать без sourcesContent и абсолютных путей.",
       "text": "Не викладати .map у продуктив або закрити до них доступ; збирати без sourcesContent і абсолютних шляхів."
+    },
+    {
+      "id": "f638",
+      "rules": "secret,rdp-password,ica-password,recon.js_secret",
+      "pattern": "Пароль в строке подключения к данным",
+      "text": "Пароль у рядку підключення до даних"
     }
   ],
   "tech_cats": {
