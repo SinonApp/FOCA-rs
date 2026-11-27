@@ -405,6 +405,7 @@ fn template_key_for(rule: &str, category: &str) -> &'static str {
         | "eol-os"
         | "sw.kev"
         | "recon.outdated_tech"
+        | "recon.vuln_js_lib"
         | "ports-outdated"
         | "internetdb-cve" => "sw-cve",
 

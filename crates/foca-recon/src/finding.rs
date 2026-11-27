@@ -24,6 +24,9 @@ pub struct ReconFinding {
     pub evidence: String,
     pub url: Option<String>,
     pub tags: Vec<String>,
+    /// CVE ids the finding is about (vulnerable JS libraries).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cve: Vec<String>,
 }
 
 impl ReconFinding {
@@ -48,6 +51,7 @@ impl ReconFinding {
             evidence: String::new(),
             url: None,
             tags: vec!["recon".into()],
+            cve: Vec::new(),
         }
     }
 
@@ -78,7 +82,7 @@ impl ReconFinding {
             first_scan: None,
             fixed_scan: None,
             tags: self.tags.clone(),
-            cve: vec![],
+            cve: self.cve.clone(),
             cvss: None,
             mitre: self.mitre.clone(),
             description: self.description.clone(),

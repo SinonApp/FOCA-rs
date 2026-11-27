@@ -3707,6 +3707,24 @@
       "rules": "sw.kev",
       "pattern": "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации {}, CVSS до {}.",
       "text": "EPSS priority (FIRST): highest exploitation probability {0}, CVSS up to {1}."
+    },
+    {
+      "id": "f619",
+      "rules": "recon.vuln_js_lib",
+      "pattern": "Уязвимая JS-библиотека {} {}",
+      "text": "Vulnerable JS library {0} {1}"
+    },
+    {
+      "id": "f620",
+      "rules": "recon.vuln_js_lib",
+      "pattern": "Библиотека {} версии {} ({}) попадает в известные уязвимые диапазоны Retire.js: {n}.",
+      "text": "Library {0} version {1} ({2}) falls into known vulnerable ranges of Retire.js: {3}."
+    },
+    {
+      "id": "f621",
+      "rules": "recon.vuln_js_lib",
+      "pattern": "Обновить библиотеку до версии без известных уязвимостей или убрать неиспользуемый код.",
+      "text": "Update the library to a version without known vulnerabilities or remove unused code."
     }
   ],
   "tech_cats": {

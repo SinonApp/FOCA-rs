@@ -75,6 +75,9 @@ pub struct JsAnalysis {
     pub graphql_operations: Vec<String>,
     /// The input was truncated to [`MAX_JS_BYTES`].
     pub truncated: bool,
+    /// JavaScript libraries with versions and known vulnerable ranges (Retire.js).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub libraries: Vec<crate::retire::JsLibrary>,
 }
 
 /// Masks a secret as first 4 + `…` + last 2 characters (`***` for short values).
@@ -496,6 +499,7 @@ pub fn analyze_js(source_url: &str, js: &str) -> JsAnalysis {
         secrets: find_secrets(js),
         graphql_operations: ops.into_iter().collect(),
         truncated,
+        libraries: crate::retire::detect(source_url, js),
     }
 }
 

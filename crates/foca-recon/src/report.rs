@@ -190,6 +190,7 @@ fn f(
         evidence: String::new(),
         url: None,
         tags: vec!["recon".into()],
+        cve: Vec::new(),
     }
 }
 
@@ -225,6 +226,8 @@ fn public_client_key(s: &crate::js::SecretHit, site: &str) -> bool {
 /// - `recon.bucket_refs` (info): references to cloud storage;
 /// - `recon.js_secret` (high/critical; medium for generic, JWT and Google API keys);
 /// - `recon.outdated_tech` (medium): outdated version (jQuery, WordPress, PHP, …);
+/// - `recon.vuln_js_lib` (by Retire.js severity): a JS library version in known vulnerable
+///   ranges;
 /// - `recon.sourcemap` (low): published source maps;
 /// - `recon.robots_hidden` (info): hidden sections in robots.txt;
 /// - `recon.code_mentions` (info): the domain in public code (grep.app);
@@ -365,6 +368,61 @@ pub fn build_findings(r: &ReconReport) -> Vec<ReconFinding> {
             );
             x.recommendation = "Обновить компонент до поддерживаемой версии; скрыть версию в заголовках/метатегах.".into();
             x.evidence = t.evidence.join("; ");
+            out.push(x);
+        }
+    }
+    // JavaScript libraries in known vulnerable ranges (Retire.js), once per library version.
+    let mut lib_seen = BTreeSet::new();
+    for js in &r.js {
+        for l in &js.libraries {
+            let Some(sev) = l.severity() else { continue };
+            if !lib_seen.insert(format!("{}:{}", l.name, l.version)) {
+                continue;
+            }
+            let mut x = f(
+                "recon.vuln_js_lib",
+                format!("{}:{}", l.name, l.version),
+                format!("Уязвимая JS-библиотека {} {}", l.name, l.version),
+                sev,
+                host,
+            );
+            x.mitre = "T1190".into();
+            x.description = format!(
+                "Библиотека {} версии {} ({}) попадает в известные уязвимые диапазоны Retire.js: {}.",
+                l.name,
+                l.version,
+                js.source_url,
+                l.vulns.len()
+            );
+            x.recommendation = "Обновить библиотеку до версии без известных уязвимостей или убрать неиспользуемый код.".into();
+            x.evidence = l
+                .vulns
+                .iter()
+                .map(|v| {
+                    let ids = if v.cves.is_empty() {
+                        v.ghsa.clone().unwrap_or_default()
+                    } else {
+                        v.cves.join(",")
+                    };
+                    let from = v
+                        .at_or_above
+                        .as_deref()
+                        .map(|a| format!(">= {a}, "))
+                        .unwrap_or_default();
+                    format!(
+                        "{ids} ({from}< {}) {}: {}",
+                        v.below,
+                        v.severity,
+                        v.summary.as_deref().unwrap_or("")
+                    )
+                    .trim_end_matches([' ', ':'])
+                    .to_string()
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            x.url = Some(js.source_url.clone());
+            x.cve = l.vulns.iter().flat_map(|v| v.cves.clone()).collect();
+            x.cve.dedup();
             out.push(x);
         }
     }

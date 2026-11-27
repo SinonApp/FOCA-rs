@@ -101,7 +101,11 @@ fn group(rule: &str) -> usize {
     } else if r.starts_with("eol-")
         || matches!(
             r,
-            "sw.kev" | "ports-outdated" | "recon.outdated_tech" | "internetdb-cve"
+            "sw.kev"
+                | "ports-outdated"
+                | "recon.outdated_tech"
+                | "recon.vuln_js_lib"
+                | "internetdb-cve"
         )
     {
         5

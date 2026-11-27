@@ -3709,6 +3709,24 @@
  },
  {
   "lang": "en",
+  "rule": "recon.vuln_js_lib",
+  "text": "Уязвимая JS-библиотека X1 X2",
+  "out": "Vulnerable JS library X1 X2"
+ },
+ {
+  "lang": "en",
+  "rule": "recon.vuln_js_lib",
+  "text": "Библиотека X1 версии X2 (X3) попадает в известные уязвимые диапазоны Retire.js: 11.",
+  "out": "Library X1 version X2 (X3) falls into known vulnerable ranges of Retire.js: 11."
+ },
+ {
+  "lang": "en",
+  "rule": "recon.vuln_js_lib",
+  "text": "Обновить библиотеку до версии без известных уязвимостей или убрать неиспользуемый код.",
+  "out": "Update the library to a version without known vulnerabilities or remove unused code."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7426,6 +7444,24 @@
   "rule": "sw.kev",
   "text": "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации X1, CVSS до X2.",
   "out": "Пріоритет за EPSS (FIRST): найбільша ймовірність експлуатації X1, CVSS до X2."
+ },
+ {
+  "lang": "uk",
+  "rule": "recon.vuln_js_lib",
+  "text": "Уязвимая JS-библиотека X1 X2",
+  "out": "Вразлива JS-бібліотека X1 X2"
+ },
+ {
+  "lang": "uk",
+  "rule": "recon.vuln_js_lib",
+  "text": "Библиотека X1 версии X2 (X3) попадает в известные уязвимые диапазоны Retire.js: 11.",
+  "out": "Бібліотека X1 версії X2 (X3) потрапляє у відомі вразливі діапазони Retire.js: 11."
+ },
+ {
+  "lang": "uk",
+  "rule": "recon.vuln_js_lib",
+  "text": "Обновить библиотеку до версии без известных уязвимостей или убрать неиспользуемый код.",
+  "out": "Оновити бібліотеку до версії без відомих вразливостей або прибрати невикористовуваний код."
  },
  {
   "lang": "uk",

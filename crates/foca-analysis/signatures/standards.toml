@@ -623,6 +623,15 @@ iso27001 = ["8.8"]
 nist = ["SI-2"]
 
 [[rule]]
+id = "recon.vuln_js_lib"
+mitre = ["T1190"]
+cwe = ["CWE-1395", "CWE-1104"]
+owasp = ["A03:2025"]
+wstg = ["WSTG-INFO-08"]
+iso27001 = ["8.8"]
+nist = ["SI-2"]
+
+[[rule]]
 id = "recon.web.version_disclosure"
 mitre = ["T1592.002"]
 cwe = ["CWE-497"]

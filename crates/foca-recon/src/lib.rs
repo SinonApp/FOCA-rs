@@ -13,6 +13,7 @@
 //!   `<link rel=icon>`;
 //! - [`tech`]: site technologies via Wappalyzer-style rules, plus analytics ids (pivots);
 //! - [`js`]: endpoints and secrets in JavaScript (secrets are always masked);
+//! - [`retire`]: JavaScript library versions and vulnerable ranges (Retire.js data);
 //! - [`grepapp`]: where the domain appears in public code (grep.app);
 //! - [`wellknown`]: robots.txt / sitemap.xml / security.txt, and snapshot selection from CDX;
 //! - [`buckets`]: references to cloud storage (S3, GCS, Azure, DO Spaces, Yandex);
@@ -33,6 +34,7 @@ pub mod grepapp;
 pub mod hash;
 pub mod js;
 pub mod report;
+pub mod retire;
 pub mod screenshot;
 pub mod tech;
 pub mod webaudit;
