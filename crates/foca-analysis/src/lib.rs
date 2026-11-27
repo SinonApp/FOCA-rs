@@ -40,8 +40,8 @@ pub mod util;
 
 pub use analytics::{anomalies, chain, clusters, correlate, graphview, insights, netmap};
 pub use assess::{attack_paths, findings, forensic, infra, playbooks, portmerge, standards};
-pub use content::{artifacts, links, pii, rules, secrets};
-pub use identity::{emails, orgchart, people, translit, wordlist};
+pub use content::{artifacts, links, natid, pii, rules, secrets};
+pub use identity::{emails, orgchart, people, textpeople, translit, wordlist};
 pub use products::{cve, kev, software, vercmp};
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -151,6 +151,8 @@ pub struct Analysis {
     pub docs: Vec<Doc>,
     pub people: Vec<Person>,
     pub emails: Vec<Email>,
+    /// Phone numbers from document text (masked).
+    pub phones: Vec<api::Phone>,
     pub patterns: Vec<Pattern>,
     pub hosts: Vec<api::Host>,
     pub pcs: Vec<api::Pc>,
@@ -480,6 +482,8 @@ struct Pre<'a> {
     os: Option<SwMatch>,
     hits: Vec<secrets::SecretHit>,
     text_emails: Vec<String>,
+    /// People, contacts and identifiers named in the text.
+    text_scan: Option<textpeople::TextScan>,
 }
 
 /// Runs the analysis.
@@ -521,6 +525,7 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
                 os: None,
                 hits: vec![],
                 text_emails: vec![],
+                text_scan: None,
             };
             if let (true, Some(m)) = (analyzed, meta) {
                 for c in software::candidates(m) {
@@ -544,6 +549,13 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
                 if let (Some(t), false) = (inp.text, skip_text) {
                     hits.extend(rules.scan(t, "текст"));
                     p.text_emails = emails::find_in_text(t);
+                    let ts = textpeople::scan(t);
+                    for e in &ts.emails {
+                        if emails::valid_addr(e) && !p.text_emails.contains(e) {
+                            p.text_emails.push(e.clone());
+                        }
+                    }
+                    p.text_scan = Some(ts);
                 }
                 for (place, t) in meta_texts(m) {
                     for h in rules.scan(&t, &place) {
@@ -663,6 +675,9 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
                     src: "Метаданные документа".into(),
                 });
             }
+        }
+        if let Some(ts) = &p.text_scan {
+            textpeople::identities(ts, id, &mut idents);
         }
         for e in &p.text_emails {
             occ.push(emails::Occurrence {
@@ -869,9 +884,15 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
     }
 
     // People → Person.
+    let text_scans = || {
+        pre.iter()
+            .filter_map(|p| p.text_scan.as_ref().map(|t| (p.inp.doc.id, t)))
+    };
+    let text_attrs = textpeople::attrs(text_scans(), &resolved);
     let mut persons: Vec<Person> = Vec::new();
     for (n, &i) in keep.iter().enumerate() {
         let c = &resolved.clusters[i];
+        let ta = text_attrs.get(&i).cloned().unwrap_or_default();
         persons.push(Person {
             login: c.login.clone(),
             name: c.name.clone(),
@@ -898,9 +919,16 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             aliases: c.aliases.clone(),
             service: c.service,
             emails: c.emails.clone(),
+            title: ta.title,
+            unit: ta.unit,
+            phones: ta.phones,
+            ids: ta.ids,
+            signatory: ta.signatory,
+            src_line: ta.first.filter(|_| !c.from_meta).map(|(_, line)| line),
             ..Default::default()
         });
     }
+    let phones_out = textpeople::phones(text_scans(), |raw| login_of(raw));
 
     // ---------- 5. e-mail ----------
     let eres = emails::build(&occ, &resolved, &keep, scope);
@@ -1074,6 +1102,9 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             first_scan: p.inp.first_scan.map(str::to_string),
             ..Default::default()
         };
+        if let Some(ts) = &p.text_scan {
+            (out.text_people, out.text_contacts) = textpeople::doc_counts(ts);
+        }
         if let (true, Some(m)) = (p.analyzed, p.meta) {
             let who = |raw: &str| login_of(raw).unwrap_or_else(|| raw.to_string());
             out.author = m.author.as_deref().and_then(login_of);
@@ -1337,6 +1368,7 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
         docs: docs_out,
         people: persons,
         emails: eres.emails,
+        phones: phones_out,
         patterns: eres.patterns,
         hosts: hosts_out,
         pcs: hres.pcs,

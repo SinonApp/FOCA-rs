@@ -1,0 +1,5 @@
+# Synthetic Turkish snippets; invented names.
+# expect: Mehmet Yılmaz | Ayşe Demir | Mustafa Kaya
+Genel müdür: Mehmet Yılmaz
+Muhasebe müdürü Ayşe Demir ve avukat Mustafa Kaya toplantıya katıldı.
+Ankara, Ocak 2024. Ankara Üniversitesi.

@@ -1,0 +1,6 @@
+# Synthetic Polish snippets; invented names.
+# expect: Piotr Kowalski | Anna Nowak | Krzysztof Wiśniewski | Małgorzata Zielińska
+Prezes zarządu: Piotr Kowalski
+Osoba kontaktowa: Anna Nowak, tel. 512 345 678, PESEL 44051401359
+Dyrektor Krzysztof Wiśniewski oraz główna księgowa Małgorzata Zielińska.
+Warszawa, styczeń 2024. Uniwersytet Warszawski.

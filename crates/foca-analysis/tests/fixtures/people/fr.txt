@@ -1,0 +1,7 @@
+# Synthetic French snippets; invented names.
+# expect: Jean-Pierre Martin | Sophie Lefèvre | Charles de la Fontaine | Camille Dubois | Hélène Moreau
+Directeur général : Jean-Pierre Martin
+Responsable du projet Sophie Lefèvre, tél. 01 23 45 67 89
+M. Charles de la Fontaine, professeur à l'Université de Lyon
+Rédigé par Camille Dubois et signé par Mme Hélène Moreau.
+Paris, le 3 mars 2024. Société Générale de Construction.

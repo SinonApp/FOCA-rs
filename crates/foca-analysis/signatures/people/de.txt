@@ -1,0 +1,63 @@
+# German
+[script]
+latin
+
+[common]
+der die das und ist nicht zu den von mit sich des auf für im dem eine ein als auch es an werden aus er
+hat dass sie nach wird bei einer um am sind noch wie
+
+[given_m]
+Thomas Michael Andreas Stefan Peter Klaus Wolfgang Jürgen Frank Christian Markus Martin Uwe Matthias
+Bernd Ralf Dieter Hans Werner Günter Helmut Manfred Karl Heinz Horst Gerhard Rolf Jörg Dirk Holger
+Tobias Florian Sebastian Jan Lukas Leon Felix Jonas Maximilian Paul Niklas Tim Philipp Moritz Johannes
+Alexander Daniel David Simon Fabian Julian Benedikt Kai Sven Torsten Volker Rainer Ulrich Norbert
+Friedrich Ludwig Otto Wilhelm Hermann Georg Franz Josef Ernst Heinrich Rüdiger Detlef Björn Lars
+
+[given_f]
+Maria Ursula Monika Petra Elisabeth Sabine Renate Helga Karin Brigitte Ingrid Erika Andrea Gisela
+Claudia Susanne Gabriele Christa Christine Hildegard Anna Birgit Barbara Gertrud Heike Marianne Elke
+Martina Angelika Irmgard Inge Ute Stefanie Julia Katharina Laura Lea Lena Hannah Sophie Leonie Lisa
+Johanna Sarah Anja Nicole Melanie Sandra Tanja Silke Kerstin Doris Jutta Waltraud Annette Bettina
+Franziska Jana Lina Mia Emma Greta Charlotte Antje Dagmar
+
+[particles]
+von van der den de zu vom zum ter ten
+
+[honorifics]
+herr frau dr prof dipl ing mag
+
+[after]
+jun sen
+
+[labels]
+name ansprechpartner ansprechpartnerin verfasser verfasserin unterschrift sachbearbeiter
+sachbearbeiterin kontakt
+
+[titles]
+geschäftsführer = geschäftsführer*; geschäftsführerin
+vorstand = vorstand*; vorstandsvorsitzender
+abteilungsleiter = abteilungsleiter*
+leiter = leiter; leiterin
+projektleiter = projektleiter*
+sachbearbeiter = sachbearbeiter*
+referent = referent; referentin
+prokurist = prokurist*
+buchhalter = buchhalter*
+sekretär = sekretär*
+professor = professor; professorin; prof.
+dozent = dozent; dozentin
+dekan = dekan; dekanin
+rektor = rektor; rektorin
+ingenieur = ingenieur*
+entwickler = entwickler*
+systemadministrator = systemadministrator*
+datenschutzbeauftragter = datenschutzbeauftragte*
+dr. med. = dr. med.
+
+[stop]
+abteilung anlage anhang tabelle abbildung kapitel abschnitt artikel universität hochschule institut
+fakultät ministerium bundesministerium januar februar märz april mai juni juli august september
+oktober november dezember montag dienstag mittwoch donnerstag freitag samstag sonntag straße strasse
+deutschland österreich schweiz berlin hamburg münchen köln frankfurt stuttgart wien zürich gmbh ag kg
+sehr geehrte geehrter herren damen mit freundlichen grüßen seite datum betreff summe gesamt bericht
+vertrag rechnung bundesrepublik land stadt gemeinde

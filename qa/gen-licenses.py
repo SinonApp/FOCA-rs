@@ -295,6 +295,13 @@ def collect_data_and_assets() -> list[dict]:
             "notes": "Aggregated public CIDR prefixes (Cloudflare, AWS, Azure, GCP, Fastly, DigitalOcean, Akamai, Hetzner) in `crates/foca-net/data/cloud_ranges.txt.gz`.",
         },
         {
+            "name": "People Name and Title Lists",
+            "category": "Reference",
+            "license": "GPL-3.0",
+            "url": "https://github.com/SinonApp/FOCA-rs",
+            "notes": "Self-made per-language lists of common given names, family names, name particles, positions and stopwords (`crates/foca-analysis/signatures/people/*.txt`), compiled by the project from general knowledge; part of FOCA-rs.",
+        },
+        {
             "name": "Security Standards Identifiers",
             "category": "Reference",
             "license": "Facts / CC BY-SA 4.0 (OWASP)",

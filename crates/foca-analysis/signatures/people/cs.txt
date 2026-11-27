@@ -1,0 +1,42 @@
+# Czech
+[script]
+latin
+
+[common]
+a v se na je že s z do o k to i jako pro by být byl jsou ale nebo od po při tak které který
+
+[given_m]
+Jiří Jan Petr Josef Pavel Martin Tomáš Jaroslav Miroslav Zdeněk Václav Michal František Jakub Milan
+Karel Lukáš David Vladimír Ondřej Ladislav Roman Stanislav Marek Radek Daniel Antonín Vojtěch Filip
+Adam Matěj Aleš Libor Vít Zbyněk
+
+[given_f]
+Jana Marie Eva Hana Anna Lenka Kateřina Lucie Věra Alena Petra Veronika Jaroslava Tereza Martina
+Michaela Jitka Helena Ludmila Zdeňka Ivana Monika Eliška Zuzana Markéta Barbora Kristýna Klára Adéla
+Natálie Simona Dagmar Vlasta Božena
+
+[surname_suffix]
+ová ský ská ček čková ák ík ek
+
+[honorifics]
+pan paní ing mgr dr doc prof bc
+
+[labels]
+jméno příjmení kontakt autor podpis
+
+[titles]
+generální ředitel = generální ředitel*
+ředitel = ředitel*
+vedoucí = vedoucí
+jednatel = jednatel*
+účetní = účetní
+sekretářka = sekretářka
+profesor = profesor*
+docent = docent*
+děkan = děkan
+
+[stop]
+příloha tabulka obrázek kapitola článek univerzita institut fakulta ministerstvo leden únor březen
+duben květen červen červenec srpen září říjen listopad prosinec ledna února března dubna května
+června července srpna října listopadu prosince pondělí úterý středa čtvrtek pátek sobota neděle ulice
+česká republika praha brno ostrava vážený vážená datum strana celkem zpráva smlouva faktura

@@ -76,7 +76,9 @@ fn forensic_findings_from_fixtures() {
     assert!(has("doc.scan_without_text", "scan.pdf").is_some());
     // Signers become people.
     assert!(
-        a.people.iter().any(|p| p.name.contains("Петренко")),
+        a.people.iter().any(
+            |p| p.name.contains("Петренко") || p.aliases.iter().any(|x| x.contains("Петренко"))
+        ),
         "{:?}",
         a.people.iter().map(|p| &p.name).collect::<Vec<_>>()
     );

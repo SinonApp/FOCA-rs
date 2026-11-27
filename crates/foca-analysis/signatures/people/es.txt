@@ -1,0 +1,49 @@
+# Spanish
+[script]
+latin
+
+[common]
+el la los las de del y en que es un una por con para no se su al lo como más pero sus le ya o este
+esta son
+
+[given_m]
+José Antonio Manuel Francisco Juan David Javier Daniel Carlos Jesús Alejandro Miguel Rafael Pedro
+Pablo Ángel Sergio Fernando Jorge Luis Alberto Álvaro Adrián Diego Raúl Enrique Ramón Vicente Andrés
+Joaquín Santiago Víctor Eduardo Mario Roberto Jaime Ignacio Alfonso Rubén Óscar Hugo Mateo Martín
+Lucas Gonzalo Iván Emilio Julio Marcos Guillermo Agustín Felipe Gustavo Ricardo Héctor Rodrigo
+
+[given_f]
+María Carmen Josefa Isabel Ana Laura Dolores Pilar Teresa Rosa Cristina Marta Lucía Elena Paula Sara
+Mercedes Raquel Manuela Rosario Beatriz Julia Concepción Silvia Patricia Alba Irene Andrea Noelia
+Nuria Sofía Valentina Martina Daniela Gabriela Natalia Claudia Alicia Inmaculada Montserrat Ángela
+Esther Eva Lorena Mónica Rocío Victoria Ximena Camila Verónica Adriana Guadalupe
+
+[particles]
+de del la las los y
+
+[honorifics]
+sr sra srta don doña dr dra lic ing
+
+[labels]
+nombre apellidos contacto autor firmado firma responsable
+
+[titles]
+director general = director general; directora general
+director = director; directora
+gerente = gerente
+jefe de proyecto = jefe de proyecto
+jefe = jefe; jefa
+responsable = responsable
+ingeniero = ingeniero; ingeniera
+contador = contador; contadora; contable
+secretario = secretario; secretaria
+catedrático = catedrático; catedrática
+profesor = profesor; profesora
+abogado = abogado; abogada
+consejero delegado = consejero delegado
+
+[stop]
+anexo tabla figura capítulo sección artículo universidad instituto facultad ministerio enero febrero
+marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre lunes martes miércoles
+jueves viernes sábado domingo calle avenida plaza españa madrid barcelona méxico buenos aires
+estimado estimada atentamente asunto fecha página total informe contrato factura gobierno santa san

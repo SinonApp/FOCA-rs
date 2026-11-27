@@ -1,0 +1,84 @@
+# English
+[script]
+latin
+
+[common]
+the and of to in is for that with on as by this are be from or at which an it not have was were will
+shall should may
+
+[given_m]
+James John Robert Michael William David Richard Joseph Thomas Charles Christopher Daniel Matthew
+Anthony Mark Donald Steven Paul Andrew Joshua Kenneth Kevin Brian George Timothy Ronald Edward Jason
+Jeffrey Ryan Jacob Gary Nicholas Eric Jonathan Stephen Larry Justin Scott Brandon Benjamin Samuel
+Gregory Alexander Frank Patrick Raymond Jack Dennis Jerry Tyler Aaron Jose Adam Nathan Henry Douglas
+Zachary Peter Kyle Walter Ethan Jeremy Harold Keith Christian Roger Noah Gerald Carl Terry Sean Austin
+Arthur Lawrence Jesse Dylan Bryan Joe Jordan Billy Bruce Albert Willie Gabriel Logan Alan Juan Wayne
+Roy Ralph Randy Eugene Vincent Russell Elijah Louis Bobby Philip Johnny Oliver Harry Liam Owen Connor
+Ian Neil Colin Graham Simon Martin Nigel Trevor Gavin Stuart Hugh Malcolm Duncan Fraser
+
+[given_f]
+Mary Patricia Jennifer Linda Elizabeth Barbara Susan Jessica Sarah Karen Lisa Nancy Betty Margaret
+Sandra Ashley Kimberly Emily Donna Michelle Carol Amanda Dorothy Melissa Deborah Stephanie Rebecca
+Sharon Laura Cynthia Kathleen Amy Angela Shirley Anna Brenda Pamela Emma Nicole Helen Samantha Katherine
+Christine Debra Rachel Carolyn Janet Catherine Maria Heather Diane Ruth Julie Olivia Joyce Virginia
+Victoria Kelly Lauren Christina Joan Evelyn Judith Megan Andrea Cheryl Hannah Jacqueline Martha Gloria
+Teresa Ann Sara Madison Frances Kathryn Janice Jean Abigail Alice Judy Sophia Grace Denise Amber Doris
+Marilyn Danielle Beverly Isabella Theresa Diana Natalie Brittany Charlotte Marie Kayla Alexis Lori
+Julia Claire Fiona Gillian Siobhan Bethany Chloe Lucy Sophie Jade Megan Holly
+
+[ambiguous]
+will mark grace joy hope faith rose may june april summer august victoria virginia carol bill
+amber jack frank georgia sydney paris florence jordan
+
+[particles]
+mc mac o'
+
+[honorifics]
+mr mrs ms miss dr prof sir dame rev hon
+
+[after]
+jr sr ii iii iv phd md esq
+
+[labels]
+name full name contact person author prepared by approved by signed by signature owner manager
+
+[titles]
+chief executive officer = chief executive officer; ceo
+chief technology officer = chief technology officer; cto
+chief financial officer = chief financial officer; cfo
+chief information security officer = chief information security officer; ciso
+chief operating officer = chief operating officer; coo
+vice president = vice president; vp
+managing director = managing director
+director = director
+head of department = head of department; head of
+manager = manager
+project manager = project manager
+team lead = team lead; team leader
+senior engineer = senior engineer
+engineer = engineer
+developer = developer; software engineer
+system administrator = system administrator; sysadmin
+accountant = accountant
+secretary = secretary
+associate professor = associate professor
+assistant professor = assistant professor
+professor = professor; prof.
+lecturer = lecturer; senior lecturer
+dean = dean
+rector = rector
+president = president
+chairman = chairman; chairperson; chair
+consultant = consultant
+analyst = analyst
+officer = officer
+
+[stop]
+introduction conclusion table figure appendix chapter section article university institute faculty
+department center centre ministry president january february march april june july september october
+november december monday tuesday wednesday thursday friday saturday sunday street avenue road the and
+of for with new united states kingdom europe european ukraine kyiv kiev russia poland germany france
+england london paris berlin washington google microsoft apple amazon facebook zoom teams moodle office
+word excel adobe acrobat scopus web science orcid isbn issn doi pdf http https www dear regards
+sincerely best kind yours thank thanks please note page date total summary report policy agreement
+contract invoice inc ltd llc corp company group services north south east west san santa los las

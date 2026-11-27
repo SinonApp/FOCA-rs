@@ -1,0 +1,7 @@
+# Synthetic Italian snippets; invented names.
+# expect: Giuseppe Rossi | Francesca Bianchi | Marco De Luca | Chiara Esposito
+Amministratore delegato: Giuseppe Rossi
+Referente: Francesca Bianchi, codice fiscale RSSMRA85T10A562S
+Dott. Marco De Luca, direttore
+La professoressa Chiara Esposito ha firmato.
+Roma, aprile 2024. Università di Bologna.

@@ -1,0 +1,5 @@
+# Synthetic Czech snippets; invented names.
+# expect: Jan Novák | Petra Svobodová | Tomáš Dvořák
+Jednatel: Jan Novák
+Vedoucí oddělení Petra Svobodová a docent Tomáš Dvořák.
+Praha, březen 2024. Univerzita Karlova.

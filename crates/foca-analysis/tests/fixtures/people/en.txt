@@ -1,0 +1,13 @@
+# Synthetic English snippets; invented names.
+# expect: Emily Carter | John A. Whitfield | Sarah Thompson | Michael O'Connor | Robert Hale Jr | Laura McAllister | Kevin Brandt | K. Brennan | J.R. Halloway | Olena Kovalchuk
+Prepared by: Emily Carter, Chief Technology Officer
+Approved by John A. Whitfield, Director of Finance, phone (415) 555-2671
+Contact Sarah Thompson at sarah.thompson@example.com for details.
+Dr. Michael O'Connor, Department of Computer Science
+Robert Hale, Jr., Senior Engineer
+Carter, Emily
+Ms. Laura McAllister and Kevin Brandt attended the meeting.
+References: Brennan K. (2019) Data security. J.R. Halloway, Notes on privacy.
+Signed: Olena Kovalchuk, Project Manager, Kyiv office
+The United States and the European Union signed the agreement in New York.
+Table 3 shows the results. Grace period ends in May. Will Power Supply Inc.

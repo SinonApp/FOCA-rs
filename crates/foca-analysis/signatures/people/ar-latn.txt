@@ -1,0 +1,27 @@
+# Arabic, Persian, Hebrew and South Asian names in Latin transliteration
+[script]
+latin
+
+[given_m]
+Mohammed Mohammad Muhammad Mohamed Ahmed Ahmad Ali Hassan Hasan Hussein Husain Omar Umar Khaled Khalid
+Abdullah Abdallah Youssef Yusuf Ibrahim Mustafa Mostafa Mahmoud Mahmood Said Saeed Tariq Tarek Karim
+Kareem Sami Fahad Nasser Salman Adel Walid Yasser Hisham Majid Rami Ziad Faisal Mansour Jamal Nabil
+Suleiman Osman Hamza Anas Bilal Ismail Reza Mehdi Amir Hamid Masoud Bahram Dariush Kourosh Farhad
+Babak Arash Omid Moshe Yosef Avraham Yitzhak Yaakov Shmuel Uri Yonatan Noam Itai Ariel Alon Guy Ido
+Avi Yossi Chaim Shlomo Eliyahu Rahul Amit Arjun Vikram Sanjay Rajesh Suresh Anil Ravi Deepak Imran
+Asif Bilal Usman Kwame Kofi Chinedu Oluwaseun Tunde Emeka Ade
+
+[given_f]
+Fatima Fatma Maryam Mariam Aisha Ayesha Khadija Zainab Zeinab Noor Nour Sara Layla Leila Huda Amal
+Salma Rana Dina Yasmin Yasmine Mona Hind Lina Nadia Souad Samira Iman Asma Hanan Zahra Narges Mahsa
+Nazanin Shirin Parisa Mina Azadeh Rachel Leah Rivka Miriam Noa Tamar Michal Yael Shira Ruth Esther
+Priya Anjali Pooja Neha Sunita Kavita Ngozi Amara Chiamaka Folake
+
+[ambiguous]
+guy noor amal hind iman mona ruth esther dina lina rana
+
+[particles]
+al el bin ibn bint abu abd ben bar
+
+[stop]
+allah

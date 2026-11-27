@@ -1,0 +1,5 @@
+# Synthetic Persian snippets; invented names.
+# expect: علی رضایی | مریم احمدی
+مدیرعامل: علی رضایی
+خانم مریم احمدی
+دانشگاه تهران

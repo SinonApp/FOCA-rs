@@ -1,0 +1,6 @@
+# Synthetic Japanese snippets; invented names.
+# expect: 佐藤 太郎 | 鈴木花子 | 高橋 健
+担当者：佐藤 太郎
+鈴木花子様へのご連絡
+作成者 | 高橋 健 | 2024年
+株式会社東京は日本の会社です。

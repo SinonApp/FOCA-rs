@@ -4,5 +4,6 @@
 pub mod emails;
 pub mod orgchart;
 pub mod people;
+pub mod textpeople;
 pub mod translit;
 pub mod wordlist;

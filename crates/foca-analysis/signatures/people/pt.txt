@@ -1,0 +1,44 @@
+# Portuguese
+[script]
+latin
+
+[common]
+o a os as de do da dos das e em que é um uma para com não por se na no mais ao como seu sua são foi
+
+[given_m]
+João José António Antonio Francisco Carlos Paulo Pedro Lucas Luís Luiz Marcos Gabriel Rafael Daniel
+Marcelo Bruno Eduardo Felipe Rodrigo Manuel Ricardo Fernando Gustavo Tiago Thiago Miguel Rui Nuno
+Diogo André Gonçalo Vítor Vitor Sérgio Jorge Mário Joaquim Leonardo Matheus Henrique Arthur Davi
+Heitor Bernardo Caio Renato Alexandre
+
+[given_f]
+Maria Ana Francisca Antónia Adriana Juliana Márcia Fernanda Patrícia Aline Sandra Camila Amanda Bruna
+Jéssica Letícia Júlia Luciana Vanessa Mariana Gabriela Beatriz Carolina Inês Joana Rita Catarina Sofia
+Leonor Matilde Alice Helena Laura Manuela Valentina Isabela Larissa Rafaela Tatiana Cláudia Teresa
+
+[particles]
+de da do dos das e
+
+[honorifics]
+sr sra dr dra eng prof
+
+[labels]
+nome contacto contato autor assinatura responsável
+
+[titles]
+diretor executivo = diretor executivo; diretora executiva
+diretor = diretor; diretora
+gerente = gerente
+gestor = gestor; gestora
+coordenador = coordenador; coordenadora
+engenheiro = engenheiro; engenheira
+contabilista = contabilista; contador; contadora
+secretário = secretário; secretária
+professor = professor; professora
+advogado = advogado; advogada
+
+[stop]
+anexo tabela figura capítulo secção seção artigo universidade instituto faculdade ministério janeiro
+fevereiro março abril maio junho julho agosto setembro outubro novembro dezembro segunda terça quarta
+quinta sexta sábado domingo rua avenida praça portugal brasil lisboa porto paulo rio janeiro prezado
+prezada atenciosamente assunto data página total relatório contrato fatura são

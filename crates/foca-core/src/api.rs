@@ -309,6 +309,12 @@ pub struct Doc {
     /// Where the document link came from (crawler page, another document, public storage).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub provenance: Option<DocProvenance>,
+    /// People named in the document text (unique spellings).
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub text_people: u32,
+    /// Contacts and personal identifiers in the document text (phones, e-mails, identifiers).
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub text_contacts: u32,
 }
 
 /// How a document was reached: the in-scope page that linked it, or the downloaded document it
@@ -374,9 +380,44 @@ pub struct Person {
     /// Confidence of the department assignment, 0-95.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub dept_conf: Option<u8>,
-    /// Job title from a signing certificate.
+    /// Job title from a signing certificate, or the position / academic title written next to
+    /// the name in document text (`доцент, к.ю.н.`, `CTO`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    /// Department, faculty or unit written next to the name in document text.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub unit: Option<String>,
+    /// Phone numbers written next to the name, masked (`+38••••••••67`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub phones: Vec<String>,
+    /// Kinds of personal identifiers written next to the name (`rnokpp`, `birth_date`,
+    /// `pl_pesel`, ...); values are never stored.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ids: Vec<String>,
+    /// Named in a signature block (`_____ /Петренко І.В./`, `(підпис)`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub signatory: bool,
+    /// Line of the first text mention in `src_doc` (1-based).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub src_line: Option<u32>,
+}
+
+/// A phone number found in document text (`phones` snapshot key). The value is masked.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Phone {
+    /// Masked number (`+38••••••••67`).
+    pub value: String,
+    /// ISO country (`UA`, `US`, ...) or empty when only the shape is known.
+    #[serde(default)]
+    pub country: String,
+    /// Documents that contain the number.
+    pub docs: u32,
+    /// First document.
+    #[serde(default)]
+    pub src_doc: Option<u64>,
+    /// Person the number is written next to (login).
+    #[serde(default)]
+    pub login: Option<String>,
 }
 
 /// `Email`.
@@ -754,6 +795,8 @@ pub struct Snapshot {
     pub docs: Vec<Doc>,
     pub people: Vec<Person>,
     pub emails: Vec<Email>,
+    /// Phone numbers from document text (masked).
+    pub phones: Vec<Phone>,
     pub patterns: Vec<Pattern>,
     pub hosts: Vec<Host>,
     pub pcs: Vec<Pc>,
@@ -784,9 +827,9 @@ pub struct Snapshot {
 
 /// Snapshot keys read by the UI screens (the demo backend `SNAP_KEYS` plus `settings` and `scan`).
 pub const SNAPSHOT_KEYS: &[&str] = &[
-    "project", "scope", "docs", "people", "emails", "patterns", "hosts", "pcs", "software",
-    "paths", "printers", "secrets", "findings", "gps", "events", "scans", "reports", "leaks",
-    "settings", "scan",
+    "project", "scope", "docs", "people", "emails", "phones", "patterns", "hosts", "pcs",
+    "software", "paths", "printers", "secrets", "findings", "gps", "events", "scans", "reports",
+    "leaks", "settings", "scan",
 ];
 
 #[cfg(test)]

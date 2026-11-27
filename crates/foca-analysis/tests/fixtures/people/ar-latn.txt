@@ -1,0 +1,6 @@
+# Synthetic English text with transliterated names; invented names.
+# expect: Mohammed bin Rashid | Fatima Al-Zahra | Ahmed el-Sayed | Yossi Ben-David | Reza Ahmadi
+Approved by Mohammed bin Rashid, Managing Director
+Contact person: Fatima Al-Zahra, finance officer
+Dr. Ahmed el-Sayed and Yossi Ben-David reviewed the plan.
+Prepared by Reza Ahmadi

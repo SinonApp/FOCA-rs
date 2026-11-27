@@ -1,0 +1,44 @@
+# Turkish
+[script]
+latin
+
+[common]
+ve bir bu da de için ile olarak olan gibi daha çok en ne var mı ise ya kadar sonra her şekilde göre
+
+[given_m]
+Mehmet Mustafa Ahmet Ali Hüseyin Hasan İbrahim İsmail Osman Yusuf Murat Ömer Ramazan Halil Süleyman
+Abdullah Mahmut Recep Salih Fatih Kadir Emre Burak Serkan Volkan Onur Cem Can Kerem Barış Tolga
+Oğuz Uğur Selim Kemal Erdem Eren Yiğit Arda Kaan Berk Emir Efe Deniz
+
+[given_f]
+Fatma Ayşe Emine Hatice Zeynep Elif Meryem Şerife Zehra Sultan Hanife Merve Havva Zeliha Esra Fadime
+Özlem Hacer Yasemin Hülya Leyla Derya Sevgi Ebru Gül Dilek Büşra Kübra Seda Tuğba Aslı Ece Defne Ela
+Nisa Asya Selin İrem Melike Gamze
+
+[ambiguous]
+deniz gül sultan can
+
+[honorifics]
+bay bayan sayın dr prof doç av
+
+[after]
+bey hanım
+
+[labels]
+ad soyad adı soyadı iletişim yazar imza yetkili
+
+[titles]
+genel müdür = genel müdür*
+müdür = müdür*
+yönetici = yönetici
+mühendis = mühendis
+muhasebeci = muhasebeci; muhasebe müdürü
+sekreter = sekreter
+profesör = profesör
+doçent = doçent
+avukat = avukat
+
+[stop]
+ek tablo şekil bölüm madde üniversite enstitü fakülte bakanlığı ocak şubat mart nisan mayıs haziran
+temmuz ağustos eylül ekim kasım aralık pazartesi salı çarşamba perşembe cuma cumartesi pazar cadde
+sokak türkiye ankara istanbul izmir sayın tarih sayfa toplam rapor sözleşme fatura cumhuriyeti

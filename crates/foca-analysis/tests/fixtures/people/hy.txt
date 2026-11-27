@@ -1,0 +1,5 @@
+# Synthetic Armenian snippets; invented names.
+# expect: Արամ Պետրոսյան | Անի Հակոբյան
+տնօրեն Արամ Պետրոսյան
+պրոֆեսոր Անի Հակոբյան
+Երևան Հայաստան

@@ -1,0 +1,6 @@
+# Synthetic Korean snippets; invented names.
+# expect: 김민수 | 이수진 | 박지훈
+담당자: 김민수
+이수진 교수님께서 발표하셨습니다.
+박지훈님 감사합니다.
+서울 대한민국 주식회사 회의 자료

@@ -775,6 +775,7 @@ pub fn build(ctx: &Ctx) -> Vec<Finding> {
     }
 
     crate::forensic::drafts(&an, &mut drafts);
+    super::people_text::drafts(ctx.people, &mut drafts);
 
     finalize(drafts, ctx, &by_id)
 }

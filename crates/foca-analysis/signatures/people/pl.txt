@@ -1,0 +1,48 @@
+# Polish
+[script]
+latin
+
+[common]
+i w na z do nie się że jest to o jak po od za przez dla oraz lub ale jego jej ich być został może są
+
+[given_m]
+Piotr Krzysztof Andrzej Tomasz Paweł Jan Michał Marcin Jakub Adam Marek Łukasz Grzegorz Mateusz Wojciech
+Mariusz Dariusz Zbigniew Jerzy Maciej Rafał Robert Kamil Józef Henryk Ryszard Kazimierz Stanisław
+Tadeusz Mirosław Sławomir Bartosz Dawid Szymon Filip Kacper Wiktor Damian Przemysław Sebastian Artur
+Janusz Waldemar Zdzisław Leszek Bogdan Czesław Wiesław
+
+[given_f]
+Anna Maria Katarzyna Małgorzata Agnieszka Barbara Ewa Krystyna Elżbieta Magdalena Joanna Aleksandra
+Zofia Monika Teresa Danuta Natalia Karolina Marta Beata Dorota Halina Jadwiga Jolanta Iwona Grażyna
+Bożena Urszula Justyna Renata Alicja Paulina Sylwia Agata Patrycja Julia Wiktoria Zuzanna Hanna Maja
+Oliwia Weronika Kinga Emilia Izabela Martyna Wanda Irena Stanisława
+
+[surname_suffix]
+ski ska cki cka dzki dzka wicz owicz ewicz czyk ak ek uk ik
+
+[honorifics]
+pan pani dr prof mgr inż
+
+[labels]
+imię nazwisko kontakt autor podpis osoba kontaktowa
+
+[titles]
+prezes zarządu = prezes zarządu; prezes
+dyrektor = dyrektor*
+kierownik = kierownik*
+księgowy = główny księgowy; księgowa; księgowy
+specjalista = specjalista; specjalistka
+inżynier = inżynier
+sekretarz = sekretarz
+profesor = profesor
+adiunkt = adiunkt
+dziekan = dziekan
+rektor = rektor
+prawnik = prawnik; radca prawny
+
+[stop]
+załącznik tabela rysunek rozdział artykuł uniwersytet instytut wydział ministerstwo styczeń luty marzec
+kwiecień maj czerwiec lipiec sierpień wrzesień październik listopad grudzień stycznia lutego marca
+kwietnia maja czerwca lipca sierpnia września października listopada grudnia poniedziałek wtorek środa
+czwartek piątek sobota niedziela ulica polska warszawa kraków gdańsk wrocław poznań łódź szanowny
+szanowna szanowni pozdrawiam data strona razem sprawozdanie umowa faktura rzeczpospolita

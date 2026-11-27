@@ -1,0 +1,6 @@
+# Synthetic Portuguese snippets; invented names.
+# expect: João Pedro Silva | Ana Carolina Souza | Rui Costa | Mariana dos Santos
+Diretor executivo: João Pedro Silva
+Coordenadora Ana Carolina Souza, contacto ana@example.pt
+O engenheiro Rui Costa e Mariana dos Santos assinaram o relatório.
+Lisboa, março de 2024. Universidade do Porto.

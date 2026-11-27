@@ -1,0 +1,9 @@
+# Synthetic German snippets; invented names.
+# expect: Jürgen Müller | Anna-Lena Schröder | Klaus von Bergen | Stefanie Hoffmann | Thomas Weiß | Markus van der Linden
+Geschäftsführer: Jürgen Müller
+Ansprechpartnerin: Anna-Lena Schröder, Telefon: 030 1234567, E-Mail: a.schroeder (at) example (dot) de
+Prof. Dr. Klaus von Bergen, Lehrstuhl für Informatik
+Die Rechnung wurde von Stefanie Hoffmann, Buchhalterin, geprüft.
+Herr Thomas Weiß und Markus van der Linden waren anwesend.
+Sehr geehrte Damen und Herren, mit freundlichen Grüßen aus Berlin.
+Steuer-ID 86095742719

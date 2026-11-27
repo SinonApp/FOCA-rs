@@ -29,8 +29,8 @@ pub const REFERENCE_CASE_ARCHIVE: &str = "priklad-reference-case.zip";
 
 /// Entity kinds stored as whole JSON values after analysis.
 pub const ENTITY_KINDS: &[&str] = &[
-    "docs", "people", "emails", "patterns", "hosts", "pcs", "software", "os", "paths", "printers",
-    "secrets", "gps", "events", "graph", "activity", "risk", "leaks",
+    "docs", "people", "emails", "phones", "patterns", "hosts", "pcs", "software", "os", "paths",
+    "printers", "secrets", "gps", "events", "graph", "activity", "risk", "leaks",
 ];
 
 /// A new document to insert.
@@ -1892,9 +1892,7 @@ impl ProjectDb {
                 };
                 x.error_kind = Some(kind);
             } else {
-                x.error_reason = None;
-                x.http_status = None;
-                x.error_kind = None;
+                (x.error_reason, x.http_status, x.error_kind) = (None, None, None);
             }
             out.push(x);
         }
@@ -1913,6 +1911,7 @@ impl ProjectDb {
             docs: self.ui_docs()?,
             people: self.entity_vec("people")?,
             emails: self.entity_vec("emails")?,
+            phones: self.entity_vec("phones")?,
             patterns: self.entity_vec("patterns")?,
             hosts: self.entity_vec("hosts")?,
             pcs: self.entity_vec("pcs")?,

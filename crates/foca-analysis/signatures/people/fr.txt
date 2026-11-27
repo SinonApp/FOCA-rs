@@ -1,0 +1,50 @@
+# French
+[script]
+latin
+
+[common]
+le la les de des du et est un une en dans pour que qui sur au aux par pas plus ne se ce avec son sa
+ses sont été être cette ces
+
+[given_m]
+Jean Pierre Michel André Philippe Alain Jacques Bernard Patrick Daniel Christian Nicolas Éric Eric
+Frédéric Laurent Stéphane Olivier Thierry Pascal Julien Sébastien Christophe David Vincent François
+Thomas Guillaume Antoine Maxime Alexandre Romain Mathieu Benoît Didier Gérard Claude Henri Louis Hugo
+Lucas Théo Léo Gabriel Raphaël Arthur Jules Mathis Baptiste Clément Quentin Yves Marcel Georges René
+
+[given_f]
+Marie Nathalie Isabelle Sylvie Catherine Françoise Martine Christine Monique Valérie Sandrine Nicole
+Sophie Céline Véronique Chantal Stéphanie Patricia Julie Aurélie Émilie Emilie Camille Léa Manon Chloé
+Inès Jade Louise Alice Juliette Charlotte Mathilde Pauline Margaux Élodie Laetitia Hélène Anne Brigitte
+Jacqueline Danielle Odile Agnès Claire Delphine Virginie Caroline Laure Mélanie Amandine
+
+[particles]
+de du des la le d'
+
+[honorifics]
+m mme mlle me dr pr monsieur madame mademoiselle maître
+
+[labels]
+nom prénom contact auteur rédigé signé signataire responsable interlocuteur
+
+[titles]
+président-directeur général = président-directeur général; pdg
+directeur général = directeur général; directrice générale; dg
+directeur = directeur; directrice
+chef de projet = chef de projet
+chef de service = chef de service
+responsable = responsable
+ingénieur = ingénieur*
+comptable = comptable
+secrétaire = secrétaire
+professeur = professeur*; pr.
+maître de conférences = maître de conférences
+gérant = gérant*
+avocat = avocat*
+notaire = notaire
+
+[stop]
+annexe tableau figure chapitre section article université institut faculté ministère janvier février
+mars avril mai juin juillet août septembre octobre novembre décembre lundi mardi mercredi jeudi
+vendredi samedi dimanche rue avenue boulevard place france paris lyon marseille bruxelles genève
+madame monsieur cordialement objet date page total rapport contrat facture société république

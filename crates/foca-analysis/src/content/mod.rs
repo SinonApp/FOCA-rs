@@ -3,6 +3,7 @@
 
 pub mod artifacts;
 pub mod links;
+pub mod natid;
 pub mod pii;
 pub mod rules;
 pub mod secrets;

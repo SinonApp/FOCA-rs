@@ -1,0 +1,5 @@
+# Synthetic Hebrew snippets; invented names.
+# expect: דוד כהן | מיכל לוי
+מנכ"ל: דוד כהן
+מהנדסת מיכל לוי
+אוניברסיטה בירושלים

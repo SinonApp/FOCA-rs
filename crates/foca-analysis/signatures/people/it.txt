@@ -1,0 +1,45 @@
+# Italian
+[script]
+latin
+
+[common]
+il lo la i gli le di del della e è un una in che per con non si da al alla dei delle sono come più
+
+[given_m]
+Giuseppe Giovanni Antonio Mario Luigi Francesco Angelo Vincenzo Pietro Salvatore Carlo Franco Domenico
+Bruno Paolo Michele Giorgio Aldo Sergio Luciano Marco Andrea Alessandro Matteo Lorenzo Stefano Roberto
+Massimo Fabio Davide Simone Riccardo Daniele Federico Emanuele Gabriele Leonardo Tommaso Filippo
+Edoardo Alberto Enrico Claudio Maurizio Gianluca Raffaele Nicola Fabrizio
+
+[given_f]
+Maria Anna Giuseppina Rosa Angela Giovanna Teresa Lucia Carmela Caterina Francesca Antonietta Carla
+Elena Concetta Rita Margherita Franca Paola Laura Sara Giulia Chiara Federica Valentina Alessandra
+Silvia Martina Elisa Sofia Aurora Alice Ginevra Emma Beatrice Greta Ilaria Roberta Cristina Monica
+Daniela Barbara Simona Stefania Claudia Serena
+
+[particles]
+di de del della da dal dalla dei degli lo la
+
+[honorifics]
+sig sig.ra dott dott.ssa ing avv prof
+
+[labels]
+nome cognome contatto referente autore firma responsabile
+
+[titles]
+amministratore delegato = amministratore delegato
+direttore generale = direttore generale
+direttore = direttore; direttrice
+responsabile = responsabile
+dirigente = dirigente
+ingegnere = ingegnere
+commercialista = commercialista
+segretario = segretario; segretaria
+professore = professore; professoressa
+avvocato = avvocato
+
+[stop]
+allegato tabella figura capitolo sezione articolo università istituto facoltà ministero gennaio
+febbraio marzo aprile maggio giugno luglio agosto settembre ottobre novembre dicembre lunedì martedì
+mercoledì giovedì venerdì sabato domenica via viale piazza corso italia roma milano napoli torino
+gentile egregio cordiali saluti oggetto data pagina totale relazione contratto fattura repubblica san

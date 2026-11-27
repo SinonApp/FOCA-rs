@@ -1,0 +1,7 @@
+# Synthetic Spanish snippets; invented names.
+# expect: José García López | María del Carmen Ruiz | Javier Fernández | Lucía Martínez Soto
+Director general: José García López
+Responsable: María del Carmen Ruiz, correo m.ruiz arroba example punto es
+Firmado por Javier Fernández, ingeniero, DNI 12345678Z
+La catedrática Lucía Martínez Soto presentó el informe.
+Madrid, enero de 2024. Universidad de Salamanca.

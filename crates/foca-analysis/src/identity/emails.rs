@@ -162,6 +162,108 @@ pub fn find_in_text(text: &str) -> Vec<String> {
     out
 }
 
+fn re_obfuscated() -> &'static regex::Regex {
+    static R: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    R.get_or_init(|| {
+        let at = r"собака|сабака|arroba|arobase|klammeraffe|chiocciola|małpa|malpa|zavináč|atmark|\bat\b|@";
+        let dot = r"dot|точка|крапка|punkt|punto|point|kropka|tečka|nokta|\.";
+        regex::Regex::new(&format!(
+            r"(?i)([a-z0-9._%+\-]+)\s*([(\[{{<]?)\s*({at})\s*[)\]}}>]?\s*([a-z0-9\-]+(?:\s*[(\[{{<]?\s*(?:{dot})\s*[)\]}}>]?\s*[a-z0-9\-]+)+)"
+        ))
+        .expect("obfuscated e-mail regex")
+    })
+}
+
+/// Quick filter: the line can hold a plain or an obfuscated address.
+pub fn may_hold_address(line: &str) -> bool {
+    line.contains('@') || {
+        let l = line.to_lowercase();
+        [
+            "at",
+            "собака",
+            "сабака",
+            "arroba",
+            "arobase",
+            "klammeraffe",
+            "chiocciola",
+            "małpa",
+            "malpa",
+            "zavináč",
+            "atmark",
+        ]
+        .iter()
+        .any(|w| l.contains(w))
+    }
+}
+
+/// Addresses in one line with their byte column: plain ones and obfuscated forms
+/// (`ivan (at) example (dot) com`, `ivan собака example.com`, `ivan arroba example punto es`,
+/// `ivan [at] example.com`). A bare English `at` counts only when the dots are spelled too.
+pub fn find_in_line(line: &str) -> Vec<(usize, String)> {
+    let mut out: Vec<(usize, String)> = Vec::new();
+    if line.contains('@') {
+        let mut from = 0;
+        for a in find_in_text(line) {
+            if let Some(i) = line[from..].to_lowercase().find(&a) {
+                out.push((from + i, a.clone()));
+                from += i + a.len();
+            } else {
+                out.push((0, a));
+            }
+        }
+    }
+    for c in re_obfuscated().captures_iter(line) {
+        let (Some(all), Some(local), Some(at), Some(dom)) =
+            (c.get(0), c.get(1), c.get(3), c.get(4))
+        else {
+            continue;
+        };
+        let bracket = c.get(2).is_some_and(|m| !m.as_str().is_empty());
+        let at_word = at.as_str().to_lowercase();
+        let spelled_dot = dom
+            .as_str()
+            .chars()
+            .any(|ch| ch.is_whitespace() || "([{<".contains(ch));
+        if at_word == "@" && !all.as_str().contains(' ') {
+            continue; // a plain address, handled above
+        }
+        if at_word == "at" && !bracket && !spelled_dot {
+            continue;
+        }
+        let mut domain = String::new();
+        for tok in dom
+            .as_str()
+            .split(|ch: char| ch.is_whitespace() || "()[]{}<>".contains(ch))
+            .filter(|t| !t.is_empty())
+        {
+            let t = tok.to_lowercase();
+            let is_dot = t == "." || re_obfuscated_dot(&t);
+            if is_dot {
+                domain.push('.');
+            } else {
+                domain.push_str(&t);
+            }
+        }
+        let domain = domain.replace("..", ".");
+        let addr = format!(
+            "{}@{}",
+            local.as_str().to_lowercase(),
+            domain.trim_matches('.')
+        );
+        if valid_addr(&addr) && !out.iter().any(|(_, a)| *a == addr) {
+            out.push((all.start(), addr));
+        }
+    }
+    out
+}
+
+fn re_obfuscated_dot(t: &str) -> bool {
+    matches!(
+        t,
+        "dot" | "точка" | "крапка" | "punkt" | "punto" | "point" | "kropka" | "tečka" | "nokta"
+    )
+}
+
 /// An occurrence of an address: the address, the document and where it was seen
 /// (document metadata or document text).
 #[derive(Debug, Clone, PartialEq, Eq)]
