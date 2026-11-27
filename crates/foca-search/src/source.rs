@@ -210,7 +210,8 @@ pub enum SourceStatus {
     Unavailable,
     /// Skipped in autonomous headless background mode where no Android WebView can be attached.
     SkippedHeadless,
-    /// The service rate-limited the requests (HTTP 429 after `Retry-After` retries).
+    /// The service rate-limited the requests (HTTP 429 or 503 after `Retry-After` retries and
+    /// slowing down, see [`crate::rate::Throttle`]).
     Limit,
 }
 
@@ -223,6 +224,17 @@ pub fn limit_message(id: &str) -> String {
         format!("{base}. Лимит OTX общий для «OTX passive DNS» и «OTX (URL)»: второй в этом скане не опрашивается")
     } else {
         base.to_string()
+    }
+}
+
+/// Returns the `limit` text for a final HTTP 429 or 503 (overloaded or throttling service).
+pub fn limit_message_status(id: &str, status: u16) -> String {
+    if status == 503 {
+        "сервис перегружен или ограничил частоту запросов (HTTP 503): повторы с паузой не помогли; \
+         источник остановлен до следующего скана"
+            .into()
+    } else {
+        limit_message(id)
     }
 }
 
@@ -354,9 +366,9 @@ async fn run_one(
                 rep.error = Some(m);
             }
         }
-        Ok(Err(NetError::Status(429))) => {
+        Ok(Err(NetError::Status(st @ (429 | 503)))) => {
             rep.status = SourceStatus::Limit;
-            rep.error = Some(limit_message(id));
+            rep.error = Some(limit_message_status(id, st));
         }
         Ok(Err(NetError::Request(m))) if m.starts_with(BLOCKED) => {
             rep.status = SourceStatus::Blocked;

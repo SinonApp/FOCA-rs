@@ -1,27 +1,23 @@
-//! Search APIs (no HTML scraping): Brave Search API (key) and SearXNG (instance URL,
-//! `format=json`). Queries have the form `site:domain filetype:ext`. Passive.
+//! Search APIs (no HTML scraping): Brave Search API (key) and own SearXNG instances
+//! (`format=json`) run as dork engines on the scan's shared board; VirusTotal, SecurityTrails and
+//! GitHub Code Search (keys). Passive.
+
+use std::sync::Mutex;
+use std::time::Duration;
 
 use foca_net::{Access, NetError, NetRequest};
 use serde_json::Value;
 
+use crate::dorkboard::PageKind;
+use crate::rate::{self, Throttle, Verdict};
 use crate::source::{DocumentSource, Found, FoundUrl, SearchCtx, SourceKind};
+use crate::sources::dorkpool::{run_dorks, DorkBackend, DorkPage};
+
+/// Brave Search API base.
+pub const BRAVE_API: &str = "https://api.search.brave.com";
 use crate::sources::subdomains::extract_hosts;
 use crate::sources::urls::extract_urls;
 use crate::BoxFuture;
-
-/// File types used for search engine queries (intersected with the context filter).
-pub const ENGINE_EXTS: &[&str] = &[
-    "pdf", "docx", "doc", "xlsx", "xls", "pptx", "ppt", "odt", "rtf",
-];
-
-fn exts_for(ctx: &SearchCtx, max: usize) -> Vec<&'static str> {
-    ENGINE_EXTS
-        .iter()
-        .copied()
-        .filter(|e| ctx.filter.allows_ext(e))
-        .take(max)
-        .collect()
-}
 
 fn in_domain(url: &str, domain: &str) -> bool {
     url::Url::parse(url)
@@ -100,22 +96,126 @@ async fn get_body(ctx: &SearchCtx, req: NetRequest) -> Result<String, NetError> 
     r.text_limited(8 * 1024 * 1024).await
 }
 
-/// Brave Search API.
-#[derive(Debug, Clone)]
+/// Brave Search API (optional user key): an extra dork engine on the scan's shared board. Brave
+/// has no free tier: every plan needs a card and gets a monthly credit of about 1000 queries.
+/// 401/403 means the key was rejected (`nokey`), 429 slows down through the throttle and then
+/// stops the engine for the scan (`limit`); a spent monthly quota stops it at once.
+#[derive(Debug)]
 pub struct Brave {
     pub base: String,
     pub key: Option<String>,
-    /// Number of queries (file types) per domain.
-    pub max_queries: usize,
+    /// Results per page (the API allows up to 20).
+    pub count: usize,
+    thr: Throttle,
 }
 
 impl Brave {
     pub fn new(key: Option<String>) -> Self {
         Brave {
-            base: "https://api.search.brave.com".into(),
-            key: key.filter(|k| !k.trim().is_empty()),
-            max_queries: 6,
+            base: BRAVE_API.into(),
+            key: key.map(|k| k.trim().to_string()).filter(|k| !k.is_empty()),
+            count: 20,
+            // the plans allow one request per second
+            thr: Throttle::new(Duration::from_millis(1100)),
         }
+    }
+
+    /// Points the engine at another API base (tests, mirrors) without pacing.
+    pub fn with_base(mut self, base: &str) -> Self {
+        self.base = base.trim_end_matches('/').to_string();
+        self.thr = Throttle::new(Duration::ZERO);
+        self
+    }
+
+    fn search_url(&self, q: &str, page: usize) -> Result<String, NetError> {
+        let mut u = url::Url::parse(&format!(
+            "{}/res/v1/web/search",
+            self.base.trim_end_matches('/')
+        ))
+        .map_err(|e| NetError::BadUrl(e.to_string()))?;
+        u.query_pairs_mut()
+            .append_pair("q", q)
+            .append_pair("count", &self.count.to_string());
+        if page > 1 {
+            u.query_pairs_mut()
+                .append_pair("offset", &(page - 1).to_string());
+        }
+        Ok(u.to_string())
+    }
+
+    async fn fetch_page(
+        &self,
+        ctx: &SearchCtx,
+        q: &str,
+        page: usize,
+    ) -> Result<DorkPage, NetError> {
+        let key = self
+            .key
+            .as_deref()
+            .ok_or_else(|| NetError::NoKey("brave".into()))?;
+        loop {
+            self.thr.wait(&ctx.net).await?;
+            let req = NetRequest::get(&self.search_url(q, page)?, "brave", Access::Passive)?
+                .header("Accept", "application/json")
+                .header("X-Subscription-Token", key)
+                .timeout(ctx.req_timeout(Duration::from_secs(30)))
+                .retries(0);
+            let r = ctx.net.send(req).await?;
+            match r.status() {
+                401 | 403 => return Err(NetError::NoKey(format!("HTTP {}", r.status()))),
+                s if rate::is_limit(s) => {
+                    let wait = rate::retry_after(&r);
+                    let body = r.text_limited(64 * 1024).await.unwrap_or_default();
+                    // a spent monthly credit does not come back within the scan
+                    if body.to_ascii_uppercase().contains("QUOTA") {
+                        return Err(NetError::Status(429));
+                    }
+                    match self.thr.limited(wait) {
+                        Verdict::Retry(_) => {
+                            ctx.retrying("brave", 1, &format!("HTTP {s}"));
+                            continue;
+                        }
+                        Verdict::Stop => return Err(NetError::Status(429)),
+                    }
+                }
+                _ => {}
+            }
+            let body = r.ensure_success()?.text_limited(8 * 1024 * 1024).await?;
+            self.thr.ok();
+            let v: Value =
+                serde_json::from_str(&body).map_err(|e| NetError::Parse(e.to_string()))?;
+            let links: Vec<String> = parse_brave(&body)?.into_iter().map(|(u, _)| u).collect();
+            return Ok(DorkPage {
+                kind: Some(PageKind::Results),
+                has_next: v["query"]["more_results_available"].as_bool() == Some(true),
+                links,
+                why: None,
+            });
+        }
+    }
+}
+
+impl DorkBackend for Brave {
+    fn engine_id(&self) -> &'static str {
+        "brave"
+    }
+    fn or_ok(&self) -> bool {
+        true
+    }
+    fn max_pages(&self) -> usize {
+        2
+    }
+    fn pause(&self) -> Duration {
+        Duration::ZERO
+    }
+    fn fetch<'a>(
+        &'a self,
+        ctx: &'a SearchCtx,
+        q: &'a str,
+        page: usize,
+        _first: bool,
+    ) -> BoxFuture<'a, Result<DorkPage, NetError>> {
+        Box::pin(self.fetch_page(ctx, q, page))
     }
 }
 
@@ -141,49 +241,182 @@ impl DocumentSource for Brave {
         domain: &'a str,
     ) -> BoxFuture<'a, Result<Found, NetError>> {
         Box::pin(async move {
-            let key = self
-                .key
-                .as_deref()
-                .ok_or_else(|| NetError::NoKey("brave".into()))?;
-            let mut found = Found::default();
-            for ext in exts_for(ctx, self.max_queries) {
-                let mut u = url::Url::parse(&format!(
-                    "{}/res/v1/web/search",
-                    self.base.trim_end_matches('/')
-                ))
-                .map_err(|e| NetError::BadUrl(e.to_string()))?;
-                u.query_pairs_mut()
-                    .append_pair("q", &format!("site:{domain} filetype:{ext}"))
-                    .append_pair("count", "20");
-                let req = NetRequest::get(u.as_str(), "brave", Access::Passive)?
-                    .header("Accept", "application/json")
-                    .header("X-Subscription-Token", key);
-                let body = get_body(ctx, req).await?;
-                for (url, date) in parse_brave(&body)? {
-                    push(&mut found, ctx, domain, &url, "brave", date);
-                }
-                if found.urls.len() >= ctx.limit {
-                    break;
-                }
+            if self.key.is_none() {
+                return Err(NetError::NoKey("brave".into()));
             }
-            Ok(found)
+            let mut f = run_dorks(ctx, domain, self).await?;
+            for u in f.urls.iter_mut() {
+                u.source = "brave".into();
+            }
+            Ok(f)
         })
     }
 }
 
-/// SearXNG (the instance must allow `format=json`).
-#[derive(Debug, Clone)]
+/// Splits the SearXNG setting into instance URLs (one per line, or separated by commas, spaces
+/// or semicolons), without trailing slashes and duplicates.
+pub fn searx_instances(raw: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for p in raw.split(|c: char| c.is_whitespace() || c == ',' || c == ';') {
+        let p = p.trim().trim_end_matches('/');
+        if !p.is_empty() && !out.iter().any(|o| o == p) {
+            out.push(p.to_string());
+        }
+    }
+    out
+}
+
+/// The user's own SearXNG instances (`format=json` must be enabled), asked before the public
+/// pool. Each instance must be HTTPS on a public host, like other user URLs; an instance that
+/// refuses JSON (403) or keeps failing is skipped for the rest of the scan.
+#[derive(Debug)]
 pub struct Searx {
-    pub instance: Option<String>,
-    pub max_queries: usize,
+    pub instances: Vec<String>,
+    /// Accept plain HTTP and local hosts (tests; the `--test-net` bench allows them anyway).
+    pub allow_local: bool,
+    bad: Mutex<Vec<String>>,
+    thr: Throttle,
 }
 
 impl Searx {
     pub fn new(instance: Option<String>) -> Self {
         Searx {
-            instance: instance.filter(|k| !k.trim().is_empty()),
-            max_queries: 6,
+            instances: instance.as_deref().map(searx_instances).unwrap_or_default(),
+            allow_local: false,
+            bad: Mutex::new(Vec::new()),
+            thr: Throttle::new(Duration::from_millis(1500)),
         }
+    }
+
+    /// Instance URLs for tests and the local bench: HTTP and loopback allowed, no pacing.
+    pub fn local(instance: &str) -> Self {
+        Searx {
+            allow_local: true,
+            thr: Throttle::new(Duration::ZERO),
+            ..Searx::new(Some(instance.into()))
+        }
+    }
+
+    fn usable(&self, ctx: &SearchCtx, base: &str) -> bool {
+        self.allow_local || ctx.net.is_local_only() || public_https_url(base)
+    }
+
+    async fn fetch_page(
+        &self,
+        ctx: &SearchCtx,
+        q: &str,
+        page: usize,
+    ) -> Result<DorkPage, NetError> {
+        let mut last: Option<NetError> = None;
+        for base in &self.instances {
+            if self
+                .bad
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .contains(base)
+            {
+                continue;
+            }
+            if !self.usable(ctx, base) {
+                let host = url::Url::parse(base)
+                    .ok()
+                    .and_then(|u| u.host_str().map(String::from))
+                    .unwrap_or_default();
+                let mut rec = ctx.net.draft("searx", "GET", base, &host, &Access::Passive);
+                rec.blocked = true;
+                rec.error = Some(SEARX_URL_RULE.into());
+                ctx.net.record(rec);
+                self.bad
+                    .lock()
+                    .unwrap_or_else(|e| e.into_inner())
+                    .push(base.clone());
+                last = Some(NetError::BadUrl(SEARX_URL_RULE.into()));
+                continue;
+            }
+            let mut u = url::Url::parse(&format!("{base}/search"))
+                .map_err(|e| NetError::BadUrl(e.to_string()))?;
+            u.query_pairs_mut()
+                .append_pair("q", q)
+                .append_pair("format", "json")
+                .append_pair("pageno", &page.to_string());
+            loop {
+                self.thr.wait(&ctx.net).await?;
+                let req = NetRequest::get(u.as_str(), "searx", Access::Passive)?
+                    .header("Accept", "application/json")
+                    .timeout(ctx.req_timeout(Duration::from_secs(30)))
+                    .retries(0);
+                let r = match ctx.net.send(req).await {
+                    Ok(r) => r,
+                    Err(NetError::Cancelled) => return Err(NetError::Cancelled),
+                    Err(e) => {
+                        last = Some(e);
+                        break;
+                    }
+                };
+                let st = r.status();
+                if rate::is_limit(st) {
+                    match self.thr.limited(rate::retry_after(&r)) {
+                        Verdict::Retry(_) => {
+                            ctx.retrying("searx", 1, &format!("HTTP {st}"));
+                            continue;
+                        }
+                        Verdict::Stop => return Err(NetError::Status(429)),
+                    }
+                }
+                if !(200..300).contains(&st) {
+                    // 403 is the usual answer of an instance without `format: json`
+                    last = Some(NetError::Status(st));
+                    break;
+                }
+                let body = r.text_limited(8 * 1024 * 1024).await?;
+                match parse_searx(&body) {
+                    Ok(v) => {
+                        self.thr.ok();
+                        let links: Vec<String> = v.into_iter().map(|(u, _)| u).collect();
+                        return Ok(DorkPage {
+                            kind: Some(PageKind::Results),
+                            has_next: links.len() >= crate::sources::dorkpool::PAGE_FULL,
+                            links,
+                            why: None,
+                        });
+                    }
+                    Err(e) => {
+                        last = Some(e);
+                        break;
+                    }
+                }
+            }
+            tracing::warn!(target: "foca::source", "searx: {base} не отвечает JSON: следующий экземпляр");
+            self.bad
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .push(base.clone());
+        }
+        Err(last.unwrap_or_else(|| NetError::NoKey("searx".into())))
+    }
+}
+
+impl DorkBackend for Searx {
+    fn engine_id(&self) -> &'static str {
+        "searx"
+    }
+    fn or_ok(&self) -> bool {
+        true
+    }
+    fn max_pages(&self) -> usize {
+        2
+    }
+    fn pause(&self) -> Duration {
+        Duration::ZERO
+    }
+    fn fetch<'a>(
+        &'a self,
+        ctx: &'a SearchCtx,
+        q: &'a str,
+        page: usize,
+        _first: bool,
+    ) -> BoxFuture<'a, Result<DorkPage, NetError>> {
+        Box::pin(self.fetch_page(ctx, q, page))
     }
 }
 
@@ -201,7 +434,7 @@ impl DocumentSource for Searx {
         true
     }
     fn has_key(&self) -> bool {
-        self.instance.is_some()
+        !self.instances.is_empty()
     }
     fn find<'a>(
         &'a self,
@@ -209,31 +442,158 @@ impl DocumentSource for Searx {
         domain: &'a str,
     ) -> BoxFuture<'a, Result<Found, NetError>> {
         Box::pin(async move {
-            let inst = self
-                .instance
-                .as_deref()
-                .ok_or_else(|| NetError::NoKey("searx".into()))?;
-            let mut found = Found::default();
-            for ext in exts_for(ctx, self.max_queries) {
-                let mut u = url::Url::parse(&format!("{}/search", inst.trim_end_matches('/')))
-                    .map_err(|e| NetError::BadUrl(e.to_string()))?;
-                u.query_pairs_mut()
-                    .append_pair("q", &format!("site:{domain} filetype:{ext}"))
-                    .append_pair("format", "json")
-                    .append_pair("pageno", "1");
-                let req = NetRequest::get(u.as_str(), "searx", Access::Passive)?
-                    .header("Accept", "application/json");
-                let body = get_body(ctx, req).await?;
-                for (url, date) in parse_searx(&body)? {
-                    push(&mut found, ctx, domain, &url, "searx", date);
-                }
-                if found.urls.len() >= ctx.limit {
-                    break;
-                }
+            if self.instances.is_empty() {
+                return Err(NetError::NoKey("searx".into()));
             }
-            Ok(found)
+            run_dorks(ctx, domain, self).await
         })
     }
+}
+
+/// Error text for an own SearXNG URL that is not HTTPS on a public host.
+pub const SEARX_URL_RULE: &str = "Адрес SearXNG должен использовать HTTPS и публичный хост";
+
+/// Whether a user URL is HTTPS on a public host (no localhost, private or reserved addresses).
+pub fn public_https_url(raw: &str) -> bool {
+    crate::sources::searx_pool::is_safe_public_instance(raw)
+}
+
+/// Result of the key or instance check in Settings.
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize)]
+pub struct KeyCheck {
+    pub ok: bool,
+    /// `ok` | `rejected` | `limit` | `json_off` | `bad_url` | `unreachable` | `error`.
+    pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<u16>,
+    /// Requests left in the current month (Brave `X-RateLimit-Remaining`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remaining: Option<u64>,
+    /// Monthly request limit (Brave `X-RateLimit-Limit`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u64>,
+    /// Results in the test answer (SearXNG).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub results: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+impl KeyCheck {
+    fn new(code: &str) -> Self {
+        KeyCheck {
+            ok: code == "ok",
+            code: code.into(),
+            ..Default::default()
+        }
+    }
+}
+
+/// Last number of a Brave rate-limit header (`"1, 2000"`: per second, per month).
+fn last_num(v: Option<&str>) -> Option<u64> {
+    v?.rsplit(',').next()?.trim().parse().ok()
+}
+
+/// Checks a Brave Search API key with one query (`count=1`), reading the monthly quota headers.
+pub async fn check_brave(net: &foca_net::NetClient, base: &str, key: &str) -> KeyCheck {
+    let b = Brave::new(Some(key.into())).with_base(base);
+    let Ok(u) = b.search_url("site:example.com", 1) else {
+        return KeyCheck::new("bad_url");
+    };
+    let req = match NetRequest::get(&u.replace("count=20", "count=1"), "brave", Access::Passive) {
+        Ok(r) => r
+            .header("Accept", "application/json")
+            .header("X-Subscription-Token", key.trim())
+            .timeout(Duration::from_secs(20))
+            .retries(0),
+        Err(_) => return KeyCheck::new("bad_url"),
+    };
+    match net.send(req).await {
+        Ok(r) => {
+            let st = r.status();
+            let mut k = KeyCheck::new(match st {
+                200..=299 => "ok",
+                401 | 403 => "rejected",
+                429 => "limit",
+                _ => "error",
+            });
+            k.status = Some(st);
+            k.remaining = last_num(r.header("x-ratelimit-remaining"));
+            k.limit = last_num(r.header("x-ratelimit-limit"));
+            k
+        }
+        Err(e) => KeyCheck {
+            detail: Some(e.to_string()),
+            ..KeyCheck::new("unreachable")
+        },
+    }
+}
+
+/// Checks own SearXNG instances: each must be HTTPS on a public host and answer a JSON query.
+/// Returns one result per instance.
+pub async fn check_searx(
+    net: &foca_net::NetClient,
+    raw: &str,
+    allow_local: bool,
+) -> Vec<(String, KeyCheck)> {
+    let mut out = Vec::new();
+    for base in searx_instances(raw) {
+        if !allow_local && !public_https_url(&base) {
+            out.push((
+                base,
+                KeyCheck {
+                    detail: Some(SEARX_URL_RULE.into()),
+                    ..KeyCheck::new("bad_url")
+                },
+            ));
+            continue;
+        }
+        let u = format!("{base}/search?q=test&format=json");
+        let req = match NetRequest::get(&u, "searx", Access::Passive) {
+            Ok(r) => r
+                .header("Accept", "application/json")
+                .timeout(Duration::from_secs(20))
+                .retries(0),
+            Err(_) => {
+                out.push((base, KeyCheck::new("bad_url")));
+                continue;
+            }
+        };
+        let k = match net.send(req).await {
+            Ok(r) => {
+                let st = r.status();
+                if (200..300).contains(&st) {
+                    let body = r.text_limited(4 * 1024 * 1024).await.unwrap_or_default();
+                    match parse_searx(&body) {
+                        Ok(v) => KeyCheck {
+                            status: Some(st),
+                            results: Some(v.len()),
+                            ..KeyCheck::new("ok")
+                        },
+                        Err(_) => KeyCheck {
+                            status: Some(st),
+                            ..KeyCheck::new("json_off")
+                        },
+                    }
+                } else {
+                    KeyCheck {
+                        status: Some(st),
+                        ..KeyCheck::new(match st {
+                            403 => "json_off",
+                            429 => "limit",
+                            _ => "error",
+                        })
+                    }
+                }
+            }
+            Err(e) => KeyCheck {
+                detail: Some(e.to_string()),
+                ..KeyCheck::new("unreachable")
+            },
+        };
+        out.push((base, k));
+    }
+    out
 }
 
 /// Parses a VirusTotal API v3 response (`/domains/{d}/subdomains` or `/domains/{d}/urls`),

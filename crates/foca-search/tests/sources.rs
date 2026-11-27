@@ -251,15 +251,13 @@ async fn search_engines_with_keys() {
     .await;
     let (mut ctx, sink) = ctx("", "");
     ctx.filter = ExtFilter::parse("pdf");
-    let mut brave = Brave::new(Some("BSA-test".into()));
-    brave.base = srv.url();
+    let brave = Brave::new(Some("BSA-test".into())).with_base(&srv.url());
     let f = brave.find(&ctx, "iana.org").await.unwrap();
     // example.net is dropped (not the target domain)
     assert_eq!(f.urls.len(), 2);
-    assert_eq!(f.urls[0].date.as_deref(), Some("2015-09-06T19:20:24"));
+    assert!(f.urls.iter().all(|u| u.source == "brave"));
 
-    let mut bad = Brave::new(Some("wrong".into()));
-    bad.base = srv.url();
+    let bad = Brave::new(Some("wrong".into())).with_base(&srv.url());
     let res = run_sources(
         &[
             Box::new(bad) as Box<dyn DocumentSource>,
@@ -274,9 +272,10 @@ async fn search_engines_with_keys() {
     assert_eq!(res.sources[0].status, SourceStatus::Nokey);
     assert_eq!(res.sources[1].status, SourceStatus::Nokey);
 
-    let sx = Searx::new(Some(srv.url()));
+    let sx = Searx::local(&srv.url());
     let f = sx.find(&ctx, "iana.org").await.unwrap();
-    assert_eq!(f.urls.len(), 1);
+    // like every dork engine, an extensionless link counts as the requested type (MIME decides later)
+    assert_eq!(f.urls.len(), 2);
     assert_eq!(
         f.urls[0].url,
         "https://www.iana.org/_files/2023/iana-annual-report.pdf"

@@ -128,7 +128,7 @@ pub fn healthy_ranked(results: &[InstanceHealth]) -> Vec<String> {
     ok.into_iter().map(|(_, h)| h.url.clone()).collect()
 }
 
-fn is_safe_public_instance(raw_url: &str) -> bool {
+pub(crate) fn is_safe_public_instance(raw_url: &str) -> bool {
     let Ok(u) = url::Url::parse(raw_url) else {
         return false;
     };

@@ -384,9 +384,105 @@ impl DorkBoard {
 
     /// Returns the number of the domain's groups that no engine completed (for the scan summary).
     pub fn lost(&self, domain: &str) -> usize {
-        self.lock().queues.get(domain).map_or(0, |q| {
-            q.iter().filter(|i| !i.ok && i.tried.is_empty()).count()
+        self.lost_groups(domain).len()
+    }
+
+    /// Returns the type groups of a domain that no engine could run (captcha or block everywhere).
+    pub fn lost_groups(&self, domain: &str) -> Vec<Vec<String>> {
+        self.lock().queues.get(domain).map_or_else(Vec::new, |q| {
+            q.iter()
+                .filter(|i| !i.ok && i.tried.is_empty())
+                .map(|i| i.exts.clone())
+                .collect()
         })
+    }
+
+    /// Returns the type groups of a domain that at least one engine ran (with or without links).
+    pub fn ran_groups(&self, domain: &str) -> Vec<Vec<String>> {
+        self.lock().queues.get(domain).map_or_else(Vec::new, |q| {
+            q.iter()
+                .filter(|i| i.ok || !i.tried.is_empty())
+                .map(|i| i.exts.clone())
+                .collect()
+        })
+    }
+}
+
+/// Scans after which a postponed dork group is dropped.
+pub const PENDING_MAX_TRIES: u32 = 5;
+
+/// A dork group no engine could run (captcha everywhere), kept per project for a later retry.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PendingDork {
+    pub domain: String,
+    pub exts: Vec<String>,
+    /// Unix time it was first postponed.
+    pub since: i64,
+    /// Runs that lost it (scans and in-scan retries).
+    #[serde(default)]
+    pub tries: u32,
+}
+
+/// Postponed dork groups of a project (stored in the project facts).
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct PendingDorks(pub Vec<PendingDork>);
+
+impl PendingDorks {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    /// Groups of `domain`, oldest first.
+    pub fn groups(&self, domain: &str) -> Vec<Vec<String>> {
+        self.0
+            .iter()
+            .filter(|p| p.domain == domain)
+            .map(|p| p.exts.clone())
+            .collect()
+    }
+
+    /// Applies the outcome of a run over `domain`: groups an engine ran are removed, lost
+    /// groups are added or count one more try (dropped after [`PENDING_MAX_TRIES`]). Returns the
+    /// number of groups dropped for good.
+    pub fn update(
+        &mut self,
+        domain: &str,
+        ran: &[Vec<String>],
+        lost: &[Vec<String>],
+        now: i64,
+    ) -> usize {
+        self.0
+            .retain(|p| !(p.domain == domain && ran.contains(&p.exts)));
+        for g in lost {
+            match self
+                .0
+                .iter_mut()
+                .find(|p| p.domain == domain && p.exts == *g)
+            {
+                Some(p) => p.tries += 1,
+                None => self.0.push(PendingDork {
+                    domain: domain.to_string(),
+                    exts: g.clone(),
+                    since: now,
+                    tries: 1,
+                }),
+            }
+        }
+        let before = self.0.len();
+        self.0.retain(|p| p.tries < PENDING_MAX_TRIES);
+        before - self.0.len()
+    }
+
+    /// Orders the planned groups of a domain so postponed ones run first.
+    pub fn first(&self, domain: &str, mut groups: Vec<Vec<String>>) -> Vec<Vec<String>> {
+        let pend = self.groups(domain);
+        groups.sort_by_key(|g| !pend.contains(g));
+        groups
     }
 }
 
@@ -461,6 +557,50 @@ mod tests {
         b.plan("a.ua", &[g(&["pdf"])]);
         assert_eq!(b.take("x", "a.ua"), Take::Done);
         assert!(b.first_visit("x") && !b.first_visit("x"));
+    }
+
+    #[test]
+    fn lost_groups_feed_pending_and_retry_clears_them() {
+        let b = DorkBoard::default();
+        b.plan("a.example", &[g(&["pdf"]), g(&["doc"]), g(&["xls"])]);
+        let _sp = b.begin("startpage");
+        assert!(matches!(b.take("startpage", "a.example"), Take::Item(0, _)));
+        b.finish("startpage", "a.example", 0, 2);
+        // the other groups hit a captcha on every engine
+        assert!(matches!(b.take("startpage", "a.example"), Take::Item(1, _)));
+        b.give_back("startpage", "a.example", 1, true);
+        assert_eq!(b.lost_groups("a.example"), vec![g(&["doc"]), g(&["xls"])]);
+        assert_eq!(b.ran_groups("a.example"), vec![g(&["pdf"])]);
+        let mut p = PendingDorks::default();
+        p.update(
+            "a.example",
+            &b.ran_groups("a.example"),
+            &b.lost_groups("a.example"),
+            100,
+        );
+        assert_eq!(p.len(), 2);
+        // postponed groups go first in the next plan
+        let order = p.first("a.example", vec![g(&["pdf"]), g(&["doc"]), g(&["xls"])]);
+        assert_eq!(order[0], g(&["doc"]));
+        assert_eq!(order[2], g(&["pdf"]));
+        // the retry ran doc; xls was lost again
+        p.update("a.example", &[g(&["doc"])], &[g(&["xls"])], 200);
+        assert_eq!(
+            p.0,
+            vec![PendingDork {
+                domain: "a.example".into(),
+                exts: g(&["xls"]),
+                since: 100,
+                tries: 2
+            }]
+        );
+        // the round trip through JSON keeps the list
+        let j = serde_json::to_string(&p).unwrap();
+        assert_eq!(serde_json::from_str::<PendingDorks>(&j).unwrap(), p);
+        for _ in 0..3 {
+            p.update("a.example", &[], &[g(&["xls"])], 300);
+        }
+        assert!(p.is_empty(), "dropped after {PENDING_MAX_TRIES} tries");
     }
 
     #[test]

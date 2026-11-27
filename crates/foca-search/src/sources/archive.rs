@@ -1,12 +1,9 @@
-//! Archives and CT: Wayback CDX, Common Crawl Index and crt.sh. All passive.
+//! Archives and CT: Wayback CDX and crt.sh (Common Crawl lives in `commoncrawl`). All passive.
 
-use std::collections::BTreeMap;
-use std::sync::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use foca_net::ct::{self, CtEndpoints};
 use foca_net::{Access, NetError, NetRequest};
-use serde_json::Value;
 
 use crate::source::{DocumentSource, Found, FoundUrl, SearchCtx, SourceKind};
 use crate::BoxFuture;
@@ -494,12 +491,15 @@ impl DocumentSource for Wayback {
             let mut last_err: Option<NetError> = None;
             let mut ok_pages = 0usize;
             let mut fails = 0u32;
+            let thr = crate::rate::Throttle::new(Duration::ZERO);
+            let mut throttled = false;
             for page in plan {
                 if col.full() || ctx.out_of_time(Duration::from_secs(8)) {
                     break;
                 }
                 let u = self.page_url(domain, page, &ctx.filter)?;
                 // retries must not overrun the soft deadline: timeout × attempts <= time left
+                thr.wait(&ctx.net).await?;
                 let (to, retries) = attempt_plan(ctx, Duration::from_secs(60));
                 let req = NetRequest::get(&u, "wayback", Access::Passive)?
                     .timeout(to)
@@ -517,6 +517,22 @@ impl DocumentSource for Wayback {
                         }
                     }
                     Ok(r) if r.status() == 404 => break,
+                    Ok(r) if crate::rate::is_limit(r.status()) => {
+                        // 429/503: honour Retry-After and slow down; after repeated limits stop
+                        // asking archive.org in this scan and keep what was collected
+                        last_err = Some(NetError::Status(r.status()));
+                        match thr.limited(crate::rate::retry_after(&r)) {
+                            crate::rate::Verdict::Retry(_) => {
+                                fails += 1;
+                                ctx.retrying("wayback", fails, &format!("HTTP {}", r.status()));
+                                continue;
+                            }
+                            crate::rate::Verdict::Stop => {
+                                throttled = true;
+                                break;
+                            }
+                        }
+                    }
                     Ok(r) => {
                         // 429/503: archive.org is overloaded or throttling us, so back off progressively
                         // (5, 10, 20 s, ...) instead of sending the next request right away
@@ -536,296 +552,22 @@ impl DocumentSource for Wayback {
                     }
                 };
                 fails = 0;
+                thr.ok();
                 ok_pages += 1;
                 let (rows, _) = parse_cdx_json(&body).unwrap_or_default();
                 self.take_rows(ctx, domain, rows, &mut col);
             }
             if ok_pages == 0 && col.len() == 0 {
+                if throttled {
+                    return Err(NetError::Status(429));
+                }
                 if let Some(e) = last_err {
                     return Err(e);
                 }
             }
-            Ok(col.finish())
-        })
-    }
-}
-
-/// Parses Common Crawl Index NDJSON.
-pub fn parse_cc_ndjson(text: &str) -> Vec<BTreeMap<String, String>> {
-    text.lines()
-        .filter_map(|l| serde_json::from_str::<BTreeMap<String, Value>>(l.trim()).ok())
-        .map(|m| {
-            m.into_iter()
-                .map(|(k, v)| {
-                    let s = match v {
-                        Value::String(s) => s,
-                        other => other.to_string(),
-                    };
-                    (k, s)
-                })
-                .collect()
-        })
-        .collect()
-}
-
-/// In-process cache of collinfo.json for one day: CDX API endpoints of the indexes, newest first.
-static COLLINFO: Mutex<Vec<(String, Instant, Vec<String>)>> = Mutex::new(Vec::new());
-const COLLINFO_TTL: Duration = Duration::from_secs(24 * 3600);
-
-/// Common Crawl Index: the 2-3 most recent indexes from collinfo.json (cached for a day),
-/// paginated, with extension and status filtered on the server and MIME checked locally. An
-/// unavailable index (504, TLS reset) is skipped for the next one; the source fails only if none
-/// answered. URLs point at the target site; with the passive profile the engine downloads their
-/// Wayback copies (`id_`).
-#[derive(Debug, Clone)]
-pub struct CommonCrawl {
-    pub collinfo: String,
-    /// Explicit CDX API endpoint of an index (otherwise the latest `max_indexes` from collinfo).
-    pub index_api: Option<String>,
-    pub max_indexes: usize,
-    /// How many indexes to try when the newest are unavailable (504/timeout): older ones from
-    /// collinfo are used instead of failing the source.
-    pub max_tries: usize,
-    pub max_pages: usize,
-}
-
-impl Default for CommonCrawl {
-    fn default() -> Self {
-        CommonCrawl {
-            collinfo: "https://index.commoncrawl.org/collinfo.json".into(),
-            index_api: None,
-            max_indexes: 3,
-            max_tries: 5,
-            max_pages: 3,
-        }
-    }
-}
-
-impl CommonCrawl {
-    pub fn with_collinfo(url: &str) -> Self {
-        CommonCrawl {
-            collinfo: url.into(),
-            ..Default::default()
-        }
-    }
-
-    /// Returns the CDX API endpoints of the most recent indexes, newest first.
-    pub async fn indexes(&self, ctx: &SearchCtx) -> Result<Vec<String>, NetError> {
-        if let Some(a) = &self.index_api {
-            return Ok(vec![a.clone()]);
-        }
-        if let Ok(g) = COLLINFO.lock() {
-            if let Some((_, t, v)) = g.iter().find(|x| x.0 == self.collinfo) {
-                if t.elapsed() < COLLINFO_TTL && !v.is_empty() {
-                    return Ok(v.iter().take(self.tries()).cloned().collect());
-                }
-            }
-        }
-        let v: Value = ctx
-            .net
-            .get_json(
-                NetRequest::get(&self.collinfo, "cc", Access::Passive)?
-                    .timeout(ctx.req_timeout(Duration::from_secs(30)))
-                    .retries(1),
-            )
-            .await?;
-        let all: Vec<String> = v
-            .as_array()
-            .map(|a| {
-                a.iter()
-                    .filter_map(|x| x["cdx-api"].as_str().map(String::from))
-                    .collect()
-            })
-            .unwrap_or_default();
-        if all.is_empty() {
-            return Err(NetError::Parse("collinfo.json: нет cdx-api".into()));
-        }
-        if let Ok(mut g) = COLLINFO.lock() {
-            g.retain(|x| x.0 != self.collinfo);
-            g.push((self.collinfo.clone(), Instant::now(), all.clone()));
-        }
-        Ok(all.into_iter().take(self.tries()).collect())
-    }
-
-    fn tries(&self) -> usize {
-        self.max_tries.max(self.max_indexes).max(1)
-    }
-
-    /// Returns the CDX API endpoint of the latest index.
-    pub async fn latest_index(&self, ctx: &SearchCtx) -> Result<String, NetError> {
-        self.indexes(ctx)
-            .await?
-            .into_iter()
-            .next()
-            .ok_or_else(|| NetError::Parse("collinfo.json: нет cdx-api".into()))
-    }
-
-    fn index_url(
-        api: &str,
-        domain: &str,
-        filter: &crate::filter::ExtFilter,
-        page: Option<usize>,
-    ) -> Result<String, NetError> {
-        let mut u = url::Url::parse(api).map_err(|e| NetError::BadUrl(e.to_string()))?;
-        {
-            let mut q = u.query_pairs_mut();
-            q.append_pair("url", &format!("*.{domain}"))
-                .append_pair("output", "json");
-            match page {
-                None => {
-                    q.append_pair("showNumPages", "true");
-                }
-                Some(p) => {
-                    q.append_pair("filter", "status:200")
-                        .append_pair("filter", &format!("~url:{}", filter.url_regex()))
-                        .append_pair("fl", "url,timestamp,mime,status,length")
-                        .append_pair("page", &p.to_string());
-                }
-            }
-        }
-        Ok(u.to_string())
-    }
-
-    /// Queries one index: page count, then pages. `Ok(false)` means the index answered but had nothing.
-    async fn one_index(
-        &self,
-        ctx: &SearchCtx,
-        api: &str,
-        domain: &str,
-        col: &mut Collector,
-        budget: Duration,
-    ) -> Result<(), NetError> {
-        let r = ctx
-            .net
-            .send(
-                NetRequest::get(
-                    &Self::index_url(api, domain, &ctx.filter, None)?,
-                    "cc",
-                    Access::Passive,
-                )?
-                .timeout(ctx.req_timeout(Duration::from_secs(40).min(budget)))
-                .retries(1),
-            )
-            .await?;
-        // 404 "No Captures found" means empty, not an error
-        if r.status() == 404 {
-            return Ok(());
-        }
-        let r = r.ensure_success()?;
-        let body = r.text_limited(64 * 1024).await?;
-        let pages = serde_json::from_str::<Value>(body.trim())
-            .ok()
-            .and_then(|v| v["pages"].as_u64())
-            .unwrap_or(1) as usize;
-        for p in 0..pages.min(self.max_pages.max(1)) {
-            if col.full() || ctx.out_of_time(Duration::from_secs(6)) {
-                break;
-            }
-            let r = ctx
-                .net
-                .send(
-                    NetRequest::get(
-                        &Self::index_url(api, domain, &ctx.filter, Some(p))?,
-                        "cc",
-                        Access::Passive,
-                    )?
-                    .timeout(ctx.req_timeout(Duration::from_secs(60).min(budget)))
-                    .retries(1),
-                )
-                .await?;
-            if r.status() == 404 {
-                break;
-            }
-            let r = r.ensure_success()?;
-            let body = match r.text_limited(ctx.net.config().max_body).await {
-                Ok(b) => b,
-                Err(NetError::Cancelled) => return Err(NetError::Cancelled),
-                Err(_) => continue,
-            };
-            let rows = parse_cc_ndjson(&body);
-            if rows.is_empty() {
-                break;
-            }
-            for m in rows {
-                let Some(url) = m.get("url") else { continue };
-                if m.get("status").is_some_and(|s| s != "200") {
-                    continue;
-                }
-                let Some(ext) = ctx.filter.matches(url) else {
-                    continue;
-                };
-                if !crate::filter::mime_fits(m.get("mime").map(String::as_str), &ext) {
-                    continue;
-                }
-                col.host(url, domain);
-                let mut f = FoundUrl::new(url, "cc");
-                f.hint_ext = Some(ext);
-                f.size = m.get("length").and_then(|s| s.parse().ok());
-                f.date = m.get("timestamp").cloned();
-                f.mime = m.get("mime").cloned();
-                col.push(f);
-            }
-        }
-        Ok(())
-    }
-}
-
-impl DocumentSource for CommonCrawl {
-    fn id(&self) -> &'static str {
-        "cc"
-    }
-    fn name(&self) -> &'static str {
-        "Common Crawl"
-    }
-    fn kind(&self) -> SourceKind {
-        SourceKind::Passive
-    }
-    fn find<'a>(
-        &'a self,
-        ctx: &'a SearchCtx,
-        domain: &'a str,
-    ) -> BoxFuture<'a, Result<Found, NetError>> {
-        Box::pin(async move {
-            let apis = self.indexes(ctx).await?;
-            let mut col = Collector::new(ctx);
-            let mut errs = Vec::new();
-            let mut answered = 0usize;
-            for (i, api) in apis.iter().enumerate() {
-                if col.full()
-                    || answered >= self.max_indexes.max(1)
-                    || ctx.out_of_time(Duration::from_secs(6))
-                {
-                    break;
-                }
-                // An unavailable index (gateway 504 after 60 s) must not eat the whole source deadline: each
-                // remaining index gets its own share so older ones are still reached.
-                let left = apis.len().saturating_sub(i).max(1) as u32;
-                let budget = ctx
-                    .time_left()
-                    .map(|t| (t / left).max(Duration::from_secs(10)))
-                    .unwrap_or(Duration::from_secs(60));
-                match self.one_index(ctx, api, domain, &mut col, budget).await {
-                    Ok(()) => answered += 1,
-                    Err(NetError::Cancelled) => return Err(NetError::Cancelled),
-                    Err(e) => {
-                        let id = api.rsplit('/').next().unwrap_or(api);
-                        tracing::warn!(target: "foca::source", "cc: индекс {id} недоступен: {e}");
-                        errs.push(format!("{id}: {e}"));
-                    }
-                }
-            }
-            if answered == 0 && col.len() == 0 && !errs.is_empty() {
-                return Err(NetError::Request(format!(
-                    "индексы Common Crawl недоступны ({})",
-                    errs.join("; ")
-                )));
-            }
             let mut f = col.finish();
-            if !errs.is_empty() {
-                f.note = Some(format!(
-                    "часть индексов недоступна ({}): данные из ответивших",
-                    errs.join("; ")
-                ));
+            if throttled {
+                f.note = Some(crate::rate::THROTTLED_NOTE.into());
             }
             Ok(f)
         })

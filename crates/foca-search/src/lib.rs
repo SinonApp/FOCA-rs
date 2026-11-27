@@ -18,6 +18,7 @@ mod dorkboard;
 pub mod download;
 pub mod filter;
 pub mod html;
+pub mod rate;
 pub mod render;
 pub mod source;
 pub mod sources;

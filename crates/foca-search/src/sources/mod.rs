@@ -1,6 +1,7 @@
 //! Document sources.
 
 mod archive;
+pub mod commoncrawl;
 mod crawler;
 pub mod dorkpool;
 mod engines;
@@ -10,20 +11,22 @@ mod subdomains;
 mod urls;
 
 pub use crate::dorkboard::{
-    engine_journal, DorkBoard, DorkCache, EngineStat, PageKind, CAPTCHA_WHY, VERIFY_WHY,
+    engine_journal, DorkBoard, DorkCache, EngineStat, PageKind, PendingDork, PendingDorks,
+    CAPTCHA_WHY, PENDING_MAX_TRIES, VERIFY_WHY,
 };
 pub use crate::filter::url_in_domain;
 pub use crate::source::BLOCKED;
 pub use archive::{
-    copy_url, mime_regex, page_plan, parse_cc_ndjson, parse_cdx_json, CdxRow, CommonCrawl, CrtSh,
-    Wayback, WAYBACK_FL,
+    copy_url, mime_regex, page_plan, parse_cdx_json, CdxRow, CrtSh, Wayback, WAYBACK_FL,
 };
+pub use commoncrawl::{parse_cc_ndjson, CcDepth, CcHit, CcState, CommonCrawl};
 pub use crawler::{
     CrawlOutput, CrawlStats, CrawlStop, Crawler, Frontier, LinkedStorage, ProgressHook,
 };
 pub use engines::{
-    parse_brave, parse_github_code, parse_searx, parse_securitytrails, parse_vt, Brave, GitHubCode,
-    Searx, SecurityTrails, VirusTotal,
+    check_brave, check_searx, parse_brave, parse_github_code, parse_searx, parse_securitytrails,
+    parse_vt, public_https_url, searx_instances, Brave, GitHubCode, KeyCheck, Searx,
+    SecurityTrails, VirusTotal, BRAVE_API, SEARX_URL_RULE,
 };
 pub use render_engines::{
     classify, detect_captcha_signals, parse_brave_web, parse_mojeek, parse_startpage, parse_yahoo,

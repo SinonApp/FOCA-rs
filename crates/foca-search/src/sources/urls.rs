@@ -173,6 +173,10 @@ async fn get_text(
 
 fn limited(id: &str, st: u16, body: &str) -> Option<NetError> {
     let low = body.to_ascii_lowercase();
+    if st == 503 {
+        // overloaded or throttling: also the `limit` status
+        return Some(NetError::Status(503));
+    }
     if st == 429 || low.contains("rate limit") {
         // source status `limit` (not an error); the text comes from `source::limit_message`
         return Some(NetError::Status(429));
