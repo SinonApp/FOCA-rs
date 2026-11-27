@@ -44,7 +44,7 @@ pub use dns::{axfr, bruteforce, doh, mail, nsec, permute, ptr, takeover};
 pub use error::NetError;
 pub use intel::{cdn, hibp, m365, rdap, saas};
 pub use ratelimit::TokenBucket;
-pub use scan::{canary, ports};
+pub use scan::{canary, ports, recog};
 pub use sink::{MemorySink, NullSink, RequestRecord, RequestSink};
 pub use tls::ct;
 pub use tokio_util::sync::CancellationToken;

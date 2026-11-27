@@ -22,6 +22,60 @@ pub struct FaviconHash {
     pub size: usize,
     /// Ready-made pivot queries (Shodan, FOFA, Censys).
     pub queries: Vec<String>,
+    /// Product the icon belongs to, by its MD5 in the Recog favicon table.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub known: Option<String>,
+}
+
+/// Recog favicon MD5 fingerprints (BSD-2-Clause, Rapid7), written by
+/// `foca-analysis/signatures/tools/update_recog.py`: `md5 \t label \t cpe`.
+pub const FAVICONS_MD5_TSV: &str = include_str!("../data/favicons_md5.tsv");
+
+/// MD5 -> (label, CPE).
+type Md5Table = std::collections::HashMap<String, (String, String)>;
+
+fn md5_slot() -> &'static std::sync::RwLock<Option<std::sync::Arc<Md5Table>>> {
+    static S: std::sync::RwLock<Option<std::sync::Arc<Md5Table>>> = std::sync::RwLock::new(None);
+    &S
+}
+
+fn parse_md5_table(tsv: &str) -> Md5Table {
+    tsv.lines()
+        .filter(|l| !l.starts_with('#') && !l.is_empty())
+        .filter_map(|l| {
+            let mut f = l.split('\t');
+            let md5 = f.next()?.to_ascii_lowercase();
+            let label = f.next()?.to_string();
+            Some((md5, (label, f.next().unwrap_or("").to_string())))
+        })
+        .collect()
+}
+
+fn md5_table() -> std::sync::Arc<Md5Table> {
+    if let Some(t) = md5_slot().read().ok().and_then(|g| g.clone()) {
+        return t;
+    }
+    let mut g = md5_slot().write().unwrap_or_else(|e| e.into_inner());
+    g.get_or_insert_with(|| std::sync::Arc::new(parse_md5_table(FAVICONS_MD5_TSV)))
+        .clone()
+}
+
+/// Replaces the favicon MD5 table (a signed signature bundle); returns the hash count.
+pub fn install_md5_table(tsv: &str) -> usize {
+    let t = parse_md5_table(tsv);
+    let n = t.len();
+    *md5_slot().write().unwrap_or_else(|e| e.into_inner()) = Some(std::sync::Arc::new(t));
+    n
+}
+
+/// Number of favicon MD5 fingerprints in use.
+pub fn md5_count() -> usize {
+    md5_table().len()
+}
+
+/// Product label and CPE of a favicon MD5, if Recog knows it.
+pub fn identify_md5(md5: &str) -> Option<(String, String)> {
+    md5_table().get(&md5.to_ascii_lowercase()).cloned()
 }
 
 /// Computes the icon hashes from its bytes.
@@ -36,6 +90,7 @@ pub fn favicon_hash(bytes: &[u8]) -> FaviconHash {
             format!("fofa: icon_hash=\"{mmh3}\""),
             format!("censys: services.http.response.favicons.md5_hash:{md5}"),
         ],
+        known: identify_md5(&md5).map(|(label, _)| label),
         md5,
         size: bytes.len(),
     }
@@ -138,6 +193,15 @@ pub fn find_icon_links(html: &str, base: &str) -> Vec<IconLink> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn recog_md5_table_identifies_known_icons() {
+        assert!(md5_count() > 600, "{}", md5_count());
+        let (label, cpe) = identify_md5("0629CE6BD8A86FF6B5DBB2A24C040849").unwrap();
+        assert_eq!(label, "Apache Superset");
+        assert!(cpe.contains("superset"));
+        assert_eq!(favicon_hash(b"not a real icon").known, None);
+    }
 
     #[test]
     fn hash_known_icon_bytes() {

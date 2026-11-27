@@ -473,6 +473,10 @@ pub fn build_findings(r: &ReconReport) -> Vec<ReconFinding> {
             "Хэш иконки позволяет найти другие хосты с тем же приложением в Shodan/FOFA/Censys."
                 .into();
         x.evidence = fv.hash.queries.join("; ");
+        if let Some(k) = &fv.hash.known {
+            // Product name (proper noun) from the Recog favicon table: language-neutral.
+            x.evidence.push_str(&format!("; Recog: {k}"));
+        }
         x.url = Some(fv.url.clone());
         out.push(x);
     }

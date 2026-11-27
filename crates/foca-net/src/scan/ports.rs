@@ -605,6 +605,25 @@ fn apply_text(r: &mut PortResult, raw: &[u8]) {
         r.product = p;
         r.version = v;
     }
+    // Recog fills what the built-in signatures left open.
+    if r.product.is_none() || r.version.is_none() {
+        if let Some(h) = super::recog::match_banner(&r.service, &line) {
+            // Take the version only for the same product.
+            let same = match (&r.product, &h.product) {
+                (None, _) => true,
+                (Some(a), Some(b)) => b.to_lowercase().contains(&a.to_lowercase()),
+                _ => false,
+            };
+            if same {
+                if r.version.is_none() {
+                    r.version = h.version;
+                }
+                if r.product.is_none() {
+                    r.product = h.product;
+                }
+            }
+        }
+    }
     r.banner = Some(line);
 }
 

@@ -3,3 +3,4 @@
 
 pub mod canary;
 pub mod ports;
+pub mod recog;
