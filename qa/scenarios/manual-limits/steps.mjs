@@ -96,6 +96,12 @@ export default async (page, { W, fsc, theme, out, prep }) => {
 
   // ---- Traffic and power: every cap removable ----
   await go("/settings/power");
+  // the mobile cap is off by default: turn it on first
+  if (!(await core()).power.lim_on) {
+    await ev(() => document.querySelector('[data-act="st-t:power.limOn"]').click());
+    await wait(400);
+  }
+  ok("the mobile cap switch can be turned on", (await core()).power.lim_on === true);
   await type("power-mobLimit", 0);
   let s = await core();
   ok("mobile cap 0 is saved while Wi-Fi only is on (no confirm)", s.power.mob_limit === 0 && !(await sheetOpen('[data-act="nf-risk-ok"]')), s.power);

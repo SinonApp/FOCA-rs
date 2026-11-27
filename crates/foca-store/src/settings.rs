@@ -28,7 +28,7 @@ pub(crate) fn defaults() -> Value {
         },
         "keys": keys,
         "power": {
-            "wifi_only": true, "lim_on": true, "mob_limit": 1000, "batt_on": true, "batt": 20,
+            "wifi_only": true, "lim_on": false, "mob_limit": 1000, "batt_on": true, "batt": 20,
             "batt_action": "pause", "heat": true, "charge_only": false, "period": "month",
             "auto_resume": true
         },

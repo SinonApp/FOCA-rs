@@ -4650,7 +4650,7 @@
       },
       power: {
         wifi_only: true,
-        lim_on: true,
+        lim_on: false,
         mob_limit: 1000,
         batt_on: true,
         batt: 20,
