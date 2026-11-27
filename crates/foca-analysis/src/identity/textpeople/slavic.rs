@@ -32,7 +32,7 @@ fn surname_shape(t: &Tok, v: &Vocab, strict: bool) -> bool {
         return false;
     }
     let n = t.text.chars().filter(|c| c.is_alphabetic()).count();
-    if !(2..=30).contains(&n) || registry().stop(t.text) || abstract_noun(t.text) {
+    if !(3..=30).contains(&n) || registry().stop(t.text) || abstract_noun(t.text) {
         return false;
     }
     !(strict && v.common(t.text))

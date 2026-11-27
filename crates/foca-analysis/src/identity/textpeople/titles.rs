@@ -330,18 +330,16 @@ pub fn cited(c: &Ctx) -> bool {
     if MARKS.iter().any(|m| l.contains(m)) {
         return true;
     }
-    // `12. Name Title...` with a numbered entry and a year or a period after the names.
-    let numbered = line.split_once(". ").is_some_and(|(n, _)| {
-        !n.is_empty() && n.len() <= 4 && n.bytes().all(|b| b.is_ascii_digit())
-    });
+    // `12. Name Title...`, `12.Name`, `12) Name`: a numbered entry followed by a year, a
+    // co-author list or a title after the names.
+    let digits = line.bytes().take_while(u8::is_ascii_digit).count();
+    let numbered =
+        (1..=4).contains(&digits) && matches!(line.as_bytes().get(digits), Some(b'.' | b')'));
     let year = l.as_bytes().windows(4).any(|w| {
         (w.starts_with(b"19") || w.starts_with(b"20")) && w.iter().all(u8::is_ascii_digit)
     });
-    numbered
-        && (year
-            || c.after
-                .trim_start()
-                .starts_with(|ch: char| ch.is_uppercase()))
+    let next = c.after.trim_start();
+    numbered && (year || next.starts_with(',') || next.starts_with(|ch: char| ch.is_uppercase()))
 }
 
 pub fn signatory(c: &Ctx) -> bool {

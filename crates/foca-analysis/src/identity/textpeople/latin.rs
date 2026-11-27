@@ -24,6 +24,11 @@ fn surname_ok(t: &Tok, v: &Vocab) -> bool {
         && latin(t)
         && capish(t.text)
         && t.text.chars().count() >= 2
+        && !t
+            .text
+            .split('-')
+            .skip(1)
+            .any(|p| p.starts_with(char::is_lowercase))
         && !r.stop(t.text)
         && !r.honorific(t.text)
         && !r.function_word(t.text)
