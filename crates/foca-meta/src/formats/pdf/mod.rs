@@ -19,6 +19,7 @@ use crate::{formats::signature, xmp, Ctx, MetaError};
 
 mod fonts;
 mod glyphs;
+mod ltv;
 mod redaction;
 pub(crate) mod syntax;
 mod text;
@@ -953,7 +954,10 @@ fn signatures(pdf: &Pdf, b: &[u8], meta: &mut Metadata) {
             let after = len - covered_end;
             sig.bytes_after = Some(after);
             let tail = b.get(covered_end as usize..).unwrap_or_default();
-            sig.modified_after_signing = tail.iter().any(|c| !is_ws(*c));
+            // an LTV increment (DSS, OCSP/CRL/certificates, document timestamp) is not a change
+            // of the signed document
+            sig.modified_after_signing = tail.iter().any(|c| !is_ws(*c))
+                && !ltv::ltv_only(b.get(..covered_end as usize).unwrap_or_default(), tail);
         }
         sig.sub_filter = sub_filter;
         sig.name = str_field(pdf, d, "Name");

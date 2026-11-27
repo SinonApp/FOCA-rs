@@ -58,6 +58,54 @@ fn pdf_signature_kep_and_tsa() {
     assert!(m.emails.iter().any(|e| e == "ivan.petrenko@example.com"));
 }
 
+/// A PAdES-LTV increment after the signature (DSS with certificate and OCSP streams, an
+/// updated catalog and Info dates) is not a modification; a rewritten page content stream is.
+#[test]
+fn ltv_increment_after_signing_is_not_a_modification() {
+    let p = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/forensics/signed.pdf");
+    let base = std::fs::read(p).unwrap();
+    let base_m = extract(&base, Some("signed.pdf"), &Limits::default()).unwrap();
+    assert!(!base_m.signatures[0].modified_after_signing);
+    let text = String::from_utf8_lossy(&base);
+    // the catalog of the signed file, rewritten with a DSS entry (keys reordered)
+    let root = text
+        .split("/Root")
+        .nth(1)
+        .and_then(|r| r.split_whitespace().next())
+        .unwrap()
+        .to_string();
+    let cat_start = text.find(&format!("\n{root} 0 obj")).unwrap() + 1;
+    let cat_body = &text[cat_start..];
+    let cat_body = &cat_body[cat_body.find("<<").unwrap()..cat_body.find("endobj").unwrap()];
+    let cat = cat_body.trim().trim_end_matches(">>").to_string();
+    let dss = format!(
+        "{root} 0 obj\n{cat} /DSS 900 0 R >>\nendobj\n900 0 obj\n<< /Type /DSS /Certs [ 901 0 R ] /OCSPs [ 902 0 R ] >>\nendobj\n901 0 obj\n<< /Length 4 >>\nstream\n0abc\nendstream\nendobj\n902 0 obj\n<< /Filter /FlateDecode /Length 3 >>\nstream\nxyz\nendstream\nendobj\n903 0 obj\n<< /CreationDate (D:20261005173046+03'00') /Producer () >>\nendobj\nxref\n0 1\n0000000000 65535 f \ntrailer\n<< /Root {root} 0 R >>\nstartxref\n0\n%%EOF\n"
+    );
+    let mut ltv = base.clone();
+    ltv.extend_from_slice(dss.as_bytes());
+    let m = extract(&ltv, Some("ltv.pdf"), &Limits::default()).unwrap();
+    let s = &m.signatures[0];
+    assert!(s.bytes_after.unwrap() > 100);
+    assert!(!s.modified_after_signing, "DSS-only increment flagged");
+    // a content stream of a page rewritten after signing
+    let contents = text
+        .split("/Contents")
+        .nth(1)
+        .and_then(|r| r.split_whitespace().next())
+        .unwrap()
+        .to_string();
+    let change = format!(
+        "{contents} 0 obj\n<< /Length 22 >>\nstream\nBT (Changed text) Tj ET\nendstream\nendobj\nxref\n0 1\ntrailer\n<< /Root {root} 0 R >>\nstartxref\n0\n%%EOF\n"
+    );
+    let mut edited = ltv.clone();
+    edited.extend_from_slice(change.as_bytes());
+    let m = extract(&edited, Some("edited.pdf"), &Limits::default()).unwrap();
+    assert!(
+        m.signatures[0].modified_after_signing,
+        "content change not flagged"
+    );
+}
+
 #[test]
 fn pdf_modified_after_signing() {
     let m = load("signed_modified.pdf");
