@@ -12,6 +12,7 @@ use foca_core::{
     RevisionRef,
 };
 
+use super::visual::{close, Rgb, WHITE};
 use crate::util::{clean_str, decode_codepage, rd_u32le, truncate};
 use crate::{Ctx, MetaError};
 
@@ -54,6 +55,7 @@ enum Cap {
     AtnAuthor,
     AtnId,
     AtnDate,
+    ColorTbl,
     Annotation,
     FldInst,
     ObjData,
@@ -90,6 +92,14 @@ struct State {
     uc: u32,
     cp: u16,
     hidden: bool,
+    /// `\cfN` text colour, `\cbN`/`\chcbpat`/`\highlight` background (0 = auto/none).
+    cf: u16,
+    cb: u16,
+    /// `\fsN` font size in half points.
+    fs: u16,
+    /// `\intbl` paragraph and its `\cbpat` shading.
+    intbl: bool,
+    pbg: u16,
     deleted: bool,
     revauth: Option<u32>,
     /// `\fN` inside the font table.
@@ -121,7 +131,13 @@ struct Parser<'a, 'c> {
     prop_name: Option<String>,
     obj_class: Option<String>,
     obj_name: Option<String>,
-    hidden_buf: String,
+    /// Visually hidden text being collected and its kind.
+    vis_buf: (Option<&'static str>, String),
+    colors: Vec<Option<Rgb>>,
+    cur_color: Rgb,
+    color_set: bool,
+    /// The current table row definition shades some cell (`\clcbpat`).
+    row_shaded: bool,
     deleted_buf: (String, Option<u32>, Option<String>),
     rev_date: Option<String>,
     objects: usize,
@@ -154,7 +170,11 @@ fn parse(b: &[u8], ctx: &Ctx, want_children: bool) -> Result<(Metadata, String),
         prop_name: None,
         obj_class: None,
         obj_name: None,
-        hidden_buf: String::new(),
+        vis_buf: (None, String::new()),
+        colors: Vec::new(),
+        cur_color: [0, 0, 0],
+        color_set: false,
+        row_shaded: false,
         deleted_buf: (String::new(), None, None),
         rev_date: None,
         objects: 0,
@@ -174,6 +194,11 @@ impl Parser<'_, '_> {
             uc: 1,
             cp: self.ansi_cp,
             hidden: false,
+            cf: 0,
+            cb: 0,
+            fs: 24,
+            intbl: false,
+            pbg: 0,
             deleted: false,
             revauth: None,
             font: None,
@@ -226,7 +251,7 @@ impl Parser<'_, '_> {
         let before = self.state();
         self.stack.pop();
         let after = self.state();
-        if before.hidden && !after.hidden {
+        if self.vis_kind(&before) != self.vis_kind(&after) {
             self.flush_hidden();
         }
         if before.deleted && !after.deleted {
@@ -309,6 +334,15 @@ impl Parser<'_, '_> {
         match st.dest {
             Dest::Skip | Dest::Container => {}
             Dest::Capture => {
+                if ch == ';' && self.caps.last().is_some_and(|c| c.cap == Cap::ColorTbl) {
+                    let c = self.color_set.then_some(self.cur_color);
+                    if self.colors.len() < 4096 {
+                        self.colors.push(c);
+                    }
+                    self.cur_color = [0, 0, 0];
+                    self.color_set = false;
+                    return;
+                }
                 if let Some(cap) = self.caps.last_mut() {
                     if cap.text.len() < 1 << 20 {
                         cap.text.push(ch);
@@ -324,8 +358,26 @@ impl Parser<'_, '_> {
                     self.deleted_buf.2.clone_from(&self.rev_date);
                     return;
                 }
-                if st.hidden && self.hidden_buf.len() < 4096 {
-                    self.hidden_buf.push(ch);
+                match self.vis_kind(&st) {
+                    Some(k) => {
+                        if self.vis_buf.0 != Some(k) {
+                            self.flush_hidden();
+                            self.vis_buf.0 = Some(k);
+                        }
+                        if self.vis_buf.1.len() < 4096 {
+                            self.vis_buf.1.push(ch);
+                        }
+                    }
+                    None if ch.is_whitespace() && self.vis_buf.0.is_some() => {
+                        if self.vis_buf.1.len() < 4096 {
+                            self.vis_buf.1.push(ch);
+                        }
+                    }
+                    None => {
+                        if self.vis_buf.0.is_some() {
+                            self.flush_hidden();
+                        }
+                    }
                 }
                 if self.body.len() < MAX_TEXT {
                     self.body.push(ch);
@@ -507,7 +559,50 @@ impl Parser<'_, '_> {
                     s.cp = cp;
                     s.hidden = false;
                     s.deleted = false;
+                    s.cf = 0;
+                    s.cb = 0;
+                    s.fs = 24;
                 }
+            }
+            "cf" | "cb" | "chcbpat" | "highlight" | "fs" | "cbpat" => {
+                let v = u16::try_from(n.max(0)).unwrap_or(0);
+                if let Some(s) = self.state_mut() {
+                    match w {
+                        "cf" => s.cf = v,
+                        "fs" => s.fs = v,
+                        "cbpat" => s.pbg = v,
+                        _ => s.cb = v,
+                    }
+                }
+            }
+            "pard" => {
+                if let Some(s) = self.state_mut() {
+                    s.intbl = false;
+                    s.pbg = 0;
+                }
+            }
+            "intbl" => {
+                if let Some(s) = self.state_mut() {
+                    s.intbl = true;
+                }
+            }
+            "trowd" => self.row_shaded = false,
+            "clcbpat" | "clcbpatraw" => {
+                let c = self.color(u16::try_from(n.max(0)).unwrap_or(0));
+                if c.is_some_and(|c| !close(c, WHITE)) {
+                    self.row_shaded = true;
+                }
+            }
+            "red" | "green" | "blue"
+                if self.caps.last().is_some_and(|c| c.cap == Cap::ColorTbl) =>
+            {
+                let i = match w {
+                    "red" => 0,
+                    "green" => 1,
+                    _ => 2,
+                };
+                self.cur_color[i] = n.clamp(0, 255) as u8;
+                self.color_set = true;
             }
             "v" => {
                 let on = param != Some(0);
@@ -643,12 +738,13 @@ impl Parser<'_, '_> {
                     self.set_dest(Dest::Container);
                 }
             }
-            "colortbl" | "stylesheet" | "listtable" | "listoverridetable" | "filetbl"
-            | "rsidtbl" | "xmlnstbl" | "themedata" | "colorschememapping" | "datastore"
-            | "latentstyles" | "pgdsctbl" | "mmathPr" | "fldtype" | "datafield" | "sn"
-            | "bkmkstart" | "bkmkend" | "pntext" | "pntxta" | "pntxtb" | "listtext" | "falt"
-            | "panose" | "fname" | "blipuid" | "picprop" | "atnref" | "atntime" | "atnicn"
-            | "objalias" | "objsect" | "xe" | "tc" | "txe" | "rxe" | "header_rsid" => {
+            "colortbl" => self.begin(Cap::ColorTbl),
+            "stylesheet" | "listtable" | "listoverridetable" | "filetbl" | "rsidtbl"
+            | "xmlnstbl" | "themedata" | "colorschememapping" | "datastore" | "latentstyles"
+            | "pgdsctbl" | "mmathPr" | "fldtype" | "datafield" | "sn" | "bkmkstart" | "bkmkend"
+            | "pntext" | "pntxta" | "pntxtb" | "listtext" | "falt" | "panose" | "fname"
+            | "blipuid" | "picprop" | "atnref" | "atntime" | "atnicn" | "objalias" | "objsect"
+            | "xe" | "tc" | "txe" | "rxe" | "header_rsid" => {
                 if w == "rsidtbl" {
                     // \rsidN words inside are still recorded; only text is skipped
                     self.set_dest(Dest::Container);
@@ -718,15 +814,48 @@ impl Parser<'_, '_> {
             .map_or(self.ansi_cp, |(_, cp)| *cp)
     }
 
+    fn color(&self, i: u16) -> Option<Rgb> {
+        if i == 0 {
+            return None;
+        }
+        self.colors.get(usize::from(i)).copied().flatten()
+    }
+
+    /// Why text in state `st` cannot be seen: `\v`, colour equal to the background under it
+    /// (character shading, paragraph shading, page; unknown inside shaded table rows), or a
+    /// font of 3 pt or less.
+    fn vis_kind(&self, st: &State) -> Option<&'static str> {
+        if st.hidden {
+            return Some("rtf_hidden");
+        }
+        let bg = if st.cb > 0 {
+            self.color(st.cb)
+        } else if st.pbg > 0 {
+            self.color(st.pbg)
+        } else if st.intbl && self.row_shaded {
+            None
+        } else {
+            Some(WHITE)
+        };
+        if let (Some(fg), Some(bg)) = (self.color(st.cf), bg) {
+            if close(fg, bg) {
+                return Some("white_text");
+            }
+        }
+        (st.fs > 0 && st.fs <= 6).then_some("tiny_text")
+    }
+
     fn flush_hidden(&mut self) {
-        let t = std::mem::take(&mut self.hidden_buf);
+        let (kind, t) = std::mem::take(&mut self.vis_buf);
         let t = t.split_whitespace().collect::<Vec<_>>().join(" ");
-        if !t.is_empty() && self.meta.hidden_content.len() < 500 {
-            self.meta.hidden_content.push(HiddenContent {
-                kind: "vanish".into(),
-                location: "rtf".into(),
-                text: truncate(&t, 512),
-            });
+        if let (Some(kind), false) = (kind, t.is_empty()) {
+            if self.meta.hidden_content.len() < 500 {
+                self.meta.hidden_content.push(HiddenContent {
+                    kind: kind.into(),
+                    location: "rtf".into(),
+                    text: truncate(&t, 512),
+                });
+            }
         }
     }
 
@@ -856,6 +985,7 @@ impl Parser<'_, '_> {
             Cap::ObjName => self.obj_name = text,
             Cap::ObjData => self.object(cap)?,
             Cap::Pict => self.picture(cap)?,
+            Cap::ColorTbl => {}
             Cap::Ud => {
                 if let Some(t) = text {
                     // the \ud text belongs to the enclosing capture

@@ -73,6 +73,7 @@ Layout and dependency direction (lower rows never use higher ones):
 | `src/formats/office/xlsb.rs` | 259 | Excel binary workbook (BIFF12 records) |
 | `src/formats/office/ole/objects.rs` | 403 | Embedded OLE objects (recursive), OfficeArt pictures and properties, CompObj |
 | `src/formats/office/ole/ppt.rs` | 231 | PowerPoint 97-2003 records: text, comments, links, saves, ExOleObjStg |
+| `src/formats/office/visual.rs` | 993 | Visually hidden content: colour equal to the background, tiny text, `;;;` formats, shapes outside the slide |
 | `src/formats/office/publisher.rs` | 38 | Microsoft Publisher (`.pub`, OLE2 property sets) |
 | `src/formats/office/visio.rs` | 179 | Microsoft Visio (`.vsd`, `.vsdx`/`.vsdm`) |
 | `src/formats/pdf/mod.rs` | 1,443 | In-house PDF parser (no `lopdf`): object table, trailers, Info, XMP, revisions, text, signatures |
@@ -133,6 +134,7 @@ Full API docs: `cargo doc -p foca-meta --no-deps --open`.
 - Embedded documents always go through `Ctx::attach_child`/`extract_child` (depth `max_depth`, shared budget); a child whose bytes hash equals a document on the current ancestor chain is skipped (cycle protection). Never create a fresh `Ctx` for a child.
 - Spreadsheet numbers are a cost trap: XLS/XLSB keep numeric cells only from the first two sheets, at most 20k cells, and only 6-19 digit integers (IDs, phones, card and account numbers); dates and amounts are dropped.
 - RTF is detected by the `{\rtf` magic only. `\uN` is followed by `\ucN` fallback characters to skip; `\'hh` runs are decoded together so double-byte code pages (Shift-JIS, GBK) stay intact.
+- Visual hidden-content checks compare the text colour with the background actually under it (run/paragraph shading, highlight, cell fill, page). Where it is unknown (text boxes, table styles with fills, pattern fills, shaded RTF table rows) no colour finding is made: white on a dark fill is visible.
 - BIFF8 string pool: a string split by a CONTINUE record, also right after its header, restarts with an option byte.
 - OLE2 embedded signatures (`\x05DigitalSignature`, `_VBA_PROJECT_CUR` in legacy `.doc`/`.xls`) are not parsed; Word style-inherited `w:vanish` is not resolved.
 - Redaction detection approximates glyph width at ~0.5 em, ignores form XObjects/transparency/clipping, and skips boxes > 80% of `MediaBox`. Revision text diffs skip PDFs with `pages × revisions > 5000`.

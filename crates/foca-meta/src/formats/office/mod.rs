@@ -11,4 +11,5 @@ pub(crate) mod publisher;
 pub(crate) mod rtf;
 pub(crate) mod vba;
 pub(crate) mod visio;
+pub(crate) mod visual;
 pub(crate) mod xlsb;

@@ -27,6 +27,10 @@ struct Walker<'a, 'c> {
     records: usize,
     paths: Vec<String>,
     want_children: bool,
+    /// DocumentAtom slide size (master units) and whether the walk is inside a slide.
+    slide_size: Option<(i64, i64)>,
+    in_slide: bool,
+    slides: u32,
 }
 
 /// Parses the main stream: fills `meta` and returns the text.
@@ -45,6 +49,9 @@ pub(crate) fn parse(
         records: 0,
         paths: Vec::new(),
         want_children,
+        slide_size: None,
+        in_slide: false,
+        slides: 0,
     };
     w.walk(doc, 0, doc.len(), 0)?;
     if w.edits > 0 {
@@ -90,6 +97,15 @@ impl Walker<'_, '_> {
                 (true, 0x0FF0) if inst == 1 => {}
                 (true, 0x2F14) => self.meta.encrypted = true,
                 (true, 0x2EE0) => self.comment(d, s, e),
+                (true, 0x03EE) if depth < MAX_DEPTH => {
+                    self.slides += 1;
+                    let was = std::mem::replace(&mut self.in_slide, true);
+                    self.walk(d, s, e, depth + 1)?;
+                    self.in_slide = was;
+                }
+                (true, 0xF004) if self.in_slide && depth < MAX_DEPTH => {
+                    self.shape(d, s, e, depth)?;
+                }
                 (true, 0x0FD7) => self.hyperlink(d, s, e),
                 (true, _) if depth < MAX_DEPTH => self.walk(d, s, e, depth + 1)?,
                 (false, 0x0FA0) => self.push_text(&utf16le(body)),
@@ -98,6 +114,15 @@ impl Walker<'_, '_> {
                     self.push_text(&t);
                 }
                 (false, 0x0FF5) => self.edits += 1,
+                (false, 0x03E9) => {
+                    let x = rd_u32le(body, 0).map(|v| i64::from(v as i32));
+                    let y = rd_u32le(body, 4).map(|v| i64::from(v as i32));
+                    if let (Some(x), Some(y)) = (x, y) {
+                        if x > 0 && y > 0 {
+                            self.slide_size = Some((x, y));
+                        }
+                    }
+                }
                 // CStrings of media and link objects keep source file paths
                 (false, 0x0FBA) => {
                     let v = utf16le(body);
@@ -113,6 +138,45 @@ impl Walker<'_, '_> {
                 _ => {}
             }
             p = e;
+        }
+        Ok(())
+    }
+
+    /// A shape of a slide (OfficeArtSpContainer): its text, and an `off_slide` finding when
+    /// the client anchor lies outside the DocumentAtom slide size.
+    fn shape(&mut self, d: &[u8], s: usize, e: usize, depth: u32) -> Result<(), MetaError> {
+        let mut anchor = None;
+        let mut p = s;
+        while p + 8 <= e {
+            let Some((_, _, ty, bs, be)) = header(d, p, e) else {
+                break;
+            };
+            if ty == 0xF010 {
+                let b = &d[bs..be];
+                // top, left, right, bottom: i16 in the short form, i32 otherwise
+                anchor = match b.len() {
+                    8 => {
+                        let v = |i: usize| i64::from(rd_u16le(b, i * 2).unwrap_or(0) as i16);
+                        Some((v(0), v(1), v(2), v(3)))
+                    }
+                    16 => {
+                        let v = |i: usize| i64::from(rd_u32le(b, i * 4).unwrap_or(0) as i32);
+                        Some((v(0), v(1), v(2), v(3)))
+                    }
+                    _ => None,
+                };
+            }
+            p = be;
+        }
+        let start = self.text.len();
+        self.walk(d, s, e, depth + 1)?;
+        if let (Some((top, left, right, bottom)), Some((w, h))) = (anchor, self.slide_size) {
+            if crate::formats::office::visual::outside(left, top, right - left, bottom - top, w, h)
+            {
+                let text = self.text.get(start..).unwrap_or("").to_string();
+                let loc = format!("slide {}", self.slides);
+                crate::formats::office::visual::push(self.meta, "off_slide", loc, &text);
+            }
         }
         Ok(())
     }

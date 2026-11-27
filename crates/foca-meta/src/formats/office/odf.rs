@@ -191,12 +191,20 @@ pub fn extract(bytes: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, M
         }
     }
     if !meta.encrypted {
-        for part in ["content.xml", "styles.xml"] {
-            if let Some(e) = read_xml(&mut z, part, ctx, &mut meta)? {
-                content_xml(&mut meta, &e, part);
-                if part == "content.xml" {
-                    hidden(&mut meta, &e);
-                }
+        let content = read_xml(&mut z, "content.xml", ctx, &mut meta)?;
+        let styles = read_xml(&mut z, "styles.xml", ctx, &mut meta)?;
+        for (part, e) in [("content.xml", &content), ("styles.xml", &styles)] {
+            if let Some(e) = e {
+                content_xml(&mut meta, e, part);
+            }
+        }
+        if let Some(c) = &content {
+            hidden(&mut meta, c);
+            let st = super::visual::OdfStyles::parse(Some(c), styles.as_ref());
+            match format {
+                DocFormat::Ods => super::visual::odf_cells(&mut meta, c, &st),
+                DocFormat::Odp | DocFormat::Odg => super::visual::odf_slides(&mut meta, c, &st),
+                _ => super::visual::odf_text(&mut meta, c, &st),
             }
         }
         if let Some(e) = read_xml(&mut z, "settings.xml", ctx, &mut meta)? {
@@ -305,7 +313,7 @@ fn hidden(meta: &mut Metadata, root: &Element) {
                 let mut text = String::new();
                 collect_all(r, &mut text, 0);
                 if !text.trim().is_empty() {
-                    push(meta, "row", format!("{name}!{row}"), text);
+                    push(meta, "collapsed_rows", format!("{name}!{row}"), text);
                 }
             }
         }

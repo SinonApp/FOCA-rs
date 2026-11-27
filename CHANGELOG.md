@@ -16,6 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - OpenDocument: printer name, driver and port from the settings, hidden sheets, rows, columns, slides and sections, embedded objects.
 - Document thumbnails of OOXML, OpenDocument and Office 97-2003 files, hidden PowerPoint slides with their text, Publisher story text, picture paths and links.
 - Encrypted OOXML packages (with the encryption type) and encrypted PowerPoint 97-2003 files are flagged as encrypted.
+- Visually hidden content in office documents: text coloured like its background (white on white, font colour equal to the cell fill, theme background colour), text of 3 pt or less, cells with a `;;;` number format, collapsed or filtered rows, shapes placed outside the slide or flagged hidden, in Word, Excel, PowerPoint, OpenDocument and RTF files. White text on a dark fill, shading or table style is not reported.
 - Legacy code pages (Shift-JIS, GBK, Big5, EUC-KR, Windows 1250-1258, KOI8) decode correctly in Office and RTF strings.
 
 ### Fixed

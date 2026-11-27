@@ -437,10 +437,15 @@ fn docx(
             || n == "word/footnotes.xml"
             || n == "word/endnotes.xml"
     });
+    let theme = read_xml(z, "word/theme/theme1.xml", ctx, meta)?;
+    let theme = super::visual::theme_colors(theme.as_ref());
+    let styles = read_xml(z, "word/styles.xml", ctx, meta)?;
+    let filled = super::visual::word_filled_table_styles(styles.as_ref());
     for p in &parts {
         if let Some(e) = read_xml(z, p, ctx, meta)? {
             revisions(meta, &e);
             vanish(meta, &e, p);
+            super::visual::word(meta, &e, p, &theme, &filled);
         }
     }
     if let Some(e) = read_xml(z, "word/comments.xml", ctx, meta)? {
@@ -626,7 +631,8 @@ fn pptx(
             );
         }
     }
-    // hidden slides (`<p:sld show="0">`) with their text
+    let size = super::visual::slide_size(read_xml(z, "ppt/presentation.xml", ctx, meta)?.as_ref());
+    // hidden slides (`<p:sld show="0">`) with their text, shapes outside the slide
     for n in sorted_matching(names, |n| {
         n.starts_with("ppt/slides/slide") && n.ends_with(".xml")
     })
@@ -636,6 +642,9 @@ fn pptx(
         let Some(e) = read_xml(z, &n, ctx, meta)? else {
             continue;
         };
+        if let Some(sz) = size {
+            super::visual::slide(meta, &e, &n, sz);
+        }
         if matches!(e.attr("show"), Some("0" | "false")) && meta.hidden_content.len() < MAX_HIDDEN {
             let mut text = String::new();
             collect_text(&e, &["t"], &["p"], &mut text, 0);
@@ -787,6 +796,10 @@ fn hidden_cells(z: &mut SafeZip, ctx: &Ctx, meta: &mut Metadata) -> Result<(), M
     if sheets.is_empty() {
         return Ok(());
     }
+    let theme = read_xml(z, "xl/theme/theme1.xml", ctx, meta)?;
+    let theme = super::visual::theme_colors(theme.as_ref());
+    let styles = read_xml(z, "xl/styles.xml", ctx, meta)?;
+    let styles = super::visual::XlStyles::parse(styles.as_ref(), &theme);
     let mut shared: Vec<String> = Vec::new();
     if let Some(sst) = read_xml(z, "xl/sharedStrings.xml", ctx, meta)? {
         for si in sst.elements().filter(|e| e.local() == "si").take(1_000_000) {
@@ -802,6 +815,14 @@ fn hidden_cells(z: &mut SafeZip, ctx: &Ctx, meta: &mut Metadata) -> Result<(), M
         let Some(ws) = read_xml(z, &part, ctx, meta)? else {
             continue;
         };
+        super::visual::sheet(meta, &name, &ws, &styles, |c| cell_value(c, &shared));
+        // rows hidden by a collapsed outline group or an AutoFilter
+        let filtered = ws.child("autoFilter").is_some()
+            || ws
+                .child("sheetPr")
+                .and_then(|p| p.attr("filterMode"))
+                .is_some_and(|v| v == "1" || v == "true");
+        let mut collapsed: Vec<u32> = Vec::new();
         let mut hidden_cols: Vec<u32> = Vec::new();
         if let Some(cols) = ws.child("cols") {
             for c in cols.elements().filter(|e| e.local() == "col") {
@@ -831,7 +852,12 @@ fn hidden_cells(z: &mut SafeZip, ctx: &Ctx, meta: &mut Metadata) -> Result<(), M
                     .and_then(|v| v.parse().ok())
                     .unwrap_or(i as u32 + 1);
                 let hidden = row.attr("hidden").is_some_and(|v| v == "1" || v == "true");
-                if hidden && hidden_rows.len() < 10_000 {
+                let grouped = row
+                    .attr("outlineLevel")
+                    .is_some_and(|v| v.parse::<u32>().unwrap_or(0) > 0);
+                if hidden && (grouped || filtered) && collapsed.len() < 10_000 {
+                    collapsed.push(r);
+                } else if hidden && hidden_rows.len() < 10_000 {
                     hidden_rows.push(r);
                 }
                 if !hidden && hidden_cols.is_empty() {
@@ -869,6 +895,13 @@ fn hidden_cells(z: &mut SafeZip, ctx: &Ctx, meta: &mut Metadata) -> Result<(), M
                 vals.extend(row_text.get(&r).cloned().unwrap_or_default());
             }
             push_hidden(meta, "row", format!("{name}!{label}"), &vals);
+        }
+        for (s, e, label) in ranges(&collapsed, |x| x.to_string()) {
+            let mut vals: Vec<String> = Vec::new();
+            for r in s..=e.min(s + 1000) {
+                vals.extend(row_text.get(&r).cloned().unwrap_or_default());
+            }
+            push_hidden(meta, "collapsed_rows", format!("{name}!{label}"), &vals);
         }
         for (s, e, label) in ranges(&hidden_cols, col_name) {
             let mut vals: Vec<String> = Vec::new();
