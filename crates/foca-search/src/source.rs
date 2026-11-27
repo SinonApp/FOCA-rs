@@ -8,7 +8,7 @@ use foca_net::{NetClient, NetError};
 use serde::{Deserialize, Serialize};
 
 use crate::dorkboard::DorkBoard;
-use crate::filter::{dedup_key, ext_of_url, image_quota, is_image_ext, ExtFilter};
+use crate::filter::{dedup_key, ext_of_url, is_image_ext, ExtFilter};
 use crate::BoxFuture;
 
 /// Error prefix for "captcha / blocked" (`run_sources` sets the `blocked` status).
@@ -86,8 +86,10 @@ pub struct Found {
 pub struct SearchCtx {
     pub net: NetClient,
     pub filter: ExtFilter,
-    /// Maximum number of URLs per source.
+    /// Maximum number of document URLs per source.
     pub limit: usize,
+    /// Maximum number of image URLs per source (EXIF), counted apart from `limit`; 0 = none.
+    pub images: usize,
     /// Known target hosts (from crt.sh/DNS), used as extra crawler start points.
     pub hosts: Vec<String>,
     /// Soft deadline of the source: paginated sources check it before each page and return what they
@@ -128,6 +130,7 @@ impl SearchCtx {
             net,
             filter: ExtFilter::default(),
             limit: 500,
+            images: 300,
             hosts: Vec::new(),
             deadline: None,
             known: Arc::new(HashSet::new()),
@@ -544,8 +547,8 @@ fn finish_one(one: &mut OneRun, ctx: &SearchCtx) {
             .into_iter()
             .filter(|u| ctx.filter.matches(u.target_url()).is_some())
             .filter(|u| !ctx.is_known(u))
-            .take(ctx.limit)
             .collect();
+        let urls = take_balanced(urls, ctx.limit, ctx.images);
         one.rep.n = urls.len() + if urls.is_empty() { f.hosts.len() } else { 0 };
         f.urls = urls;
     }
@@ -573,14 +576,13 @@ pub fn dedupe(items: Vec<FoundUrl>) -> Vec<FoundUrl> {
     out
 }
 
-/// Takes documents first (up to `limit`) and images within a separate [`image_quota`]; order
-/// within each group is preserved and the total never exceeds `limit`.
-pub fn take_balanced(items: Vec<FoundUrl>, limit: usize) -> Vec<FoundUrl> {
+/// Takes documents (up to `limit`), then images (up to `images`, their own budget); order
+/// within each group is preserved.
+pub fn take_balanced(items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<FoundUrl> {
     let (mut docs, imgs): (Vec<FoundUrl>, Vec<FoundUrl>) =
         items.into_iter().partition(|u| !found_is_image(u));
     docs.truncate(limit);
-    let room = limit.saturating_sub(docs.len()).min(image_quota(limit));
-    docs.extend(imgs.into_iter().take(room));
+    docs.extend(imgs.into_iter().take(images));
     docs
 }
 
@@ -592,8 +594,9 @@ fn found_is_image(u: &FoundUrl) -> bool {
 }
 
 /// Picks downloads fairly: documents round-robin across sources (so Wayback cannot eat the whole
-/// limit before the crawler or CC), then images round-robin, up to [`image_quota`].
-pub fn pick_fair(items: Vec<FoundUrl>, limit: usize) -> Vec<FoundUrl> {
+/// limit before the crawler or CC), then images round-robin within their own budget `images`
+/// (they never take room from the documents).
+pub fn pick_fair(items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<FoundUrl> {
     use std::collections::VecDeque;
     fn groups(v: Vec<FoundUrl>) -> Vec<VecDeque<FoundUrl>> {
         let mut out: Vec<(String, VecDeque<FoundUrl>)> = Vec::new();
@@ -623,7 +626,6 @@ pub fn pick_fair(items: Vec<FoundUrl>, limit: usize) -> Vec<FoundUrl> {
         items.into_iter().partition(|u| !found_is_image(u));
     let mut out = Vec::new();
     round_robin(groups(docs), limit, &mut out);
-    let room = limit.saturating_sub(out.len()).min(image_quota(limit));
-    round_robin(groups(imgs), room, &mut out);
+    round_robin(groups(imgs), images, &mut out);
     out
 }

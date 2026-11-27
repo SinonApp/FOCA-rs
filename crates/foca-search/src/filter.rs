@@ -108,11 +108,6 @@ impl ExtFilter {
     }
 }
 
-/// Returns the image quota for `limit` (documents come first; images get a third, at least 1).
-pub fn image_quota(limit: usize) -> usize {
-    (limit / 3).max(1)
-}
-
 /// Returns `true` if the URL belongs to the domain or one of its subdomains.
 pub fn url_in_domain(u: &str, domain: &str) -> bool {
     url::Url::parse(u)

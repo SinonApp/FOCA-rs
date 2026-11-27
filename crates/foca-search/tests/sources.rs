@@ -74,11 +74,12 @@ async fn wayback_cdx_with_pagination() {
     .await;
     let (mut ctx, sink) = ctx("", "");
     ctx.limit = 9;
+    ctx.images = 2;
     let wb = Wayback::with_base(&srv.url());
     let f = wb.find(&ctx, "iana.org").await.unwrap();
     let names: Vec<&str> = f.urls.iter().map(|u| u.target_url()).collect();
-    // 6 pdf + docx + xlsx documents; the image quota is 9/3 = 3, but only 1 slot is left
-    assert_eq!(f.urls.len(), 9, "{names:#?}");
+    // 6 pdf + docx + xlsx documents within the limit, images on their own cap of 2
+    assert_eq!(f.urls.len(), 10, "{names:#?}");
     let first = &f.urls[0];
     assert_eq!(
         first.url,
@@ -98,7 +99,7 @@ async fn wayback_cdx_with_pagination() {
     assert!(!names
         .iter()
         .any(|n| n.contains("font") || n.contains("gone") || n.contains("missing")));
-    assert_eq!(names.iter().filter(|n| n.ends_with(".jpg")).count(), 1);
+    assert_eq!(names.iter().filter(|n| n.ends_with(".jpg")).count(), 2);
     assert!(f.hosts.contains(&"handbook.iana.org".to_string()));
     assert_eq!(srv.requests().len(), 5);
     assert!(sink

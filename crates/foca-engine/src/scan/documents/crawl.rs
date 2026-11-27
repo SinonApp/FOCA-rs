@@ -22,7 +22,7 @@ use foca_search::storage::{
     drive_file, parse_folder_listing, parse_storage, provider_hosts, ItemKind, Provider,
     StorageEndpoints, StorageLink, FOLDER_FILES, FOLDER_TOTAL,
 };
-use foca_search::store::StoreQueue;
+use foca_search::store::{SharedDb, StoreQueue};
 use foca_search::FoundUrl;
 use foca_store::PROVENANCE_KEY;
 
@@ -98,8 +98,18 @@ impl CrawlCfg {
 }
 
 /// Effective parameters: defaults, then `settings.crawl`, then the run's wizard values (and the
-/// legacy `crawl_depth`). External storage and images are off at the passive level.
+/// legacy `crawl_depth`). External storage and crawled images are off at the passive level.
 pub(crate) fn cfg(c: &Ctx) -> CrawlCfg {
+    let mut cfg = chosen_cfg(c);
+    if c.level == "external" {
+        cfg.storage = false;
+        cfg.images = false;
+    }
+    cfg
+}
+
+/// The parameters as chosen in settings and the wizard, before the level rules.
+fn chosen_cfg(c: &Ctx) -> CrawlCfg {
     let mut v = default_settings();
     if let Ok(s) = c.e.store().settings_get() {
         if s["crawl"].is_object() {
@@ -115,11 +125,23 @@ pub(crate) fn cfg(c: &Ctx) -> CrawlCfg {
     if let (false, Some(d)) = (run_depth, lock(&c.st).crawl_depth) {
         cfg.max_depth = d;
     }
-    if c.level == "external" {
-        cfg.storage = false;
-        cfg.images = false;
-    }
     cfg
+}
+
+/// Images (EXIF) one scan may queue from any source (crawl, Wayback, Common Crawl, search):
+/// `crawl.max_images`, or none when `crawl.images` is off and the run's document types ask for
+/// no image type. Images never take room from the document limit.
+pub(crate) fn image_cap(c: &Ctx) -> usize {
+    let cfg = chosen_cfg(c);
+    let typed = lock(&c.st)
+        .exts
+        .iter()
+        .any(|e| foca_search::filter::is_image_ext(e));
+    if cfg.images || typed {
+        cfg.max_images
+    } else {
+        0
+    }
 }
 
 /// Crawl counters as sent in `crawl` events and `scan_status.crawl`.
@@ -528,25 +550,27 @@ pub(crate) fn crawl_note_sample() -> String {
     )
 }
 
-/// A crawled image: it has its own count and byte caps instead of the document limit.
-pub(crate) fn is_crawled_image(source: &str, url: &str) -> bool {
-    source == "crawler"
-        && foca_search::filter::ext_of_url(url)
-            .is_some_and(|e| foca_search::filter::is_image_ext(&e))
+/// An image download (EXIF) from any source: it has its own count and byte caps instead of the
+/// document limit.
+pub(crate) fn is_image(url: &str) -> bool {
+    foca_search::filter::ext_of_url(url).is_some_and(|e| foca_search::filter::is_image_ext(&e))
 }
 
-/// Room left under the scan's document download limit: the limit minus the download tasks this
-/// scan already queued (crawled images excluded).
+/// Download tasks this scan queued so far: `(documents, images)`.
+pub(crate) fn queued(db: &SharedDb, scan_id: &str) -> (usize, usize) {
+    let tasks = lock(db).tasks(None).unwrap_or_default();
+    let mine = tasks
+        .iter()
+        .filter(|t| t.scan_id.as_deref() == Some(scan_id));
+    let (imgs, docs): (Vec<_>, Vec<_>) = mine.partition(|t| is_image(&t.url));
+    (docs.len(), imgs.len())
+}
+
+/// Room left under the scan's document download limit: the limit minus the documents this scan
+/// already queued (images excluded).
 pub(crate) fn doc_room(c: &Ctx) -> Result<usize, Stop> {
     let limit = lock(&c.st).limit;
-    let queued = lock(&c.db)
-        .tasks(None)?
-        .iter()
-        .filter(|t| {
-            t.scan_id.as_deref() == Some(c.scan_id.as_str()) && !is_crawled_image(&t.source, &t.url)
-        })
-        .count();
-    Ok(limit.saturating_sub(queued))
+    Ok(limit.saturating_sub(queued(&c.db, &c.scan_id).0))
 }
 
 /// What [`enqueue`] queued and what the document limit left out.
@@ -558,7 +582,8 @@ pub(crate) struct Enqueued {
 
 /// Enqueues extra downloads that bypass the search-stage filters (they were checked here:
 /// in-scope images, exact storage items) and records their provenance. Documents take at most
-/// `room` new tasks (the scan's download limit), in the given order; images keep their own caps.
+/// `room` new tasks (the scan's download limit), in the given order; images take what is left of
+/// the scan's image cap.
 pub(crate) fn enqueue(
     c: &Ctx,
     queue: &StoreQueue,
@@ -570,12 +595,19 @@ pub(crate) fn enqueue(
     let mut prov: Vec<(String, DocProvenance)> = Vec::new();
     let mut seen = HashSet::new();
     let (mut docs, mut over_limit) = (0usize, 0usize);
+    let mut img_room = image_cap(c).saturating_sub(queued(&c.db, &c.scan_id).1);
     for (f, p) in items {
         let key = foca_search::filter::target_key(&f.url);
         if known.contains(&key) || !seen.insert(key) {
             continue;
         }
-        if !is_crawled_image(&f.source, &f.url) {
+        if is_image(&f.url) {
+            if img_room == 0 {
+                over_limit += 1;
+                continue;
+            }
+            img_room -= 1;
+        } else {
             if docs >= room {
                 over_limit += 1;
                 continue;

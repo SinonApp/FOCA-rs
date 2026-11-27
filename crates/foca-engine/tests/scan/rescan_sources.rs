@@ -10,17 +10,28 @@ async fn scan(e: &Env, args: Value) {
     e.wait().await;
 }
 
+/// Downloaded documents without images (images have their own budget, apart from `limit`).
+fn doc_names(s: &Value) -> Vec<String> {
+    s["docs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d["name"].as_str().unwrap_or("").to_string())
+        .filter(|n| !n.ends_with(".jpg"))
+        .collect()
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn rescan_downloads_new_documents() {
     let e = env(0).await;
     let id = e.project("example.test").await;
     let a = json!({ "project": id, "profile": "passive", "sources": ["wayback"], "limit": 3 });
     scan(&e, a.clone()).await;
-    let n1 = counts(&e.snap(&id).await)["docs"].as_u64().unwrap();
+    let n1 = doc_names(&e.snap(&id).await).len();
     assert_eq!(n1, 3);
     e.clear_events();
     scan(&e, a.clone()).await;
-    let n2 = counts(&e.snap(&id).await)["docs"].as_u64().unwrap();
+    let n2 = doc_names(&e.snap(&id).await).len();
     if n2 != 6 {
         for x in e.events() {
             if x["type"] != "progress" {
@@ -31,7 +42,7 @@ async fn rescan_downloads_new_documents() {
     assert_eq!(n2, 6, "the second scan must download 3 new files, not 0");
     scan(&e, a).await;
     let s = e.snap(&id).await;
-    // documents before images: photo.jpg comes last
+    // every document and the image (on its own budget) are in by now
     assert_eq!(counts(&s)["docs"], DOCS.len());
 }
 
@@ -186,6 +197,6 @@ async fn wizard_doc_types_and_limits_apply() {
         json!({ "project": id, "profile": "passive", "sources": ["wayback"], "limit": 2 }),
     )
     .await;
-    let after = e.snap(&id).await["docs"].as_array().unwrap().len();
+    let after = doc_names(&e.snap(&id).await).len();
     assert!(after > before && after - before <= 2, "{before} → {after}");
 }

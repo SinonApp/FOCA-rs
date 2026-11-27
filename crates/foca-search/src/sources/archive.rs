@@ -377,6 +377,7 @@ pub(crate) struct Collector {
     seen: std::collections::HashSet<String>,
     hosts: std::collections::BTreeSet<String>,
     limit: usize,
+    images: usize,
     known: std::sync::Arc<std::collections::HashSet<String>>,
 }
 
@@ -388,6 +389,7 @@ impl Collector {
             seen: Default::default(),
             hosts: Default::default(),
             limit: ctx.limit,
+            images: ctx.images,
             known: ctx.known.clone(),
         }
     }
@@ -414,7 +416,7 @@ impl Collector {
             .as_deref()
             .is_some_and(crate::filter::is_image_ext);
         if img {
-            if self.imgs.len() < crate::filter::image_quota(self.limit) {
+            if self.imgs.len() < self.images {
                 self.imgs.push(f);
             }
         } else if self.docs.len() < self.limit {
@@ -434,7 +436,7 @@ impl Collector {
         let mut urls = self.docs;
         urls.extend(self.imgs);
         Found {
-            urls: crate::source::take_balanced(urls, self.limit),
+            urls: crate::source::take_balanced(urls, self.limit, self.images),
             hosts: self.hosts.into_iter().collect(),
             note: None,
         }

@@ -367,6 +367,53 @@ async fn images_off_are_neither_fetched_nor_counted_as_documents() {
     assert_ne!(crawl["stop"], "docs", "{crawl}");
 }
 
+/// Archive images have their own budget: they neither take room from the document limit nor
+/// wait for it, obey `crawl.max_images`, and stay out when images are off.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn archive_images_use_the_image_budget_not_the_document_limit() {
+    let e = common::env(0).await;
+    let names = |s: &Value| -> Vec<String> {
+        s["docs"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["name"].as_str().unwrap().to_string())
+            .collect()
+    };
+    let scan = |id: String, extra: Value| {
+        let e = &e;
+        async move {
+            let mut args = json!({ "project": id, "profile": "passive", "sources": ["wayback"],
+                "limit": 2 });
+            if let (Some(o), Value::Object(x)) = (args.as_object_mut(), extra) {
+                o.extend(x);
+            }
+            e.call("scan_start", args).await;
+            e.wait().await;
+        }
+    };
+    let id = e.project("img-budget").await;
+    scan(id.clone(), json!({})).await;
+    let got = names(&e.snap(&id).await);
+    let docs = got.iter().filter(|n| !n.ends_with(".jpg")).count();
+    assert_eq!(docs, 2, "the document limit holds: {got:?}");
+    assert!(
+        got.iter().any(|n| n == "photo.jpg"),
+        "the archive image comes on top of the limit: {got:?}"
+    );
+    // images off: the archive image is not queued at all
+    let id = e.project("img-off").await;
+    scan(id.clone(), json!({ "crawl": { "images": false } })).await;
+    let got = names(&e.snap(&id).await);
+    assert!(!got.iter().any(|n| n.ends_with(".jpg")), "{got:?}");
+    assert_eq!(got.len(), 2, "{got:?}");
+    // the image cap applies to archive images too
+    let id = e.project("img-cap").await;
+    scan(id.clone(), json!({ "crawl": { "max_images": 0 } })).await;
+    let got = names(&e.snap(&id).await);
+    assert!(!got.iter().any(|n| n.ends_with(".jpg")), "{got:?}");
+}
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn crawl_resumes_frontier_in_next_scan() {
     let (e, site) = env_with_site(|_, r: &TestRequest| {

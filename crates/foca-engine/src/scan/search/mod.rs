@@ -183,10 +183,12 @@ async fn search(c: &Ctx) -> Result<Option<cc_lane::CcLane>, Stop> {
         dork_board.plan(d, &pending.first(d, groups));
     }
     let search_net = c.group_net("search")?;
+    let image_cap = crawl::image_cap(c);
     let make_ctx = |d: &str, k: usize| -> (SearchCtx, Value) {
         // the crawl holds its requests while the scan is paused
         let mut ctx = SearchCtx::new(search_net.clone()).with_pause(c.pause.clone());
         ctx.limit = limit;
+        ctx.images = image_cap;
         if let Some(f) = &ext_filter {
             ctx.filter = f.clone();
         }
@@ -531,6 +533,8 @@ pub(super) struct Enqueuer {
     wb: String,
     ext_filter: Option<ExtFilter>,
     limit: usize,
+    /// Images (EXIF) the scan may queue, apart from `limit`.
+    images: usize,
 }
 
 impl Enqueuer {
@@ -544,6 +548,7 @@ impl Enqueuer {
             wb: c.e.cfg.endpoints.wayback.clone(),
             ext_filter,
             limit,
+            images: crawl::image_cap(c),
         }
     }
 
@@ -551,21 +556,14 @@ impl Enqueuer {
         &self.db
     }
 
-    /// Documents this scan may still queue: the limit minus its download tasks so far (crawled
-    /// images have their own caps).
-    fn room(&self) -> usize {
-        let queued = lock(&self.db)
-            .tasks(None)
-            .map(|v| {
-                v.iter()
-                    .filter(|t| {
-                        t.scan_id.as_deref() == Some(self.scan_id.as_str())
-                            && !crawl::is_crawled_image(&t.source, &t.url)
-                    })
-                    .count()
-            })
-            .unwrap_or(0);
-        self.limit.saturating_sub(queued)
+    /// What this scan may still queue: `(documents, images)`, the limit and the image cap minus
+    /// its download tasks so far.
+    fn room(&self) -> (usize, usize) {
+        let (docs, imgs) = crawl::queued(&self.db, &self.scan_id);
+        (
+            self.limit.saturating_sub(docs),
+            self.images.saturating_sub(imgs),
+        )
     }
 
     /// Queues found URLs for download: (1) documents of hosts outside the scope are dropped (a URL
@@ -621,7 +619,8 @@ impl Enqueuer {
                 let ok = self
                     .ext_filter
                     .as_ref()
-                    .is_none_or(|f| f.matches(u.target_url()).is_some());
+                    .is_none_or(|f| f.matches(u.target_url()).is_some())
+                    && (self.images > 0 || !crawl::is_image(u.target_url()));
                 drop.other_type += usize::from(!ok);
                 ok
             })
@@ -633,8 +632,9 @@ impl Enqueuer {
             })
             .collect();
         // the room left under the limit: later batches (the background Common Crawl lane, the
-        // in-scan dork retry) count what this scan already queued
-        let pick = foca_search::pick_fair(fresh, self.room());
+        // in-scan dork retry) count what this scan already queued; images have their own cap
+        let (docs, imgs) = self.room();
+        let pick = foca_search::pick_fair(fresh, docs, imgs);
         let queue = StoreQueue::new(self.db.clone(), Some(self.scan_id.clone()));
         drop.added = queue.enqueue(&pick).map_err(Stop::Error)?;
         tracing::info!(target: "foca::scan", "{}: в загрузку {} новых (лимит {}, известных {}; найдено {}, вне скоупа {}, другой тип {}, уже известны {}, без архивной копии {})",

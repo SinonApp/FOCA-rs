@@ -50,7 +50,7 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
     let conc = c.e.cfg.download_concurrency.max(1);
     let mut finished = 0usize;
     let max_attempts = DownloadConfig::default().max_attempts;
-    // crawled images share a byte budget; past it the rest are skipped, not fetched
+    // images (any source) share a byte budget; past it the rest are skipped, not fetched
     let image_budget = crawl::image_budget(c);
     let mut image_bytes = 0u64;
     let mut storage_urls: Vec<String> = Vec::new();
@@ -63,7 +63,7 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
         }
         let mut set = tokio::task::JoinSet::new();
         for t in batch {
-            if crawled_image(&t) && image_bytes >= image_budget {
+            if image_task(&t) && image_bytes >= image_budget {
                 q.failed(&t, "skipped: бюджет трафика на изображения исчерпан", true)
                     .map_err(Stop::Error)?;
                 finished += 1;
@@ -90,7 +90,7 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
             let Ok((t, r)) = j else { continue };
             match r {
                 Ok(x) => {
-                    if crawled_image(&t) {
+                    if image_task(&t) {
                         image_bytes += x.size;
                     }
                     q.done(&t, &x).map_err(Stop::Error)?;
@@ -167,8 +167,8 @@ pub(crate) fn storage_note(got: usize, private: usize) -> String {
 /// Task error of a file on external storage that is not public (or was removed).
 pub(crate) const PRIVATE_FILE: &str = "private: файл во внешнем хранилище закрыт или удалён";
 
-fn crawled_image(t: &foca_search::QueuedTask) -> bool {
-    crawl::is_crawled_image(&t.source, &t.url)
+fn image_task(t: &foca_search::QueuedTask) -> bool {
+    crawl::is_image(&t.url)
 }
 
 fn is_storage(d: &Downloader, url: &str) -> bool {
