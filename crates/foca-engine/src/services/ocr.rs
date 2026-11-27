@@ -62,12 +62,15 @@ impl OcrSettings {
             .get("max_pages")
             .and_then(Value::as_u64)
             .unwrap_or(10)
-            .clamp(1, 50) as u32;
+            .max(1);
+        // Any page count and size from 1 up are honoured (the UI warns above its recommended
+        // range); the recognized text itself stays capped at MAX_OCR_TEXT_BYTES.
+        let max_pages = u32::try_from(max_pages).unwrap_or(u32::MAX);
         let max_mb = ocr
             .get("max_mb")
             .and_then(Value::as_u64)
             .unwrap_or(15)
-            .clamp(1, 50);
+            .max(1);
         Self {
             enabled,
             max_pages,
@@ -197,6 +200,11 @@ mod tests {
         assert!(!def.enabled);
         assert_eq!(def.max_pages, 10);
         assert_eq!(def.max_mb, 15);
+        // values above the old 50-page / 50 MB caps are kept as typed
+        let big = OcrSettings::from_settings(
+            &serde_json::json!({ "ocr": { "max_pages": 400, "max_mb": 300 } }),
+        );
+        assert_eq!((big.max_pages, big.max_mb), (400, 300));
 
         let prov = CountOcr(AtomicUsize::new(0));
         let pdf = b"%PDF-1.4 scan bytes";

@@ -18,6 +18,15 @@ use crate::engine::{lock, Core};
 use crate::services::i18n::{lang_to_u8, last_ui_lang, normalize_setting, UI_LANG};
 use crate::{CmdError, CmdResult};
 
+/// Longest duration a manual setting can ask for: ten years. Far beyond any scan, and small
+/// enough that adding it to `Instant::now()` can never overflow (the only reason for a ceiling).
+pub(crate) const MAX_SETTING_SECS: u64 = 10 * 365 * 24 * 3600;
+
+/// Seconds from a manual setting as a `Duration`, kept below [`MAX_SETTING_SECS`].
+pub(crate) fn secs(n: u64) -> Duration {
+    Duration::from_secs(n.min(MAX_SETTING_SECS))
+}
+
 pub(crate) fn resolve_proxy_spec(n: &Value, group: Option<&str>) -> Option<String> {
     if let Some(g) = group {
         let raw = n["groups"][g].as_str().unwrap_or("").trim();
@@ -234,11 +243,12 @@ impl Core {
         l
     }
 
-    /// Returns the overall source timeout: `settings.net.source_timeout` (seconds, 10-600) or `cfg.source_timeout`.
+    /// Returns the overall source timeout: `settings.net.source_timeout` (seconds, any value from 1
+    /// up) or `cfg.source_timeout` when missing or 0.
     pub(crate) fn source_timeout(&self) -> std::time::Duration {
         let s = self.store().settings_get().unwrap_or_default();
         match s["net"]["source_timeout"].as_u64() {
-            Some(n) if n > 0 => std::time::Duration::from_secs(n.clamp(10, 600)),
+            Some(n) if n > 0 => secs(n),
             _ => self.cfg.source_timeout,
         }
     }
@@ -299,22 +309,69 @@ impl Core {
         if let Some(r) = n["rps"].as_f64().filter(|r| *r > 0.0) {
             cfg.global_rps = Some(r);
         }
+        // Manual values are honoured as typed; only the semaphore's own permit ceiling is applied
+        // (a larger count would panic, and no phone gets near it).
         if let Some(t) = n["threads"].as_u64().filter(|t| *t > 0) {
-            cfg.max_concurrency = t as usize;
+            let t = usize::try_from(t).unwrap_or(usize::MAX);
+            cfg.max_concurrency = t.min(tokio::sync::Semaphore::MAX_PERMITS);
         }
         if let Some(t) = n["timeout"].as_u64().filter(|t| *t > 0) {
-            cfg.connect_timeout = Duration::from_secs(t);
+            cfg.connect_timeout = secs(t);
         }
         // A hard limit for the whole request: without it a trickling response (1 byte per read
         // timeout) would hold a download or RDAP forever. Search sources also get the overall source timeout.
+        // It never undercuts a longer connect timeout the user chose.
         if cfg.timeout.is_none() {
-            cfg.timeout = Some(Duration::from_secs(300));
+            cfg.timeout = Some(Duration::from_secs(300).max(cfg.connect_timeout));
         }
         if let Some(r) = n["retries"].as_u64() {
-            cfg.retries = r as u32;
+            cfg.retries = u32::try_from(r).unwrap_or(u32::MAX);
         }
         cfg.proxy_resolver = Some(Arc::new(foca_net::doh::DohProxyResolver));
         NetClient::with_clock(cfg, scope, sink, self.clock.clone())
             .map_err(|e| CmdError::new("net", e.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Engine, EngineConfig, MemoryEvents, MemoryKeys};
+
+    #[tokio::test]
+    async fn manual_net_values_reach_the_client_unclamped() {
+        let dir = tempfile::tempdir().unwrap();
+        let e = Engine::open(
+            EngineConfig::new(dir.path()),
+            Arc::new(MemoryKeys::new()),
+            Arc::new(MemoryEvents::default()),
+        )
+        .unwrap();
+        // far above the old UI caps (threads 64, rps 100, timeout 120 s, retries 5)
+        e.store()
+            .settings_set(
+                &json!({ "net": { "threads": 300, "rps": 250, "timeout": 900, "retries": 12 } }),
+            )
+            .unwrap();
+        let sink: Arc<dyn foca_net::RequestSink> = Arc::new(foca_net::NullSink);
+        let c = e.net_client(Scope::default(), sink.clone()).unwrap();
+        let cfg = c.config();
+        assert_eq!(cfg.max_concurrency, 300);
+        assert_eq!(cfg.global_rps, Some(250.0));
+        assert_eq!(cfg.connect_timeout, Duration::from_secs(900));
+        assert!(cfg.timeout.unwrap() >= Duration::from_secs(900));
+        assert_eq!(cfg.retries, 12);
+        // rps 0 = no limit; absurd numbers stay within the crash-safety invariants
+        e.store()
+            .settings_set(&json!({ "net": { "threads": u64::MAX, "rps": 0, "timeout": u64::MAX, "retries": u64::MAX } }))
+            .unwrap();
+        let c = e.net_client(Scope::default(), sink).unwrap();
+        let cfg = c.config();
+        assert_eq!(cfg.max_concurrency, tokio::sync::Semaphore::MAX_PERMITS);
+        assert_eq!(cfg.connect_timeout, Duration::from_secs(MAX_SETTING_SECS));
+        assert_eq!(cfg.retries, u32::MAX);
+        assert!(std::time::Instant::now()
+            .checked_add(cfg.timeout.unwrap())
+            .is_some());
     }
 }

@@ -355,7 +355,8 @@ pub struct EngineConfig {
     /// (standard/full profiles) then fetches `http(s)://<host>:<port>/` instead of the default
     /// ports. `None` on devices.
     pub site_port: Option<u16>,
-    /// Maximum documents queued per scan (the command's `limit` argument can lower it).
+    /// Documents queued per scan when `scan_start` has no `limit` argument (the argument wins,
+    /// `0` there means no limit).
     pub max_docs: usize,
     pub meta_concurrency: usize,
     pub download_concurrency: usize,

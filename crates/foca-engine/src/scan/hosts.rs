@@ -22,15 +22,16 @@ use crate::engine::lock;
 
 /// Hosts worked on at once when the setting is missing.
 pub(crate) const PARALLEL_DEFAULT: u64 = 4;
-/// Upper bound of the setting: more would not fit a phone's memory and radio.
-pub(crate) const PARALLEL_MAX: u64 = 8;
 
-/// Hosts worked on at once per `settings` (`net.hosts_parallel`), clamped to 1..=8.
+/// Hosts worked on at once per `settings` (`net.hosts_parallel`). Any value from 1 up is
+/// honoured (the UI warns above its recommended range); 0 means one host at a time. Workers
+/// are started lazily, so a big number never preallocates anything.
 pub(crate) fn parallel_of(settings: &Value) -> usize {
-    settings["net"]["hosts_parallel"]
+    let n = settings["net"]["hosts_parallel"]
         .as_u64()
         .unwrap_or(PARALLEL_DEFAULT)
-        .clamp(1, PARALLEL_MAX) as usize
+        .max(1);
+    usize::try_from(n).unwrap_or(usize::MAX)
 }
 
 /// Hosts of a running stage: which run now, how many are done, and each one's own progress.
@@ -148,11 +149,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parallel_setting_is_clamped() {
+    fn parallel_setting_is_honoured_from_one_up() {
         assert_eq!(parallel_of(&json!({})), 4);
         assert_eq!(parallel_of(&json!({ "net": { "hosts_parallel": 1 } })), 1);
         assert_eq!(parallel_of(&json!({ "net": { "hosts_parallel": 0 } })), 1);
-        assert_eq!(parallel_of(&json!({ "net": { "hosts_parallel": 50 } })), 8);
+        assert_eq!(parallel_of(&json!({ "net": { "hosts_parallel": 50 } })), 50);
     }
 
     #[test]

@@ -14,7 +14,13 @@
   F.helpBtn = (id, label = "") =>
     `<button class="hl-i" data-act="go:/help/${id}"
       aria-label="${esc(t("help.help_aria", "Справка"))}${label ? ": " + esc(label) : ""}">${ic("info")}</button>`;
+  // Recommended range, hard minimum and warnings of a field come from F.limits (ui/js/limits.js)
+  // when the field names its setting in `lim`; the recommendation never caps the value.
+  const limOf = d => (d.lim && F.limits ? F.limits.get(d.lim) : null);
+  const warnOf = (d, v) => (d.lim && F.limits && v != null ? F.limits.warning(d.lim, v) : "");
   const recPill = (d, v) => {
+    if (d.zero && v === 0)
+      return `<span class="pill warn nf-rec">${esc(t("limits.no_limit_pill", "без лимита"))}</span>`;
     if (!d.rec) return "";
     const inRec = v >= d.rec[0] && v <= d.rec[1];
     const unit = d.unit && d.unit[0] !== "/" ? "\u00a0" + d.unit : "";
@@ -26,9 +32,23 @@
       ),
     )}</span>`;
   };
+  const noteOf = d =>
+    [d.note, d.zero ? esc(t("limits.zero_hint", "0 = без лимита")) : ""]
+      .filter(Boolean)
+      .map(n => `<span class="nf-note">${n}</span>`)
+      .join("");
+  const warnHTML = w => (w ? `${ic("alert")}<span>${esc(w)}</span>` : "");
   F.numField = def => {
+    const L = limOf(def);
+    if (L) {
+      def.min = L.min;
+      def.max = L.max ?? F.limits.TYPE_MAX;
+      def.rec = def.rec || L.rec;
+      def.zero = !!L.zero;
+    }
     NF[def.id] = def;
     const value = def.get();
+    const w = warnOf(def, value);
     return `<div class="nf" data-nf="${def.id}">
       <div class="nf-top">
         <div class="nf-l"><label for="nf-${def.id}">${def.label}</label>${def.help ? F.helpBtn(def.help, def.label) : ""}${def.sub ? `<small>${def.sub}</small>` : ""}</div>
@@ -38,7 +58,7 @@
               ${value <= def.min ? "disabled" : ""}>${ic("minus")}</button>
           <span class="nf-box"><input id="nf-${def.id}" class="nf-in" type="text"
             inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" value="${value}"
-            aria-describedby="nf-${def.id}-m"
+            aria-describedby="nf-${def.id}-m nf-${def.id}-w"
             data-nf-in="${def.id}">${def.unit ? `<small class="nf-u">${def.unit}</small>` : ""}</span>
           <button class="ib nf-b" data-act="nf-step:${def.id}:1"
             aria-label="${esc(t("help.inc_aria", { label: def.label }, `Увеличить: ${def.label}`))}"
@@ -46,14 +66,19 @@
         </div>
       </div>
       <div class="nf-m" id="nf-${def.id}-m"
-        aria-live="polite">${recPill(def, value)}${def.note ? `<span class="nf-note">${def.note}</span>` : ""}</div>
+        aria-live="polite">${recPill(def, value)}${noteOf(def)}</div>
+      <div class="nf-warn" id="nf-${def.id}-w" role="status" ${w ? "" : "hidden"}>${warnHTML(w)}</div>
       <div class="nf-err" id="nf-${def.id}-e" role="alert" hidden></div>
     </div>`;
   };
   /** Validates raw input; returns null when valid, otherwise the reason text. */
   const why = (d, raw) => {
     const s = String(raw).trim().replace(",", ".");
-    if (!s) return t("help.err_empty", { min: d.min, max: d.max }, `Введите число от ${d.min} до ${d.max}`);
+    const open = !!limOf(d) && d.max >= F.limits.TYPE_MAX;
+    if (!s)
+      return open
+        ? t("limits.err_empty", { min: d.min }, `Введите целое число от ${d.min}`)
+        : t("help.err_empty", { min: d.min, max: d.max }, `Введите число от ${d.min} до ${d.max}`);
     if (!/^-?\d+$/.test(s)) return t("help.err_int", "Только целое число, без букв и дробей");
     const v = +s;
     const unit = d.unit ? "\u00a0" + d.unit : "";
@@ -64,11 +89,13 @@
         `Минимум ${d.min}${unit}${d.whyMin ? ": " + d.whyMin : ""}`,
       );
     if (v > d.max)
-      return t(
-        "help.err_max",
-        { max: fmt(d.max), unit, why: d.whyMax ? ": " + d.whyMax : "" },
-        `Максимум ${fmt(d.max)}${unit}${d.whyMax ? ": " + d.whyMax : ""}`,
-      );
+      return open
+        ? t("limits.err_huge", "Слишком большое число")
+        : t(
+            "help.err_max",
+            { max: fmt(d.max), unit, why: d.whyMax ? ": " + d.whyMax : "" },
+            `Максимум ${fmt(d.max)}${unit}${d.whyMax ? ": " + d.whyMax : ""}`,
+          );
     return null;
   };
   const box = id => document.querySelector(`.nf[data-nf="${id}"]`);
@@ -83,12 +110,54 @@
     el.querySelector(".nf-in").setAttribute("aria-invalid", err ? "true" : "false");
     if (!err) {
       const msgEl = el.querySelector(".nf-m");
-      msgEl.innerHTML = `${recPill(def, value)}${def.note ? `<span class="nf-note">${def.note}</span>` : ""}`;
+      msgEl.innerHTML = `${recPill(def, value)}${noteOf(def)}`;
+      const w = warnOf(def, value);
+      const wEl = el.querySelector(".nf-warn");
+      if (wEl) {
+        wEl.hidden = !w;
+        wEl.innerHTML = warnHTML(w);
+      }
       const [mi, pl] = el.querySelectorAll(".nf-b");
       mi.disabled = value <= def.min;
       pl.disabled = value >= def.max;
     }
   }
+  const setInput = (id, value) => {
+    const inp = box(id) && box(id).querySelector(".nf-in");
+    if (inp) {
+      inp.value = value;
+      inp.defaultValue = String(value);
+    }
+  };
+  // One-time confirmation when a value enters the risky zone (very high speed, threads or hosts
+  // at once, no limit for speed or mobile data). Cancel puts the previous value back.
+  let pendingRisk = null;
+  function confirmRisk(id, value, old) {
+    const def = NF[id];
+    pendingRisk = { id, value, old, ok: false };
+    F.sheet({
+      title: t("limits.confirm_title", "Применить рискованное значение?"),
+      html: `<div class="banner warn">${ic("alert")}<div><b>${esc(def.label.replace(/<[^>]+>/g, ""))}: ${esc(value === 0 ? t("limits.no_limit_pill", "без лимита") : String(value) + (def.unit ? "\u00a0" + def.unit : ""))}</b> ${esc(warnOf(def, value))}</div></div>
+        <p class="fhint st-hint">${ic("info")}${esc(t("limits.confirm_hint", "Значение сохранится, предупреждение останется у поля. Вернуть безопасное значение можно в любой момент."))}</p>`,
+      footer: `<button class="btn" data-act="sheet-close">${esc(t("common.cancel", "Отмена"))}</button><button class="btn primary"
+        data-act="nf-risk-ok">${esc(t("limits.confirm_apply", "Применить"))}</button>`,
+      onClose: () => {
+        const p = pendingRisk;
+        pendingRisk = null;
+        if (!p || p.ok) return;
+        setInput(p.id, p.old);
+        show(p.id, p.old, null);
+      },
+    });
+  }
+  F.actions["nf-risk-ok"] = () => {
+    const p = pendingRisk;
+    if (!p) return F.closeSheet();
+    p.ok = true;
+    const def = NF[p.id];
+    if (def && p.value !== def.get()) def.set(p.value);
+    F.closeSheet();
+  };
   function apply(id, raw) {
     const def = NF[id];
     if (!def) return false;
@@ -98,13 +167,16 @@
       return false;
     }
     const value = +String(raw).trim();
-    const inp = box(id) && box(id).querySelector(".nf-in");
-    if (inp) {
-      inp.value = value;
-      inp.defaultValue = String(value);
-    }
+    setInput(id, value);
     show(id, value, null);
-    if (value !== def.get()) def.set(value);
+    const old = def.get();
+    if (value === old) return true;
+    const ctx = def.riskCtx ? def.riskCtx() : {};
+    if (def.lim && F.limits && F.limits.risky(def.lim, value, ctx) && !F.limits.risky(def.lim, old, ctx)) {
+      confirmRisk(id, value, old);
+      return true;
+    }
+    def.set(value);
     return true;
   }
   F.numApply = apply;

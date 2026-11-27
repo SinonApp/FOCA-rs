@@ -140,6 +140,25 @@
   height: 16px;
   margin-top: 2px;
 }
+/* Value above the recommended range: allowed, with the reason next to the field. */
+.nf-warn {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin-top: 6px;
+  color: var(--warn);
+  font-size: 0.9rem;
+}
+.nf-warn[hidden],
+.nf.bad .nf-warn {
+  display: none;
+}
+.nf-warn svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
 .nf.bad .nf-box {
   border-color: var(--bad);
   box-shadow: 0 0 0 3px var(--bad-soft);

@@ -441,8 +441,9 @@
     newExcl: wiz.newExcl || [],
     docs: wiz.docs || DOC_DEFAULT.slice(),
     depth: wiz.depth || 2,
-    maxDocs: wiz.maxDocs || 500,
-    maxSize: wiz.maxSize || 50,
+    // 0 = no limit, so only a missing value falls back to the default
+    maxDocs: wiz.maxDocs ?? 500,
+    maxSize: wiz.maxSize ?? 50,
     ua: uaOf(wiz.ua || NETS().ua),
   });
   delete wiz.excl;
@@ -451,7 +452,7 @@
     if (wiz.fzMods) return;
     const z = (F.db.settings || {}).fuzz || {};
     wiz.fzMods = (z.modules || ["docs", "backups", "exposed", "dirlisting"]).slice();
-    wiz.fzRate = Math.max(1, Math.min(10, Math.round(z.rate || 5)));
+    wiz.fzRate = Math.max(0, Math.round(z.rate ?? 5));
   };
   // Exclusions: a new project keeps its own list (sent with project_create); the current project uses
   // F.db.scope.excl (edited via F.api.scope_set).
@@ -672,20 +673,17 @@
       )
       .join("")}</div>`;
   }
-  // Numeric input with ± (F.numField from help.js), applied on blur/Enter.
-  const nfL = (key, label, unit, min, max, rec, note, help, whyMax, whyMin, step = 1, after) =>
+  // Numeric input with ± (F.numField from help.js), applied on blur/Enter. `lim` names the setting
+  // in F.limits (ui/js/limits.js): hard minimum, recommendation and warnings.
+  const nfL = (key, label, unit, lim, note, help, step = 1, after) =>
     F.numField({
       id: "la-" + key,
       label,
       unit,
-      min,
-      max,
+      lim,
       step,
-      rec,
       note,
       help,
-      whyMax,
-      whyMin,
       get: () => +wiz[key],
       set: v => {
         wiz[key] = v;
@@ -693,20 +691,20 @@
       },
     });
   // Threads and requests/s are shared with Settings → Network (settings.net), not limited to this scan.
-  const nfNet = (key, label, unit, min, max, rec, note, help, whyMax, whyMin) =>
+  const nfNet = (key, label, unit, note, help, whyMin = "") =>
     F.numField({
       id: "la-net-" + key,
       label,
       unit,
-      min,
-      max,
+      lim: "net." + key,
       step: 1,
-      rec,
       note,
       help,
-      whyMax,
       whyMin,
-      get: () => +(NETS()[key] || { threads: 4, hosts_parallel: 4 }[key] || 5),
+      get: () => {
+        const v = NETS()[key];
+        return +(v ?? { threads: 4, hosts_parallel: 4, rps: 5 }[key]);
+      },
       set: v => {
         F.api.settings_set({ net: { [key]: v } });
       },
@@ -759,17 +757,8 @@
             .join("")}</div>`,
       ).join("")}
 
-      <h3 class="sub-h la-h3">${esc(tx("launch.crawl_depth", "Глубина краулера, уровней"))}</h3>
-      <div class="seg"
-        role="radiogroup">${[1, 2, 3, 5]
-          .map(
-            n => `<button class="${wiz.depth === n ? "on" : ""}" role="radio"
-        aria-checked="${wiz.depth === n}" data-act="la-depth:${n}">${n}</button>`,
-          )
-          .join("")}</div>
-
       <h3 class="sub-h la-h3">${esc(tx("launch.limits", "Лимиты"))}</h3>
-      <div class="card nfs la-nfs">${nfL("maxDocs", tx("launch.nf_maxdocs", "Документов на цель"), "", 50, 5000, [200, 1000], tx("launch.nf_maxdocs_note", "больше: дольше скачивание"), "set-limits", tx("launch.nf_maxdocs_max", "столько документов телефон будет качать часами"), tx("launch.nf_maxdocs_min", "меньше 50: можно пропустить важное"), 50)}${nfL("maxSize", tx("launch.nf_maxsize", "Размер файла, до"), tx("launch.nf_mb", "МБ"), 5, 500, [20, 100], tx("launch.nf_maxsize_note", "крупнее: редко документы"), "set-limits", tx("launch.nf_maxsize_max", "такие файлы почти всегда видео или архивы"), tx("launch.nf_maxsize_min", "многие PDF больше 5 МБ"), 5)}</div>
+      <div class="card nfs la-nfs">${nfL("depth", tx("launch.crawl_depth", "Глубина краулера, уровней"), "", "scan.crawl_depth", "", "set-limits")}${nfL("maxDocs", tx("launch.nf_maxdocs", "Документов на цель"), "", "scan.max_docs", tx("launch.nf_maxdocs_note", "больше: дольше скачивание"), "set-limits", 50)}${nfL("maxSize", tx("launch.nf_maxsize", "Размер файла, до"), tx("launch.nf_mb", "МБ"), "scan.max_size_mb", tx("launch.nf_maxsize_note", "крупнее: редко документы"), "set-limits", 5)}</div>
 
       <h3 class="sub-h la-h3">${esc(tx("launch.net", "Сеть"))}</h3>
       <p class="fhint la-nh">${esc(tx("launch.net_hint", "Весь трафик скана идёт через прокси из настроек. Один для мастера и скана."))}</p>
@@ -782,7 +771,7 @@
         attrs: 'data-key="ua"',
         options: Object.entries(UAS).map(([k, v]) => ({ v: k, t: v })),
       })}
-      <div class="card nfs la-nfs la-steps2">${nfNet("threads", tx("launch.nf_threads", "Потоков"), "", 1, 64, [4, 8], tx("launch.nf_threads_note", "больше: риск бана"), "set-threads", tx("launch.nf_threads_max", "телефон и сеть больше не вытянут"), tx("launch.nf_threads_min", "нужен хотя бы один поток"))}${nfNet("rps", tx("launch.nf_rps", "Запросов в сек."), tx("launch.nf_per_s", "/с"), 1, 100, [5, 10], tx("launch.nf_rps_note", "на один хост"), "set-rps", tx("launch.nf_rps_max", "так быстро сайт почти наверняка заблокирует"), tx("launch.nf_rps_min", "меньше одного запроса в секунду ядро не поддерживает"))}${nfNet("hosts_parallel", tx("launch.nf_hosts_parallel", "Хостов одновременно"), "", 1, 8, [2, 4], tx("launch.nf_hosts_parallel_note", "1: по очереди"), "set-hosts-parallel", tx("launch.nf_hosts_parallel_max", "больше 8 хостов сразу телефон не потянет"), tx("launch.nf_hosts_parallel_min", "нужен хотя бы один хост"))}</div>
+      <div class="card nfs la-nfs la-steps2">${nfNet("threads", tx("launch.nf_threads", "Потоков"), "", tx("launch.nf_threads_note", "больше: риск бана"), "set-threads", tx("launch.nf_threads_min", "нужен хотя бы один поток"))}${nfNet("rps", tx("launch.nf_rps", "Запросов в сек."), tx("launch.nf_per_s", "/с"), tx("launch.nf_rps_note", "на один хост"), "set-rps")}${nfNet("hosts_parallel", tx("launch.nf_hosts_parallel", "Хостов одновременно"), "", tx("launch.nf_hosts_parallel_note", "1: по очереди"), "set-hosts-parallel", tx("launch.nf_hosts_parallel_min", "нужен хотя бы один хост"))}</div>
       <p class="fhint">${esc(tx("launch.net_shared", "Потоки, запросы в секунду и хосты одновременно. Общие с «Настройки → Сеть». Скан не превысит лимит запросов к одному хосту, даже при большом числе потоков."))}</p>`;
   }
 
@@ -800,7 +789,8 @@
       return `${ic("alert")}${esc(tx("launch.fz_est_err", { err: e.error }, "Оценка недоступна: {err}"))}`;
     if (!e.hosts || !e.hosts.length) return `${ic("info")}${esc(fzNote(e))}`;
     const m = Math.max(1, Math.round((e.seconds || 0) / 60));
-    return `${ic("clock")}${esc(F.tp ? F.tp("launch.fz_est", e.requests, { n: fmt(e.requests), m, rate: wiz.fzRate }, "≈ {n} запрос · ≈ {m} мин при {rate} запр/с|≈ {n} запроса · ≈ {m} мин при {rate} запр/с|≈ {n} запросов · ≈ {m} мин при {rate} запр/с") : tx("launch.fz_est", { n: fmt(e.requests), m, rate: wiz.fzRate }, "≈ {n} запросов · ≈ {m} мин при {rate} запр/с"))} · ${pl(e.hosts.length, "launch.pl_address", "адрес|адреса|адресов")}${e.capped_by_budget ? " · " + esc(tx("launch.fz_capped", "упирается в бюджет")) : ""}`;
+    const rate = wiz.fzRate || "∞"; // 0 = no speed limit
+    return `${ic("clock")}${esc(F.tp ? F.tp("launch.fz_est", e.requests, { n: fmt(e.requests), m, rate }, "≈ {n} запрос · ≈ {m} мин при {rate} запр/с|≈ {n} запроса · ≈ {m} мин при {rate} запр/с|≈ {n} запросов · ≈ {m} мин при {rate} запр/с") : tx("launch.fz_est", { n: fmt(e.requests), m, rate }, "≈ {n} запросов · ≈ {m} мин при {rate} запр/с"))} · ${pl(e.hosts.length, "launch.pl_address", "адрес|адреса|адресов")}${e.capped_by_budget ? " · " + esc(tx("launch.fz_capped", "упирается в бюджет")) : ""}`;
   };
   let fzTimer = null;
   function fzEstimate() {
@@ -836,13 +826,9 @@
         "fzRate",
         tx("launch.fz_rate", "Скорость, запросов в секунду"),
         tx("launch.nf_per_s", "/с"),
-        1,
-        10,
-        [3, 5],
+        "fuzz.rate",
         tx("launch.fz_rate_note", "сайт не должен заметить нагрузку"),
         "set-fuzz",
-        tx("wordlists.nf_rate_why_max", "быстрее перебор по сайту заказчика не идёт"),
-        tx("wordlists.nf_rate_why_min", "меньше одного запроса в секунду не бывает"),
         1,
         () => {
           wiz.fzEst = null;
@@ -1449,22 +1435,12 @@
       el.classList.toggle("on", i < 0);
       el.setAttribute("aria-pressed", i < 0);
     },
-    "la-depth": n => {
-      wiz.depth = +n;
-      F.render(true);
-    },
     "la-ports-top": n => {
       wiz.portsTop = +n;
       F.render(true);
     },
     "la-sub-wl": k => {
       wiz.subWl = k;
-      F.render(true);
-    },
-    "la-step": a => {
-      const [k, d, mn, mx] = a.split(":");
-      wiz[k] = Math.max(+mn, Math.min(+mx, wiz[k] + +d));
-      if (k === "fzRate") wiz.fzEst = null;
       F.render(true);
     },
     "la-excl-add": () => {

@@ -189,27 +189,27 @@
         )
         .join("")}</div>`;
   // Numeric input with ± (F.numField from help.js); applied on blur/Enter and saved to the core.
-  const nf = (path, label, unit, min, max, rec, note, help, whyMax, whyMin, step = 1) =>
+  // `lim` names the setting in F.limits (ui/js/limits.js): hard minimum, recommendation, warnings.
+  const nf = (path, label, unit, lim, note, help, step = 1, extra = {}) =>
     F.numField({
       id: path.replace(".", "-"),
       label,
       unit,
-      min,
-      max,
+      lim,
       step,
-      rec,
       note,
       help,
-      whyMax,
-      whyMin,
+      whyMin: extra.whyMin,
+      riskCtx: extra.riskCtx,
       get: () => +get(path),
       set: v => {
         set(path, v);
         persist(path, 300);
         updPresets();
+        if (extra.after) extra.after(v);
       },
     });
-  // Network presets (UI limits: threads 1-64, requests/s 1-100, timeout 5-120 s).
+  // Network presets (all inside the recommended ranges of F.limits).
   const PRESETS = [
     ["soft", "Бережно", "мобильный · Tor", { threads: 2, rps: 3, timeout: 30 }],
     ["normal", "Обычно", "Wi-Fi", { threads: 6, rps: 8, timeout: 15 }],
@@ -272,6 +272,8 @@
       // Turning off the kill switch or the proxy exposes the real IP, so it requires hold-to-confirm.
       if ((path === "net.kill" || path === "net.proxyOn") && get(path)) return confirmNetOff(path);
       if (path === "sec.panic" && !get(path)) return F.actions["st-panic-setup"]();
+      // Leaving mobile data without any cap is allowed, after a one-time confirmation.
+      if (mobileUnlimitedAfter(path)) return confirmMobileUnlimited(path);
       set(path, !get(path));
       persist(path);
       const tg = el && (el.classList.contains("toggle") ? el : el.querySelector(".toggle"));
@@ -291,12 +293,6 @@
       const [path, v] = a.split(/:(.*)/s);
       set(path, /^-?\d+(\.\d+)?$/.test(v) ? +v : v);
       persist(path);
-      F.render(true);
-    },
-    "st-step": a => {
-      const [path, d, mn, mx] = a.split(":");
-      set(path, Math.max(+mn, Math.min(+mx, get(path) + +d)));
-      persist(path, 400);
       F.render(true);
     },
     "st-net-off": path => {
@@ -343,6 +339,29 @@
     },
   });
 
+  // `true` when toggling `path` would leave scans on mobile data with no traffic limit.
+  function mobileUnlimitedAfter(path) {
+    const p = state.power;
+    const noCap = !p.limOn || !(+p.mobLimit > 0);
+    if (path === "power.limOn") return p.limOn && !p.wifiOnly;
+    if (path === "power.wifiOnly") return p.wifiOnly && noCap;
+    return false;
+  }
+  function confirmMobileUnlimited(path) {
+    F.sheet({
+      title: F.t("limits.confirm_title", "Применить рискованное значение?"),
+      html: `<div class="banner warn">${ic("alert")}<div><b>${esc(F.t("limits.mob_unlimited", "Мобильный трафик без лимита"))}</b> ${esc(F.limits.warning("power.mob_limit", 0))}</div></div>
+        <p class="fhint st-hint">${ic("info")}${esc(F.t("limits.confirm_hint", "Значение сохранится, предупреждение останется у поля. Вернуть безопасное значение можно в любой момент."))}</p>`,
+      footer: `<button class="btn" data-act="sheet-close">${esc(F.t("common.cancel", "Отмена"))}</button><button class="btn primary"
+        data-act="st-mob-unlim:${path}">${esc(F.t("limits.confirm_apply", "Применить"))}</button>`,
+    });
+  }
+  F.actions["st-mob-unlim"] = path => {
+    F.closeSheet();
+    set(path, !get(path));
+    persist(path);
+    F.render(true);
+  };
   function confirmNetOff(path) {
     const kill = path === "net.kill";
     F.sheet({
@@ -959,13 +978,13 @@
       <div class="nf-pre" id="st-presets" role="radiogroup"
         aria-label="${esc(F.t("settings.speed_preset", "Пресет скорости"))}">${presetsHTML()}</div>
       <div class="card nfs st-nfs">
-        ${nf("net.threads", F.t("settings.threads", "Потоков"), "", 1, 64, [4, 8], F.t("settings.threads_note", "больше: риск бана"), "set-threads", F.t("settings.threads_max", "телефон и сеть больше не вытянут"), F.t("settings.threads_min", "нужен хотя бы один поток"))}
-        ${nf("net.rps", F.t("settings.rps", "Запросов в сек."), F.t("settings.unit_per_s", "/с"), 1, 100, [5, 10], F.t("settings.rps_note", "общий предел на все источники"), "set-rps", F.t("settings.rps_max", "так быстро сайт почти наверняка заблокирует"), F.t("settings.rps_min", "меньше одного запроса в секунду ядро не поддерживает"))}
-        ${nf("net.hostsParallel", F.t("settings.hosts_parallel", "Хостов одновременно"), "", 1, 8, [2, 4], F.t("settings.hosts_parallel_note", "1: по очереди"), "set-hosts-parallel", F.t("settings.hosts_parallel_max", "больше 8 хостов сразу телефон не потянет"), F.t("settings.hosts_parallel_min", "нужен хотя бы один хост"))}
-        ${nf("net.timeout", F.t("settings.timeout", "Таймаут"), F.t("settings.unit_s", "с"), 5, 120, [15, 30], F.t("settings.timeout_note", "для Tor: 60"), "set-timeout", F.t("settings.timeout_max", "дольше ждать ответа бессмысленно. Источник отключится по общему таймауту"), F.t("settings.timeout_min", "за меньшее время многие серверы не успевают ответить"))}
-        ${nf("net.retries", F.t("settings.retries", "Повторов"), "", 0, 5, [1, 3], F.t("settings.retries_note", "при обрыве"), "set-retries", F.t("settings.retries_max", "больше повторов только нагружают сервер и затягивают скан"), "")}
+        ${nf("net.threads", F.t("settings.threads", "Потоков"), "", "net.threads", F.t("settings.threads_note", "больше: риск бана"), "set-threads", 1, { whyMin: F.t("settings.threads_min", "нужен хотя бы один поток") })}
+        ${nf("net.rps", F.t("settings.rps", "Запросов в сек."), F.t("settings.unit_per_s", "/с"), "net.rps", F.t("settings.rps_note", "общий предел на все источники"), "set-rps")}
+        ${nf("net.hostsParallel", F.t("settings.hosts_parallel", "Хостов одновременно"), "", "net.hosts_parallel", F.t("settings.hosts_parallel_note", "1: по очереди"), "set-hosts-parallel", 1, { whyMin: F.t("settings.hosts_parallel_min", "нужен хотя бы один хост") })}
+        ${nf("net.timeout", F.t("settings.timeout", "Таймаут"), F.t("settings.unit_s", "с"), "net.timeout", F.t("settings.timeout_note", "для Tor: 60"), "set-timeout")}
+        ${nf("net.retries", F.t("settings.retries", "Повторов"), "", "net.retries", F.t("settings.retries_note", "при обрыве"), "set-retries")}
       </div>
-      <p class="fhint st-hint">${ic("info")}${esc(F.t("settings.nf_hint", "Нажмите на число: откроется клавиатура. Значение применяется, когда вы уходите из поля или нажимаете «Готово»; вне диапазона: подсветка и причина."))}</p>
+      <p class="fhint st-hint">${ic("info")}${esc(F.t("settings.nf_hint", "Нажмите на число: откроется клавиатура. Значение применяется, когда вы уходите из поля или нажимаете «Готово». Выше рекомендованного: предупреждение у поля, рискованные значения нужно подтвердить."))}</p>
 
       ${h3("DNS")}
       <div class="kv">
@@ -1303,7 +1322,9 @@
     const power = state.power;
     const usage = traffic(power.period);
     const tm = traffic("month");
-    const pct = Math.min(100, Math.round((tm.mob / power.mobLimit) * 100));
+    // 0 MB or the switch off = no mobile traffic limit
+    const capped = power.limOn && +power.mobLimit > 0;
+    const pct = capped ? Math.min(100, Math.round((tm.mob / power.mobLimit) * 100)) : 0;
     return `
       ${h3(F.t("settings.traffic_counter", "Счётчик трафика"))}
       ${seg(
@@ -1317,11 +1338,11 @@
       ${
         usage.n
           ? `<div class="grid g2 st-tstats">
-        <div class="card stat"><div class="k">${ic("st-phone")}${esc(F.t("settings.mobile", "Мобильный"))}</div><div class="v">${mb(usage.mob)}</div><div class="d">${power.limOn ? F.t("settings.pct_limit", { pct }, "{pct}% лимита за месяц") : F.t("settings.no_limit", "без лимита")}</div></div>
+        <div class="card stat"><div class="k">${ic("st-phone")}${esc(F.t("settings.mobile", "Мобильный"))}</div><div class="v">${mb(usage.mob)}</div><div class="d">${capped ? F.t("settings.pct_limit", { pct }, "{pct}% лимита за месяц") : F.t("settings.no_limit", "без лимита")}</div></div>
         <div class="card stat"><div class="k">${ic("st-wifi")}Wi-Fi</div><div class="v">${mb(usage.wifi)}</div><div class="d">${esc(usage.when)}</div></div>
       </div>
       ${
-        power.limOn
+        capped
           ? `<div class="card pad st-lim"><div class="st-lim-h"><span>${esc(F.t("settings.mob_month", "Мобильный трафик за месяц"))}</span><b>${F.t("settings.a_of_b", { a: mb(tm.mob), b: mb(power.mobLimit) }, "{a} из {b}")}</b></div><div class="pbar"><i style="width:${Math.min(100, (tm.mob / power.mobLimit) * 100)}%"
         class="${tm.mob / power.mobLimit > 0.8 ? "st-pw" : ""}"></i></div></div>`
           : ""
@@ -1334,7 +1355,8 @@
       <div class="list">
         ${tRow("power.wifiOnly", F.t("settings.wifi_only", "Только Wi-Fi для тяжёлых модулей"), F.t("settings.wifi_only_sub", "Скачивание документов и поиск на сайте. Пауза в мобильной сети"), ui.leadIcon("st-wifi"))}
         ${tRow("power.limOn", F.t("settings.mob_limit", "Лимит мобильного трафика"), F.t("settings.mob_limit_sub", "При достижении: пауза и уведомление"), ui.leadIcon("st-phone"))}
-        ${power.limOn ? `<div class="st-in nfs st-steps2">${nf("power.mobLimit", F.t("settings.limit_month", "Лимит в месяц"), F.t("settings.mb", "МБ"), 100, 20000, [500, 3000], F.t("settings.of_mobile", "мобильного трафика"), "set-limits", F.t("settings.limit_max", "это уже больше любого тарифа"), F.t("settings.limit_min", "меньше лимит остановит скан почти сразу"), 100)}</div>` : ""}
+        ${!power.limOn && !power.wifiOnly ? `<div class="st-in st-pad nf-warn st-mob-warn" role="status">${ic("alert")}<span>${esc(F.limits.warning("power.mob_limit", 0))}</span></div>` : ""}
+        ${power.limOn ? `<div class="st-in nfs st-steps2">${nf("power.mobLimit", F.t("settings.limit_month", "Лимит в месяц"), F.t("settings.mb", "МБ"), "power.mob_limit", F.t("settings.of_mobile", "мобильного трафика"), "set-limits", 100, { riskCtx: () => ({ zeroRisky: !state.power.wifiOnly }) })}</div>` : ""}
       </div>
 
       ${h3(F.t("settings.power_h", "Питание"))}
@@ -1346,7 +1368,8 @@
           <div class="st-sl-h"><span>${esc(F.t("settings.batt_threshold", "Порог заряда"))}</span><b id="st-batt-v">${power.batt}%</b></div>
           <input type="range" min="5" max="50" step="5" value="${power.batt}" data-range="power.batt"
             aria-label="${esc(F.t("settings.batt_threshold_aria", "Порог заряда, %"))}">
-          <div class="st-sl-s"><span>5%</span><span>50%</span></div></div>`
+          <div class="st-sl-s"><span>5%</span><span>50%</span></div></div>
+          <div class="st-in nfs">${nf("power.batt", F.t("limits.manual", "Своё значение"), "%", "power.batt", F.t("settings.batt_manual_note", "любой порог от 1 до 100%"), "set-limits", 1, { after: () => F.render(true) })}</div>`
             : ""
         }
         ${tRow("power.heat", F.t("settings.heat", "Пауза при перегреве"), F.t("settings.heat_sub", "Выше 42 °C: пауза, продолжение после остывания"), ui.leadIcon("st-temp"))}
@@ -2963,22 +2986,20 @@
           <div class="tail">${ui.toggle(!!ocr.enabled, "st-ocr-tog", `aria-label="${esc(F.t("settings.ocr_aria", "Офлайн-OCR сканов"))}"`)}</div>
         </div>
       </div>
-      <label class="flabel">${esc(F.t("settings.ocr_pages", "Максимум страниц PDF для OCR"))}</label>
-      <div class="seg" role="radiogroup" aria-label="${esc(F.t("settings.ocr_pages", "Максимум страниц PDF для OCR"))}">${[
-        5, 10, 20, 30,
-      ]
-        .map(
-          n =>
-            `<button class="${(ocr.max_pages || 10) === n ? "on" : ""}" role="radio" aria-checked="${(ocr.max_pages || 10) === n}" data-act="st-ocr-pages:${n}">${esc(F.t("settings.n_pages", { n }, "{n} стр."))}</button>`,
-        )
-        .join("")}</div>
-      <label class="flabel">${esc(F.t("settings.ocr_mb", "Максимальный размер файла для OCR"))}</label>
-      <div class="seg" role="radiogroup" aria-label="${esc(F.t("settings.ocr_mb", "Максимальный размер файла для OCR"))}">${[
-        5, 15, 25, 50,
-      ]
-        .map(
-          m =>
-            `<button class="${(ocr.max_mb || 15) === m ? "on" : ""}" role="radio" aria-checked="${(ocr.max_mb || 15) === m}" data-act="st-ocr-mb:${m}">${m} ${esc(F.t("settings.mb", "МБ"))}</button>`,
+      <div class="card nfs st-nfs">${["max_pages", "max_mb"]
+        .map(k =>
+          F.numField({
+            id: "ocr-" + k,
+            label:
+              k === "max_pages"
+                ? esc(F.t("settings.ocr_pages", "Максимум страниц PDF для OCR"))
+                : esc(F.t("settings.ocr_mb", "Максимальный размер файла для OCR")),
+            unit: k === "max_pages" ? F.t("settings.pages_unit", "стр.") : F.t("settings.mb", "МБ"),
+            lim: "ocr." + k,
+            step: 5,
+            get: () => +(ocr[k] || (k === "max_pages" ? 10 : 15)),
+            set: v => F.api.settings_set({ ocr: { [k]: v } }).then(() => F.render(true)),
+          }),
         )
         .join("")}</div>
       <p class="fhint st-hint">${ic("lock")}${esc(F.t("settings.ocr_hint", "По умолчанию выключено для экономии батареи. Распознанный текст индексируется в FTS5 и проверяется детектором ПДн с обязательной маскировкой."))}</p>`;
@@ -3104,12 +3125,6 @@
     "st-ocr-tog": () => {
       const cur = ((F.db.settings || {}).ocr || {}).enabled;
       F.api.settings_set({ ocr: { enabled: !cur } }).then(() => F.render(true));
-    },
-    "st-ocr-pages": v => {
-      F.api.settings_set({ ocr: { max_pages: +v } }).then(() => F.render(true));
-    },
-    "st-ocr-mb": v => {
-      F.api.settings_set({ ocr: { max_mb: +v } }).then(() => F.render(true));
     },
   });
 })();

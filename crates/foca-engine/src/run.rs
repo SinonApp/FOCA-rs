@@ -478,20 +478,26 @@ impl Engine {
                 })
                 .unwrap_or_default(),
         );
+        // Wizard limits are honoured as typed (the UI warns above its recommended ranges): the
+        // crawler needs at least one level, `max_size_mb: 0` and `limit: 0` mean no limit.
         let crawl_depth = pick("crawl_depth")
             .and_then(|v| v.as_u64())
-            .map(|d| d.clamp(1, 10) as usize);
+            .map(|d| usize::try_from(d.max(1)).unwrap_or(usize::MAX));
         let max_size_mb = pick("max_size_mb")
             .and_then(|v| v.as_u64())
-            .map(|m| m.clamp(1, 2048));
+            .map(|m| match m {
+                0 => u64::MAX / (1024 * 1024),
+                m => m.min(u64::MAX / (1024 * 1024)),
+            });
         let ua = pick("ua")
             .and_then(|v| v.as_str().map(|s| s.trim().to_string()))
             .filter(|s| !s.is_empty());
         let limit_arg = pick("limit").and_then(|v| v.as_u64());
-        let limit = limit_arg
-            .map(|l| l as usize)
-            .unwrap_or(self.inner.cfg.max_docs)
-            .min(self.inner.cfg.max_docs.max(1));
+        let limit = match limit_arg {
+            Some(0) => usize::MAX,
+            Some(l) => usize::try_from(l).unwrap_or(usize::MAX),
+            None => self.inner.cfg.max_docs.max(1),
+        };
         let st = RunState {
             scan_id: scan_id.clone(),
             project: project.clone(),

@@ -136,13 +136,31 @@ fn str_list(v: &Value) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Builds a `FuzzConfig` from the effective parameters, clamped to limits suitable for a phone and the client's site.
+/// Rate used for `settings.fuzz.rate: 0` (no limit): the token bucket's own ceiling.
+const UNLIMITED_RATE: f64 = 10_000.0;
+
+/// Builds a `FuzzConfig` from the effective parameters. Manual values are honoured as typed (the
+/// UI warns above its recommended ranges); `0` means no limit for the rate, the request budget
+/// and the time budget. Only crash-safety invariants apply: at least one thread and durations
+/// that cannot overflow an `Instant`.
 fn config_of(e: &Core, v: &Value) -> FuzzConfig {
+    let rate = v["rate"].as_f64().unwrap_or(5.0);
+    let max_min = v["max_time_min"].as_u64().unwrap_or(20);
     let mut c = FuzzConfig {
-        threads: v["threads"].as_u64().unwrap_or(4).clamp(1, 8) as usize,
-        rate: v["rate"].as_f64().unwrap_or(5.0).clamp(0.5, 20.0),
-        max_requests: v["max_requests"].as_u64().unwrap_or(3000).clamp(50, 50_000),
-        max_time: Duration::from_secs(v["max_time_min"].as_u64().unwrap_or(20).clamp(1, 180) * 60),
+        threads: usize::try_from(v["threads"].as_u64().unwrap_or(4).max(1)).unwrap_or(usize::MAX),
+        rate: if rate.is_finite() && rate > 0.0 {
+            rate
+        } else {
+            UNLIMITED_RATE
+        },
+        max_requests: match v["max_requests"].as_u64().unwrap_or(3000) {
+            0 => u64::MAX,
+            n => n,
+        },
+        max_time: match max_min {
+            0 => crate::settings::secs(u64::MAX),
+            m => crate::settings::secs(m.saturating_mul(60)),
+        },
         follow_redirects: v["follow_redirects"].as_bool().unwrap_or(false),
         exclude_paths: str_list(&v["exclude_paths"]),
         ..Default::default()
@@ -340,10 +358,11 @@ fn build_tasks(
 ) -> Result<Vec<FuzzTask>, String> {
     let mods = modules_of(v);
     let wl_ids = str_list(&v["wordlists"]);
-    let max_hosts = v["max_hosts"]
-        .as_u64()
-        .unwrap_or(MAX_HOSTS_DEFAULT)
-        .clamp(1, 20) as usize;
+    // 0 = every web address of the scope
+    let max_hosts = match v["max_hosts"].as_u64().unwrap_or(MAX_HOSTS_DEFAULT) {
+        0 => usize::MAX,
+        n => usize::try_from(n).unwrap_or(usize::MAX),
+    };
     let bases: Vec<Url> = web_bases(e, db, scope, domains, for_estimate)
         .into_iter()
         .take(max_hosts)
@@ -1059,8 +1078,14 @@ impl Engine {
             "candidates": cand, "calibration": cal, "requests": requests,
             "seconds": secs.ceil() as u64, "capped_by_budget": total > cfg.max_requests,
             "per_module": per, "skipped_excluded": excl,
-            "rate": cfg.rate, "max_requests": cfg.max_requests,
-            "max_time_min": cfg.max_time.as_secs() / 60,
+            // 0 = no limit, as in the settings
+            "rate": if cfg.rate >= UNLIMITED_RATE { 0.0 } else { cfg.rate },
+            "max_requests": if cfg.max_requests == u64::MAX { 0 } else { cfg.max_requests },
+            "max_time_min": if cfg.max_time.as_secs() >= crate::settings::MAX_SETTING_SECS {
+                0
+            } else {
+                cfg.max_time.as_secs() / 60
+            },
             "note": note,
             "note_msg": { "code": note_code, "params": {} },
         }))

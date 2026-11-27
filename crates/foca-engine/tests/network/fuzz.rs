@@ -487,3 +487,46 @@ async fn wordlists_commands() {
         "{err:?}"
     );
 }
+
+/// Brute-force limits typed above the old caps (rate 20/s, 8 threads, 50 000 requests, 180 min,
+/// 20 hosts) are honoured as typed, and `0` means no limit instead of being raised to a minimum.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn fuzz_limits_above_old_caps_and_unlimited_are_honoured() {
+    let dir = tempfile::tempdir().unwrap();
+    let server = TestServer::start(handler).await;
+    let keys = Arc::new(MemoryKeys::new());
+    let (engine, events, pause_at) = open(dir.path(), &server.url(), keys.clone());
+    let e = Env {
+        dir,
+        server,
+        engine,
+        events,
+        pause_at,
+        keys,
+    };
+    let id = e.project("example.test").await;
+    e.call(
+        "settings_set",
+        json!({ "patch": { "fuzz": { "rate": 100, "threads": 32, "max_requests": 200000,
+            "max_time_min": 600, "max_hosts": 50 } } }),
+    )
+    .await;
+    let est = e.call("fuzz_estimate", json!({ "project": id })).await;
+    assert_eq!(est["rate"], 100.0, "{est}");
+    assert_eq!(est["max_requests"], 200000, "{est}");
+    assert_eq!(est["max_time_min"], 600, "{est}");
+    // 100 requests per second really shorten the run against the old 20/s ceiling
+    let req = est["requests"].as_u64().unwrap();
+    assert!(req > 100, "{est}");
+    assert!(est["seconds"].as_u64().unwrap() * 20 < req, "{est}");
+    e.call(
+        "settings_set",
+        json!({ "patch": { "fuzz": { "rate": 0, "max_requests": 0, "max_time_min": 0, "max_hosts": 0 } } }),
+    )
+    .await;
+    let est = e.call("fuzz_estimate", json!({ "project": id })).await;
+    assert_eq!(est["rate"], 0.0, "{est}");
+    assert_eq!(est["max_requests"], 0, "{est}");
+    assert_eq!(est["max_time_min"], 0, "{est}");
+    assert_eq!(est["capped_by_budget"], false, "{est}");
+}

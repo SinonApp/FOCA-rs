@@ -780,6 +780,43 @@ fn settings_merge_and_strip() {
 }
 
 #[test]
+fn settings_keep_manual_numbers_unclamped_and_safe_defaults() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    // safe defaults stay as they were
+    let d = s.settings_get().unwrap();
+    assert_eq!(
+        (
+            &d["net"]["threads"],
+            &d["net"]["rps"],
+            &d["net"]["hosts_parallel"]
+        ),
+        (
+            &serde_json::json!(4),
+            &serde_json::json!(5),
+            &serde_json::json!(4)
+        )
+    );
+    assert_eq!(d["power"]["mob_limit"], 1000);
+    assert_eq!(d["fuzz"]["max_requests"], 3000);
+    // values far above the old UI caps and 0 = no limit are stored as typed, survive a reopen
+    let patch = serde_json::json!({
+        "net": { "threads": 500, "rps": 250, "hosts_parallel": 40, "timeout": 900, "retries": 20 },
+        "power": { "mob_limit": 0, "lim_on": false, "batt": 3 },
+        "fuzz": { "rate": 0, "threads": 64, "max_requests": 0, "max_time_min": 0, "max_hosts": 0 },
+        "ocr": { "max_pages": 400, "max_mb": 300 }
+    });
+    s.settings_set(&patch).unwrap();
+    drop(s);
+    let v = store(tmp.path()).settings_get().unwrap();
+    for (sec, o) in patch.as_object().unwrap() {
+        for (k, want) in o.as_object().unwrap() {
+            assert_eq!(&v[sec][k], want, "{sec}.{k}");
+        }
+    }
+}
+
+#[test]
 fn report_result_snapshot_roundtrip_and_settings_reset() {
     let dir = tempfile::tempdir().unwrap();
     let s = store(dir.path());

@@ -467,9 +467,11 @@ impl DocumentSource for Wayback {
             let mut col = Collector::new(ctx);
             // 1) quick unpaginated document query (one attempt, at most 55 s)
             if self.quick {
-                if let Some(u) =
-                    self.quick_url(domain, (ctx.limit * 2).clamp(20, 200), &ctx.filter)?
-                {
+                if let Some(u) = self.quick_url(
+                    domain,
+                    ctx.limit.saturating_mul(2).clamp(20, 200),
+                    &ctx.filter,
+                )? {
                     let req = NetRequest::get(&u, "wayback", Access::Passive)?
                         .timeout(ctx.req_timeout(Duration::from_secs(55)))
                         .retries(0);

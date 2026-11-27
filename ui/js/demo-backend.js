@@ -6529,14 +6529,14 @@
     const fuzz = {
       on: fuzzOn,
       modules: fzArgs.modules || fz.modules || [],
-      rate: fzArgs.rate || fz.rate || 5,
+      rate: fzArgs.rate ?? fz.rate ?? 5,
       checked: 0,
       found: 0,
       filtered: 0,
       planned: 0,
     };
     fuzz.planned = Math.min(
-      fz.max_requests || 3000,
+      +(fz.max_requests ?? 3000) || Infinity,
       fuzz.modules.reduce((a, m) => a + (FZ_PER[m] || 0), 0),
     );
     RUN = {
@@ -6860,7 +6860,8 @@
       at = RUN.sel ? RUN.sel.indexOf(i) : i;
     if (at < 0) return;
     const frac = Math.max(0, Math.min(0.999, (RUN.progress - at * per) / per));
-    const par = Math.max(1, Math.min(8, +((load().settings.net || {}).hosts_parallel || 4)));
+    // any value from 1 up, as the core (scan/hosts.rs parallel_of)
+    const par = Math.max(1, +((load().settings.net || {}).hosts_parallel || 4));
     const done = Math.min(names.length, Math.floor(frac * names.length));
     hostsEmit(sid, "running", done, names.slice(done, done + par));
   }
@@ -11857,9 +11858,15 @@
     fuzz_estimate: ({ project, modules, rate, wordlists } = {}) => {
       const st = P(project || load().settings.last_project),
         fz = load().settings.fuzz || {};
+      // Same rules as the core (scan/fuzz.rs config_of): values are taken as typed, 0 = no limit.
+      const num = (v, d) => (v == null || v === "" ? d : +v);
+      const rawRate = num(rate, num(fz.rate, 5)),
+        rawBudget = num(fz.max_requests, 3000),
+        rawTime = num(fz.max_time_min, 20),
+        rawHosts = num(fz.max_hosts, 3);
       const mods = modules || fz.modules || [],
-        r = Math.max(0.5, Math.min(20, rate || fz.rate || 5)),
-        budget = fz.max_requests || 3000;
+        r = rawRate > 0 ? rawRate : 10000,
+        budget = rawBudget > 0 ? rawBudget : Infinity;
       const hosts = (st.scope.targets || [])
         .filter(
           t =>
@@ -11867,7 +11874,7 @@
             RULES().scope.checkTarget(st.scope, t, { hosts: st.hosts }).ok,
         )
         .map(t => (t.type === "url" ? t.v : `https://${t.v}/`))
-        .slice(0, fz.max_hosts || 3);
+        .slice(0, rawHosts > 0 ? rawHosts : undefined);
       const per = {};
       mods.forEach(m => {
         per[m] = (FZ_PER[m] || 0) * hosts.length;
@@ -11882,13 +11889,13 @@
         candidates: cand,
         calibration: cal,
         requests,
-        seconds: Math.min((fz.max_time_min || 20) * 60, Math.ceil(requests / r)),
+        seconds: Math.min(rawTime > 0 ? rawTime * 60 : Infinity, Math.ceil(requests / r)),
         capped_by_budget: total > budget,
         per_module: per,
         skipped_excluded: 0,
-        rate: r,
-        max_requests: budget,
-        max_time_min: fz.max_time_min || 20,
+        rate: rawRate > 0 ? rawRate : 0,
+        max_requests: rawBudget > 0 ? rawBudget : 0,
+        max_time_min: rawTime > 0 ? rawTime : 0,
         note: hosts.length
           ? "без учёта кандидатов, появляющихся по ходу (варианты найденного, листинги, .DS_Store)"
           : "нет веб-адресов в скоупе",

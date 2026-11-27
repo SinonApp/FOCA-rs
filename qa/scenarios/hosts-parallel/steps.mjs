@@ -1,5 +1,5 @@
 // Hosts worked on at once: the "Hosts at once" field in Settings → Network and in the launch wizard
-// (settings.net.hosts_parallel, 1-8, default 4), its help article, and the scan screen line
+// (settings.net.hosts_parallel, from 1, warning above 8, default 4), its help article, and the scan screen line
 // "Hosts: N running, D done of T" with the running names (the core's `hosts` sub-step; demo backend).
 // qa/shoot.sh --routes none --out $PWD/qa/out/hosts-parallel --steps $PWD/qa/scenarios/hosts-parallel/steps.mjs
 export default async (page, { W, fsc, theme, out }) => {
@@ -61,16 +61,25 @@ export default async (page, { W, fsc, theme, out }) => {
   await ev(() => document.querySelector('[data-act="nf-step:net-hostsParallel:1"]').click());
   await wait(700);
   ok("+ saves 5 to settings.net.hosts_parallel", (await coreSetting()) === 5, await coreSetting());
-  // out of range: 9 is refused with the reason, the stored value stays
+  // above the recommendation: 9 is saved as typed with an inline warning (no cap, no confirm below 17)
   await page.fill("#nf-net-hostsParallel", "9");
+  await page.press("#nf-net-hostsParallel", "Enter");
+  await wait(500);
+  const warn = await ev(() => {
+    const e = document.querySelector("#nf-net-hostsParallel-w");
+    return e && !e.hidden ? e.textContent.trim() : null;
+  });
+  ok("9 is saved with a warning", !!warn && /8/.test(warn) && (await coreSetting()) === 9, [warn, await coreSetting()]);
+  // below the hard minimum: 0 is refused with the reason, the stored value stays
+  await page.fill("#nf-net-hostsParallel", "0");
   await page.press("#nf-net-hostsParallel", "Enter");
   await wait(500);
   const bad = await ev(() => {
     const e = document.querySelector("#nf-net-hostsParallel-e");
     return e && !e.hidden ? e.textContent.trim() : null;
   });
-  ok("9 is refused with a reason", !!bad && /8/.test(bad), bad);
-  ok("the stored value stays 5", (await coreSetting()) === 5, await coreSetting());
+  ok("0 is refused with a reason", !!bad && /1/.test(bad), bad);
+  ok("the stored value stays 9", (await coreSetting()) === 9, await coreSetting());
   ok("no horizontal overflow on Settings → Network", (await overflow()) <= 1, await overflow());
   await ev(() => FOCA.api.settings_set({ net: { hosts_parallel: 3 } }));
   await wait(300);
@@ -78,7 +87,7 @@ export default async (page, { W, fsc, theme, out }) => {
   // ---- help article ----
   await go("/help/set-hosts-parallel");
   const help = await ev(() => (FOCA.page() || document.body).innerText);
-  ok("help article opens", /1-8/.test(help) && /429/.test(help), help.slice(0, 200));
+  ok("help article opens", /2-4/.test(help) && /429/.test(help), help.slice(0, 200));
 
   // ---- launch wizard: the same setting next to threads and requests per second ----
   await ev(() => {

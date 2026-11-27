@@ -50,21 +50,21 @@
         if (F.cur && F.cur.path === "/settings/wordlists") F.render(true);
       });
   }
-  /** Numeric input with ± buttons (F.numField from help.js); the value is applied on blur/Enter. */
-  const nf = (k, label, unit, min, max, rec, note, whyMax, whyMin, step = 1) =>
+  /** Numeric input with ± buttons (F.numField from help.js); the value is applied on blur/Enter.
+   * Hard minimum, recommendation and warnings come from F.limits (`fuzz.<key>`). */
+  // Core defaults of settings.fuzz (crates/foca-store/src/settings.rs) for a missing key.
+  const FZ_DEF = { rate: 5, max_requests: 3000, max_time_min: 20, max_hosts: 3 };
+  const nf = (k, label, unit, note, step = 1, whyMin = "") =>
     F.numField({
       id: "wl-" + k,
       label,
       unit,
-      min,
-      max,
+      lim: "fuzz." + k,
       step,
-      rec,
       note,
       help: "set-fuzz",
-      whyMax,
       whyMin,
-      get: () => +(fz()[k] || 0),
+      get: () => +(fz()[k] ?? FZ_DEF[k]),
       set: v => saveFz({ [k]: v }),
     });
   // Built-in and downloadable wordlist names come from the core in Russian: translate by id.
@@ -112,10 +112,10 @@
       <p class="lead st-lead">${esc(F.t("wordlists.lead", "Поиск забытых документов, бэкапов и служебных файлов на сайте заказчика работает в профиле «Полный» (или «Свой» с модулем перебора) по целям скоупа. Здесь: щадящие лимиты по умолчанию и словари."))}</p>
       ${ui.secH(F.t("wordlists.params", "Параметры перебора"))}
       <div class="card nfs st-nfs">
-        ${nf("rate", F.t("wordlists.nf_rate", "Скорость"), F.t("wordlists.nf_rate_unit", "/с"), 1, 10, [3, 5], F.t("wordlists.nf_rate_note", "сайт заказчика не должен заметить нагрузку"), F.t("wordlists.nf_rate_why_max", "быстрее перебор по сайту заказчика не идёт"), F.t("wordlists.nf_rate_why_min", "меньше одного запроса в секунду не бывает"))}
-        ${nf("max_requests", F.t("wordlists.nf_max_requests", "Бюджет на скан"), F.t("wordlists.nf_max_requests_unit", "запр."), 500, 20000, [2000, 5000], F.t("wordlists.nf_max_requests_note", "общий на все адреса"), F.t("wordlists.nf_max_requests_why_max", "больше: перебор на часы"), F.t("wordlists.nf_max_requests_why_min", "меньше 500: модули не успеют проверить даже типовые пути"), 500)}
-        ${nf("max_time_min", F.t("wordlists.nf_max_time_min", "Время на скан, до"), F.t("wordlists.nf_max_time_min_unit", "мин"), 5, 120, [15, 30], F.t("wordlists.nf_max_time_min_note", "потом перебор останавливается сам"), F.t("wordlists.nf_max_time_min_why_max", "дольше двух часов перебор не идёт"), F.t("wordlists.nf_max_time_min_why_min", "за меньшее время перебор почти ничего не проверит"), 5)}
-        ${nf("max_hosts", F.t("wordlists.nf_max_hosts", "Адресов за скан"), "", 1, 10, [1, 3], F.t("wordlists.nf_max_hosts_note", "сколько сразу: «Настройки → Сеть»"), F.t("wordlists.nf_max_hosts_why_max", "больше 10 адресов за скан не перебирается"), F.t("wordlists.nf_max_hosts_why_min", "нужен хотя бы один адрес"))}
+        ${nf("rate", F.t("wordlists.nf_rate", "Скорость"), F.t("wordlists.nf_rate_unit", "/с"), F.t("wordlists.nf_rate_note", "сайт заказчика не должен заметить нагрузку"))}
+        ${nf("max_requests", F.t("wordlists.nf_max_requests", "Бюджет на скан"), F.t("wordlists.nf_max_requests_unit", "запр."), F.t("wordlists.nf_max_requests_note", "общий на все адреса"), 500)}
+        ${nf("max_time_min", F.t("wordlists.nf_max_time_min", "Время на скан, до"), F.t("wordlists.nf_max_time_min_unit", "мин"), F.t("wordlists.nf_max_time_min_note", "потом перебор останавливается сам"), 5)}
+        ${nf("max_hosts", F.t("wordlists.nf_max_hosts", "Адресов за скан"), "", F.t("wordlists.nf_max_hosts_note", "сколько сразу: «Настройки → Сеть»"))}
       </div>
       <div class="list">${ui.row({ lead: ui.leadIcon("filter"), title: esc(F.t("wordlists.show_paths", "Показывать все найденные пути")), sub: esc(F.t("wordlists.show_paths_sub", "Находки «Найден путь на сайте» (важность «Инфо»), обычно не нужны")), tail: ui.toggle(!!fuzzCfg.show_paths, "wl-paths", `aria-label="${esc(F.t("wordlists.show_paths", "Показывать все найденные пути"))}"`) })}</div>
       <h3 class="sub-h">${esc(F.t("wordlists.exclude_h", "Не запрашивать пути"))}</h3>

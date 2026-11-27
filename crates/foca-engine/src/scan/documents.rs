@@ -128,10 +128,20 @@ pub(super) async fn meta_pending(c: &Ctx, stage: usize) -> Result<(), Stop> {
                 // A panic while parsing one file becomes a parse error for that document instead of leaving it
                 // "downloaded" forever; the scan continues with the batch.
                 let r = crate::util::catch_panic(|| {
+                    let lim = foca_meta::Limits::default();
+                    // The download size limit can be lifted by the user: never pull a file the
+                    // parser would refuse anyway into memory.
+                    let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
+                    if size > lim.max_file {
+                        return Err(foca_meta::MetaError::TooLarge {
+                            size,
+                            limit: lim.max_file,
+                        }
+                        .to_string());
+                    }
                     std::fs::read(&path)
                         .map_err(|e| e.to_string())
                         .and_then(|b| {
-                            let lim = foca_meta::Limits::default();
                             let m = foca_meta::extract(&b, Some(&name), &lim)
                                 .map_err(|e| e.to_string())?;
                             let mut t = foca_meta::text(&b, &lim).ok();

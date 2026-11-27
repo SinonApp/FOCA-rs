@@ -477,7 +477,7 @@
         "presets",
         "set-hosts-parallel"
       ],
-      "body": "\n      <p>Number of concurrent requests kept in flight. More threads make scans faster, but are more noticeable to WAFs and consume more battery.</p>\n      <p><b>Recommended: 4-8.</b> Over Tor or cellular data: 2-4. Allowed range: 1-64.</p>\n      <p>The per-host rate limit (“Requests per second”) is enforced regardless of the thread count.</p>"
+      "body": "\n      <p>Number of concurrent requests kept in flight. More threads make scans faster, but are more noticeable to WAFs and consume more battery.</p>\n      <p><b>Recommended: 4-8.</b> Over Tor or cellular data: 2-4. Any number from 1 is accepted: above 16 a warning appears next to the field, above 32 the app asks you to confirm.</p>\n      <p>The per-host rate limit (“Requests per second”) is enforced regardless of the thread count.</p>"
     },
     {
       "id": "set-rps",
@@ -490,7 +490,7 @@
         "presets",
         "set-hosts-parallel"
       ],
-      "body": "\n      <p>Global request rate cap. Lower values reduce the likelihood of triggering CAPTCHAs or IP blocks.</p>\n      <p><b>Recommended: 5-10.</b> Allowed range: 1-100. Client website fuzzing runs even slower using its own cap configured under “Wordlists”.</p>"
+      "body": "\n      <p>Global request rate cap. Lower values reduce the likelihood of triggering CAPTCHAs or IP blocks.</p>\n      <p><b>Recommended: 5-10.</b> Any number is accepted, and 0 removes the limit: above 20 a warning appears next to the field, above 50 or with no limit the app asks you to confirm. Client website fuzzing runs even slower using its own cap configured under “Wordlists”.</p>"
     },
     {
       "id": "set-hosts-parallel",
@@ -502,7 +502,7 @@
         "set-threads",
         "set-rps"
       ],
-      "body": "\n      <p>How many hosts of one scan are worked on at the same time: subdomains and hosts found during the scan, or several targets of a project. It applies to the stages that go host by host: liveness and TLS certificates, the port scan, website reconnaissance and site search.</p>\n      <p><b>Recommended: 2-4.</b> Allowed range: 1-8. “1” works one host after another, as before. Over Tor or cellular data: 1-2.</p>\n      <ul><li>Shared limits do not grow: “Requests per second” and “Threads” cap the whole scan, and site search keeps its own rate and budget per host.</li>\n      <li>The site search budget and time are shared by all hosts: running them together does not raise them.</li>\n      <li>If one host answers 429 or turns on bot protection, only that host stops; the others go on.</li>\n      <li>Pause, Stop and Skip on the stage reach every running host at once.</li></ul>\n      <p>The scan screen shows which hosts are running: “Hosts: 3 running, 2 done of 7”.</p>"
+      "body": "\n      <p>How many hosts of one scan are worked on at the same time: subdomains and hosts found during the scan, or several targets of a project. It applies to the stages that go host by host: liveness and TLS certificates, the port scan, website reconnaissance and site search.</p>\n      <p><b>Recommended: 2-4.</b> Any number from 1 is accepted: above 8 a warning appears next to the field, above 16 the app asks you to confirm. “1” works one host after another, as before. Over Tor or cellular data: 1-2.</p>\n      <ul><li>Shared limits do not grow: “Requests per second” and “Threads” cap the whole scan, and site search keeps its own rate and budget per host.</li>\n      <li>The site search budget and time are shared by all hosts: running them together does not raise them.</li>\n      <li>If one host answers 429 or turns on bot protection, only that host stops; the others go on.</li>\n      <li>Pause, Stop and Skip on the stage reach every running host at once.</li></ul>\n      <p>The scan screen shows which hosts are running: “Hosts: 3 running, 2 done of 7”.</p>"
     },
     {
       "id": "set-timeout",
@@ -514,7 +514,7 @@
         "slow-scan",
         "presets"
       ],
-      "body": "\n      <p>Seconds to wait when establishing a connection. Shorter timeouts drop dead hosts faster; longer timeouts help on slow networks.</p>\n      <p><b>Recommended: 15-30 s</b> (60 s for Tor). Allowed range: 5-120. Each search source also has its own overall time cap after which it stops automatically.</p>"
+      "body": "\n      <p>Seconds to wait when establishing a connection. Shorter timeouts drop dead hosts faster; longer timeouts help on slow networks.</p>\n      <p><b>Recommended: 15-30 s</b> (60 s for Tor). Any number from 1 is accepted: below 5 or above 120 a warning appears next to the field. Each search source also has its own overall time cap after which it stops automatically.</p>"
     },
     {
       "id": "set-retries",
@@ -525,7 +525,7 @@
       "rel": [
         "set-timeout"
       ],
-      "body": "\n      <p>How many times to retry a request on connection drop or network error. <b>Recommended: 1-3.</b> Allowed range: 0-5. Excessive retries only burden the server and drag out the scan.</p>"
+      "body": "\n      <p>How many times to retry a request on connection drop or network error. <b>Recommended: 1-3.</b> Any number from 0 is accepted; above 5 a warning appears, since more retries only load the server and drag the scan out. Excessive retries only burden the server and drag out the scan.</p>"
     },
     {
       "id": "presets",
@@ -549,7 +549,7 @@
       "rel": [
         "slow-scan"
       ],
-      "body": "\n      <ul><li><b>Documents per target</b>: maximum files to download per target (recommended: 200-1,000). Subsequent scans pick up new files without re-downloading previously seen ones.</li>\n      <li><b>Max file size</b>: larger files are skipped (recommended: 20-100 MB).</li>\n      <li><b>Monthly data cap</b> (“Traffic & power”). Limits how much mobile data scans may consume.</li></ul>"
+      "body": "\n      <ul><li><b>Documents per target</b>: maximum files to download per target (recommended: 200-1,000, 0 = no limit). Subsequent scans pick up new files without re-downloading previously seen ones.</li>\n      <li><b>Max file size</b>: larger files are skipped (recommended: 20-100 MB, 0 = no limit). Files over 200 MB are downloaded but not parsed.</li>\n      <li><b>Crawler depth</b>: how many levels of links to follow (recommended: 1-3, at least 1).</li>\n      <li><b>Monthly data cap</b> (“Traffic & power”). Limits how much mobile data scans may consume. 0 or the switch off means no limit; the app warns you and asks to confirm.</li></ul>\n      <p>Recommendations never cap what you type: any valid number is saved as is. Above the recommended range a warning appears next to the field, and risky values need a one-time confirmation.</p>"
     },
     {
       "id": "security-pin",
@@ -581,7 +581,7 @@
       "rel": [
         "legal"
       ],
-      "body": "\n      <p>Runs only in “Full” (or “Custom” with the module enabled): the “Site search” stage probes the client's website for forgotten documents, backups, service files (<code>.env</code>, <code>.git</code>) and open directory listings, so the owner can remove them.</p>\n      <ul><li><b>Rate</b>: recommended 3-5 req/s (allowed: 1-10).</li>\n      <li><b>Budget per scan</b> and <b>time per scan</b>: when either runs out, the search stops on its own. <b>Addresses per scan</b>: up to 10; how many of them run at once is set by “Hosts at once” in “Settings → Network”.</li>\n      <li>If the site starts answering 429/403/5xx, the search on that host stops at once without retries; other hosts go on.</li>\n      <li>Before it starts, the app checks how the site answers non-existent paths (soft 404 calibration) to avoid noisy findings.</li></ul>\n      <h3>Wordlists</h3>\n      <p>“Settings → Wordlists” has three groups: <b>Built-in</b>; <b>Large: download</b> (from SecLists on GitHub, a pinned version with a verified checksum, never from the target site); <b>Custom</b>: a text file with one path per line, up to 64 MB. “Do not request paths” lists paths the search must never touch.</p>"
+      "body": "\n      <p>Runs only in “Full” (or “Custom” with the module enabled): the “Site search” stage probes the client's website for forgotten documents, backups, service files (<code>.env</code>, <code>.git</code>) and open directory listings, so the owner can remove them.</p>\n      <ul><li><b>Rate</b>: recommended 3-5 req/s (0 removes the limit; above 10 a warning appears next to the field, above 20 or with no limit you confirm once).</li>\n      <li><b>Budget per scan</b> and <b>time per scan</b>: when either runs out, the search stops on its own, and 0 removes the limit. <b>Addresses per scan</b>: any number, 0 = every web address in scope; how many of them run at once is set by “Hosts at once” in “Settings → Network”.</li>\n      <li>If the site starts answering 429/403/5xx, the search on that host stops at once without retries; other hosts go on.</li>\n      <li>Before it starts, the app checks how the site answers non-existent paths (soft 404 calibration) to avoid noisy findings.</li></ul>\n      <h3>Wordlists</h3>\n      <p>“Settings → Wordlists” has three groups: <b>Built-in</b>; <b>Large: download</b> (from SecLists on GitHub, a pinned version with a verified checksum, never from the target site); <b>Custom</b>: a text file with one path per line, up to 64 MB. “Do not request paths” lists paths the search must never touch.</p>"
     },
     {
       "id": "recon-help",

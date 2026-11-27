@@ -30,9 +30,12 @@ export default async (page, { out, W, fsc, theme, checkText }) => {
     await ev(() => FOCA.api.key_delete("shodan")); await wait(100);
     const off = await ev(() => { let got = null; const orig = FOCA.actions["scan-start"]; FOCA.actions["scan-start"] = o => { got = o; return Promise.reject(new Error("stub")); }; FOCA.actions["la-start"](); FOCA.actions["scan-start"] = orig; return got && got.sources_off; });
     ok("wizard: sources_off has the paid keyless source and no free ones", Array.isArray(off) && off.includes("shodan") && !off.includes("wayback") && !off.includes("startpage"), off);
-    // Out-of-range number in the wizard (threads are shared with the network settings).
-    await page.fill("#nf-la-net-threads", "500"); await page.press("#nf-la-net-threads", "Enter"); await wait(250);
-    ok('wizard: 500 threads → hint "Максимум 64"', /Максимум 64/.test(await ev(() => document.querySelector("#nf-la-net-threads-e")?.textContent || "")));
+    // Big number in the wizard (threads are shared with the network settings): no cap, a warning
+    // and a one-time confirmation; cancel keeps the old value.
+    await page.fill("#nf-la-net-threads", "500"); await page.press("#nf-la-net-threads", "Enter"); await wait(400);
+    ok("wizard: 500 threads → confirm sheet", await ev(() => !!document.querySelector('.sheet.show [data-act="nf-risk-ok"]')));
+    await ev(() => FOCA.closeSheet()); await wait(350);
+    ok("wizard: cancel keeps the old value", await ev(() => document.querySelector("#nf-la-net-threads").value !== "500" && +(FOCA.db.settings.net.threads || 0) !== 500));
     await page.fill("#nf-la-net-threads", "6"); await page.press("#nf-la-net-threads", "Enter"); await wait(300);
     // Sources: 5 groups + "advanced, with key".
     await go("/settings/sources");
@@ -62,9 +65,9 @@ export default async (page, { out, W, fsc, theme, checkText }) => {
     // Network: numeric input, presets.
     await go("/settings/network");
     await ev(() => document.querySelector("#st-presets")?.scrollIntoView({ block: "start" }));
-    await page.fill("#nf-net-threads", "999"); await page.press("#nf-net-threads", "Enter"); await wait(250);
+    await page.fill("#nf-net-threads", "0"); await page.press("#nf-net-threads", "Enter"); await wait(250);
     const err = await ev(() => document.querySelector("#nf-net-threads-e")?.textContent || "");
-    ok("network: 999 threads → highlight and reason, value not saved", /Максимум 64/.test(err) && await ev(() => document.querySelector('.nf[data-nf="net-threads"]').classList.contains("bad")) && await ev(() => FOCA.db.settings.net.threads !== 999), err);
+    ok("network: 0 threads → highlight and reason, value not saved", /Минимум 1/.test(err) && await ev(() => document.querySelector('.nf[data-nf="net-threads"]').classList.contains("bad")) && await ev(() => +FOCA.db.settings.net.threads !== 0), err);
     await shot("net_error");
     await page.fill("#nf-net-threads", "12"); await page.locator("#nf-net-rps").focus(); await wait(250);
     ok("network: 12 threads applied on blur", await ev(() => +FOCA.db.settings.net.threads === 12));
@@ -80,8 +83,8 @@ export default async (page, { out, W, fsc, theme, checkText }) => {
     await noOvf("network");
     // Wordlists: numeric input.
     await go("/settings/wordlists");
-    await page.fill("#nf-wl-rate", "0"); await page.press("#nf-wl-rate", "Enter"); await wait(250);
-    ok('wordlists: rate 0 → "Минимум 1"', /Минимум 1/.test(await ev(() => document.querySelector("#nf-wl-rate-e")?.textContent || "")));
+    await page.fill("#nf-wl-rate", "15"); await page.press("#nf-wl-rate", "Enter"); await wait(250);
+    ok("wordlists: rate 15 → saved with a warning", /Больше 10/.test(await ev(() => document.querySelector("#nf-wl-rate-w")?.textContent || "")) && await ev(() => +FOCA.db.settings.fuzz.rate === 15));
     await page.fill("#nf-wl-rate", "5"); await page.press("#nf-wl-rate", "Enter"); await wait(200);
     // Help.
     await go("/settings");
