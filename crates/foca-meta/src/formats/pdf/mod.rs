@@ -872,7 +872,9 @@ fn images(pdf: &Pdf, ctx: &Ctx, meta: &mut Metadata) -> Result<(), MetaError> {
                     || !m.people.is_empty()
                     || !m.software.is_empty()
                     || m.created.is_some()
-                    || m.description.is_some();
+                    || m.description.is_some()
+                    || m.ai_generated.is_some()
+                    || m.fields.keys().any(|k| !trivial_image_field(k));
                 if interesting {
                     meta.embedded.push(Embedded {
                         name: format!("pdf:obj {} ({name})", o.num),
@@ -885,6 +887,35 @@ fn images(pdf: &Pdf, ctx: &Ctx, meta: &mut Metadata) -> Result<(), MetaError> {
         }
     }
     Ok(())
+}
+
+/// Image layout fields that say nothing about the author or device (kept out of the PDF
+/// embedded image list).
+fn trivial_image_field(k: &str) -> bool {
+    let k = k.strip_prefix("exif:").unwrap_or(k);
+    matches!(
+        k,
+        "ColorSpace"
+            | "Orientation"
+            | "PixelXDimension"
+            | "PixelYDimension"
+            | "XResolution"
+            | "YResolution"
+            | "ResolutionUnit"
+            | "YCbCrPositioning"
+            | "ExifVersion"
+            | "FlashpixVersion"
+            | "ComponentsConfiguration"
+            | "ImageWidth"
+            | "ImageLength"
+            | "BitsPerSample"
+            | "Compression"
+            | "PhotometricInterpretation"
+            | "SamplesPerPixel"
+            | "jp2:xml"
+    ) || k.starts_with("icc:")
+        || k.starts_with("webp:")
+        || k.starts_with("gif:")
 }
 
 fn str_field(pdf: &Pdf, d: &Dict, k: &str) -> Option<String> {

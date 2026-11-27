@@ -1,5 +1,6 @@
 //! SVG: RDF metadata, Inkscape/Sodipodi attributes (docname, docbase, export-filename), the
-//! generator from comments (Illustrator), and absolute paths and external links in attributes.
+//! generator from comments (Illustrator), other comments, absolute paths and external links in
+//! attributes, and `data:image/...;base64` images parsed recursively (EXIF/GPS of pasted photos).
 
 use foca_core::{DocFormat, Metadata};
 
@@ -15,8 +16,17 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
         let sw = format!("Inkscape {}", v.split_whitespace().next().unwrap_or(v));
         Metadata::add_unique(&mut meta.software, &sw);
         meta.application = Some(sw);
+        meta.fields
+            .insert("svg:inkscape_version".into(), truncate(v, 128));
     }
+    let mut notes: Vec<String> = Vec::new();
     for c in root.comments() {
+        // other comments may carry contacts or paths; keep a few for the path/e-mail scan
+        if !c.contains("Generator:") && notes.len() < 20 {
+            if let Some(t) = crate::util::clean_str(c) {
+                notes.push(truncate(&t, 1024));
+            }
+        }
         if let Some(g) = c.trim().strip_prefix("Generator:") {
             let g = g.split(',').next().unwrap_or(g).trim();
             Metadata::add_unique(&mut meta.software, g);
@@ -55,13 +65,34 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     if meta.description.is_none() {
         meta.description = root.child("desc").and_then(|t| t.text_opt());
     }
-    // absolute paths and external links in attributes
+    if !notes.is_empty() {
+        meta.fields
+            .insert("svg:comments".into(), truncate(&notes.join("\n"), 4096));
+    }
+    // absolute paths, external links and embedded data: images in attributes
+    let mut images = 0;
     for e in root.walk() {
         for (k, v) in &e.attrs {
             if k.starts_with("xmlns") {
                 continue;
             }
             let v = v.trim();
+            if xml::local(k) == "href" && v.starts_with("data:image/") {
+                if let Some((_, data)) = v.split_once(";base64,") {
+                    if images < 50 && data.len() <= 16 << 20 {
+                        images += 1;
+                        let img = crate::formats::mail::eml::base64_decode(data.as_bytes());
+                        ctx.spend(img.len() as u64)?;
+                        ctx.attach_child(
+                            &mut meta,
+                            &img,
+                            "image",
+                            &format!("svg:data-image-{images}"),
+                        )?;
+                    }
+                }
+                continue;
+            }
             if analyze_path(v).is_some() {
                 meta.fields
                     .entry(format!("svg:path:{k}"))
@@ -79,4 +110,33 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
 pub fn text(b: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
     let root = xml::parse_bytes(b, ctx.max_xml_depth(), ctx.max_xml_nodes())?;
     Ok(root.text())
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn data_uri_image_and_comments() {
+        let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+        let text = b"Author\0Mykola Shevchenko";
+        png.extend((text.len() as u32).to_be_bytes());
+        png.extend(b"tEXt");
+        png.extend(text);
+        png.extend([0; 4]);
+        png.extend(b"\0\0\0\0IEND\0\0\0\0");
+        let b64 = foca_core::b64::encode(&png);
+        let svg = format!(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><!-- contact: art@studio.example --><image xlink:href="data:image/png;base64,{b64}"/></svg>"#
+        );
+        let m = crate::extract(svg.as_bytes(), Some("a.svg"), &crate::Limits::default()).unwrap();
+        assert_eq!(m.embedded.len(), 1);
+        assert_eq!(
+            m.embedded[0].metadata.author.as_deref(),
+            Some("Mykola Shevchenko")
+        );
+        assert!(
+            m.emails.iter().any(|e| e == "art@studio.example"),
+            "{:?}",
+            m.emails
+        );
+    }
 }
