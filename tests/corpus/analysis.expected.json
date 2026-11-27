@@ -3753,50 +3753,6 @@
       "category": "docs",
       "cve": [],
       "cvss": null,
-      "description": "Документ с грифом ограничения доступа опубликован в открытом доступе.",
-      "doc": 4,
-      "evidence": "ДСК\nДСК",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 7485834845775390,
-      "mitre": "T1213 · Data from Information Repositories",
-      "module": "pii",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          4
-        ],
-        "fields": [
-          "текст, строка 1"
-        ],
-        "rule": "pii"
-      },
-      "recommendation": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
-      "rel": {
-        "docs": [
-          4
-        ],
-        "pcs": [],
-        "people": []
-      },
-      "request": "",
-      "sev": "high",
-      "source": "Персональные данные",
-      "status": "new",
-      "tags": [
-        "pii"
-      ],
-      "time": "2026-11-20T12:00:00",
-      "title": "Гриф ограничения доступа в документе (personal.docx)",
-      "url": "https://files.contoso.example/corpus/forensics/personal.docx"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
       "description": "После байтов, покрытых подписью (/ByteRange), в файл дописаны изменения: видимое содержимое может отличаться от подписанного.",
       "doc": 10,
       "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
@@ -5139,6 +5095,50 @@
       "time": "2026-11-20T12:00:00",
       "title": "Внутренний домен в Message-ID (budget.msg)",
       "url": "https://files.contoso.example/corpus/mail/budget.msg"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": null,
+      "description": "Документ с грифом ограничения доступа опубликован в открытом доступе.",
+      "doc": 4,
+      "evidence": "ДСК\nДСК",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 7485834845775390,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          4
+        ],
+        "fields": [
+          "текст, строка 1"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
+      "rel": {
+        "docs": [
+          4
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "warn",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Гриф ограничения доступа в документе (personal.docx)",
+      "url": "https://files.contoso.example/corpus/forensics/personal.docx"
     },
     {
       "active": false,

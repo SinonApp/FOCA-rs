@@ -67,6 +67,7 @@ FOCA-rs detects Ukrainian RNOKPP (РНОКПП / ІПН), EDRPOU (ЄДРПОУ),
 - **Masked before persistence:** Only masked values (`••••••••90`) are written to the SQLite database, FTS5 search index, reports, and exports. Full PII numbers are never stored on disk, and biometric "reveal secret" does not apply to PII.
 - One finding is created per PII type per document with an occurrence counter. Organizational EDRPOU codes are public registry identifiers and are logged at `Info` severity.
 - Reports include PII categories and counts only.
+- **Classification markings count only as stamps:** the whole line is the marking (optionally with a copy number such as `Прим. № 2`), at the top or bottom of a page or text block, written in capitals or title case: `ДСК`, `ДЛЯ СЛУЖБОВОГО КОРИСТУВАННЯ`, `ЦІЛКОМ ТАЄМНО`, `ДСП`, `Совершенно секретно`, `CONFIDENTIAL`, `INTERNAL USE ONLY`, `SECRET`, `VS-NUR FÜR DEN DIENSTGEBRAUCH`, `DIFFUSION RESTREINTE` and similar. A level mentioned inside a sentence, a series code such as `ДСК № 123456` (diplomas) and a list of levels are ignored. State secret stamps are High, "for official use", confidential and commercial secret stamps Medium, drafts Low; a state secret stamp becomes Critical only when the same document also holds personal data.
 
 ## Full-Text Document Search
 

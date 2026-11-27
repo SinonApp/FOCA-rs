@@ -11,8 +11,9 @@
 //!   accepted only next to a context word;
 //! * phone numbers: `+380` / national mobile format and international E.164 with a `+`;
 //! * access restriction markings (`ДСК`, `Для службового користування`, `Таємно`,
-//!   `Confidential`, `Draft`, …) recognised as a marking (own line, all caps or after
-//!   «гриф»), never as an ordinary word inside a sentence.
+//!   `Confidential`, `Draft`, …) recognised only as a stamp line at the top or bottom of a
+//!   page or block, never inside a sentence or before a series number (see
+//!   [`crate::content::markings`]).
 //!
 //! Values are wrapped in [`SecretValue`]: `Debug`/`Display` print only the mask, the context
 //! carries the value as `{{s:…}}` exactly like secrets, so the snapshot layer masks it the same
@@ -172,10 +173,6 @@ lazy_re!(
 lazy_re!(
     re_phone_intl,
     r"\+[1-9]\d{0,2}(?:[ \u00a0.\-]?\(?\d{1,4}\)?){2,5}\b"
-);
-lazy_re!(
-    re_marking,
-    r"(?i)для\s+службового\s+користування|для\s+служебного\s+пользования|цілком\s+таємно|совершенно\s+секретно|особливої\s+важливості|особой\s+важности|(?:for\s+)?internal\s+use\s+only|internal\s+only|strictly\s+confidential|for\s+official\s+use\s+only|not\s+for\s+(?:public\s+)?distribution|комерційна\s+таємниця|коммерческая\s+тайна|\bконфіденційно\b|\bконфиденциально\b|\bтаємно\b|\bсекретно\b|\bconfidential\b|\brestricted\b|\bdraft\b|\bчернетка\b|\bчерновик\b|\bДСК\b|\bДСП\b"
 );
 
 /// Finds PII values and access markings in `text`. `place` names the location; for
@@ -768,108 +765,23 @@ fn phones(c: &Ctx, out: &mut Vec<PiiHit>) {
     }
 }
 
-/// Marking level → (normalised label, severity, needs strict placement).
-fn marking_level(m: &str) -> (&'static str, Severity, bool) {
-    let l = m.to_lowercase();
-    let l = l.split_whitespace().collect::<Vec<_>>().join(" ");
-    match l.as_str() {
-        "цілком таємно" | "совершенно секретно" | "особливої важливості" | "особой важности" => {
-            ("Цілком таємно", Severity::Critical, false)
-        }
-        "таємно" | "секретно" => ("Таємно", Severity::Critical, true),
-        "для службового користування" | "для служебного пользования" => {
-            ("ДСК", Severity::High, false)
-        }
-        "дск" | "дсп" => ("ДСК", Severity::High, true),
-        "комерційна таємниця" | "коммерческая тайна" => {
-            ("Комерційна таємниця", Severity::High, true)
-        }
-        "конфіденційно" | "конфиденциально" => {
-            ("Конфіденційно", Severity::High, true)
-        }
-        "strictly confidential" => ("Strictly Confidential", Severity::High, false),
-        "confidential" => ("Confidential", Severity::Medium, true),
-        "restricted" => ("Restricted", Severity::Medium, true),
-        "draft" | "чернетка" | "черновик" => ("Draft", Severity::Low, true),
-        _ if l.contains("internal") || l.contains("official use") => {
-            ("Internal Only", Severity::Medium, false)
-        }
-        _ if l.contains("distribution") => ("Not for distribution", Severity::Medium, false),
-        _ => ("Гриф", Severity::Medium, true),
-    }
-}
-
 fn line_of(text: &str, s: usize, e: usize) -> &str {
     let ls = text[..s].rfind('\n').map(|i| i + 1).unwrap_or(0);
     let le = text[e..].find('\n').map(|i| e + i).unwrap_or(text.len());
     &text[ls..le]
 }
 
-/// A single word marking counts only as a marking: the line is (almost) only the marking,
-/// the marking is written in capitals on a short line, or «гриф»/«примірник» is on the line.
-fn marking_placed(text: &str, s: usize, e: usize) -> bool {
-    let line = line_of(text, s, e);
-    let word = &text[s..e];
-    let ll = line.to_lowercase();
-    if ll.contains("гриф") || ll.contains("примірник") || ll.contains("экземпляр")
-    {
-        return true;
-    }
-    let rest: String = line
-        .replacen(word, "", 1)
-        .chars()
-        .filter(|c| c.is_alphanumeric())
-        .collect();
-    // Allow «Конфіденційно», "DRAFT v2", "Таємно. Прим. № 1" style lines.
-    if rest.chars().count() <= 4 {
-        return true;
-    }
-    let caps = word.chars().filter(|c| c.is_alphabetic()).count() >= 3
-        && word
-            .chars()
-            .filter(|c| c.is_alphabetic())
-            .all(char::is_uppercase);
-    caps && line.chars().count() <= 80
-}
-
 fn markings(c: &Ctx, out: &mut Vec<PiiHit>) {
-    let mut seen: Vec<&'static str> = Vec::new();
-    for m in re_marking().find_iter(c.text) {
-        let (label, sev, strict) = marking_level(m.as_str());
-        let word = m.as_str();
-        // Abbreviations are case-sensitive: «дск» inside a sentence is not a marking.
-        if (label == "ДСК" && word.chars().count() == 3) && word != "ДСК" && word != "ДСП"
-        {
-            continue;
-        }
-        if strict && !marking_placed(c.text, m.start(), m.end()) {
-            continue;
-        }
-        // ДСП is also «chipboard»: demand the line to look like a marking even in capitals.
-        if word == "ДСП" {
-            let line = line_of(c.text, m.start(), m.end()).to_lowercase();
-            let rest = line.replace("дсп", "");
-            if !(line.contains("гриф")
-                || line.contains("примірник")
-                || line.contains("экземпляр")
-                || rest.chars().filter(|c| c.is_alphabetic()).count() <= 4)
-            {
-                continue;
-            }
-        }
-        if seen.contains(&label) {
-            continue;
-        }
-        seen.push(label);
+    for m in crate::content::markings::find(c.text) {
         c.push(
             out,
             PiiKind::Marking,
-            m.start(),
-            m.end(),
-            label.to_string(),
+            m.start,
+            m.end,
+            m.label.to_string(),
             Confidence::High,
-            Some(label.to_string()),
-            Some(sev),
+            Some(m.label.to_string()),
+            Some(m.sev),
         );
     }
 }
@@ -1138,6 +1050,11 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
         v.len() >= 2
     };
     let (many_iban, many_rnokpp) = (several(PiiKind::Iban), several(PiiKind::Rnokpp));
+    // A state secret stamp becomes Critical only next to real personal values.
+    let personal = hits.iter().any(|(h, _)| {
+        !matches!(h.kind, PiiKind::Marking | PiiKind::Edrpou | PiiKind::Phone)
+            && !(h.kind == PiiKind::Card && drop_cards)
+    });
     for (h, sample) in hits {
         if h.kind == PiiKind::Card && drop_cards {
             continue;
@@ -1160,6 +1077,7 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
         let sev = match h.kind {
             PiiKind::Iban if many_iban && h.sev != Severity::Low => Severity::High,
             PiiKind::Rnokpp if many_rnokpp => Severity::High,
+            PiiKind::Marking if personal && h.sev == Severity::High => Severity::Critical,
             _ => h.sev,
         };
         if p.count == 1 || sev < p.sev {
@@ -1463,18 +1381,29 @@ mod tests {
 
     #[test]
     fn markings_as_markings() {
-        let t = "ДСК\nПримірник № 2\n\nНАКАЗ №15\nCONFIDENTIAL\nТаємно\n«Для службового користування»\n\
-                 Internal use only\nDRAFT";
+        let t = "ДСК\nПримірник № 2\n\nНАКАЗ №15\nпро порядок роботи\n\nТекст наказу.\n\nDRAFT";
         let hits = scan(t, "текст");
         let labels: Vec<String> = hits.iter().filter_map(|h| h.detail.clone()).collect();
-        assert_eq!(
-            labels,
-            ["ДСК", "Confidential", "Таємно", "Internal Only", "Draft"]
-        );
+        assert_eq!(labels, ["ДСК", "Draft"]);
         let t2 = "Гриф: Конфіденційно";
         assert_eq!(kinds(t2), [PiiKind::Marking]);
-        let t3 = "ЦІЛКОМ ТАЄМНО";
-        assert_eq!(scan(t3, "x")[0].sev, Severity::Critical);
+        // A state secret stamp alone is High; Critical needs personal data next to it.
+        assert_eq!(scan("ЦІЛКОМ ТАЄМНО", "x")[0].sev, Severity::High);
+        let r = mk_rnokpp("301234567");
+        let (m, _) = sanitize(
+            &foca_core::Metadata::default(),
+            Some(&format!("ЦІЛКОМ ТАЄМНО\nРНОКПП {r}")),
+        );
+        let mk = m.pii.iter().find(|p| p.kind == "marking").unwrap();
+        assert_eq!(mk.sev, Severity::Critical);
+        let (m, _) = sanitize(
+            &foca_core::Metadata::default(),
+            Some("ДСК\nРНОКПП 3012345670"),
+        );
+        assert_ne!(
+            m.pii.iter().find(|p| p.kind == "marking").unwrap().sev,
+            Severity::Critical
+        );
     }
 
     #[test]

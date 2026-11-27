@@ -22,7 +22,7 @@ Built-in signature tables live in `crates/foca-analysis/signatures/` (`software.
 
 - **Forensics, PII & Custom Rules**:
   - `assess/forensic.rs`: per-document facts (recursively across attachments) and ~25 rules (`doc.*`, `mail.*`, `cal.*`, `pim.*`, `media.*`, `zip.*`, `doc.links`, `doc.user_rule`, `pii`).
-  - `content/pii.rs`: Ukrainian RNOKPP, EDRPOU, UA IBAN, payment cards (Luhn + BIN), passports/IDs (context-aware), phone numbers, and classification markings; `sanitize` masks text and metadata before persistence (`ProjectDb::set_analyzed`).
+  - `content/pii.rs`: Ukrainian RNOKPP, EDRPOU, UA IBAN, payment cards (Luhn + BIN), passports/IDs (context-aware), phone numbers, and classification markings (stamp lines only, `content/markings.rs`); `sanitize` masks text and metadata before persistence (`ProjectDb::set_analyzed`).
   - `content/links.rs`: cloud workspaces and tokens in URLs (SAS, presigned URLs, webhooks, bot tokens), always masked.
   - `content/rules.rs`-"YARA-lite" presets (`ua-gov`, `credentials`, `infra`, `crypto`, `personal`) and bounded user regexes (`<= 512` chars, `<= 64` rules, `<= 1 MiB` DFA, no empty matches).
   - `content/artifacts.rs`: parses exposed `.git/config`, `.git/logs/HEAD`, `.env`, `.ovpn`, `package.json`, `composer.json` from `foca-fuzz` into masked summaries.

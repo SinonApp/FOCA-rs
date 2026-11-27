@@ -2230,44 +2230,6 @@
     },
     {
       "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
-      "description": "Документ с грифом ограничения доступа опубликован в открытом доступе.",
-      "documents": [
-        {
-          "id": 4,
-          "name": "personal.docx"
-        }
-      ],
-      "evidence": "ДСК\nДСК",
-      "first_scan": "s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 7789053018638507,
-      "mitre": "T1213 · Data from Information Repositories",
-      "module": "pii",
-      "notes": [],
-      "provenance": {
-        "fields": [
-          "текст, строка 1"
-        ],
-        "rule": "pii"
-      },
-      "recommendation": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
-      "severity": "high",
-      "severity_label": "Высокий",
-      "source": "Персональные данные",
-      "status": "new",
-      "tags": [
-        "pii"
-      ],
-      "time": "2026-11-20T12:00:00",
-      "title": "Гриф ограничения доступа в документе (personal.docx)",
-      "url": "https://files.contoso.example/corpus/forensics/personal.docx"
-    },
-    {
-      "active": false,
       "category": "people",
       "cve": [],
       "cvss": null,
@@ -3578,6 +3540,44 @@
       "time": "2026-11-20T12:00:00",
       "title": "iOS 17.4 (EOL) у 2 документов",
       "url": "https://files.contoso.example/corpus/media/iphone.mov"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": null,
+      "description": "Документ с грифом ограничения доступа опубликован в открытом доступе.",
+      "documents": [
+        {
+          "id": 4,
+          "name": "personal.docx"
+        }
+      ],
+      "evidence": "ДСК\nДСК",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 7789053018638507,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "текст, строка 1"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
+      "severity": "warn",
+      "severity_label": "Средний",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Гриф ограничения доступа в документе (personal.docx)",
+      "url": "https://files.contoso.example/corpus/forensics/personal.docx"
     },
     {
       "active": false,
@@ -6965,10 +6965,10 @@
   "summary": {
     "counts": {
       "crit": 4,
-      "high": 25,
+      "high": 24,
       "info": 5,
       "low": 34,
-      "warn": 39
+      "warn": 40
     },
     "fixed": 1,
     "pages": null,

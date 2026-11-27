@@ -17,7 +17,7 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 
 **Overall risk level: 88/100 - High**
 
-Findings in total: 107; 4 critical and 25 high.
+Findings in total: 107; 4 critical and 24 high.
 
 ## Key findings
 
