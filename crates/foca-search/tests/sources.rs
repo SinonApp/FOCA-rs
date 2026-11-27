@@ -80,7 +80,12 @@ async fn wayback_cdx_with_pagination() {
     let names: Vec<&str> = f.urls.iter().map(|u| u.target_url()).collect();
     // 6 pdf + docx + xlsx documents within the limit, images on their own cap of 2
     assert_eq!(f.urls.len(), 10, "{names:#?}");
-    let first = &f.urls[0];
+    // the priority ladder puts smaller office/PDF files first: find the booklet by name
+    let first = f
+        .urls
+        .iter()
+        .find(|u| u.url.ends_with("informational-booklet.pdf"))
+        .unwrap();
     assert_eq!(
         first.url,
         format!(
@@ -190,7 +195,11 @@ async fn common_crawl_latest_index() {
         .urls
         .iter()
         .all(|u| u.source == "cc" && u.hint_ext.as_deref() == Some("pdf")));
-    assert_eq!(f.urls[0].size, Some(2101234));
+    assert!(
+        f.urls.iter().any(|u| u.size == Some(2101234)),
+        "{:#?}",
+        f.urls
+    );
     assert_eq!(srv.hits("/collinfo.json"), 1);
     assert_eq!(srv.hits("/CC-MAIN-2026-43-index"), 2);
     assert!(srv.hits("/CC-MAIN-2026-39-index") >= 1);
