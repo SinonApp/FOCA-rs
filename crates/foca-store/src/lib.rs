@@ -17,6 +17,7 @@ pub mod project;
 pub mod schema;
 pub mod search;
 pub mod settings;
+mod storage_docs;
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

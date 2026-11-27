@@ -6,7 +6,6 @@
 //! smaller files when the size is known, then discovery order.
 
 use crate::filter::ext_of_url;
-use crate::source::FoundUrl;
 
 /// Office and PDF files with the richest metadata (authors, templates, printers, revisions).
 const TIER1: &[&str] = &[
@@ -93,17 +92,20 @@ pub fn rank(url: &str, source: &str) -> (u8, u8) {
     (tier(url, None), source_rank(source))
 }
 
-/// Sorts finds by tier, provenance, then known size (smaller first); stable, so discovery order
-/// breaks the remaining ties.
-pub fn sort_found(items: &mut [FoundUrl]) {
-    items.sort_by_key(|u| {
-        (
-            tier(u.target_url(), u.hint_ext.as_deref()),
-            source_rank(&u.source),
-            u.size.is_none(),
-            u.size.unwrap_or(0),
-        )
-    });
+/// Order key of a find: tier, provenance, then known size (smaller first). Sorting by it is
+/// stable, so discovery order breaks the remaining ties.
+pub fn found_key(
+    url: &str,
+    hint_ext: Option<&str>,
+    source: &str,
+    size: Option<u64>,
+) -> (u8, u8, bool, u64) {
+    (
+        tier(url, hint_ext),
+        source_rank(source),
+        size.is_none(),
+        size.unwrap_or(0),
+    )
 }
 
 fn file_name(url: &str) -> String {
@@ -114,6 +116,11 @@ fn file_name(url: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::source::FoundUrl;
+
+    fn sort_found(items: &mut [FoundUrl]) {
+        crate::source::sort_found(items);
+    }
 
     #[test]
     fn mixed_items_follow_the_ladder() {

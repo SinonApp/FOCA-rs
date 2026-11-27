@@ -577,9 +577,9 @@ pub fn dedupe(items: Vec<FoundUrl>) -> Vec<FoundUrl> {
 }
 
 /// Takes documents (up to `limit`), then images (up to `images`, their own budget), each group in
-/// download priority order (`priority::sort_found`).
+/// download priority order (`sort_found`).
 pub fn take_balanced(mut items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<FoundUrl> {
-    crate::priority::sort_found(&mut items);
+    sort_found(&mut items);
     let (mut docs, imgs): (Vec<FoundUrl>, Vec<FoundUrl>) =
         items.into_iter().partition(|u| !found_is_image(u));
     docs.truncate(limit);
@@ -625,11 +625,18 @@ pub fn pick_fair(items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<Found
     }
     // Priority order inside each source (the stable sort keeps it through the grouping).
     let mut items = items;
-    crate::priority::sort_found(&mut items);
+    sort_found(&mut items);
     let (docs, imgs): (Vec<FoundUrl>, Vec<FoundUrl>) =
         items.into_iter().partition(|u| !found_is_image(u));
     let mut out = Vec::new();
     round_robin(groups(docs), limit, &mut out);
     round_robin(groups(imgs), images, &mut out);
     out
+}
+
+/// Sorts finds into the download priority order (`priority::found_key`).
+pub(crate) fn sort_found(items: &mut [FoundUrl]) {
+    items.sort_by_key(|u| {
+        crate::priority::found_key(u.target_url(), u.hint_ext.as_deref(), &u.source, u.size)
+    });
 }

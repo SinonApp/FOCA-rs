@@ -99,17 +99,8 @@ pub struct FindingPatch {
     pub status: Option<FindingStatus>,
 }
 
-/// Project setting with the provenance of documents by their download URL
-/// (`BTreeMap<String, DocProvenance>`), written by the scan engine and read into `Doc.provenance`.
+/// Document provenance by download URL (`BTreeMap<String, DocProvenance>`), from the scan engine.
 pub const PROVENANCE_KEY: &str = "docs.provenance";
-
-/// Host of a page URL (`https://Site.example:8443/a` → `site.example`); `None` without a host.
-fn page_host(url: &str) -> Option<String> {
-    let rest = url.split_once("://")?.1;
-    let auth = rest.split(['/', '?', '#']).next()?;
-    let host = auth.rsplit('@').next()?.split(':').next()?.trim();
-    (!host.is_empty()).then(|| host.to_ascii_lowercase())
-}
 
 /// An entry of the outgoing request log.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -956,40 +947,14 @@ impl ProjectDb {
         })
     }
 
-    /// Documents as the analysis sees them: a file downloaded from external storage (Google
-    /// Drive, OneDrive, Dropbox...) belongs to the in-scope site that linked it, so its host is the
-    /// linking page's host (or the host of the document that linked it), never the provider's.
-    /// Every re-analysis applies it, so older projects lose the provider "host" too.
+    /// Documents as the analysis sees them: storage files get the linking site's host.
     pub fn analysis_documents(&self) -> Result<Vec<StoredDoc>> {
         let mut docs = self.documents(true)?;
-        let prov: BTreeMap<String, DocProvenance> = self
+        let prov = self
             .setting(PROVENANCE_KEY)?
-            .and_then(|v| serde_json::from_value(v).ok())
-            .unwrap_or_default();
-        if prov.is_empty() {
-            return Ok(docs);
-        }
-        let host_by_id: BTreeMap<u64, Option<String>> = docs
-            .iter()
-            .map(|d| (d.doc.id, d.doc.host.clone()))
-            .collect();
-        for d in &mut docs {
-            let Some(p) = d.doc.url.as_ref().and_then(|u| prov.get(u)) else {
-                continue;
-            };
-            if p.storage.is_none() {
-                continue;
-            }
-            let site = match p.kind.as_str() {
-                "doc" => p
-                    .from_doc
-                    .and_then(|i| host_by_id.get(&i).cloned().flatten()),
-                _ => page_host(&p.from),
-            };
-            if let Some(h) = site {
-                d.doc.host = Some(h);
-            }
-        }
+            .and_then(|v| serde_json::from_value(v).ok());
+        let mut refs: Vec<&mut Document> = docs.iter_mut().map(|d| &mut d.doc).collect();
+        crate::storage_docs::attribute_storage(&mut refs, &prov.unwrap_or_default());
         Ok(docs)
     }
 
