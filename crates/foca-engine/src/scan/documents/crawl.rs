@@ -291,31 +291,52 @@ async fn folder_files(net: &NetClient, ep: &StorageEndpoints, l: &StorageLink) -
     out
 }
 
+/// Linked storage after folder expansion.
+#[derive(Default)]
+struct Expanded {
+    files: Vec<(StorageLink, String)>,
+    /// Folder listing URLs fetched.
+    listed: Vec<String>,
+    /// Folders left unlisted because the files already fill the download limit.
+    unlisted: usize,
+}
+
 /// Expands folder links into their files (capped per folder and in total, subfolders one level
-/// deep) and keeps file and export links as they are. Each file keeps the linking page.
+/// deep) and keeps file and export links as they are. Each file keeps the linking page. Files
+/// come in link order, folder contents after them; once the new files (not in `known`) fill
+/// `room`, the remaining folders are not listed: their files could not be downloaded anyway.
 async fn expand_storage(
     c: &Ctx,
     net: &NetClient,
     ep: &StorageEndpoints,
     linked: &[LinkedStorage],
-) -> Result<(Vec<(StorageLink, String)>, Vec<String>), Stop> {
-    let mut files: Vec<(StorageLink, String)> = Vec::new();
-    let mut listed: Vec<String> = Vec::new();
+    known: &HashSet<String>,
+    room: usize,
+) -> Result<Expanded, Stop> {
+    let mut x = Expanded::default();
     let mut seen: HashSet<String> = HashSet::new();
     let mut from_folders = 0usize;
+    let mut fresh = 0usize;
+    let is_new = |l: &StorageLink| !known.contains(&foca_search::filter::target_key(&l.fetch));
     let mut folders: std::collections::VecDeque<(StorageLink, String, u8)> = Default::default();
     for s in linked {
         match s.link.kind {
             ItemKind::Folder => folders.push_back((s.link.clone(), s.page.clone(), 0)),
             _ => {
                 if seen.insert(s.link.fetch.clone()) {
-                    files.push((s.link.clone(), s.page.clone()));
+                    fresh += usize::from(is_new(&s.link));
+                    x.files.push((s.link.clone(), s.page.clone()));
                 }
             }
         }
     }
+    let (files, listed) = (&mut x.files, &mut x.listed);
     while let Some((f, page, level)) = folders.pop_front() {
         c.gate().await?;
+        if fresh >= room {
+            x.unlisted += 1;
+            continue;
+        }
         if from_folders >= FOLDER_TOTAL || listed.contains(&f.fetch) {
             continue;
         }
@@ -332,13 +353,14 @@ async fn expand_storage(
                 break;
             }
             if seen.insert(item.fetch.clone()) {
+                fresh += usize::from(is_new(&item));
                 files.push((item, page.clone()));
                 taken += 1;
                 from_folders += 1;
             }
         }
     }
-    Ok((files, listed))
+    Ok(x)
 }
 
 /// Marks this scan's requests to linked external storage in the request journal.
@@ -382,6 +404,7 @@ pub(crate) async fn after_domain(
     domain: &str,
     out: CrawlOutput,
     net: &NetClient,
+    known: &HashSet<String>,
 ) -> Result<CrawlExtra, Stop> {
     {
         let db = lock(&c.db);
@@ -428,10 +451,14 @@ pub(crate) async fn after_domain(
     };
     if cfg.storage && !out.storage.is_empty() {
         let ep = c.e.cfg.endpoints.storage.clone();
-        let (files, listed) = expand_storage(c, net, &ep, &out.storage).await?;
-        annotate_storage(c, &listed);
-        extra.storage_files = files.len();
-        for (l, page) in files {
+        // the crawl's own new documents are queued first and take room from the limit
+        let room = doc_room(c)?.saturating_sub(out.doc_pages.len());
+        let x = expand_storage(c, net, &ep, &out.storage, known, room).await?;
+        annotate_storage(c, &x.listed);
+        tracing::info!(target: "foca::scan", "{}: {domain}: хранилища: ссылок {}, папок раскрыто {}, не раскрыто (лимит загрузок) {}, файлов {}",
+            c.scan_id, out.storage.len(), x.listed.len(), x.unlisted, x.files.len());
+        extra.storage_files = x.files.len();
+        for (l, page) in x.files {
             let p = storage_prov(&l, "page", &page);
             extra.items.push((storage_found(&l, "crawler"), p));
         }
@@ -482,28 +509,66 @@ pub(crate) fn crawl_note_sample() -> String {
     )
 }
 
+/// A crawled image: it has its own count and byte caps instead of the document limit.
+pub(crate) fn is_crawled_image(source: &str, url: &str) -> bool {
+    source == "crawler"
+        && foca_search::filter::ext_of_url(url)
+            .is_some_and(|e| foca_search::filter::is_image_ext(&e))
+}
+
+/// Room left under the scan's document download limit: the limit minus the download tasks this
+/// scan already queued (crawled images excluded).
+pub(crate) fn doc_room(c: &Ctx) -> Result<usize, Stop> {
+    let limit = lock(&c.st).limit;
+    let queued = lock(&c.db)
+        .tasks(None)?
+        .iter()
+        .filter(|t| {
+            t.scan_id.as_deref() == Some(c.scan_id.as_str()) && !is_crawled_image(&t.source, &t.url)
+        })
+        .count();
+    Ok(limit.saturating_sub(queued))
+}
+
+/// What [`enqueue`] queued and what the document limit left out.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct Enqueued {
+    pub added: usize,
+    pub over_limit: usize,
+}
+
 /// Enqueues extra downloads that bypass the search-stage filters (they were checked here:
-/// in-scope images, exact storage items) and records their provenance. Returns the number of
-/// new tasks.
+/// in-scope images, exact storage items) and records their provenance. Documents take at most
+/// `room` new tasks (the scan's download limit), in the given order; images keep their own caps.
 pub(crate) fn enqueue(
     c: &Ctx,
     queue: &StoreQueue,
     items: Vec<(FoundUrl, DocProvenance)>,
     known: &HashSet<String>,
-) -> Result<usize, Stop> {
+    room: usize,
+) -> Result<Enqueued, Stop> {
     let mut fresh: Vec<FoundUrl> = Vec::new();
     let mut prov: Vec<(String, DocProvenance)> = Vec::new();
     let mut seen = HashSet::new();
+    let (mut docs, mut over_limit) = (0usize, 0usize);
     for (f, p) in items {
         let key = foca_search::filter::target_key(&f.url);
         if known.contains(&key) || !seen.insert(key) {
             continue;
         }
+        if !is_crawled_image(&f.source, &f.url) {
+            if docs >= room {
+                over_limit += 1;
+                continue;
+            }
+            docs += 1;
+        }
         prov.push((f.url.clone(), p));
         fresh.push(f);
     }
     record_provenance(c, prov)?;
-    queue.enqueue(&fresh).map_err(Stop::Error)
+    let added = queue.enqueue(&fresh).map_err(Stop::Error)?;
+    Ok(Enqueued { added, over_limit })
 }
 
 /// Strips author attribution from a Google export: its metadata describes Google's converter.

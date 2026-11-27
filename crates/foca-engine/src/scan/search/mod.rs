@@ -296,7 +296,8 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
                 });
                 if let (Some(out), true, 0) = (&crawl_out, ran, pass) {
                     let o = std::mem::take(&mut *lock(out));
-                    let x = crawl::after_domain(cref, &crawl_cfg, d, o, &search_net).await?;
+                    let x =
+                        crawl::after_domain(cref, &crawl_cfg, d, o, &search_net, &known).await?;
                     crawl_extra.extend(x.items);
                 }
                 let retry_ids = take_retries(&cref.skip);
@@ -344,11 +345,13 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
     }
     let c: &Ctx = cref;
     let drop = enq.enqueue(found, &known)?;
-    // storage files linked from in-scope pages and selected images have their own caps
+    // storage files linked from in-scope pages share the download limit with the documents
+    // queued above; selected images have their own caps
     if !crawl_extra.is_empty() {
         let queue = StoreQueue::new(c.db.clone(), Some(c.scan_id.clone()));
-        let n = crawl::enqueue(c, &queue, crawl_extra, &known)?;
-        tracing::info!(target: "foca::scan", "{}: в загрузку из обхода (хранилища, изображения): {n}", c.scan_id);
+        let room = crawl::doc_room(c)?;
+        let q = crawl::enqueue(c, &queue, crawl_extra, &known, room)?;
+        tracing::info!(target: "foca::scan", "{}: в загрузку из обхода (хранилища, изображения): {}, сверх лимита {}", c.scan_id, q.added, q.over_limit);
     }
     if drop.found > 0 {
         let note = queue_note(&drop);

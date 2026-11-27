@@ -168,9 +168,7 @@ pub(crate) fn storage_note(got: usize, private: usize) -> String {
 pub(crate) const PRIVATE_FILE: &str = "private: файл во внешнем хранилище закрыт или удалён";
 
 fn crawled_image(t: &foca_search::QueuedTask) -> bool {
-    t.source == "crawler"
-        && foca_search::filter::ext_of_url(&t.url)
-            .is_some_and(|e| foca_search::filter::is_image_ext(&e))
+    crawl::is_crawled_image(&t.source, &t.url)
 }
 
 fn is_storage(d: &Downloader, url: &str) -> bool {
@@ -191,17 +189,16 @@ pub(super) async fn follow_doc_links(c: &Ctx, stage: usize) -> Result<(), Stop> 
         return Ok(());
     }
     let mut done: HashSet<u64> = HashSet::new();
-    let mut budget = lock(&c.st).limit;
     for _ in 0..cfg.doc_link_depth {
         c.gate().await?;
-        if budget == 0 {
+        // the scan's download limit covers documents found inside documents too
+        let room = crawl::doc_room(c)?;
+        if room == 0 {
+            tracing::info!(target: "foca::scan", "{}: ссылки из документов: лимит загрузок исчерпан", c.scan_id);
             break;
         }
         let items: Vec<(foca_search::FoundUrl, DocProvenance)> =
-            crawl::doc_link_items(c, &cfg, &mut done)?
-                .into_iter()
-                .take(budget)
-                .collect();
+            crawl::doc_link_items(c, &cfg, &mut done)?;
         if items.is_empty() {
             break;
         }
@@ -211,12 +208,11 @@ pub(super) async fn follow_doc_links(c: &Ctx, stage: usize) -> Result<(), Stop> 
             .map(|u| foca_search::filter::target_key(u))
             .collect();
         let queue = StoreQueue::new(c.db.clone(), Some(c.scan_id.clone()));
-        let added = crawl::enqueue(c, &queue, items, &known)?;
-        tracing::info!(target: "foca::scan", "{}: ссылки из документов: в загрузку {added}", c.scan_id);
-        if added == 0 {
+        let q = crawl::enqueue(c, &queue, items, &known, room)?;
+        tracing::info!(target: "foca::scan", "{}: ссылки из документов: в загрузку {}, сверх лимита {}", c.scan_id, q.added, q.over_limit);
+        if q.added == 0 {
             break;
         }
-        budget = budget.saturating_sub(added);
         download_queue(c, stage).await?;
         meta_pending(c, stage).await?;
     }

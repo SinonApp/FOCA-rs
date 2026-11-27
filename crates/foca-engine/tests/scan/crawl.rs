@@ -285,6 +285,38 @@ async fn crawl_finds_deep_sitemap_storage_and_doc_link_documents() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn storage_files_and_doc_links_stay_within_the_download_limit() {
+    let (e, site) = env_with_site(site).await;
+    let id = e.project("limit").await;
+    // three own documents on the site, then room for two linked storage files
+    crawl_scan(&e, &id, json!({ "limit": 5 })).await;
+    let s = e.snap(&id).await;
+    let docs: Vec<&str> = s["docs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|d| d["name"].as_str().unwrap())
+        .filter(|n| !n.ends_with(".jpg"))
+        .collect();
+    assert_eq!(docs.len(), 5, "{docs:?}");
+    for want in ["deep.docx", "hidden.xlsx", "start.pdf"] {
+        assert!(docs.contains(&want), "{want}: {docs:?}");
+    }
+    // directly linked files come before folder contents; the rest is never fetched
+    assert!(docs.contains(&"Plan 2026.pdf"), "{docs:?}");
+    for id in [F1, F2] {
+        assert!(
+            !site.requests().iter().any(|r| r.target.contains(id)),
+            "{id} is over the limit"
+        );
+    }
+    // links inside documents get no room either
+    assert_eq!(site.hits("/files/l1.pdf"), 0);
+    // direct files already fill the limit: the folder is not even listed
+    assert_eq!(site.hits("/embeddedfolderview"), 0);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn crawl_resumes_frontier_in_next_scan() {
     let (e, site) = env_with_site(|_, r: &TestRequest| {
         let p = r.path().to_string();
