@@ -50,7 +50,7 @@ const findingsCat = demoFindings(ROOT);
 // The shots. `go` is a route or an async function (page, helpers) that prepares the screen.
 const SHOTS = [
   // A target typed but not added yet.
-  { id: "01", name: "new-project", go: "/new", type: ["#la-in", "testphp.vulnweb.com"] },
+  { id: "01", name: "new-project", go: "/new", type: ["#la-in", "portal.contoso.example"] },
   { id: "02", name: "scan", go: "scan" },
   { id: "03", name: "findings", go: "/p/findings" },
   { id: "04", name: "finding-detail", go: "/p/finding/1" },
@@ -217,10 +217,12 @@ for (const lang of LANGS) {
       const seen = el => {
         const r = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
-        return r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && cs.visibility !== "hidden";
+        return (
+          r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight && cs.visibility !== "hidden"
+        );
       };
       const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-      for (let n; (n = w.nextNode()); ) {
+      for (let n; (n = w.nextNode());) {
         const t = n.nodeValue.trim();
         if (t && re.test(t) && n.parentElement && seen(n.parentElement)) out.push(t.slice(0, 80));
       }
