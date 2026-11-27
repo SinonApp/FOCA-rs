@@ -556,12 +556,14 @@ impl Engine {
             scan_id: Some(scan_id.clone()),
         });
         let cancel = CancellationToken::new();
+        // a scan pause holds every request that has not started yet, right at the client
+        let (ptx, prx) = watch::channel(None);
         let net = self
             .net_client_ua(core, sink, ua.as_deref())?
-            .with_cancel(cancel.clone());
+            .with_cancel(cancel.clone())
+            .with_pause(prx);
         // passive requests: exclusions never, target hosts not at the passive level
         net.set_passive_guard(foca_core::Scope::from(&scope), level == "external");
-        let (ptx, _) = watch::channel(None);
         let st = Arc::new(Mutex::new(st));
         let run = Run {
             st: st.clone(),

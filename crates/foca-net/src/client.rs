@@ -243,12 +243,16 @@ struct Inner {
     per_source: Mutex<HashMap<String, Arc<TokenBucket>>>,
 }
 
+/// Pause state a client follows: `Some(reason)` while the scan is paused.
+pub type PauseState = tokio::sync::watch::Receiver<Option<String>>;
+
 /// Shared HTTP client. Cloning is cheap (`Arc`); a clone may carry its own cancellation token
-/// ([`NetClient::with_cancel`]).
+/// ([`NetClient::with_cancel`]) and follow a scan's pause ([`NetClient::with_pause`]).
 #[derive(Clone)]
 pub struct NetClient {
     inner: Arc<Inner>,
     cancel: CancellationToken,
+    pause: Option<PauseState>,
 }
 
 impl std::fmt::Debug for NetClient {
@@ -570,6 +574,7 @@ impl NetClient {
                 per_source: Mutex::new(HashMap::new()),
             }),
             cancel: CancellationToken::new(),
+            pause: None,
         })
     }
 
@@ -586,6 +591,38 @@ impl NetClient {
         NetClient {
             inner: self.inner.clone(),
             cancel,
+            pause: self.pause.clone(),
+        }
+    }
+
+    /// Returns a clone that holds new requests while `pause` is `Some`: a request waits after
+    /// the rate limiter and before it is sent, so a pause stops new traffic at once while the
+    /// requests already in flight finish.
+    pub fn with_pause(&self, pause: PauseState) -> NetClient {
+        NetClient {
+            inner: self.inner.clone(),
+            cancel: self.cancel.clone(),
+            pause: Some(pause),
+        }
+    }
+
+    /// Waits while the followed scan is paused; fails once the client is cancelled.
+    async fn hold(&self) -> Result<(), NetError> {
+        let Some(p) = &self.pause else {
+            return Ok(());
+        };
+        let mut p = p.clone();
+        loop {
+            if self.cancel.is_cancelled() {
+                return Err(NetError::Cancelled);
+            }
+            if p.borrow_and_update().is_none() {
+                return Ok(());
+            }
+            tokio::select! {
+                _ = self.cancel.cancelled() => return Err(NetError::Cancelled),
+                r = p.changed() => if r.is_err() { return Ok(()); },
+            }
         }
     }
 
@@ -874,15 +911,17 @@ impl NetClient {
         )
     }
 
-    /// Waits for the rate limiter (global and per module).
+    /// Waits for the rate limiter (global and per module), then for the end of a pause.
     pub async fn rate_limit(&self, module: &str) -> Result<(), NetError> {
+        self.hold().await?;
         if let Some(g) = &self.inner.global {
             g.acquire(&self.cancel).await?;
         }
         if let Some(b) = self.source_bucket(module) {
             b.acquire(&self.cancel).await?;
         }
-        Ok(())
+        // a request that got its token during a pause still waits for the resume
+        self.hold().await
     }
 
     /// Acquires a concurrency slot; hold it for the duration of the exchange.

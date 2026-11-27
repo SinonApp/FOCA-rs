@@ -296,6 +296,81 @@ async fn per_source_rate_limit() {
     );
 }
 
+/// A paused scan stops new requests at the client: requests already waiting for the limiter do
+/// not start while paused, the one in flight finishes, and everything resumes after the pause.
+#[tokio::test]
+async fn pause_holds_queued_requests_and_keeps_the_one_in_flight() {
+    let srv = TestServer::start(|r| match r.path() {
+        "/slow" => TestResponse::ok("slow").delay(Duration::from_millis(400)),
+        _ => TestResponse::ok("x"),
+    })
+    .await;
+    let mut c = cfg();
+    c.global_rps = Some(5.0);
+    let (net, _) = client("", "", c);
+    let (tx, rx) = tokio::sync::watch::channel(None::<String>);
+    let net = net.with_pause(rx);
+    // the bucket starts with 5 tokens: drain them so the queued requests wait for the limiter
+    for _ in 0..5 {
+        net.rate_limit("drain").await.unwrap();
+    }
+    let slow = {
+        let (net, u) = (net.clone(), format!("{}/slow", srv.url()));
+        tokio::spawn(async move { net.get_text(&u, "m", Access::Passive).await })
+    };
+    tokio::time::sleep(Duration::from_millis(250)).await;
+    assert_eq!(srv.requests().len(), 1, "the in-flight request started");
+    let queued: Vec<_> = (0..3)
+        .map(|i| {
+            let (net, u) = (net.clone(), format!("{}/q{i}", srv.url()));
+            tokio::spawn(async move { net.get_text(&u, "m", Access::Passive).await })
+        })
+        .collect();
+    tx.send_replace(Some("user".into()));
+    // the in-flight request still completes during the pause
+    assert_eq!(slow.await.unwrap().unwrap(), "slow");
+    tokio::time::sleep(Duration::from_millis(900)).await;
+    assert_eq!(
+        srv.requests().len(),
+        1,
+        "no request may start while paused: {:?}",
+        srv.requests()
+            .iter()
+            .map(|r| r.path().to_string())
+            .collect::<Vec<_>>()
+    );
+    // a clone with its own cancellation keeps following the pause
+    let other = net.with_cancel(foca_net::CancellationToken::new());
+    let held = {
+        let u = format!("{}/other", srv.url());
+        tokio::spawn(async move { other.get_text(&u, "m", Access::Passive).await })
+    };
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    assert_eq!(srv.requests().len(), 1);
+    tx.send_replace(None);
+    for q in queued {
+        q.await.unwrap().unwrap();
+    }
+    held.await.unwrap().unwrap();
+    assert_eq!(srv.requests().len(), 5);
+}
+
+/// Stopping a paused scan cancels the requests waiting for the pause to end.
+#[tokio::test]
+async fn cancel_ends_a_request_held_by_the_pause() {
+    let srv = TestServer::start(|_| TestResponse::ok("x")).await;
+    let (net, _) = client("", "", cfg());
+    let (_tx, rx) = tokio::sync::watch::channel(Some("user".to_string()));
+    let net = net.with_pause(rx);
+    let n2 = net.clone();
+    let u = srv.url();
+    let h = tokio::spawn(async move { n2.get_text(&u, "m", Access::Passive).await });
+    tokio::time::sleep(Duration::from_millis(100)).await;
+    net.cancel();
+    assert_eq!(h.await.unwrap(), Err(NetError::Cancelled));
+    assert!(srv.requests().is_empty());
+}
+
 #[tokio::test]
 async fn global_rate_limit_and_concurrency() {
     let srv = TestServer::start(|_| TestResponse::ok("x").delay(Duration::from_millis(250))).await;

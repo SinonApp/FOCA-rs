@@ -451,6 +451,54 @@ async fn crawl_slows_down_and_stops_a_rate_limited_host() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn pause_stops_new_crawl_requests_at_once() {
+    let (e, site) = env_with_site(|_, r: &TestRequest| match r.path() {
+        "/" => html(
+            (1..=16)
+                .map(|i| format!(r#"<a href="/p{i}">{i}</a>"#))
+                .collect::<String>(),
+        ),
+        "/robots.txt" | "/sitemap.xml" => TestResponse::status(404),
+        _ => html("<p>page</p>"),
+    })
+    .await;
+    // a slow limiter keeps a whole batch of pages waiting for tokens when the pause comes
+    e.call("settings_set", json!({ "patch": { "net": { "rps": 2 } } }))
+        .await;
+    let id = e.project("pause").await;
+    e.call(
+        "scan_start",
+        json!({ "project": id, "profile": "std", "sources": ["crawler"] }),
+    )
+    .await;
+    let pages = || {
+        site.requests()
+            .iter()
+            .filter(|r| r.path().starts_with("/p"))
+            .count()
+    };
+    for _ in 0..400 {
+        if pages() >= 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(10)).await;
+    }
+    e.call("scan_pause", json!({})).await;
+    // requests already on the wire may still land
+    tokio::time::sleep(Duration::from_millis(300)).await;
+    let at_pause = site.requests().len();
+    tokio::time::sleep(Duration::from_millis(2000)).await;
+    assert_eq!(
+        site.requests().len(),
+        at_pause,
+        "no request may start after the pause"
+    );
+    e.call("scan_resume", json!({})).await;
+    e.wait().await;
+    assert_eq!(pages(), 16, "the crawl continues after the resume");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn passive_profile_sends_no_crawl_requests() {
     let (e, site) = env_with_site(site).await;
     let id = e.project("passive").await;

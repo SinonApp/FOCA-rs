@@ -263,7 +263,8 @@ impl Ctx {
         let net = self
             .e
             .net_client_group(self.net.scope(), sink, ua.as_deref(), Some(group))?
-            .with_cancel(self.cancel.clone());
+            .with_cancel(self.cancel.clone())
+            .with_pause(self.pause.clone());
         net.set_passive_guard(Scope::from(&self.scope), self.level == "external");
         Ok(net)
     }
