@@ -49,6 +49,7 @@ Patch release after phone testing of 2.0.0-beta.4.
 - КЕП wrappers: a file that is a CMS/PKCS#7 SignedData with the document inside (a Ukrainian `.p7s`, or a `.pdf` that is really such a wrapper) is recognised by content; the inner document is parsed as usual and the signer's certificate (name, surname and given name, masked РНОКПП, ЄДРПОУ, organisation, title, CA, signing time) is kept, giving one Medium "signer data in the document" finding per file.
 
 ### Changed
+- First-run terms state honestly that the play build's optional OCR uses Google ML Kit, which may send anonymous diagnostics to Google, and describe how active modules are enabled (profile and scope) instead of promising a per-run confirmation.
 
 - The app no longer loads the 0.5 MB browser demo backend at startup; it is loaded only in the plain browser demo and QA.
 - Downloads go by priority: office files and PDF first, then other metadata-rich files, media, and site graphics last.
