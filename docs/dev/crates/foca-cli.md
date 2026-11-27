@@ -9,7 +9,7 @@
 - [Tests](#tests)
 - [Pitfalls](#pitfalls)
 
-Path: `crates/foca-cli/` · `src/` lines: 4,343 · tests: 14 · depends on: [foca-analysis](foca-analysis.md), [foca-core](foca-core.md), [foca-engine](foca-engine.md), [foca-fuzz](foca-fuzz.md), [foca-meta](foca-meta.md), [foca-net](foca-net.md), [foca-recon](foca-recon.md), [foca-report](foca-report.md), [foca-search](foca-search.md), [foca-store](foca-store.md)
+Path: `crates/foca-cli/` · `src/` lines: 4,532 · tests: 16 · depends on: [foca-analysis](foca-analysis.md), [foca-core](foca-core.md), [foca-engine](foca-engine.md), [foca-fuzz](foca-fuzz.md), [foca-meta](foca-meta.md), [foca-net](foca-net.md), [foca-recon](foca-recon.md), [foca-report](foca-report.md), [foca-search](foca-search.md), [foca-store](foca-store.md)
 
 ## Purpose
 
@@ -28,7 +28,7 @@ Path: `crates/foca-cli/` · `src/` lines: 4,343 · tests: 14 · depends on: [foc
 - `foca download <url...> --project id`: scoped, logged, resumable download into a project;
 - `foca report --project id [--format html|md|csv|json] [--lang ru|uk|en] [--out file]`: build project report;
 - `foca export --project id --kind users --format dict [--out file]`: export tables (`list`, `dict`, `csv`, `json`, `maltego`, `graphml`, `md`, `stix`);
-- `foca scan --project id --profile passive --wait [--limit N]`: run a full scan via `foca-engine` with identical launch rules and `scan://event` stream;
+- `foca scan --project id --profile passive --wait [--limit N]`: run a full scan via `foca-engine` with identical launch rules and `scan://event` stream. Per-run crawl options (stored with the scan, over `settings.crawl`): `--crawl-depth N`, `--crawl-pages N`, `--crawl-minutes N`, `--crawl-storage true|false`, `--crawl-doc-links true|false`, `--crawl-images true|false`, `--max-images N`, `--max-image-mb N`; Common Crawl depth: `--cc-depth latest|years|all [--cc-years N]`. `--control` reads commands from stdin while the scan runs: `pause [reason]`, `resume`, `stop`, `status` (prints `scan_status`), `skip <source id>`, so a script can drive it, e.g. `(sleep 60; echo pause; sleep 30; echo resume) | foca scan --project p1 --profile std --wait --control`;
 - `foca run <scenario.toml> [--store dir] [--json] [--dry-run]`: execute a declarative audit scenario (`F-31`);
 - `foca fuzz` / `foca ports` / `foca recon`: standalone fuzzing, TCP port scanning, and site recon commands;
 - `foca serve --data dir [--port 8787] [--test-net net.json]`: HTTP/SSE E2E harness (`POST /invoke`, SSE `/events`, static `ui/`);
@@ -66,7 +66,7 @@ Supported `[gate]` thresholds return a non-zero exit code when breached:
 | `src/net.rs` | 416 | Network subcommands: `dns`, `subdomains`, `search`, `download` |
 | `src/ports.rs` | 153 | `foca ports <host> [--top 100|1000] [--ports …]`: TCP port scan and banners |
 | `src/recon.rs` | 256 | `foca recon <url/domain>`: project-less site reconnaissance |
-| `src/scan.rs` | 161 | `foca scan`: scan runner via `foca-engine` |
+| `src/scan.rs` | 342 | `foca scan`: scan runner via `foca-engine` |
 | `src/scenario.rs` | 621 | Declarative audit scenarios (`foca run <scenario.toml> [--json] [--dry-run]`, `F-31`) |
 | `src/serve.rs` | 631 | `foca serve`: HTTP/SSE E2E harness exposing `Engine::invoke` + static `ui/` |
 | `src/testnet.rs` | 354 | `foca testnet`: offline mock "internet" for E2E tests |

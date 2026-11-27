@@ -29,7 +29,7 @@ url.workspace = true
 regex.workspace = true
 sha2.workspace = true
 foca-search = { workspace = true, features = ["store"] }
-tokio = { workspace = true, features = ["signal", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["signal", "rt-multi-thread", "io-std"] }
 time.workspace = true
 tracing.workspace = true
 tempfile.workspace = true
