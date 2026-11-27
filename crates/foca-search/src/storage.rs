@@ -37,6 +37,19 @@ impl Provider {
             Provider::SharePoint => "sharepoint",
         }
     }
+
+    /// Inverse of [`Provider::id`].
+    pub fn from_id(id: &str) -> Option<Provider> {
+        [
+            Provider::GoogleDrive,
+            Provider::GoogleDocs,
+            Provider::OneDrive,
+            Provider::Dropbox,
+            Provider::SharePoint,
+        ]
+        .into_iter()
+        .find(|p| p.id() == id)
+    }
 }
 
 /// What a storage link points to.
@@ -465,6 +478,44 @@ fn clean_name(s: &str) -> String {
     n.trim().chars().take(200).collect()
 }
 
+/// Google Drive answers a large file with a "can't scan for viruses" page whose form downloads
+/// it anyway. Returns that form's GET URL (action plus hidden inputs), or `None` for any other
+/// page (a sign-in page means the file is not public).
+pub fn drive_confirm_url(html: &str, page: &Url) -> Option<String> {
+    let lower = html.to_ascii_lowercase();
+    let f = lower.find("id=\"download-form\"")?;
+    let form_start = lower[..f].rfind("<form")?;
+    let form_end = lower[form_start..]
+        .find("</form>")
+        .map(|e| form_start + e)
+        .unwrap_or(lower.len());
+    let tag_end = lower[form_start..].find('>')? + form_start;
+    let attr = |tag: &str, name: &str| -> Option<String> {
+        let lt = tag.to_ascii_lowercase();
+        let i = lt.find(&format!("{name}=\""))? + name.len() + 2;
+        let e = tag[i..].find('"')? + i;
+        Some(decode_html(&tag[i..e]))
+    };
+    let action = attr(&html[form_start..tag_end], "action")?;
+    let mut u = page.join(&action).ok()?;
+    let mut pairs: Vec<(String, String)> = Vec::new();
+    let mut rest = &html[tag_end..form_end];
+    while let Some(i) = rest.to_ascii_lowercase().find("<input") {
+        let after = &rest[i..];
+        let e = after.find('>').unwrap_or(after.len());
+        let tag = &after[..e];
+        if let (Some(n), Some(v)) = (attr(tag, "name"), attr(tag, "value")) {
+            pairs.push((n, v));
+        }
+        rest = &after[e..];
+    }
+    if pairs.is_empty() {
+        return None;
+    }
+    u.query_pairs_mut().clear().extend_pairs(pairs);
+    Some(u.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -637,5 +688,20 @@ mod tests {
             Some("passwd")
         );
         assert_eq!(disposition_name("inline"), None);
+    }
+
+    #[test]
+    fn drive_virus_scan_form() {
+        let page = Url::parse("https://drive.storage.test/uc?export=download&id=X").unwrap();
+        let html = r#"<html><body><p>Google Drive can't scan this file for viruses.</p>
+            <form id="download-form" action="https://usercontent.storage.test/download" method="get">
+            <input type="submit" value="Download anyway"/><input type="hidden" name="id" value="1Big">
+            <input type="hidden" name="export" value="download"><input type="hidden" name="confirm" value="t">
+            <input type="hidden" name="uuid" value="u-1&amp;2"></form></body></html>"#;
+        assert_eq!(
+            drive_confirm_url(html, &page).as_deref(),
+            Some("https://usercontent.storage.test/download?id=1Big&export=download&confirm=t&uuid=u-1%262")
+        );
+        assert_eq!(drive_confirm_url("<html>Sign in</html>", &page), None);
     }
 }

@@ -1019,6 +1019,9 @@ fn visit_dicts<'b>(o: &'b Obj, depth: usize, f: &mut dyn FnMut(&'b Dict)) {
     }
 }
 
+/// Web links kept per PDF.
+const MAX_LINKS: usize = 500;
+
 pub(crate) fn count_eof(b: &[u8]) -> u32 {
     let mut n = 0;
     let mut i = 0;
@@ -1172,7 +1175,22 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     // JavaScript, embedded files, annotations
     let mut files: Vec<(String, Option<Obj>)> = Vec::new();
     let mut found_js = false;
+    // web links of link annotations (`/S /URI`); strings of an encrypted file are unreadable
+    let mut uris: Vec<String> = Vec::new();
+    let encrypted = meta.encrypted;
     pdf.for_each_dict(&mut |_, d| {
+        if !encrypted && dname(d, "S") == Some("URI") && uris.len() < MAX_LINKS {
+            if let Some(Obj::Str(u)) = dget(d, "URI").map(|u| pdf.resolve(u)) {
+                let u = pdf_str(u);
+                let u = u.trim();
+                let lower = u.to_ascii_lowercase();
+                if (lower.starts_with("http://") || lower.starts_with("https://"))
+                    && u.len() <= 2048
+                {
+                    uris.push(u.to_string());
+                }
+            }
+        }
         if dget(d, "JS").is_some()
             || dname(d, "S") == Some("JavaScript")
             || dget(d, "JavaScript").is_some()
@@ -1250,6 +1268,9 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
             }
         }
     });
+    for u in uris {
+        Metadata::add_unique(&mut meta.links, &u);
+    }
     if found_js {
         meta.has_javascript = true;
     }
@@ -1439,5 +1460,30 @@ mod tests {
         let res = pdf.decode(&dict, 0, compressed.len(), &ctx).unwrap();
         assert!(res.is_none());
         assert_eq!(ctx.remaining(), 512);
+    }
+}
+
+#[cfg(test)]
+mod link_tests {
+    #[test]
+    fn uri_annotations_become_links() {
+        let pdf = b"%PDF-1.4
+1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+3 0 obj << /Type /Page /Parent 2 0 R /Annots [4 0 R 5 0 R 6 0 R] >> endobj
+4 0 obj << /Type /Annot /Subtype /Link /A << /S /URI /URI (https://site.example/files/next.pdf) >> >> endobj
+5 0 obj << /Type /Annot /Subtype /Link /A << /S /URI /URI (mailto:office@site.example) >> >> endobj
+6 0 obj << /Type /Annot /Subtype /Link /A 7 0 R >> endobj
+7 0 obj << /S /URI /URI (https://drive.storage.test/file/d/1AbCdEfGhIjKlMn/view) >> endobj
+trailer << /Root 1 0 R >>
+%%EOF";
+        let m = crate::extract(pdf, Some("a.pdf"), &crate::Limits::default()).unwrap();
+        assert_eq!(
+            m.links,
+            vec![
+                "https://site.example/files/next.pdf".to_string(),
+                "https://drive.storage.test/file/d/1AbCdEfGhIjKlMn/view".to_string(),
+            ]
+        );
     }
 }

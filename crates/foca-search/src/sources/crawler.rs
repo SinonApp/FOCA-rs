@@ -74,10 +74,13 @@ pub struct Crawler {
     pub storage: Option<StorageEndpoints>,
     /// Collect images as EXIF candidates in [`CrawlOutput::images`] instead of [`Found`].
     pub collect_images: bool,
-    /// Unfinished frontiers of earlier scans, by domain.
+    /// Offline test harness only: the port start hosts listen on (`http(s)://<host>:<port>/`).
+    pub site_port: Option<u16>,
+    /// Unfinished frontiers of earlier scans, by domain ([`Crawler::with_resume`]).
     pub resume: HashMap<String, Frontier>,
     /// Results beyond document URLs; the caller keeps a clone of the `Arc`.
     pub out: Arc<Mutex<CrawlOutput>>,
+    /// Running statistics ([`Crawler::with_progress`]).
     pub on_progress: Option<ProgressHook>,
 }
 
@@ -114,6 +117,7 @@ impl Default for Crawler {
             pace_base: Duration::ZERO,
             storage: None,
             collect_images: false,
+            site_port: None,
             resume: HashMap::new(),
             out: Arc::new(Mutex::new(CrawlOutput::default())),
             on_progress: None,
@@ -437,6 +441,18 @@ impl Crawler {
         self
     }
 
+    /// Continues the unfinished frontiers of earlier scans (by domain).
+    pub fn with_resume(mut self, resume: HashMap<String, Frontier>) -> Self {
+        self.resume = resume;
+        self
+    }
+
+    /// Reports the running statistics after every batch of pages.
+    pub fn with_progress(mut self, hook: ProgressHook) -> Self {
+        self.on_progress = Some(hook);
+        self
+    }
+
     /// Picks the host scheme: https with a short timeout, falling back to http on a network error.
     /// Returns the start page (if it is HTML) and whether the server answered at all.
     async fn pick_origin(
@@ -444,8 +460,9 @@ impl Crawler {
         st: &mut State<'_>,
         h: &str,
     ) -> Result<Option<(Url, Option<(Url, Vec<u8>)>)>, NetError> {
+        let port = self.site_port.map(|p| format!(":{p}")).unwrap_or_default();
         for scheme in ["https", "http"] {
-            let Ok(u) = Url::parse(&format!("{scheme}://{h}/")) else {
+            let Ok(u) = Url::parse(&format!("{scheme}://{h}{port}/")) else {
                 continue;
             };
             match fetch(st.ctx, &u, self.max_page_bytes, true, PROBE_TIMEOUT).await? {

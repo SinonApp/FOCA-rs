@@ -13,11 +13,12 @@
 //! trait and the `foca-store` adapter is an optional feature. This keeps the downloader
 //! testable with [`MemQueue`], while the application and the CLI enable `store`.
 
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 
-use foca_net::{Access, NetClient, NetError, NetRequest};
+use foca_net::{Access, NetClient, NetError, NetRequest, NetResponse};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use tokio::io::AsyncWriteExt;
@@ -37,7 +38,25 @@ pub struct DownloadConfig {
     /// without media data (`ftyp`, `moov`, `meta`, ...) are fetched with HTTP Range requests,
     /// if the server supports them. Metadata lives in those boxes, the video data is skipped.
     pub max_media_full: u64,
+    /// Files on public external storage linked from in-scope pages, by download URL. Only these
+    /// exact URLs are fetched from a storage host (passive, journal module `storage`); any other
+    /// URL on that host stays out of scope.
+    pub storage: Arc<HashMap<String, StorageItem>>,
 }
+
+/// An allowed external storage download.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct StorageItem {
+    /// Hosts the download may hop through (the provider's own hosts).
+    pub hosts: Vec<String>,
+    /// Expected extension when neither the URL nor `Content-Disposition` gives one.
+    pub ext: Option<String>,
+    /// File name (without extension) used when the provider sends no `Content-Disposition`.
+    pub name: Option<String>,
+}
+
+/// Request log module of external storage downloads.
+pub const STORAGE_MODULE: &str = "storage";
 
 impl Default for DownloadConfig {
     fn default() -> Self {
@@ -53,6 +72,7 @@ impl Default for DownloadConfig {
                 "arquivo.pt".into(),
             ],
             max_media_full: 8 * 1024 * 1024,
+            storage: Arc::new(HashMap::new()),
         }
     }
 }
@@ -230,8 +250,30 @@ impl Downloader {
         self.dir.join("files")
     }
 
-    /// Returns the access class for a URL: archives are passive, everything else touches the target.
+    fn storage_item(&self, url: &str) -> Option<&StorageItem> {
+        self.cfg.storage.get(url)
+    }
+
+    /// Returns `true` for an allowed linked external storage item.
+    pub fn is_storage(&self, url: &str) -> bool {
+        self.storage_item(url).is_some()
+    }
+
+    /// Request log module: `storage` for linked external storage, `download` otherwise.
+    fn module(&self, url: &str) -> &'static str {
+        if self.storage_item(url).is_some() {
+            STORAGE_MODULE
+        } else {
+            "download"
+        }
+    }
+
+    /// Returns the access class for a URL: archives and allowed external storage items are
+    /// passive, everything else touches the target.
     pub fn access_for(&self, url: &str) -> Access {
+        if self.storage_item(url).is_some() {
+            return Access::Passive;
+        }
         let host = url::Url::parse(url)
             .ok()
             .and_then(|u| u.host_str().map(|h| h.to_ascii_lowercase()))
@@ -252,9 +294,14 @@ impl Downloader {
     /// lead a passive request to a third-party host; the network layer blocks target hosts and exclusions.
     fn req(&self, r: NetRequest) -> NetRequest {
         if r.access.touches_target() {
-            r
-        } else {
-            r.passive_allow(Arc::new(self.cfg.passive_hosts.clone()))
+            return r;
+        }
+        match self.storage_item(r.url.as_str()) {
+            Some(item) => {
+                let hosts = Arc::new(item.hosts.clone());
+                r.passive_allow(hosts)
+            }
+            None => r.passive_allow(Arc::new(self.cfg.passive_hosts.clone())),
         }
     }
 
@@ -263,7 +310,7 @@ impl Downloader {
         let access = self.access_for(url);
         let r = self
             .net
-            .send(self.req(NetRequest::head(url, "download", access.clone())?))
+            .send(self.req(NetRequest::head(url, self.module(url), access.clone())?))
             .await?;
         if r.is_success() {
             return Ok(r.content_length());
@@ -276,7 +323,7 @@ impl Downloader {
         // HEAD not supported (405/501/403, ...): GET and abort after the headers
         let r = self
             .net
-            .send(self.req(NetRequest::get(url, "download", access)?))
+            .send(self.req(NetRequest::get(url, self.module(url), access)?))
             .await?;
         let len = if r.is_success() {
             r.content_length()
@@ -295,7 +342,9 @@ impl Downloader {
     pub async fn download(&self, url: &str) -> Result<Downloaded, NetError> {
         let max = self.cfg.max_size;
         let media = ext_of_url(url).is_some_and(|e| MEDIA_EXTS.contains(&e.as_str()));
-        if self.cfg.head_first {
+        let storage = self.storage_item(url).cloned();
+        // storage providers answer HEAD poorly; the stream limit applies anyway
+        if self.cfg.head_first && storage.is_none() {
             match self.probe(url).await {
                 Ok(Some(len)) if media && len > self.cfg.max_media_full => {
                     return self.download_media_boxes(url, len).await;
@@ -310,15 +359,21 @@ impl Downloader {
         let access = self.access_for(url);
         let mut r = self
             .net
-            .send(self.req(NetRequest::get(url, "download", access)?))
+            .send(self.req(NetRequest::get(url, self.module(url), access)?))
             .await?
             .ensure_success()?;
+        if let Some(item) = &storage {
+            r = self.storage_response(url, item, r).await?;
+        }
         if r.content_length().is_some_and(|l| l > max) {
             r.abort();
             return Err(NetError::TooLarge { limit: max });
         }
         let final_url = r.url().to_string();
         let mime = r.content_type().map(String::from);
+        let disposition = r
+            .header("content-disposition")
+            .and_then(crate::storage::disposition_name);
         let tmp_dir = self.dir.join(".tmp");
         tokio::fs::create_dir_all(&tmp_dir).await?;
         let n = self.seq.fetch_add(1, Ordering::Relaxed);
@@ -350,9 +405,19 @@ impl Downloader {
             }
         };
         drop(r);
-        let ext = ext_of_url(url)
-            .or_else(|| mime.as_deref().and_then(ext_from_mime).map(String::from))
-            .unwrap_or_else(|| "bin".into());
+        let name = match (&storage, &disposition) {
+            (Some(_), Some(n)) => n.clone(),
+            (Some(StorageItem { name: Some(n), .. }), None) => n.clone(),
+            _ => file_name_of_url(url),
+        };
+        let ext = match &storage {
+            Some(item) => ext_of_url(&format!("https://x/{name}"))
+                .or_else(|| item.ext.clone())
+                .or_else(|| mime.as_deref().and_then(ext_from_mime).map(String::from)),
+            None => ext_of_url(url)
+                .or_else(|| mime.as_deref().and_then(ext_from_mime).map(String::from)),
+        }
+        .unwrap_or_else(|| "bin".into());
         let files = self.files_dir();
         tokio::fs::create_dir_all(&files).await?;
         let path = files.join(format!("{sha}.{ext}"));
@@ -362,16 +427,54 @@ impl Downloader {
         } else {
             tokio::fs::rename(&tmp, &path).await?;
         }
+        let name = if storage.is_some() && ext_of_url(&format!("https://x/{name}")).is_none() {
+            format!("{name}.{ext}")
+        } else {
+            name
+        };
         Ok(Downloaded {
             url: url.to_string(),
             final_url,
             sha256: sha,
             size,
             path,
-            name: file_name_of_url(url),
+            name,
             mime,
             existing,
         })
+    }
+
+    /// Checks an external storage answer: an HTML page instead of a file is either Google Drive's
+    /// "can't scan for viruses" page (its form is followed once) or a sign-in/permission page,
+    /// i.e. the file is not public (`Status(403)`).
+    async fn storage_response(
+        &self,
+        url: &str,
+        item: &StorageItem,
+        r: NetResponse,
+    ) -> Result<NetResponse, NetError> {
+        let html = r
+            .content_type()
+            .is_some_and(|c| c.to_ascii_lowercase().contains("text/html"));
+        if !html {
+            return Ok(r);
+        }
+        let page = r.url().clone();
+        let body = r.text_limited(1024 * 1024).await.unwrap_or_default();
+        let Some(next) = crate::storage::drive_confirm_url(&body, &page) else {
+            return Err(NetError::Status(403));
+        };
+        let req = NetRequest::get(&next, STORAGE_MODULE, Access::Passive)?
+            .passive_allow(Arc::new(item.hosts.clone()));
+        let r = self.net.send(req).await?.ensure_success()?;
+        if r.content_type()
+            .is_some_and(|c| c.to_ascii_lowercase().contains("text/html"))
+        {
+            r.abort();
+            tracing::info!(target: "foca::download", "{}: хранилище вернуло страницу вместо файла", foca_net::sink::redact_url(url));
+            return Err(NetError::Status(403));
+        }
+        Ok(r)
     }
 
     /// Fetches only the metadata boxes of a large MP4/MOV with Range requests: the head of the
@@ -461,7 +564,7 @@ impl Downloader {
             .net
             .send(
                 self.req(
-                    NetRequest::get(url, "download", access)?
+                    NetRequest::get(url, self.module(url), access)?
                         .header("Range", &format!("bytes={first}-{last}")),
                 ),
             )

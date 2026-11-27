@@ -27,7 +27,9 @@ pub mod storage;
 pub mod store;
 pub mod urlinfo;
 
-pub use download::{DownloadConfig, Downloaded, Downloader, MemQueue, QueuedTask, TaskQueue};
+pub use download::{
+    DownloadConfig, Downloaded, Downloader, MemQueue, QueuedTask, StorageItem, TaskQueue,
+};
 pub use filter::{normalize_url, ExtFilter, DEFAULT_EXTS};
 pub use foca_net::{BoxFuture, NetError};
 pub use render::{RenderFetch, RenderPage, RenderRequest, RenderStep};

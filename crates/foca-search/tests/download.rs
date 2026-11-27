@@ -439,3 +439,74 @@ async fn large_video_fetches_only_metadata_boxes() {
     let e = d.download(&format!("{}/norange.mov", srv.url())).await;
     assert!(matches!(e, Err(NetError::TooLarge { .. })), "{e:?}");
 }
+
+/// Linked external storage: only the exact allowed URLs are fetched (passive, module `storage`);
+/// the file name comes from `Content-Disposition`; Drive's virus-scan page is passed once; a
+/// sign-in page means a private file (403); anything else on the host stays out of scope.
+#[tokio::test]
+async fn storage_items_only_and_private_files() {
+    let srv = TestServer::start(|r| {
+        let id = r.query("id").unwrap_or_default();
+        match (r.path(), id.as_str()) {
+            ("/uc", "PUB") => TestResponse::ok(pdf(7))
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=\"Plan 2026.pdf\""),
+            ("/uc", "PRIV") => TestResponse::ok("<html><title>Sign in</title></html>")
+                .header("Content-Type", "text/html; charset=utf-8"),
+            ("/uc", "BIG") => TestResponse::ok(
+                r#"<form id="download-form" action="/download" method="get"><input type="hidden" name="id" value="BIG"><input type="hidden" name="confirm" value="t"></form>"#,
+            )
+            .header("Content-Type", "text/html"),
+            ("/download", "BIG") if r.query("confirm").as_deref() == Some("t") => {
+                TestResponse::ok(b"PK\x03\x04sheet".to_vec())
+                    .header("Content-Type", "application/octet-stream")
+            }
+            ("/uc", _) => TestResponse::ok(pdf(9)),
+            _ => TestResponse::status(404),
+        }
+    })
+    .await;
+    let dir = tempfile::tempdir().unwrap();
+    let (net, sink) = net("site.example", "");
+    let mut cfg = DownloadConfig::default();
+    let mut allow = std::collections::HashMap::new();
+    let item = |ext: Option<&str>| foca_search::download::StorageItem {
+        hosts: vec!["127.0.0.1".into()],
+        ext: ext.map(String::from),
+        name: Some("gdrive-BIG".into()),
+    };
+    let u = |id: &str| format!("{}/uc?export=download&id={id}", srv.url());
+    allow.insert(u("PUB"), item(None));
+    allow.insert(u("PRIV"), item(None));
+    allow.insert(u("BIG"), item(Some("xlsx")));
+    cfg.storage = Arc::new(allow);
+    let d = Downloader::new(net, dir.path(), cfg);
+    let a = d.download(&u("PUB")).await.unwrap();
+    assert_eq!(a.name, "Plan 2026.pdf");
+    assert!(a.path.to_string_lossy().ends_with(".pdf"));
+    assert_eq!(
+        d.download(&u("PRIV")).await.unwrap_err(),
+        NetError::Status(403)
+    );
+    let b = d.download(&u("BIG")).await.unwrap();
+    assert!(b.path.to_string_lossy().ends_with(".xlsx"), "{:?}", b.path);
+    assert_eq!(b.name, "gdrive-BIG.xlsx");
+    // another item on the same host was never linked: it stays out of scope
+    assert!(d.download(&u("OTHER")).await.unwrap_err().is_scope_denial());
+    assert_eq!(
+        srv.requests()
+            .iter()
+            .filter(|r| r.target.contains("OTHER"))
+            .count(),
+        0
+    );
+    let log = sink.records();
+    assert!(log
+        .iter()
+        .filter(|r| !r.blocked)
+        .all(|r| r.module == "storage" && !r.active));
+    assert!(
+        srv.requests().iter().all(|r| r.method == "GET"),
+        "no HEAD probes on storage"
+    );
+}

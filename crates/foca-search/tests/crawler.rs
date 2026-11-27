@@ -265,10 +265,10 @@ async fn crawl_resumes_frontier() {
     let frontier = cr.out.lock().unwrap().frontier.clone();
     assert_eq!(frontier.queue.len(), 2);
     assert_eq!(frontier.pages, 2);
-    let mut next = Crawler::with_start(&format!("{}/", srv.url()));
+    let mut next = Crawler::with_start(&format!("{}/", srv.url()))
+        .with_resume([("127.0.0.1".to_string(), frontier)].into_iter().collect());
     next.use_sitemap = false;
     next.respect_robots = false;
-    next.resume.insert("127.0.0.1".into(), frontier);
     let (f, st) = next.crawl(&ctx, "127.0.0.1").await.unwrap();
     assert!(st.resumed && st.finished);
     assert!(f.urls.iter().any(|u| u.url.ends_with("/files/late.pdf")));
