@@ -24,10 +24,10 @@ Status legend: ✅ done · ⏳ planned or needs a device check · ✖ excluded
 
 ## Current Status
 
-🧪 2.0.0-beta.4: fourth beta with deeper technology and plugin detection, an offline NVD CVE database and 25 more document file types (see the [changelog](../CHANGELOG.md)). 2.0.0-beta.1 was the first public release, published as a GitHub Pre-release (tag `v2.0.0-beta.1`). All 2.0 milestones (`2.0-M1`-`2.0-M9`) and the `1.1.1`-`1.6` series are in. Expect rough edges; problems go to [GitHub issues](https://github.com/SinonApp/FOCA-rs/issues/new/choose).
+🧪 2.0.0-beta.4.1: patch release of the fourth beta (fixes from the phone test, people and contacts from document text, calibrated risk score); 2.0.0-beta.4 brought deeper technology and plugin detection, an offline NVD CVE database and 25 more document file types (see the [changelog](../CHANGELOG.md)). 2.0.0-beta.1 was the first public release, published as a GitHub Pre-release (tag `v2.0.0-beta.1`). All 2.0 milestones (`2.0-M1`-`2.0-M9`) and the `1.1.1`-`1.6` series are in. Expect rough edges; problems go to [GitHub issues](https://github.com/SinonApp/FOCA-rs/issues/new/choose).
 
 - Android package `app.sinon.focars`, two builds: `foss` (GPL-3.0 only, no Google libraries) and `play` (adds optional offline ML Kit OCR).
-- The APK is signed with a new key: uninstall a previous 1.x or 2.0 preview build before installing. 2.0.0-beta.4 installs over 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps projects.
+- The APK is signed with a new key: uninstall a previous 1.x or 2.0 preview build before installing. 2.0.0-beta.4.1 installs over 2.0.0-beta.4, 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps projects.
 
 ---
 

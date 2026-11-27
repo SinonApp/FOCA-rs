@@ -438,7 +438,7 @@
         ${item("theme", "", F.t("settings.appearance", "Внешний вид"), F.t("settings.appearance_sub", { theme: THEME_L()[state.look.theme] || state.look.theme, lang: LANG_L()[langLook()] || langLook(), fs: Math.round(curFs() * 100) }), "/settings/appearance")}
         ${item("bug", "", F.t("settings.debug", "Отладка"), F.t("settings.debug_sub", "Журналы, запросы, сбои, устройство"), "/settings/debug")}
         ${item("info", "var(--accent)", F.t("settings.help", "Помощь"), F.t("settings.help_sub", "Офлайн-справка и глоссарий"), "/help")}
-        ${item("info", "", F.t("settings.about", "О программе"), `FOCA-rs ${aboutMeta.version || "2.0.0-beta.4"} · GPL-3.0`, "/settings/about", F.betaChip ? F.betaChip() : "")}
+        ${item("info", "", F.t("settings.about", "О программе"), `FOCA-rs ${aboutMeta.version || "2.0.0-beta.4.1"} · GPL-3.0`, "/settings/about", F.betaChip ? F.betaChip() : "")}
       </div>`;
   }
   F.route("/settings", {
@@ -919,7 +919,7 @@
       ],
       honest: [
         F.t("settings.ua_honest", "Честный FOCA-rs"),
-        "FOCA-rs/" + ((F.state.aboutMeta && F.state.aboutMeta.version) || F.APP_VERSION || "2.0.0-beta.4"),
+        "FOCA-rs/" + ((F.state.aboutMeta && F.state.aboutMeta.version) || F.APP_VERSION || "2.0.0-beta.4.1"),
       ],
       custom: [F.t("settings.custom", "Свой"), custom || ""],
     }[id];
@@ -2606,6 +2606,19 @@
   // the version in src-tauri/tauri.conf.json or a language lacks a line, so the note cannot go stale.
   const CHANGES = [
     [
+      "2.0.0-beta.4.1",
+      "2026-11-27",
+      [
+        "Люди, должности и контакты из текста документов на 22 языках, новый раздел «Телефоны»",
+        "Откалиброванные уровни находок и оценка риска: меньше ложных критических, грифы только по штампу",
+        "Полный список CVE продукта с CVSS, KEV, EPSS и версией для обновления",
+        "Обёртки КЕП (.p7s): подписант и вложенный документ",
+        "Кириллический текст PDF из Word читается верно, подпись с LTV больше не считается изменённой",
+        "История ИИ-сводок не пропадает, ошибки видны, сводку для отчёта можно выбрать",
+        "Правки по тесту на телефоне: прогресс на экране блокировки, счётчики загрузок, гид по фоновой работе",
+      ],
+    ],
+    [
       "2.0.0-beta.4",
       "2026-11-27",
       [
@@ -2642,7 +2655,7 @@
   // Exposed for checks: the version the in-app note describes.
   F.whatsNew = { version: CHANGES[0][0], date: CHANGES[0][1], count: CHANGES[0][2].length };
   // Build version shown until platform_device_info answers (bumped with tauri.conf.json).
-  const APP_VERSION_FALLBACK = "2.0.0-beta.4";
+  const APP_VERSION_FALLBACK = "2.0.0-beta.4.1";
   const aboutMeta = (F.state.aboutMeta = F.state.aboutMeta || {
     version: APP_VERSION_FALLBACK,
     flavor: "foss",

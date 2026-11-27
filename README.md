@@ -11,7 +11,7 @@
 </div>
 
 > [!WARNING]
-> **2.0.0-beta.4 is a beta.** Expect rough edges. If something breaks or looks wrong, please [open an issue](https://github.com/SinonApp/FOCA-rs/issues/new/choose). In the app, *Settings → About → Report a problem* saves the logs and opens the issue form for you.
+> **2.0.0-beta.4.1 is a beta.** Expect rough edges. If something breaks or looks wrong, please [open an issue](https://github.com/SinonApp/FOCA-rs/issues/new/choose). In the app, *Settings → About → Report a problem* saves the logs and opens the issue form for you.
 
 FOCA-rs is an Android app for OSINT and document metadata reconnaissance. You give it a domain, URL or IP range you are allowed to assess. It finds the organisation's public documents and attack surface, pulls metadata out of the files (authors, logins, internal paths, servers, printers, software versions), turns that into findings with severity and standard references, and writes an offline report. The default profile is passive: it reads only third-party sources such as web archives, certificate logs and search engines, and sends nothing to the target. Everything runs on the phone, with a Rust core and a Tauri 2 interface. The idea comes from the desktop tool [FOCA](https://github.com/ElevenPaths/FOCA); FOCA-rs is a separate implementation written from scratch.
 
@@ -62,16 +62,16 @@ The pictures come from the built-in demo project. Its domains and addresses are 
 ## Install
 
 1. Download an APK from [Releases](https://github.com/SinonApp/FOCA-rs/releases). Beta builds are marked as pre-releases.
-   - `FOCA-rs-2.0.0-beta.4-foss-arm64.apk`: no Google components.
-   - `FOCA-rs-2.0.0-beta.4-play-arm64.apk`: the same app plus offline OCR for scanned PDFs and images through Google ML Kit (off by default).
+   - `FOCA-rs-2.0.0-beta.4.1-foss-arm64.apk`: no Google components.
+   - `FOCA-rs-2.0.0-beta.4.1-play-arm64.apk`: the same app plus offline OCR for scanned PDFs and images through Google ML Kit (off by default).
 2. Check the signature before installing:
    ```bash
-   apksigner verify --print-certs FOCA-rs-2.0.0-beta.4-*.apk
+   apksigner verify --print-certs FOCA-rs-2.0.0-beta.4.1-*.apk
    # SHA-256: see release notes
    ```
 3. Install on Android 7.0 or newer (64-bit ARM).
 
-2.0.0-beta.4 installs over 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects: all betas use the same signing key. The 2.0 betas are signed with a new key, so if you have a 1.x or 2.0 preview build installed, export your projects, uninstall it, install the beta and import them again: Android will not update an app across signing keys.
+2.0.0-beta.4.1 installs over 2.0.0-beta.4, 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects: all betas use the same signing key. The 2.0 betas are signed with a new key, so if you have a 1.x or 2.0 preview build installed, export your projects, uninstall it, install the beta and import them again: Android will not update an app across signing keys.
 
 ## Quick start
 

@@ -4,7 +4,7 @@
 
 | Version | Supported |
 |---|---|
-| 2.0.0-beta.4 (latest pre-release) | ✅ security fixes |
+| 2.0.0-beta.4.1 (latest pre-release) | ✅ security fixes |
 | 1.x | ✖, please update (uninstall first: 2.0 is signed with a new key) |
 
 Fixes land on `main` and ship in the next beta.

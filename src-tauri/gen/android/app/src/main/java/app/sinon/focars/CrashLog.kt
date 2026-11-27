@@ -106,7 +106,7 @@ object CrashLog {
       } catch (e: Throwable) { sb.append("(не удалось прочитать причину выхода: $e)\n") }
     }
     return if (sb.isEmpty()) null else
-      "FOCA-rs 2.0.0-beta.4 · Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) · ${Build.MANUFACTURER} ${Build.MODEL} · ${Build.SUPPORTED_ABIS.joinToString()}\n\n$sb"
+      "FOCA-rs 2.0.0-beta.4.1 · Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}) · ${Build.MANUFACTURER} ${Build.MODEL} · ${Build.SUPPORTED_ABIS.joinToString()}\n\n$sb"
   }
 
   fun clear(ctx: Context) {

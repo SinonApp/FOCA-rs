@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 
+> **Installs over 2.0.0-beta.4, 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects** (same signing key, Android versionCode 2000007).
+
 ### Fixed
 
 - Background guide: the MIUI/HyperOS step for a background pop-up permission is gone (the app never opens windows from the background); the lock screen step is detected automatically; Samsung paths match One UI 6 and later.
@@ -42,11 +44,13 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 - Signed PDFs: a PAdES-LTV increment after the signature (DSS with VRI, certificate, OCSP and CRL streams, a document timestamp, a catalog or Info rewritten without other changes) is no longer reported as "modified after signing"; page, content stream, annotation and form value changes still are. On a real corpus of 41 signed PDFs the false finding went from 41 to 0.
 - PDF revisions: "Old PDF revisions kept" is reported only when an older revision really differs (page text, or a changed author, creator, producer, modification date, title, subject or keywords); empty Word increments, converter re-saves and LTV data stay a document fact.
 - Internal host names: a `www.` name or a name that goes on after a dash, soft hyphen or letter (`www.corp-media.lg.ua`, `www.corporation.com.ua` cut by text extraction) is no longer reported as an internal host.
+- Access restriction markings count only as a document stamp: a line that is only the marking (optionally with «Гриф» or a copy number such as «Прим. № 2»), in capitals or title case, at the top or bottom of a page or text block, in UA, RU, EN, DE or FR. A level named inside a sentence, a diploma series (`ДСК № 123456`), a list of levels and lowercase mentions no longer produce the finding. State secret stamps are High, «for official use», confidential and commercial secret stamps Medium; a state secret stamp is Critical only next to personal data in the same document. On a real corpus of 1445 public university PDFs all 9 marking findings were false and are gone.
+- People from text: numbered bibliography entries give cited authors, short Cyrillic surnames and lowercase hyphenated surnames are read, abstract nouns are never taken for surnames.
 - КЕП wrappers: a file that is a CMS/PKCS#7 SignedData with the document inside (a Ukrainian `.p7s`, or a `.pdf` that is really such a wrapper) is recognised by content; the inner document is parsed as usual and the signer's certificate (name, surname and given name, masked РНОКПП, ЄДРПОУ, organisation, title, CA, signing time) is kept, giving one Medium "signer data in the document" finding per file. 6 such files in the real corpus had no signer before.
 
 ### Changed
-- The app no longer loads the 0.5 MB browser demo backend at startup; it is loaded only in the plain browser demo and QA.
 
+- The app no longer loads the 0.5 MB browser demo backend at startup; it is loaded only in the plain browser demo and QA.
 - Downloads go by priority: office files and PDF first, then other metadata-rich files, media, and site graphics last.
 
 ### Added
