@@ -4,6 +4,9 @@
   "fields": {
     "pdf:version": "1.7"
   },
+  "fonts": [
+    "Helvetica"
+  ],
   "format": "pdf",
   "incremental_updates": 1,
   "modified": "2024-02-01T10:00:00Z",

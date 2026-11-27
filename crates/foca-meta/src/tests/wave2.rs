@@ -1313,3 +1313,115 @@ fn office_connections_power_query_mail_merge_vba() {
     assert_eq!(m.fonts, vec!["Calibri", "PT Astra Serif"]);
     assert!(!serde_json::to_string(&m).unwrap().contains("pw1"));
 }
+
+// ---------------------------------------------------------------- images
+
+fn png_with(chunks: &[(&[u8; 4], &[u8])]) -> Vec<u8> {
+    let mut b = b"\x89PNG\r\n\x1a\n".to_vec();
+    let mut ihdr = vec![0, 0, 0, 1, 0, 0, 0, 1, 8, 2, 0, 0, 0];
+    let mut all: Vec<(&[u8; 4], Vec<u8>)> = vec![(b"IHDR", std::mem::take(&mut ihdr))];
+    all.extend(chunks.iter().map(|(t, d)| (*t, d.to_vec())));
+    all.push((b"IEND", Vec::new()));
+    for (t, d) in all {
+        b.extend((d.len() as u32).to_be_bytes());
+        b.extend_from_slice(t);
+        b.extend(&d);
+        b.extend([0u8; 4]);
+    }
+    b
+}
+
+/// A bare TIFF whose EXIF maker note is a Canon IFD with owner name and serial number.
+fn canon_tiff() -> Vec<u8> {
+    let mut t = b"II*\0".to_vec();
+    t.extend(8u32.to_le_bytes());
+    let ent = |t: &mut Vec<u8>, tag: u16, ty: u16, n: u32, v: u32| {
+        t.extend(tag.to_le_bytes());
+        t.extend(ty.to_le_bytes());
+        t.extend(n.to_le_bytes());
+        t.extend(v.to_le_bytes());
+    };
+    t.extend(2u16.to_le_bytes());
+    ent(&mut t, 0x010F, 2, 6, 38);
+    ent(&mut t, 0x8769, 4, 1, 44);
+    t.extend(0u32.to_le_bytes());
+    t.extend(b"Canon\0");
+    t.extend(1u16.to_le_bytes());
+    ent(&mut t, 0x927C, 7, 48, 62);
+    t.extend(0u32.to_le_bytes());
+    t.extend(2u16.to_le_bytes());
+    ent(&mut t, 0x0009, 2, 18, 92);
+    ent(&mut t, 0x000C, 4, 1, 123_456_789);
+    t.extend(0u32.to_le_bytes());
+    t.extend(b"Jane Photographer\0");
+    t
+}
+
+#[test]
+fn images_ai_c2pa_icc_makernote() {
+    let png = png_with(&[(
+        b"tEXt",
+        b"parameters\0a lighthouse at dusk\nNegative prompt: blurry\nSteps: 20, Sampler: Euler a, Model: dreamshaper_8",
+    )]);
+    let m = run(&png, "gen.png");
+    let ai = m.ai_generated.as_ref().expect("ai marker");
+    assert_eq!(ai.model.as_deref(), Some("dreamshaper_8"));
+    assert_eq!(ai.prompt.as_deref(), Some("a lighthouse at dusk"));
+    assert!(
+        !m.fields.values().any(|v| v.contains("lighthouse")),
+        "the prompt is not a plain field"
+    );
+    let cleaned = crate::clean(&png, DocFormat::Png).unwrap();
+    assert!(run(&cleaned, "gen.png").ai_generated.is_none());
+
+    let mut jumbf = b"JP\0\x01\0\0\0\x10jumbc2pa".to_vec();
+    jumbf.extend(b"\x6Fclaim_generator\x6CExampleCam/1 c2pa.actions trainedAlgorithmicMedia");
+    let mut icc = vec![0u8; 132];
+    icc[36..40].copy_from_slice(b"acsp");
+    icc[48..52].copy_from_slice(b"EXMP");
+    icc[52..56].copy_from_slice(b"SCN1");
+    let mut jpg = vec![0xFF, 0xD8];
+    for (marker, data) in [
+        (0xEBu8, jumbf),
+        (0xE2, [b"ICC_PROFILE\0\x01\x01".to_vec(), icc].concat()),
+    ] {
+        jpg.extend([0xFF, marker]);
+        jpg.extend(((data.len() + 2) as u16).to_be_bytes());
+        jpg.extend(data);
+    }
+    jpg.extend([0xFF, 0xD9]);
+    let m = run(&jpg, "a.jpg");
+    assert_eq!(m.fields["c2pa:claim_generator"], "ExampleCam/1");
+    assert_eq!(m.ai_generated.as_ref().unwrap().source, "c2pa");
+    assert_eq!(m.fields["icc:device_model"], "SCN1");
+
+    let t = canon_tiff();
+    assert_eq!(detect(&t), DocFormat::Tiff);
+    let m = run(&t, "a.tif");
+    let cam = m.camera.as_ref().unwrap();
+    assert_eq!(cam.serial.as_deref(), Some("123456789"));
+    assert_eq!(cam.owner.as_deref(), Some("Jane Photographer"));
+    assert!(m.people.iter().any(|p| p.name == "Jane Photographer"));
+    for b in [png, jpg, t] {
+        let mut rng = Rng(7);
+        for _ in 0..200 {
+            let mut x = b.clone();
+            let i = rng.next() as usize % x.len();
+            x[i] = rng.next() as u8;
+            assert_no_panic("x.img", &x);
+        }
+    }
+}
+
+#[test]
+fn pdf_forms_fonts_intents() {
+    let pdf = b"%PDF-1.7\n1 0 obj << /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [4 0 R] /XFA 9 0 R >> /OutputIntents [5 0 R] /PieceInfo << /Illustrator << >> >> >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /Resources << /Font << /F1 6 0 R >> >> >> endobj\n4 0 obj << /FT /Tx /T (applicant_name) /V (Ivan Example) >> endobj\n5 0 obj << /Type /OutputIntent /S /GTS_PDFX /OutputConditionIdentifier (FOGRA39) >> endobj\n6 0 obj << /Type /Font /Subtype /TrueType /BaseFont /ABCDEF+PTSans-Regular >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n";
+    let m = run(pdf, "form.pdf");
+    assert_eq!(m.fonts, vec!["PTSans-Regular"]);
+    assert_eq!(m.form_fields[0].name, "applicant_name");
+    assert_eq!(m.form_fields[0].value.as_deref(), Some("Ivan Example"));
+    assert_eq!(m.fields["pdf:xfa"], "true");
+    assert_eq!(m.fields["pdf:OutputIntent"], "FOGRA39");
+    assert_eq!(m.fields["pdf:PieceInfo"], "Illustrator");
+    assert!(m.software.iter().any(|s| s == "Adobe Illustrator"));
+}

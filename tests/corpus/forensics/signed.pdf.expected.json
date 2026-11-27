@@ -9,6 +9,14 @@
     "pdf:acroform": "true",
     "pdf:version": "1.7"
   },
+  "fonts": [
+    "Helvetica"
+  ],
+  "form_fields": [
+    {
+      "name": "Signature1"
+    }
+  ],
   "format": "pdf",
   "incremental_updates": 0,
   "people": [

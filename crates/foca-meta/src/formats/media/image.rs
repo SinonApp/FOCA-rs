@@ -6,6 +6,7 @@ use std::io::{Cursor, Read};
 use exif::{Context, Field, In, Tag, Value};
 use foca_core::{Camera, DocFormat, Gps, Metadata, PersonRole, Thumbnail};
 
+use super::image_extra;
 use crate::util::{clean_str, normalize_date, truncate, utf16le_z};
 use crate::{xmp, Ctx, MetaError};
 
@@ -406,10 +407,22 @@ fn png_chunks(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError>
                 };
                 (key, Some(s))
             }
+            b"iCCP" => {
+                image_extra::png_iccp(meta, data, ctx)?;
+                continue;
+            }
+            b"caBX" => {
+                image_extra::c2pa(meta, data);
+                continue;
+            }
             b"IEND" => break,
             _ => continue,
         };
         let Some(text) = text else { continue };
+        // generator prompts stay out of plain fields (shown on the document card only)
+        if image_extra::is_generator_key(&key) && image_extra::png_generator(meta, &key, &text) {
+            continue;
+        }
         if key == "XML:com.adobe.xmp" {
             let map = xmp::parse(text.as_bytes(), ctx);
             xmp::apply(meta, &map, "xmp");
@@ -441,6 +454,22 @@ fn png_chunks(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError>
     Ok(())
 }
 
+/// Camera maker note (Canon, Nikon, Fujifilm, Apple) through the raw EXIF TIFF block.
+fn maker_note(meta: &mut Metadata, ex: &exif::Exif) {
+    let Some(f) = ex.get_field(Tag::MakerNote, In::PRIMARY) else {
+        return;
+    };
+    let Value::Undefined(_, off) = &f.value else {
+        return;
+    };
+    let make = meta
+        .camera
+        .as_ref()
+        .and_then(|c| c.make.clone())
+        .unwrap_or_default();
+    image_extra::maker_note(meta, &make, ex.buf(), *off as usize, ex.little_endian());
+}
+
 pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaError> {
     let mut meta = Metadata::new(format);
     let ex = crate::guard("exif", || {
@@ -450,6 +479,7 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
     })?;
     if let Some(ex) = &ex {
         exif_meta(&mut meta, ex);
+        maker_note(&mut meta, ex);
         if let Some(f) = ex.get_field(Tag(Context::Tiff, 700), In::PRIMARY) {
             if let Value::Byte(x) | Value::Undefined(x, _) = &f.value {
                 let map = xmp::parse(x, ctx);
@@ -459,9 +489,17 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
     }
     match format {
         DocFormat::Jpeg => {
+            let mut icc_profile: Vec<u8> = Vec::new();
+            let mut jumbf: Vec<u8> = Vec::new();
             for (m, _, s, e) in jpeg_segments(b) {
                 let Some(data) = b.get(s..e) else { continue };
                 match m {
+                    0xE2 if data.starts_with(b"ICC_PROFILE\0") && icc_profile.len() < (4 << 20) => {
+                        icc_profile.extend_from_slice(data.get(14..).unwrap_or(&[]));
+                    }
+                    0xEB if data.starts_with(b"JP") && jumbf.len() < (8 << 20) => {
+                        jumbf.extend_from_slice(data);
+                    }
                     0xE1 if data.starts_with(b"http://ns.adobe.com/xap/1.0/\0") => {
                         let map = xmp::parse(&data[29..], ctx);
                         xmp::apply(&mut meta, &map, "xmp");
@@ -476,10 +514,13 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
                     _ => {}
                 }
             }
+            image_extra::icc(&mut meta, &icc_profile);
+            image_extra::c2pa(&mut meta, &jumbf);
         }
         DocFormat::Png => png_chunks(&mut meta, b, ctx)?,
         _ => {}
     }
+    image_extra::xmp_ai(&mut meta);
     // Compare thumbnail and photo pixels; a decoder panic on a broken file must not abort parsing.
     if format == DocFormat::Jpeg {
         if let Some(t) = meta.thumbnail.as_mut() {

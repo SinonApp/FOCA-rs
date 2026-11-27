@@ -3,7 +3,8 @@
 //! JPEG: APP1 (EXIF/XMP), APP13 (IPTC/Photoshop), other metadata-bearing APPn segments and COM
 //! are removed; only JFIF (APP0), ICC (APP2) and Adobe (APP14) remain; data after EOI is
 //! dropped; the image data is copied without re-encoding.
-//! PNG: tEXt/zTXt/iTXt (including XMP), eXIf and tIME chunks are removed.
+//! PNG: tEXt/zTXt/iTXt (including XMP and generator prompts), eXIf, tIME and caBX (C2PA)
+//! chunks are removed.
 
 use crate::MetaError;
 
@@ -70,7 +71,10 @@ pub(crate) fn clean_png(b: &[u8]) -> Result<Vec<u8>, MetaError> {
             return Err(MetaError::malformed("png", "обрезанный чанк"));
         };
         let ty = &b[p + 4..p + 8];
-        if !matches!(ty, b"tEXt" | b"zTXt" | b"iTXt" | b"eXIf" | b"tIME") {
+        if !matches!(
+            ty,
+            b"tEXt" | b"zTXt" | b"iTXt" | b"eXIf" | b"tIME" | b"caBX"
+        ) {
             out.extend_from_slice(&b[p..end]);
         }
         p = end;

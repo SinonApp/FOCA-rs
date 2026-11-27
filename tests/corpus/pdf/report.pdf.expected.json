@@ -86,6 +86,9 @@
   "fields": {
     "pdf:version": "1.7"
   },
+  "fonts": [
+    "Helvetica"
+  ],
   "format": "pdf",
   "has_javascript": true,
   "incremental_updates": 1,

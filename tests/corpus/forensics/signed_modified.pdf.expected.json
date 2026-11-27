@@ -8,6 +8,14 @@
     "pdf:acroform": "true",
     "pdf:version": "1.7"
   },
+  "fonts": [
+    "Helvetica"
+  ],
+  "form_fields": [
+    {
+      "name": "Signature1"
+    }
+  ],
   "format": "pdf",
   "incremental_updates": 1,
   "modified": "2024-03-05T12:00:00+02:00",

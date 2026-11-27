@@ -10,8 +10,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::io::Read;
 
 use foca_core::{
-    Attachment, BadRedaction, CommentRef, DocFormat, Embedded, Metadata, OldVersion, PdfRevision,
-    PersonRole, SignatureKind,
+    Attachment, BadRedaction, CommentRef, DocFormat, Embedded, FormField, Metadata, OldVersion,
+    PdfRevision, PersonRole, SignatureKind,
 };
 
 use crate::util::{find, normalize_date, truncate};
@@ -1136,8 +1136,18 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
         if let Some(Obj::Ref(n, _)) = dget(c, "Metadata") {
             primary_xmp = Some(*n);
         }
-        if dget(c, "AcroForm").is_some() {
+        if let Some(af) = dget(c, "AcroForm") {
             meta.fields.insert("pdf:acroform".into(), "true".into());
+            if pdf
+                .resolve(af)
+                .dict()
+                .is_some_and(|d| dget(d, "XFA").is_some())
+            {
+                meta.fields.insert("pdf:xfa".into(), "true".into());
+            }
+        }
+        if dget(c, "Collection").is_some() {
+            meta.fields.insert("pdf:portfolio".into(), "true".into());
         }
         if let Some(Obj::Dict(pages)) = dget(c, "Pages").map(|p| pdf.resolve(p)) {
             if let Some(cnt) = dget(pages, "Count").and_then(Obj::num) {
@@ -1178,7 +1188,22 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     // web links of link annotations (`/S /URI`); strings of an encrypted file are unreadable
     let mut uris: Vec<String> = Vec::new();
     let encrypted = meta.encrypted;
+    let mut fonts: Vec<String> = Vec::new();
+    let mut form: Vec<FormField> = Vec::new();
+    let mut pieces: Vec<String> = Vec::new();
+    let mut intents: Vec<String> = Vec::new();
+    let mut icc_refs: Vec<Obj> = Vec::new();
     pdf.for_each_dict(&mut |_, d| {
+        doc_parts(
+            &pdf,
+            d,
+            encrypted,
+            &mut fonts,
+            &mut form,
+            &mut pieces,
+            &mut intents,
+            &mut icc_refs,
+        );
         if !encrypted && dname(d, "S") == Some("URI") && uris.len() < MAX_LINKS {
             if let Some(Obj::Str(u)) = dget(d, "URI").map(|u| pdf.resolve(u)) {
                 let u = pdf_str(u);
@@ -1271,6 +1296,30 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     for u in uris {
         Metadata::add_unique(&mut meta.links, &u);
     }
+    meta.fonts = fonts;
+    meta.form_fields = form;
+    if !pieces.is_empty() {
+        meta.fields
+            .insert("pdf:PieceInfo".into(), pieces.join(", "));
+        for p in &pieces {
+            if let Some(app) = piece_app(p) {
+                Metadata::add_unique(&mut meta.software, app);
+            }
+        }
+    }
+    if !intents.is_empty() {
+        meta.fields.insert(
+            "pdf:OutputIntent".into(),
+            truncate(&intents.join("; "), 512),
+        );
+    }
+    for r in icc_refs.iter().take(2) {
+        if let Obj::Stream(d, s, e) = pdf.resolve(r) {
+            if let Some(data) = pdf.decode(d, *s, *e, ctx)? {
+                crate::formats::media::image_extra::icc(&mut meta, &data);
+            }
+        }
+    }
     if found_js {
         meta.has_javascript = true;
     }
@@ -1337,6 +1386,87 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
         meta.warnings.push(format!("PDF: форензика прервана: {e}"));
     }
     Ok(meta)
+}
+
+/// Font names (subset prefix `ABCDEF+` removed), form fields, page-piece application names and
+/// output intents of one dictionary.
+#[allow(clippy::too_many_arguments)]
+fn doc_parts(
+    pdf: &Pdf,
+    d: &Dict,
+    encrypted: bool,
+    fonts: &mut Vec<String>,
+    form: &mut Vec<FormField>,
+    pieces: &mut Vec<String>,
+    intents: &mut Vec<String>,
+    icc_refs: &mut Vec<Obj>,
+) {
+    let text = |o: Option<&Obj>| -> Option<String> {
+        match o.map(|x| pdf.resolve(x)) {
+            Some(Obj::Str(s)) if !encrypted => crate::util::clean_str(&pdf_str(s)),
+            Some(Obj::Name(n)) => crate::util::clean_str(n),
+            _ => None,
+        }
+    };
+    if let Some(Obj::Name(f)) = dget(d, "BaseFont") {
+        let name = match f.split_once('+') {
+            Some((pre, rest)) if pre.len() == 6 && pre.bytes().all(|c| c.is_ascii_uppercase()) => {
+                rest
+            }
+            _ => f.as_str(),
+        };
+        let name = name.replace("#20", " ");
+        if fonts.len() < 200 && !name.is_empty() && !fonts.contains(&name) {
+            fonts.push(truncate(&name, 128));
+        }
+    }
+    if dget(d, "FT").is_some() && form.len() < 300 {
+        if let Some(name) = text(dget(d, "T")) {
+            let value = text(dget(d, "V")).or_else(|| text(dget(d, "DV")));
+            let f = FormField {
+                name: truncate(&name, 256),
+                value: value.map(|v| truncate(&v, 512)),
+            };
+            if !form.contains(&f) {
+                form.push(f);
+            }
+        }
+    }
+    if let Some(pi) = dget(d, "PieceInfo")
+        .map(|p| pdf.resolve(p))
+        .and_then(Obj::dict)
+    {
+        for (k, _) in pi.iter().take(20) {
+            if pieces.len() < 20 && !pieces.contains(k) {
+                pieces.push(truncate(k, 64));
+            }
+        }
+    }
+    if dname(d, "Type") == Some("OutputIntent") || dget(d, "OutputConditionIdentifier").is_some() {
+        for k in ["OutputConditionIdentifier", "Info", "OutputCondition"] {
+            if let Some(v) = text(dget(d, k)) {
+                if intents.len() < 6 && !intents.contains(&v) {
+                    intents.push(truncate(&v, 160));
+                }
+            }
+        }
+        if let Some(r) = dget(d, "DestOutputProfile") {
+            icc_refs.push(r.clone());
+        }
+    }
+}
+
+/// Applications behind `/PieceInfo` keys.
+fn piece_app(k: &str) -> Option<&'static str> {
+    Some(match k {
+        "Illustrator" => "Adobe Illustrator",
+        "AdobePhotoshop" | "Photoshop" => "Adobe Photoshop",
+        "InDesign" => "Adobe InDesign",
+        "CorelDRAW" => "CorelDRAW",
+        "Visio" => "Microsoft Visio",
+        "PDFlib" => "PDFlib",
+        _ => return None,
+    })
 }
 
 /// Returns page text: strings from Tj/TJ/'/" operators plus annotation comments.

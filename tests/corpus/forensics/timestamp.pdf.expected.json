@@ -2,6 +2,9 @@
   "fields": {
     "pdf:version": "1.7"
   },
+  "fonts": [
+    "Helvetica"
+  ],
   "format": "pdf",
   "incremental_updates": 0,
   "signatures": [
