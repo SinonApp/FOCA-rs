@@ -23,6 +23,89 @@ use crate::Analysis;
 pub const KEV_GZ: &[u8] = include_bytes!("../../signatures/kev.tsv.gz");
 /// Product mapping shared with the update script.
 pub const PRODUCTS_TOML: &str = include_str!("../../signatures/kev_products.toml");
+/// FIRST EPSS scores and CISA Vulnrichment CVSS/CWE/SSVC for the snapshot CVEs
+/// (`signatures/tools/update_kev_enrich.py`).
+pub const ENRICH_GZ: &[u8] = include_bytes!("../../signatures/kev_enrich.tsv.gz");
+
+/// Prioritization data of one CVE: EPSS (FIRST) and CVSS/CWE/SSVC (CISA Vulnrichment).
+#[derive(Debug, Clone, Default, PartialEq, Serialize)]
+pub struct KevEnrich {
+    /// Probability of exploitation activity in the next 30 days, 0..1.
+    pub epss: Option<f32>,
+    /// EPSS percentile, 0..1.
+    pub epss_pct: Option<f32>,
+    /// CVSS base score and version (`3.1`).
+    pub cvss: Option<f32>,
+    pub cvss_ver: Option<String>,
+    pub cwe: Vec<String>,
+    /// CISA SSVC `exploitation/automatable/technical impact`.
+    pub ssvc: Option<String>,
+}
+
+impl KevEnrich {
+    /// Short language-neutral label for evidence lines: `EPSS 0.97 (p99) CVSS 10 CWE-502`.
+    pub fn label(&self) -> String {
+        let mut parts = Vec::new();
+        if let Some(e) = self.epss {
+            let pct = self
+                .epss_pct
+                .map(|p| format!(" (p{})", (p * 100.0).floor() as u32))
+                .unwrap_or_default();
+            parts.push(format!("EPSS {e:.2}{pct}"));
+        }
+        if let Some(c) = self.cvss {
+            parts.push(format!("CVSS {c}"));
+        }
+        if !self.cwe.is_empty() {
+            parts.push(self.cwe.join(","));
+        }
+        parts.join(" ")
+    }
+}
+
+/// Parses `kev_enrich.tsv.gz`: CVE -> enrichment, plus the header fields (`epss=` date).
+fn parse_enrich(
+    gz: &[u8],
+) -> Result<(std::collections::HashMap<String, KevEnrich>, String), KevError> {
+    let mut text = String::new();
+    flate2::read::GzDecoder::new(gz)
+        .read_to_string(&mut text)
+        .map_err(|e| KevError(format!("kev enrich: {e}")))?;
+    let mut map = std::collections::HashMap::new();
+    let mut epss_date = String::new();
+    for line in text.lines() {
+        if let Some(h) = line.strip_prefix('#') {
+            for kv in h.split_whitespace() {
+                if let Some(("epss", v)) = kv.split_once('=') {
+                    epss_date = v.into();
+                }
+            }
+            continue;
+        }
+        let f: Vec<&str> = line.split('\t').collect();
+        if f.len() < 7 {
+            continue;
+        }
+        let num = |s: &str| s.parse::<f32>().ok();
+        let opt = |s: &str| (!s.is_empty()).then(|| s.to_string());
+        map.insert(
+            f[0].to_string(),
+            KevEnrich {
+                epss: num(f[1]),
+                epss_pct: num(f[2]),
+                cvss: num(f[3]),
+                cvss_ver: opt(f[4]),
+                cwe: f[5]
+                    .split(',')
+                    .filter(|c| !c.is_empty())
+                    .map(String::from)
+                    .collect(),
+                ssvc: opt(f[6]),
+            },
+        );
+    }
+    Ok((map, epss_date))
+}
 
 /// One KEV record of the snapshot.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -80,6 +163,10 @@ pub struct KevCatalog {
     pub total: usize,
     pub entries: Vec<KevEntry>,
     products: Vec<KevProduct>,
+    /// EPSS/CVSS/CWE by CVE.
+    enrich: std::collections::HashMap<String, KevEnrich>,
+    /// EPSS score date of `enrich` (`YYYY-MM-DD`), empty without enrichment.
+    pub epss_date: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -122,6 +209,8 @@ impl KevCatalog {
             total: 0,
             entries: Vec::new(),
             products,
+            enrich: Default::default(),
+            epss_date: String::new(),
         };
         for line in text.lines() {
             if let Some(h) = line.strip_prefix('#') {
@@ -156,8 +245,30 @@ impl KevCatalog {
     pub fn builtin() -> &'static KevCatalog {
         static CAT: OnceLock<KevCatalog> = OnceLock::new();
         CAT.get_or_init(|| {
-            KevCatalog::parse(KEV_GZ, PRODUCTS_TOML).expect("embedded KEV snapshot is valid")
+            let cat =
+                KevCatalog::parse(KEV_GZ, PRODUCTS_TOML).expect("embedded KEV snapshot is valid");
+            cat.with_enrichment(ENRICH_GZ).unwrap_or_else(|_| {
+                KevCatalog::parse(KEV_GZ, PRODUCTS_TOML).expect("embedded KEV snapshot is valid")
+            })
         })
+    }
+
+    /// EPSS/CVSS/CWE of a CVE, if the enrichment table has it.
+    pub fn enrichment(&self, cve: &str) -> Option<&KevEnrich> {
+        self.enrich.get(cve)
+    }
+
+    /// Number of CVEs with EPSS/CVSS/CWE data.
+    pub fn enriched(&self) -> usize {
+        self.enrich.len()
+    }
+
+    /// The catalog with EPSS/CVSS/CWE data from an enrichment table (replaces the current one).
+    pub fn with_enrichment(mut self, gz: &[u8]) -> Result<KevCatalog, KevError> {
+        let (map, date) = parse_enrich(gz)?;
+        self.enrich = map;
+        self.epss_date = date;
+        Ok(self)
     }
 
     /// Number of records used for matching (the kept part of the CISA catalog plus additions).
@@ -239,12 +350,15 @@ pub struct KevSubject {
 }
 
 /// A short KEV reference.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct KevRef {
     pub cve: String,
     pub date_added: String,
     pub ransomware: bool,
     pub name: String,
+    /// EPSS/CVSS/CWE when the enrichment table has the CVE.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enrich: Option<KevEnrich>,
 }
 
 /// Lookup result for one subject and product group.
@@ -464,6 +578,7 @@ pub fn lookup(cat: &KevCatalog, subjects: &[KevSubject]) -> Vec<KevMatch> {
                         date_added: e.date_added.clone(),
                         ransomware: e.ransomware,
                         name: e.name.clone(),
+                        enrich: cat.enrichment(&e.cve).cloned(),
                     })
                     .collect(),
                 confidence: confidence.into(),
@@ -493,6 +608,34 @@ pub fn match_analysis(a: &Analysis) -> Vec<KevMatch> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn enrichment_adds_epss_cvss_and_cwe() {
+        let cat = KevCatalog::builtin();
+        assert_eq!(cat.epss_date, "2026-11-26");
+        assert_eq!(cat.enrich.len(), cat.used());
+        let log4j = &cat.enrich["CVE-2021-44228"];
+        assert!(log4j.epss.unwrap() > 0.9, "{log4j:?}");
+        assert_eq!(log4j.cvss, Some(10.0));
+        assert!(log4j.cwe.contains(&"CWE-502".to_string()));
+        assert_eq!(log4j.ssvc.as_deref(), Some("active/yes/total"));
+        assert!(
+            log4j
+                .label()
+                .starts_with("EPSS 1.00 (p100) CVSS 10 CWE-502"),
+            "{}",
+            log4j.label()
+        );
+        let m = lookup(
+            cat,
+            &[subj(
+                SubjectKind::Software,
+                "Microsoft Office Word 2010",
+                None,
+            )],
+        );
+        assert!(m[0].cves.iter().all(|c| c.enrich.is_some()));
+    }
 
     fn subj(kind: SubjectKind, name: &str, eol: Option<&str>) -> KevSubject {
         KevSubject {

@@ -738,9 +738,13 @@ pub(crate) fn render_html(c: &Ctx) -> String {
     if c.o.custody {
         crate::sections::custody::render_html(c, &mut h);
     }
+    let credits = c
+        .data_credits()
+        .map(|x| format!("<span>{}</span>", esc(x)))
+        .unwrap_or_default();
     let _ = write!(
         h,
-        "</div>\n<footer class=\"gen\"><span>{} {} · {}</span><span>{}</span></footer>\n</body>\n</html>\n",
+        "</div>\n<footer class=\"gen\"><span>{} {} · {}</span>{credits}<span>{}</span></footer>\n</body>\n</html>\n",
         esc(c.t.generator),
         esc(crate::GENERATOR),
         esc(&c.date()),
@@ -862,6 +866,9 @@ pub(crate) fn render_md(c: &Ctx) -> String {
         mesc(crate::GENERATOR),
         mesc(&c.date())
     );
+    if let Some(x) = c.data_credits() {
+        let _ = writeln!(o, "\n{}", mesc(x));
+    }
     o
 }
 

@@ -3703,6 +3703,12 @@
  },
  {
   "lang": "en",
+  "rule": "sw.kev",
+  "text": "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации X1, CVSS до X2.",
+  "out": "EPSS priority (FIRST): highest exploitation probability X1, CVSS up to X2."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7414,6 +7420,12 @@
   "rule": "ports-outdated",
   "text": "версия X1 не поддерживается: ветка X2 снята с поддержки X3 (endoflife.date)",
   "out": "версія X1 не підтримується: гілку X2 знято з підтримки X3 (endoflife.date)"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.kev",
+  "text": "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации X1, CVSS до X2.",
+  "out": "Пріоритет за EPSS (FIRST): найбільша ймовірність експлуатації X1, CVSS до X2."
  },
  {
   "lang": "uk",

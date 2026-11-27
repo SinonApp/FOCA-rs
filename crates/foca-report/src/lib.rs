@@ -250,7 +250,22 @@ pub(crate) fn ai_blocks(md: &str) -> Vec<AiBlock> {
     out
 }
 
+/// Attribution of third-party vulnerability data shown in the report footer when findings use it
+/// (FIRST asks to credit EPSS; Vulnrichment is CC0 but credited as well). Proper names, so the
+/// line is the same in every report language.
+pub const EPSS_CREDITS: &str =
+    "EPSS: FIRST.org (https://www.first.org/epss) · CVSS/CWE: CISA Vulnrichment (CC0)";
+
 impl Ctx<'_> {
+    /// Footer attribution line for third-party data the included findings show.
+    pub(crate) fn data_credits(&self) -> Option<&'static str> {
+        self.main
+            .iter()
+            .chain(&self.fixed)
+            .any(|f| f.evidence.contains(" EPSS "))
+            .then_some(EPSS_CREDITS)
+    }
+
     /// AI summary to render: stored, non-empty and not switched off in the options.
     pub fn ai_summary(&self) -> Option<&AiSummary> {
         self.o

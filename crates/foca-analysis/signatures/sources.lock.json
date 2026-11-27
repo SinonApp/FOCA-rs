@@ -25,6 +25,28 @@
     "cycles": 2179
    }
   },
+  "epss": {
+   "url": "https://epss.empiricalsecurity.com/epss_scores-2026-11-26.csv.gz",
+   "version": "2026-11-26",
+   "model": "model_version:v2026.06.15,score_date:2026-11-26T12:00:25Z",
+   "license": "FIRST-EPSS-terms",
+   "license_note": "Free to use; FIRST requests attribution (https://www.first.org/epss/faq)",
+   "attribution": "EPSS scores from FIRST.org (https://www.first.org/epss), 2026-11-26",
+   "inputs": {
+    "epss_scores-2026-11-26.csv.gz": "7d002768523501d6f1d6ee076a777f2eaa6aabf3e2546773eeeda795653a8c0e"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-analysis/signatures/kev_enrich.tsv.gz",
+     "bytes": 11167,
+     "sha256": "e85e283bb61c340b6ed9fea2206e65c979bf0416ec216a2452cffd70ec436714"
+    }
+   ],
+   "stats": {
+    "cves": 924,
+    "with_epss": 924
+   }
+  },
   "gitleaks": {
    "repo": "https://github.com/gitleaks/gitleaks",
    "tag": "v8.30.1",
@@ -54,6 +76,30 @@
      "allowlist_paths": 0
     },
     "allowlist_regexes_dropped": 3
+   }
+  },
+  "vulnrichment": {
+   "repo": "https://github.com/cisagov/vulnrichment",
+   "commit": "2872f0a7d9f88cc9fa7077d706b57af184674571",
+   "license": "CC0-1.0",
+   "license_file": "LICENSE",
+   "license_sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+   "attribution": "CVSS, CWE and SSVC data from CISA Vulnrichment (CC0-1.0), https://github.com/cisagov/vulnrichment",
+   "inputs": {
+    "*": "ba40631f63e3c3644840168d0da04e5c6dfadf632e9c09d62676ccdde6f6ed0b"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-analysis/signatures/kev_enrich.tsv.gz",
+     "bytes": 11167,
+     "sha256": "e85e283bb61c340b6ed9fea2206e65c979bf0416ec216a2452cffd70ec436714"
+    }
+   ],
+   "stats": {
+    "records": 924,
+    "with_cvss": 924,
+    "with_cwe": 770,
+    "with_ssvc": 924
    }
   },
   "webappanalyzer": {

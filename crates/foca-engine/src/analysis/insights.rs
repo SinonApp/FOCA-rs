@@ -462,6 +462,19 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
                 ));
             }
         }
+        // FIRST EPSS and CISA Vulnrichment CVSS: the highest values among the matched CVEs.
+        let max_of = |f: fn(&foca_analysis::kev::KevEnrich) -> Option<f32>| {
+            g.cves
+                .iter()
+                .filter_map(|c| c.enrich.as_ref().and_then(f))
+                .fold(None, |m: Option<f32>, v| Some(m.map_or(v, |m| m.max(v))))
+        };
+        if let Some(epss) = max_of(|e| e.epss) {
+            let cvss = max_of(|e| e.cvss).map_or_else(|| "-".to_string(), |c| c.to_string());
+            d.push(format!(
+                "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации {epss:.2}, CVSS до {cvss}."
+            ));
+        }
         d.push(format!(
             "Если патч-уровень ОС/дистрибутива не определён автоматически, сверьте версию {} с бюллетенями производителя.",
             g.probe
@@ -471,8 +484,15 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
             .iter()
             .take(25)
             .map(|c| {
+                let extra = c
+                    .enrich
+                    .as_ref()
+                    .map(|e| e.label())
+                    .filter(|l| !l.is_empty())
+                    .map(|l| format!(" {l}"))
+                    .unwrap_or_default();
                 format!(
-                    "{} ({}){}",
+                    "{} ({}){}{extra}",
                     c.cve,
                     c.date_added,
                     if c.ransomware { " ransomware" } else { "" }

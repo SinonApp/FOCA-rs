@@ -3701,6 +3701,12 @@
       "rules": "ports-outdated,recon.outdated_tech",
       "pattern": "версия {} не поддерживается: ветка {} снята с поддержки {} (endoflife.date)",
       "text": "version {0} is unsupported: the {1} branch reached end of life on {2} (endoflife.date)"
+    },
+    {
+      "id": "f618",
+      "rules": "sw.kev",
+      "pattern": "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации {}, CVSS до {}.",
+      "text": "EPSS priority (FIRST): highest exploitation probability {0}, CVSS up to {1}."
     }
   ],
   "tech_cats": {
