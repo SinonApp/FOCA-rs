@@ -555,6 +555,7 @@
   "onboard.later": "Позже",
   "debug.err_refused": "соединение отклонено",
   "debug.err_http_status": "ошибка HTTP",
+  "debug.err_login_required": "приватный файл: нужен вход",
   "debug.err_redirect": "ошибка перенаправления",
   "debug.rl_clear": "Очистить журнал запросов",
   "debug.rl_clear_sub": "Проект «{name}»: весь, старше N дней или один скан",

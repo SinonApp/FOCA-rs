@@ -555,6 +555,7 @@
   "onboard.later": "Пізніше",
   "debug.err_refused": "з’єднання відхилено",
   "debug.err_http_status": "помилка HTTP",
+  "debug.err_login_required": "приватний файл: потрібен вхід",
   "debug.err_redirect": "помилка перенаправлення",
   "debug.rl_clear": "Очистити журнал запитів",
   "debug.rl_clear_sub": "Проєкт «{name}»: увесь, старший за N днів або одне сканування",

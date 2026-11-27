@@ -1131,6 +1131,16 @@ impl NetClient {
                     .and_then(|l| url.join(l).ok());
                 if let Some(next) = loc {
                     let mut rec = rec;
+                    // A redirect to a sign-in page means the file is private: the login page is
+                    // never requested.
+                    if is_login_page(&next) {
+                        rec.error = Some(format!(
+                            "login_required → {}",
+                            next.host_str().unwrap_or("")
+                        ));
+                        self.record(rec);
+                        return Err(NetError::Status(401));
+                    }
                     rec.error = Some(format!("redirect → {}", redact_url(next.as_str())));
                     self.record(rec);
                     drop(resp);
@@ -1354,4 +1364,15 @@ impl Drop for NetResponse {
             self.sink.record(&rec);
         }
     }
+}
+
+/// Sign-in pages of storage and identity providers: a redirect there means "private file".
+fn is_login_page(u: &Url) -> bool {
+    let host = u.host_str().unwrap_or("").to_ascii_lowercase();
+    let path = u.path().to_ascii_lowercase();
+    matches!(
+        host.as_str(),
+        "accounts.google.com" | "login.microsoftonline.com" | "login.live.com"
+    ) || (host.ends_with("dropbox.com") && path.starts_with("/login"))
+        || (host.ends_with("sharepoint.com") && path.contains("/_forms/default.aspx"))
 }

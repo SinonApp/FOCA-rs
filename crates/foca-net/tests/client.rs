@@ -723,3 +723,41 @@ async fn cross_origin_redirect_strips_auth_headers_and_resolver_blocks_target_ip
     assert!(matches!(err, NetError::OutOfScope { .. }), "{err:?}");
     assert!(target_srv.requests().is_empty());
 }
+
+#[tokio::test]
+async fn redirect_to_a_sign_in_page_is_private_and_not_followed() {
+    let srv = TestServer::start(|_| {
+        TestResponse::redirect(302, "https://accounts.google.com/ServiceLogin?continue=x")
+    })
+    .await;
+    let (net, sink) = client(
+        "",
+        "",
+        NetConfig {
+            retries: 0,
+            ..cfg()
+        },
+    );
+    let e = net
+        .get_text(
+            &format!("{}/uc?id=1", srv.url()),
+            "storage",
+            Access::Passive,
+        )
+        .await
+        .unwrap_err();
+    assert!(matches!(e, NetError::Status(401)), "{e:?}");
+    let log = sink.records();
+    assert_eq!(log.len(), 1, "the login page is never requested: {log:?}");
+    assert!(log[0]
+        .error
+        .as_deref()
+        .unwrap()
+        .starts_with("login_required"));
+    assert_eq!(
+        foca_core::reqlog::LogError::parse(log[0].error.as_deref())
+            .unwrap()
+            .kind,
+        "login_required"
+    );
+}

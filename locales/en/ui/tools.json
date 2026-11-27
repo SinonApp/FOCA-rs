@@ -555,6 +555,7 @@
   "onboard.later": "Later",
   "debug.err_refused": "connection refused",
   "debug.err_http_status": "HTTP error",
+  "debug.err_login_required": "private file: sign-in required",
   "debug.err_redirect": "redirect error",
   "debug.rl_clear": "Clear request log",
   "debug.rl_clear_sub": "Project “{name}”: all, older than N days or one scan",

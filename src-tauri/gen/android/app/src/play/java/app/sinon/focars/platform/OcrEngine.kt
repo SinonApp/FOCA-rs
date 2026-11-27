@@ -62,6 +62,8 @@ object OcrEngine {
     recognizer: com.google.mlkit.vision.text.TextRecognizer,
     bmp: Bitmap,
   ): String {
+    // Tiny images (icons, spacers) hold no text and make ML Kit throw: skip them quietly.
+    if (OcrLogic.tooSmall(bmp.width, bmp.height)) return ""
     val img = InputImage.fromBitmap(bmp, 0)
     val res = Tasks.await(recognizer.process(img), PAGE_TIMEOUT_SEC, TimeUnit.SECONDS)
     return res?.text ?: ""

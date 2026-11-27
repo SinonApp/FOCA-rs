@@ -14,6 +14,12 @@ object OcrLogic {
 
   fun clampMaxPages(n: Int): Int = n.coerceIn(MIN_PAGES, MAX_PAGES)
 
+  /** ML Kit rejects images under 32 px on a side ("InputImage width and height should be at least 32"). */
+  const val MIN_EDGE = 32
+
+  /** Whether an image is too small to hold readable text (OCR is skipped, not an error). */
+  fun tooSmall(width: Int, height: Int): Boolean = width < MIN_EDGE || height < MIN_EDGE
+
   fun isSupportedMime(mime: String?): Boolean {
     val m = mime?.trim()?.lowercase() ?: return false
     return m == "application/pdf" || m.startsWith("image/")

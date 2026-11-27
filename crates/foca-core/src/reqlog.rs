@@ -52,6 +52,9 @@ impl LogError {
         if let Some(st) = e.strip_prefix("retry: ") {
             return fixed("http_status", Some(st));
         }
+        if let Some(to) = e.strip_prefix("login_required → ") {
+            return fixed("login_required", Some(to));
+        }
         if let Some(to) = e.strip_prefix("redirect → ") {
             return fixed("redirect", Some(to));
         }

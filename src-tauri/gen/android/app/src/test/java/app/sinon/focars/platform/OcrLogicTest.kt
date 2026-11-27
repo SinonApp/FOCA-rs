@@ -40,4 +40,11 @@ class OcrLogicTest {
       root.deleteRecursively()
     }
   }
+
+  @Test
+  fun tinyImagesAreSkipped() {
+    assertTrue(OcrLogic.tooSmall(31, 400))
+    assertTrue(OcrLogic.tooSmall(16, 16))
+    assertFalse(OcrLogic.tooSmall(32, 32))
+  }
 }
