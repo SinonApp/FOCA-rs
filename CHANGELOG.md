@@ -18,11 +18,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - Encrypted OOXML packages (with the encryption type) and encrypted PowerPoint 97-2003 files are flagged as encrypted.
 - Visually hidden content in office documents: text coloured like its background (white on white, font colour equal to the cell fill, theme background colour), text of 3 pt or less, cells with a `;;;` number format, collapsed or filtered rows, shapes placed outside the slide or flagged hidden, in Word, Excel, PowerPoint, OpenDocument and RTF files. White text on a dark fill, shading or table style is not reported.
 - Legacy code pages (Shift-JIS, GBK, Big5, EUC-KR, Windows 1250-1258, KOI8) decode correctly in Office and RTF strings.
+- Images: GIF (comments, XMP, ICC profile, loop count), WebP (EXIF, XMP, ICC, feature flags, animation frames), JPEG XL and JPEG 2000 metadata boxes and encoder comments.
+- Camera RAW: CR2, CR3, CRW, ORF, RW2, RAF, MRW and X3F are recognised with camera, serial numbers, lens, owner, GPS and dates; preview JPEGs of RAW and TIFF-based RAW files are collected and the thumbnail is compared with the largest preview.
+- Maker notes: Olympus/OM System body and lens serials, Panasonic serial, lens and location names, Pentax, Samsung and Sony serials. Serials, lens, owner and drone GPS written only in XMP fill the camera and GPS fields.
+- Photoshop resources in JPEG and PSD: caption, URL, writer application, slice group, saved path names and PSD layer names. IPTC adds location, contact, credit, language and creation date and honours the UTF-8 character set.
+- The XMP toolkit that wrote a packet is listed as software.
+- PNG `eXIf` and `tIME` chunks; HEIF/AVIF ICC profiles.
+- MP4/MOV video compressor (encoder) and track handler names; MP3 copyright, user text and URL frames, private frame owners, picture descriptions, release dates, the encoder tag and untagged MP3 files; FLAC pictures parsed as embedded images.
+- SVG `data:image` pictures are parsed as embedded images; SVG comments are scanned for paths and e-mails.
 
 ### Fixed
 
 - Word, Excel and PowerPoint files saved by LibreOffice no longer show the operating system as Windows 1.0.
 - An embedded document that contains itself is parsed once instead of repeating down to the depth limit.
+- PDF images with author, device or comment metadata are listed even without camera EXIF; JPEG 2000 images in PDFs are parsed.
+- A later EXIF block (PSD, HEIF) no longer erases a description, title or date found earlier; repeated Vorbis comments are kept.
 
 ---
 

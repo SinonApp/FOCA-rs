@@ -27,7 +27,7 @@ All functions are pure (no network, no filesystem): bytes in, `Metadata` / clean
 
 - **Office & Documents**: RTF (`formats/office/rtf.rs`), OOXML (`docx`/`xlsx`/`pptx`, binary `xlsb` parts in `formats/office/xlsb.rs`), ODF (`odt`/`ods`/`odp`/`odg`, StarOffice), OLE2 (`doc`/`xls`/`ppt` 97-2003), PDF (in-house parser, no `lopdf`), Visio (`.vsdx`/`.vsdm`), Publisher (`.pub`), InDesign (`.indd`/`.indt`), WordPerfect (`.wpd`) & Works, EPUB (`.epub`).
 - **Mail, PIM & Remote**: EML (RFC 5322/MIME), Outlook MSG (MS-OXMSG), iCalendar (`.ics`), vCard (`.vcf`), Windows Shell Links (`.lnk`), RDP & Citrix ICA.
-- **Images, Media & Archives**: JPEG/PNG/TIFF (EXIF, XMP, GPS, thumbnail mismatch `thumbcmp.rs`), SVG, Photoshop (`.psd`/`.psb`), MP4/MOV/HEIF/HEIC/AVIF (`formats/media/isobmff.rs`), MP3 (ID3v1/ID3v2, `formats/media/mp3.rs`), ZIP (`formats/archive/zipfile.rs` with recursive child extraction and Zip-Slip detection), 7-Zip (`.7z`, `formats/archive/sevenz.rs`).
+- **Images, Media & Archives**: JPEG/PNG/TIFF (EXIF, XMP, IPTC, GPS, maker notes, thumbnail mismatch `thumbcmp.rs`), GIF/WebP/JPEG XL/JPEG 2000 (`formats/media/raster.rs`), camera RAW (`formats/media/raw.rs`), SVG (with `data:image` children), Photoshop (`.psd`/`.psb`, resources in `formats/media/irb.rs`), MP4/MOV/HEIF/HEIC/AVIF (`formats/media/isobmff.rs`), MP3 (ID3v1/ID3v2, `formats/media/mp3.rs`), ZIP (`formats/archive/zipfile.rs` with recursive child extraction and Zip-Slip detection), 7-Zip (`.7z`, `formats/archive/sevenz.rs`).
 - **Forensics (`foca_core::forensics`)**: XMP edit history & document IDs (`xmp.rs`), PDF incremental revisions with text diff & scan-without-text detection (`formats/pdf/mod.rs`), broken PDF redaction detector (`formats/pdf/redaction.rs`), hidden OOXML text/rows/columns (`formats/office/ooxml.rs`), PDF/OOXML/VBA CMS/PKCS#7 & RFC 3161 digital signatures (`formats/signature/mod.rs`), and Ukrainian qualified electronic signature (KEP) certificate fields (`formats/signature/kep.rs`, with RNOKPP strictly masked).
 
 ### Security Model (`N-3`)
@@ -58,12 +58,15 @@ Layout and dependency direction (lower rows never use higher ones):
 | `src/formats/mail/ics.rs` | 415 | iCalendar (`.ics`, RFC 5545): organizers, attendees, producers, events |
 | `src/formats/mail/msg.rs` | 395 | Outlook messages (`.msg`, MS-OXMSG OLE2 compound file) |
 | `src/formats/mail/vcf.rs` | 213 | vCard (`.vcf` 2.1-4.0): names, e-mails, phones, organizations |
-| `src/formats/media/image.rs` | 495 | JPEG/PNG/TIFF: EXIF camera/serials/software/dates/GPS, IPTC, XMP |
+| `src/formats/media/image.rs` | 494 | JPEG/PNG/TIFF: EXIF camera/serials/software/dates/GPS, XMP, PNG text/`eXIf`/`tIME`, TIFF RAW previews |
 | `src/formats/media/indesign.rs` | 74 | Adobe InDesign (`.indd`/`.indt`): master-page header and embedded XMP |
-| `src/formats/media/isobmff.rs` | 804 | ISO Base Media files (MP4, QuickTime MOV, HEIF/HEIC/AVIF), including in-place cleaning |
-| `src/formats/media/mp3.rs` | 281 | MPEG Audio Layer III (`.mp3`): ID3v2.2/2.3/2.4 and ID3v1 tags |
-| `src/formats/media/psd.rs` | 196 | Adobe Photoshop (`.psd`/`.psb`, `8BPS`): image resources & embedded XMP |
-| `src/formats/media/svg.rs` | 82 | SVG: RDF metadata, Inkscape/Sodipodi paths and export attributes |
+| `src/formats/media/irb.rs` | 388 | Photoshop image resources (JPEG APP13 and PSD) and IPTC-IIM with the UTF-8 character set |
+| `src/formats/media/isobmff.rs` | 867 | ISO Base Media files (MP4, QuickTime MOV, HEIF/HEIC/AVIF), including in-place cleaning |
+| `src/formats/media/mp3.rs` | 500 | MPEG Audio Layer III (`.mp3`): ID3v2.2/2.3/2.4 and ID3v1 tags, untagged frame detection, encoder tag |
+| `src/formats/media/psd.rs` | 166 | Adobe Photoshop (`.psd`/`.psb`, `8BPS`): image resources, layer names, embedded XMP |
+| `src/formats/media/raster.rs` | 477 | GIF (comments, XMP, ICC, loop count), WebP (VP8X, EXIF, XMP, ICCP), JPEG XL and JPEG 2000 boxes |
+| `src/formats/media/raw.rs` | 708 | Camera RAW: CR2, CR3 (`CMT1..4`), CRW (CIFF), ORF, RW2, RAF, MRW, X3F; preview JPEGs and thumbnail comparison |
+| `src/formats/media/svg.rs` | 142 | SVG: RDF metadata, Inkscape/Sodipodi paths and export attributes, comments, `data:image` children |
 | `src/formats/office/legacy_office.rs` | 100 | Legacy office formats: WordPerfect (`.wpd`) and Microsoft Works |
 | `src/formats/office/odf.rs` | 255 | ODF (`odt`/`ods`/`odp`/`odg`) and StarOffice 1.x |
 | `src/formats/office/ole/mod.rs` | 1,324 | OLE2 (`doc`/`xls`/`ppt` 97-2003): property sets, user names, OLE cleaning |
