@@ -1053,7 +1053,7 @@ async fn probe_protocol(
 /// Probes a canary: connect only, no banner. `Some(true)` means open, `None` means cancelled.
 async fn canary(sh: Arc<Shared>, port: u16) -> Option<bool> {
     if let Some(b) = &sh.bucket {
-        if b.acquire(sh.net.cancel_token()).await.is_err() {
+        if sh.net.take_token(b).await.is_err() {
             return None;
         }
     }
@@ -1108,7 +1108,7 @@ struct Shared {
 
 async fn probe(sh: Arc<Shared>, port: u16) -> Probe {
     if let Some(b) = &sh.bucket {
-        if b.acquire(sh.net.cancel_token()).await.is_err() {
+        if sh.net.take_token(b).await.is_err() {
             return Probe::Cancelled;
         }
     }

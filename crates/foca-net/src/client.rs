@@ -626,8 +626,11 @@ impl NetClient {
         }
     }
 
-    pub fn cancel_token(&self) -> &CancellationToken {
-        &self.cancel
+    /// Waits for a token of the caller's own bucket (port scan pacing), then for the end of a
+    /// pause; fails once the client is cancelled.
+    pub async fn take_token(&self, bucket: &TokenBucket) -> Result<(), NetError> {
+        bucket.acquire(&self.cancel).await?;
+        self.hold().await
     }
 
     pub fn cancel(&self) {
