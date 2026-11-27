@@ -1,0 +1,69 @@
+{
+ "_about": "Pinned upstream versions of the ingested signature sources",
+ "sources": {
+  "webappanalyzer": {
+   "repo": "https://github.com/enthec/webappanalyzer",
+   "commit": "7dba7bf3e8b4f25c6a5b4b2c9f5e7a0e73e6a1bf",
+   "license": "GPL-3.0-only",
+   "license_file": "LICENSE",
+   "license_sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+   "attribution": "Technology fingerprints from webappanalyzer (enthec), GPL-3.0, https://github.com/enthec/webappanalyzer",
+   "inputs": {
+    "src/technologies/_.json": "9e608aa2f84a6c4e1a0eebc826be7c122ac53fce31e24bbc2424a7a00b170971",
+    "src/technologies/a.json": "598d43da989c6841c63b087d04acf1f6a51be018dc6e5b36f85a7c1d7f997284",
+    "src/technologies/b.json": "9435ffe8df729781fd39144c358686ff6123da01e80ee42d16d6a4cb53ffee43",
+    "src/technologies/c.json": "eaf0111fe728d0585e447fb28ea23d9c92d6253ff87ae72c32f9a469b518655c",
+    "src/technologies/d.json": "e4ffd9188293b602e515c919a7ad24d83722864a856b58559c21770e1277b05c",
+    "src/technologies/e.json": "8b5843b60d61f111d32238de37c0a36f94b5ac2c8309d835025f951e1c1b97ab",
+    "src/technologies/f.json": "2cd94531b3fa47981f8defc2ba7ee7d57d172b7336a5d498ab45619b82c2fad6",
+    "src/technologies/g.json": "88a8b955a49d9e57c879584081d936ceecd27eddd133fefcb29eedb51434fffa",
+    "src/technologies/h.json": "c7e5a055af9e576f74ba6cb3c626e60f49adfe3e258a431c1b69c713d007d798",
+    "src/technologies/i.json": "aa2ccd81b385e6a68d9ab61847371500d49005ca1421fca16b2b08e10f43b9ad",
+    "src/technologies/j.json": "e8b4ec8ccbc147c7088682944af766404800b1e8345791ddcda14acf3c33f8bc",
+    "src/technologies/k.json": "80445c130a1654ca92ae669e19591717e0c295c6382a5fb38af9239ed9bf072e",
+    "src/technologies/l.json": "d753aaee5ac0b682a328d00d6f62056f506f9ec31bff752dbf262ed122198f3c",
+    "src/technologies/m.json": "8633ac00212c27bf09d77368e0051f89f7e71bcb43bd53a2cc948e370e5410fa",
+    "src/technologies/n.json": "9caf68ff1a0f0884caad0e298871b8aa86cfc30e5b234f7c5c41cb5bb94a79e7",
+    "src/technologies/o.json": "9d9dc535aba2bead375bd8b51e6fd0981538a1f22aef5a937ecc6b253efe6f50",
+    "src/technologies/p.json": "429c9a740c2655a630a14d3e44a0f446a50c2e10deb5a46d3426a04fd0360f92",
+    "src/technologies/q.json": "93d7c0657e85a680ae2fc2796bb0d53c1427eaa8e039e4d4de60b9bda943d972",
+    "src/technologies/r.json": "18648f295e14a084fc8ed6d48dd80228cbf74566320d9e8dbc32aaa5b8f9bf37",
+    "src/technologies/s.json": "38ba07676b508b8357e98df832ed365a10cb5384713c113fc99c979aba947505",
+    "src/technologies/t.json": "aa8c71e024696efe42a1e6db7c165881d0079b933280ce77f3ae66b844344e34",
+    "src/technologies/u.json": "67ee98c4fc627f93eef2aa96f0f021697892c6bbecbad3a3021a70d12b0095db",
+    "src/technologies/v.json": "9af94728cbb8dd5bb132816a548e813411ebff26066d5c042590726a0e1e8fcd",
+    "src/technologies/w.json": "6d40f22cea183a45d87bfabaceb9e67635f2c513fe272c860af52dc3f7f33173",
+    "src/technologies/x.json": "00b262f7e7877ac9494a0f2c3ab9a3684b630fdcf0226d438d60293452c8f92d",
+    "src/technologies/y.json": "209246a63cf30a8c81826583b2c9bd2fc1dc9fc5c4a77c5121690220ca8a7b12",
+    "src/technologies/z.json": "87af275f7aeb9d3643cfa24921f42a880150bea0f49beaf403a8aa5918cf1143",
+    "src/categories.json": "98725a70537a2215a9b151e1a1a111a992428d838e9c701b3302e0901f2d616a",
+    "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-recon/data/webappanalyzer.json.gz",
+     "bytes": 200416,
+     "sha256": "5870ea50475e58ba2805b1e7cd269b5973e2856be03df14c230c155b047e94ed"
+    },
+    {
+     "path": "crates/foca-net/data/saas_dns.json",
+     "bytes": 14637,
+     "sha256": "1d0a4e1f5f13f2e968a4ceb7e5b9bbc469de0359cd81400215ad9f8d43e5c5c1"
+    }
+   ],
+   "stats": {
+    "technologies_upstream": 7715,
+    "technologies_kept": 5623,
+    "with_cpe": 466,
+    "dns_rules": 147,
+    "patterns_total": 7002,
+    "patterns_skipped": {
+     "lookaround": 12,
+     "size": 14,
+     "dns": 0
+    },
+    "patterns_without_literal": 60
+   }
+  }
+ }
+}

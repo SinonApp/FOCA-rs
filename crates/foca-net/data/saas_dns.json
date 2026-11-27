@@ -1,0 +1,1429 @@
+{
+"source": "enthec/webappanalyzer@7dba7bf3e8b4",
+"license": "GPL-3.0",
+"rules": [
+{
+"name": "34SP.com",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns(?:\\d+)?\\.34sp\\.com"
+]
+}
+},
+{
+"name": "ALL-INKL",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.kasserver\\.com"
+]
+}
+},
+{
+"name": "ANS",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.ukfast\\.net"
+]
+}
+},
+{
+"name": "Adobe",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"adobe-idp-site-verification="
+]
+}
+},
+{
+"name": "Airtable",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"airtable-verification="
+]
+}
+},
+{
+"name": "Amazon CloudFront",
+"cat": "cloud",
+"dns": {
+"CNAME": [
+"^[a-z0-9]+\\.cloudfront.net\\.?$"
+]
+}
+},
+{
+"name": "Amazon Route 53",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.awsdns-\\d+\\."
+],
+"SOA": [
+"\\.awsdns-\\d+\\."
+]
+}
+},
+{
+"name": "Amazon SES",
+"cat": "email",
+"dns": {
+"TXT": [
+"amazonses\\.com",
+"^amazonses:"
+]
+}
+},
+{
+"name": "Amazon Web Services",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.awsdns-"
+]
+}
+},
+{
+"name": "Anthropic",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"anthropic-domain-verification"
+]
+}
+},
+{
+"name": "Apple iCloud Mail",
+"cat": "email",
+"dns": {
+"MX": [
+"mail\\.icloud\\.com"
+],
+"TXT": [
+"apple-domain",
+"redirect=icloud\\.com"
+]
+}
+},
+{
+"name": "Aruba.it",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.technorail\\.com"
+]
+}
+},
+{
+"name": "Atlassian Cloud",
+"cat": "dev",
+"dns": {
+"TXT": [
+"atlassian-domain-verification=",
+"atlassian-sending-domain-verification="
+]
+}
+},
+{
+"name": "Atlassian Statuspage",
+"cat": "dev",
+"dns": {
+"TXT": [
+"status-page-domain-verification="
+]
+}
+},
+{
+"name": "Autodesk",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"autodesk-domain-verification="
+]
+}
+},
+{
+"name": "Azion",
+"cat": "cloud",
+"dns": {
+"CNAME": [
+"azioncdn\\.net\\.?$"
+]
+}
+},
+{
+"name": "Bluehost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.bluehost\\.com"
+],
+"SOA": [
+"\\.bluehost\\.com"
+]
+}
+},
+{
+"name": "Box",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"box-domain-verification="
+]
+}
+},
+{
+"name": "Bugcrowd",
+"cat": "security",
+"dns": {
+"TXT": [
+"bugcrowd-verification"
+]
+}
+},
+{
+"name": "Canva",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"canva-site-verification="
+]
+}
+},
+{
+"name": "Cisco",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"cisco-ci-domain-verification=",
+"ciscocidomainverification="
+]
+}
+},
+{
+"name": "ClouDNS",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.cloudns\\.(?:net|uk)"
+]
+}
+},
+{
+"name": "Cloudflare",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.cloudflare\\.com"
+],
+"SOA": [
+"\\.cloudflare\\.com"
+],
+"TXT": [
+"cloudflare_dashboard_sso="
+]
+}
+},
+{
+"name": "Cloudflare DNS",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.ns\\.cloudflare\\.com"
+],
+"SOA": [
+"\\.ns\\.cloudflare\\.com"
+]
+}
+},
+{
+"name": "Contabo",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.contabo\\.net"
+]
+}
+},
+{
+"name": "Cursor",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"cursor-domain-verification"
+]
+}
+},
+{
+"name": "DanDomain email",
+"cat": "email",
+"dns": {
+"MX": [
+"mx\\d*\\.dandomain\\.dk"
+]
+}
+},
+{
+"name": "DanDomain hosting",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.dandomain\\.dk"
+],
+"SOA": [
+"\\.dandomain\\.dk"
+]
+}
+},
+{
+"name": "Detectify",
+"cat": "security",
+"dns": {
+"TXT": [
+"detectify-verification"
+]
+}
+},
+{
+"name": "Docker",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"docker-verification="
+]
+}
+},
+{
+"name": "DocuSign",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"docusign"
+]
+}
+},
+{
+"name": "DomainFactory",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns(?:\\d+)?\\.namespace4you\\.de"
+]
+}
+},
+{
+"name": "DreamHost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns\\d+\\.dreamhost\\.com"
+],
+"SOA": [
+"ns\\d+\\.dreamhost\\.com"
+]
+}
+},
+{
+"name": "Drift",
+"cat": "support",
+"dns": {
+"TXT": [
+"drift-domain-verification="
+]
+}
+},
+{
+"name": "Dropbox",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"dropbox-domain-verification"
+]
+}
+},
+{
+"name": "Dynatrace",
+"cat": "analytics",
+"dns": {
+"TXT": [
+"Dynatrace-site-verification="
+]
+}
+},
+{
+"name": "ElevenLabs",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"^elevenlabs="
+]
+}
+},
+{
+"name": "FastComet",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.fcomet\\.com"
+]
+}
+},
+{
+"name": "Figma",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"figma-domain-verification="
+]
+}
+},
+{
+"name": "Flexera",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"flexera-domain-verification-"
+]
+}
+},
+{
+"name": "Funding Choices",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"fundingchoicesmessages"
+]
+}
+},
+{
+"name": "GURU",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.guru\\.net\\.uk"
+]
+}
+},
+{
+"name": "GlobalSign",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"_?globalsign-domain-verification="
+]
+}
+},
+{
+"name": "GoDaddy",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.domaincontrol\\.com"
+],
+"SOA": [
+"\\.domaincontrol\\.com"
+]
+}
+},
+{
+"name": "Google Cloud DNS",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns-cloud-[a-z]\\d\\.googledomains\\.com"
+],
+"SOA": [
+"ns-cloud-[a-z]\\d\\.googledomains\\.com"
+]
+}
+},
+{
+"name": "Google Workspace",
+"cat": "email",
+"dns": {
+"MX": [
+"aspmx\\.l\\.google\\.com",
+"googlemail\\.com"
+]
+}
+},
+{
+"name": "Gumroad",
+"cat": "cloud",
+"dns": {
+"CNAME": [
+"\\.gumroad\\.com"
+]
+}
+},
+{
+"name": "HPE GreenLake",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"hpe-greenlake-domain-verification="
+]
+}
+},
+{
+"name": "HackerOne",
+"cat": "security",
+"dns": {
+"TXT": [
+"h1-domain-verification="
+]
+}
+},
+{
+"name": "HashiCorp Cloud Platform",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"hcp-domain-verification="
+]
+}
+},
+{
+"name": "Have I Been Pwned",
+"cat": "security",
+"dns": {
+"TXT": [
+"have-i-been-pwned-verification=",
+"hibp-verify="
+]
+}
+},
+{
+"name": "Helhost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.helhost\\.com"
+],
+"SOA": [
+"\\.helhost\\.com"
+]
+}
+},
+{
+"name": "Heroku",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"heroku-domain-verification"
+]
+}
+},
+{
+"name": "Hetzner",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.ns\\.hetzner\\.com"
+],
+"SOA": [
+"\\.hetzner\\.com"
+]
+}
+},
+{
+"name": "HostEurope",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.hosteurope\\.com"
+]
+}
+},
+{
+"name": "Hostens",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.hostens\\.com"
+]
+}
+},
+{
+"name": "Hostgator",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.hostgator\\.com"
+]
+}
+},
+{
+"name": "Hosting Ukraine",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns\\d+\\.ukraine\\.com\\.ua"
+]
+}
+},
+{
+"name": "Hostinger",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.(?:dns-parking|hostinger)\\.com"
+]
+}
+},
+{
+"name": "Hostiq",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.hostiq\\.ua"
+]
+}
+},
+{
+"name": "Hostpoint",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.hostpoint\\.ch"
+]
+}
+},
+{
+"name": "HubSpot",
+"cat": "marketing",
+"dns": {
+"TXT": [
+"hubspotemail\\.net",
+"hubspot-developer-verification",
+"hubspot-domain-verification"
+]
+}
+},
+{
+"name": "Hypernode",
+"cat": "cloud",
+"dns": {
+"CNAME": [
+"\\.hypernode\\.io"
+],
+"NS": [
+"\\.hypernode\\.com"
+]
+}
+},
+{
+"name": "IBM",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"^ibmid="
+]
+}
+},
+{
+"name": "IONOS",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns1\\d+\\.ui-dns\\.(?:de|org|biz|com)"
+]
+}
+},
+{
+"name": "Imgix",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.imgix\\.net"
+]
+}
+},
+{
+"name": "Infomaniak",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.infomaniak\\.ch"
+]
+}
+},
+{
+"name": "Jamf",
+"cat": "security",
+"dns": {
+"TXT": [
+"jamf-site-verification="
+]
+}
+},
+{
+"name": "JetBrains",
+"cat": "dev",
+"dns": {
+"TXT": [
+"jetbrains-domain-verification="
+]
+}
+},
+{
+"name": "KMK",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns\\d\\.kmkhosting\\.net"
+],
+"SOA": [
+"ns\\d\\.kmkhosting\\.net"
+]
+}
+},
+{
+"name": "Keybase",
+"cat": "security",
+"dns": {
+"TXT": [
+"keybase-site-verification"
+]
+}
+},
+{
+"name": "Leaseweb",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.leaseweb\\.nl"
+]
+}
+},
+{
+"name": "LetsHost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"dnsireland\\.(?:com|ie)"
+]
+}
+},
+{
+"name": "Linear",
+"cat": "crm",
+"dns": {
+"TXT": [
+"linear-domain-verification="
+]
+}
+},
+{
+"name": "Liquid Web",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.liquidweb\\.com"
+]
+}
+},
+{
+"name": "LiveRamp",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"liveramp-site-verification="
+]
+}
+},
+{
+"name": "LogMeIn",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"logmein-verification-code="
+]
+}
+},
+{
+"name": "Loom",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"loom-verification",
+"loom-site-verification="
+]
+}
+},
+{
+"name": "Lovable",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"lovable_verification="
+]
+}
+},
+{
+"name": "MailChimp",
+"cat": "marketing",
+"dns": {
+"TXT": [
+"spf\\.mandrillapp\\.com"
+]
+}
+},
+{
+"name": "Mailgun",
+"cat": "email",
+"dns": {
+"TXT": [
+"mailgun\\.org"
+]
+}
+},
+{
+"name": "Mailjet",
+"cat": "email",
+"dns": {
+"TXT": [
+"mailjet\\.com"
+]
+}
+},
+{
+"name": "Meta",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"facebook-domain-verification="
+]
+}
+},
+{
+"name": "Microsoft 365",
+"cat": "email",
+"dns": {
+"MX": [
+"outlook\\.com"
+],
+"TXT": [
+"^MS=(?:ms[\\w-]+|[0-9A-Fa-f]{40})$"
+]
+}
+},
+{
+"name": "Microsoft Azure",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.azure-dns\\."
+],
+"SOA": [
+"azuredns-cloud\\.net"
+]
+}
+},
+{
+"name": "Miro",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"miro-verification="
+]
+}
+},
+{
+"name": "Mittwald",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns\\d+\\.agenturserver\\.(?:de|co|it)"
+]
+}
+},
+{
+"name": "Mixpanel",
+"cat": "analytics",
+"dns": {
+"TXT": [
+"mixpanel-domain-verify"
+]
+}
+},
+{
+"name": "MongoDB Atlas",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"mongodb-site-verification="
+]
+}
+},
+{
+"name": "Natro",
+"cat": "cloud",
+"dns": {
+"NS": [
+"natrohost\\.com",
+"natro\\.com"
+]
+}
+},
+{
+"name": "Notion",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"notion-domain-verification="
+]
+}
+},
+{
+"name": "OVHcloud",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\d+\\.ovh\\.net"
+],
+"SOA": [
+"\\d+\\.ovh\\.net"
+]
+}
+},
+{
+"name": "One.com",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns\\d+\\.one\\.com"
+]
+}
+},
+{
+"name": "OneTrust",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"onetrust-domain-verification="
+]
+}
+},
+{
+"name": "OpenAI",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"openai-domain-verification="
+]
+}
+},
+{
+"name": "PTisp",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.mydnspt\\.net"
+]
+}
+},
+{
+"name": "Palo Alto Networks",
+"cat": "security",
+"dns": {
+"TXT": [
+"paloaltonetworks-site-verification="
+]
+}
+},
+{
+"name": "Parallels",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"parallels-domain-verification="
+]
+}
+},
+{
+"name": "Pendo",
+"cat": "analytics",
+"dns": {
+"TXT": [
+"pendo-domain-verification="
+]
+}
+},
+{
+"name": "Postman",
+"cat": "dev",
+"dns": {
+"TXT": [
+"postman-domain-verification="
+]
+}
+},
+{
+"name": "Proserve",
+"cat": "cloud",
+"dns": {
+"NS": [
+"dn-s\\.nl",
+"appserved\\.nl",
+"firstfind\\.n(?:l|et)"
+]
+}
+},
+{
+"name": "Proton Mail",
+"cat": "email",
+"dns": {
+"MX": [
+"\\.protonmail\\.ch"
+],
+"TXT": [
+"protonmail-verification="
+]
+}
+},
+{
+"name": "QUIC.cloud",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.quicns\\.(?:net|com)"
+]
+}
+},
+{
+"name": "REG.RU",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"(?:\\.hosting)?\\.reg\\.ru"
+]
+}
+},
+{
+"name": "Render Better",
+"cat": "cloud",
+"dns": {
+"CNAME": [
+"\\.renderbetter\\.app"
+]
+}
+},
+{
+"name": "Saba.Host",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.saba\\.host"
+]
+}
+},
+{
+"name": "Sakura Internet",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.gslbN\\.sakura\\.ne\\.jp"
+],
+"SOA": [
+"tech\\.sakura\\.ad\\.jp"
+]
+}
+},
+{
+"name": "Salesforce",
+"cat": "crm",
+"dns": {
+"TXT": [
+"salesforce\\.com",
+"^00D[A-Za-z0-9]{12}="
+]
+}
+},
+{
+"name": "Salesforce Marketing Cloud Account Engagement",
+"cat": "marketing",
+"dns": {
+"TXT": [
+"pardot"
+]
+}
+},
+{
+"name": "Segment",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"segment-site-verification"
+]
+}
+},
+{
+"name": "Sendgrid",
+"cat": "email",
+"dns": {
+"TXT": [
+"sendgrid\\.net"
+]
+}
+},
+{
+"name": "Sendinblue",
+"cat": "marketing",
+"dns": {
+"TXT": [
+"\\.sendinblue\\.com",
+"Sendinblue-code"
+]
+}
+},
+{
+"name": "Sfera Networks",
+"cat": "cloud",
+"dns": {
+"NS": [
+"sfera\\.net"
+]
+}
+},
+{
+"name": "SiteGround",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns\\d+\\.c\\d+\\.sgvps\\.net"
+],
+"SOA": [
+"\\.siteground\\.net"
+]
+}
+},
+{
+"name": "Slack",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"slack-domain-verification="
+]
+}
+},
+{
+"name": "Smartsheet",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"smartsheet-site-validation="
+]
+}
+},
+{
+"name": "SparkPost",
+"cat": "email",
+"dns": {
+"TXT": [
+"sparkpostmail\\.com"
+]
+}
+},
+{
+"name": "Strato",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.strato-rz\\.de"
+]
+}
+},
+{
+"name": "Stripe",
+"cat": "payments",
+"dns": {
+"TXT": [
+"stripe-verification="
+]
+}
+},
+{
+"name": "SuperHosting.BG",
+"cat": "cloud",
+"dns": {
+"NS": [
+"superhosting\\.bg",
+"superdnsserver\\.net",
+"bgdns\\.net"
+],
+"SOA": [
+"superhosting\\.bg",
+"superdnsserver\\.net",
+"bgdns\\.net"
+]
+}
+},
+{
+"name": "Swizzonic",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.swizzonic\\.ch"
+]
+}
+},
+{
+"name": "Tangled Network",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.tanglednetwork\\.com"
+],
+"SOA": [
+"\\.tanglednetwork\\.com"
+]
+}
+},
+{
+"name": "TeamViewer",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"teamviewer-sso-verification="
+]
+}
+},
+{
+"name": "Turhost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.turhost\\.com"
+]
+}
+},
+{
+"name": "Twilio",
+"cat": "dev",
+"dns": {
+"TXT": [
+"twilio-domain-verification="
+]
+}
+},
+{
+"name": "UKFast",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.ukfast\\.net"
+]
+}
+},
+{
+"name": "Uber",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"uber-domain-verification="
+]
+}
+},
+{
+"name": "VMware CloudHealth",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"^cloudhealth="
+]
+}
+},
+{
+"name": "VentraIP",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.(?:nameserver|hostingplatform)\\.net\\.au"
+],
+"SOA": [
+"\\.(?:nameserver|hostingplatform)\\.net\\.au"
+]
+}
+},
+{
+"name": "Vercel",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.vercel-dns\\.com"
+]
+}
+},
+{
+"name": "Vultr",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.vultr\\.com"
+]
+}
+},
+{
+"name": "WebHostUK",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns2\\d\\.dnshostcentral\\.com"
+],
+"SOA": [
+"ns2\\d\\.dnshostcentral\\.com"
+]
+}
+},
+{
+"name": "Webempresa",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns\\d+\\.webempresa\\.eu"
+],
+"SOA": [
+"ns\\d+\\.webempresa\\.eu"
+]
+}
+},
+{
+"name": "Windsurf",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"windsurf-verification="
+]
+}
+},
+{
+"name": "Wiz",
+"cat": "security",
+"dns": {
+"TXT": [
+"wiz-domain-verification="
+]
+}
+},
+{
+"name": "Workplace by Meta",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"workplace-domain-verification="
+]
+}
+},
+{
+"name": "World4You",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"ns\\d+\\.world4you\\.at"
+]
+}
+},
+{
+"name": "Xserver",
+"cat": "cloud",
+"dns": {
+"SOA": [
+"\\.xserver\\.jp"
+]
+}
+},
+{
+"name": "Yahoo",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"yahoo-verification-key="
+]
+}
+},
+{
+"name": "YalinHost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.yalinhost\\.com"
+],
+"SOA": [
+"\\.yalinhost\\.com"
+]
+}
+},
+{
+"name": "Zapier",
+"cat": "dev",
+"dns": {
+"TXT": [
+"zapier-domain-verification-challenge="
+]
+}
+},
+{
+"name": "Zendesk",
+"cat": "docs",
+"dns": {
+"TXT": [
+"mail\\.zendesk\\.com"
+]
+}
+},
+{
+"name": "Zoho",
+"cat": "crm",
+"dns": {
+"TXT": [
+"\\.zoho\\.com"
+]
+}
+},
+{
+"name": "Zoho Mail",
+"cat": "email",
+"dns": {
+"TXT": [
+"transmail\\.net"
+]
+}
+},
+{
+"name": "Zoom",
+"cat": "cloud",
+"dns": {
+"TXT": [
+"^ZOOM_verify_",
+"zoom-domain-verification="
+]
+}
+},
+{
+"name": "idCloudHost",
+"cat": "cloud",
+"dns": {
+"NS": [
+"ns\\d+\\.cloudhost\\.id"
+],
+"SOA": [
+"ns\\d+\\.cloudhost\\.id"
+]
+}
+},
+{
+"name": "maxcluster",
+"cat": "cloud",
+"dns": {
+"NS": [
+"\\.maxcluster\\.net"
+]
+}
+}
+]
+}

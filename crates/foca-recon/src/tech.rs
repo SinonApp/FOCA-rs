@@ -1,21 +1,34 @@
-//! Site technology detection with Wappalyzer/webappanalyzer-style rules: response headers,
-//! `<meta>` (generator and others), cookies, HTML regexes and `<script src>`. JS globals and
+//! Site technology detection with Wappalyzer-style rules: response headers, `<meta>`
+//! (generator and others), cookies, HTML regexes, `<script src>` and the page URL. JS globals and
 //! the DOM are unavailable (there is no JS engine), so such rules are not supported.
 //!
-//! Rules live in `data/tech.json` (embedded with `include_str!`, about 130 technologies,
-//! GPL-3.0, hand-written with Wappalyzer's key format). The version is the first non-empty
-//! capture group. Analytics and advertising ids ([`extract_analytics_ids`]) are extracted as
-//! well, as pivots for finding related sites.
+//! Two rule sets are merged by technology name:
+//! * `data/tech.json`: about 130 hand-written rules (GPL-3.0, part of FOCA-rs) with tuned
+//!   categories, outdated thresholds and end-of-life branches; they win on conflicts;
+//! * `data/webappanalyzer.json.gz`: the webappanalyzer fingerprints (GPL-3.0, enthec), converted
+//!   by `foca-analysis/signatures/tools/update_webappanalyzer.py` (regexes the Rust engine rejects
+//!   are dropped there). A signed signature bundle may replace this table at runtime
+//!   ([`install_upstream`]).
+//!
+//! Upstream regexes carry a lowercase literal that every match must contain: one Aho-Corasick
+//! pass over the page finds the present literals and only those regexes are compiled (lazily,
+//! once) and run. The version is the upstream version template (`\1`, `\1?a:b`) or the first
+//! non-empty capture group. Analytics and advertising ids ([`extract_analytics_ids`]) are
+//! extracted as well, as pivots for finding related sites.
 
-use std::collections::BTreeMap;
-use std::sync::OnceLock;
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::io::Read;
+use std::sync::{Arc, OnceLock, RwLock};
 
+use aho_corasick::{AhoCorasick, AhoCorasickBuilder, MatchKind};
 use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 
 use crate::favicon::attrs;
 
 const RULES_JSON: &str = include_str!("../data/tech.json");
+/// Converted webappanalyzer fingerprints (gzip JSON).
+pub const UPSTREAM_GZ: &[u8] = include_bytes!("../data/webappanalyzer.json.gz");
 
 /// A technology rule (as in `data/tech.json`).
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -40,6 +53,15 @@ pub struct TechRule {
     /// `upto` is reported as unsupported since `date`.
     pub eol_branches: Vec<EolBranch>,
     pub website: Option<String>,
+    /// CPE 2.3 name (`cpe:2.3:a:f5:nginx:*:...`), from the upstream table.
+    #[serde(skip)]
+    pub cpe: Option<String>,
+    /// Reported only together with one of these technologies.
+    #[serde(skip)]
+    pub requires: Vec<String>,
+    /// Detecting this technology removes these ones.
+    #[serde(skip)]
+    pub excludes: Vec<String>,
 }
 
 /// An unsupported release branch: versions up to `upto` (compared on its components, so `8.1`
@@ -69,13 +91,143 @@ struct RulesFile {
     technologies: Vec<TechRule>,
 }
 
+/// A pattern: regex source, optional version template, confidence (0 = field default) and the
+/// prefilter literal index. The regex is compiled on first use.
+#[derive(Debug)]
+struct Pat {
+    src: String,
+    ver: Option<String>,
+    conf: u8,
+    lit: Option<usize>,
+    re: OnceLock<Option<Regex>>,
+}
+
+impl Pat {
+    fn new(src: &str) -> Pat {
+        Pat {
+            src: src.to_string(),
+            ver: None,
+            conf: 0,
+            lit: None,
+            re: OnceLock::new(),
+        }
+    }
+
+    /// `None` for an empty pattern (presence is enough) or one that does not compile.
+    fn re(&self) -> Option<&Regex> {
+        self.re.get_or_init(|| re(&self.src)).as_ref()
+    }
+
+    /// An upstream pattern `[regex, version template, confidence, literal]`; the literal is
+    /// interned into `lits` (its index is the Aho-Corasick pattern id).
+    fn upstream(
+        v: &[serde_json::Value],
+        lits: &mut Vec<String>,
+        seen: &mut HashMap<String, usize>,
+    ) -> Pat {
+        let s = |i: usize| v.get(i).and_then(|x| x.as_str()).unwrap_or("");
+        let mut p = Pat::new(s(0));
+        p.ver = Some(s(1)).filter(|t| !t.is_empty()).map(String::from);
+        p.conf = v
+            .get(2)
+            .and_then(|x| x.as_u64())
+            .map_or(0, |c| c.min(100) as u8);
+        let lit = s(3);
+        if !lit.is_empty() {
+            let next = lits.len();
+            let id = *seen.entry(lit.to_string()).or_insert(next);
+            if id == next {
+                lits.push(lit.to_string());
+            }
+            p.lit = Some(id);
+        }
+        p
+    }
+
+    /// Presence is enough (no regex for the value).
+    fn presence_only(&self) -> bool {
+        self.src.is_empty()
+    }
+
+    /// Whether the prefilter allows a match: no literal, or its literal is in `present`.
+    fn may_match(&self, present: &HashSet<usize>) -> bool {
+        self.lit.is_none_or(|l| present.contains(&l))
+    }
+
+    fn weight(&self, base: u32) -> u32 {
+        if self.conf == 0 {
+            base
+        } else {
+            base * u32::from(self.conf.min(100)) / 100
+        }
+    }
+
+    /// `Some(version)` when `s` matches (presence-only patterns always match).
+    fn version(&self, s: &str) -> Option<Option<String>> {
+        if self.src.is_empty() {
+            return Some(None);
+        }
+        let re = self.re()?;
+        let c = re.captures(s)?;
+        Some(match &self.ver {
+            Some(t) => apply_version_template(t, &c),
+            None => c
+                .iter()
+                .skip(1)
+                .flatten()
+                .map(|m| m.as_str().trim_matches('.').to_string())
+                .find(|v| v.chars().any(|c| c.is_ascii_digit())),
+        })
+    }
+}
+
+/// Expands an upstream version template: `\1` is replaced by group 1, `\1?a:b` gives `a` when
+/// group 1 matched and `b` otherwise. An empty result means no version.
+pub fn apply_version_template(t: &str, c: &regex::Captures) -> Option<String> {
+    let group = |i: usize| c.get(i).map(|m| m.as_str()).filter(|s| !s.is_empty());
+    let b = t.as_bytes();
+    let mut out = String::new();
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'\\' && i + 1 < b.len() && b[i + 1].is_ascii_digit() {
+            let g = usize::from(b[i + 1] - b'0');
+            i += 2;
+            if i < b.len() && b[i] == b'?' {
+                // Ternary `\N?yes:no`: both branches run up to the next `:` / end.
+                let rest = &t[i + 1..];
+                let (yes, no) = rest.split_once(':').unwrap_or((rest, ""));
+                out.push_str(if group(g).is_some() { yes } else { no });
+                break;
+            }
+            out.push_str(group(g).unwrap_or(""));
+        } else {
+            let ch = t[i..].chars().next().unwrap_or(' ');
+            out.push(ch);
+            i += ch.len_utf8();
+        }
+    }
+    let v = out.trim().trim_matches('.').to_string();
+    (!v.is_empty() && v.chars().any(|c| c.is_ascii_alphanumeric())).then_some(v)
+}
+
 struct Compiled {
     rule: TechRule,
-    headers: Vec<(String, Option<Regex>)>,
-    meta: Vec<(String, Option<Regex>)>,
-    cookies: Vec<(String, Option<Regex>)>,
-    html: Vec<Regex>,
-    scripts: Vec<Regex>,
+    headers: Vec<(String, Pat)>,
+    meta: Vec<(String, Pat)>,
+    cookies: Vec<(String, Pat)>,
+    html: Vec<Pat>,
+    scripts: Vec<Pat>,
+    url: Vec<Pat>,
+}
+
+/// The merged rule database.
+struct Db {
+    techs: Vec<Compiled>,
+    by_name: HashMap<String, usize>,
+    /// Prefilter over the literals of every upstream html/script/url pattern.
+    lits: Option<AhoCorasick>,
+    hand: usize,
+    upstream: usize,
 }
 
 fn re(p: &str) -> Option<Regex> {
@@ -89,32 +241,197 @@ fn re(p: &str) -> Option<Regex> {
         .ok()
 }
 
-fn compiled() -> &'static [Compiled] {
-    static C: OnceLock<Vec<Compiled>> = OnceLock::new();
-    C.get_or_init(|| {
-        let f: RulesFile = serde_json::from_str(RULES_JSON).expect("data/tech.json");
-        let kv = |m: &BTreeMap<String, String>| {
-            m.iter()
-                .map(|(k, v)| (k.to_ascii_lowercase(), re(v)))
-                .collect::<Vec<_>>()
-        };
-        f.technologies
-            .into_iter()
-            .map(|r| Compiled {
-                headers: kv(&r.headers),
-                meta: kv(&r.meta),
-                cookies: r.cookies.iter().map(|(k, v)| (k.clone(), re(v))).collect(),
-                html: r.html.iter().filter_map(|p| re(p)).collect(),
-                scripts: r.scripts.iter().filter_map(|p| re(p)).collect(),
-                rule: r,
-            })
-            .collect()
-    })
+/// Upstream table as written by the ingest script.
+#[derive(Deserialize)]
+struct UpstreamFile {
+    #[serde(default)]
+    technologies: Vec<UpstreamTech>,
 }
 
-/// Returns all built-in rules.
-pub fn rules() -> impl Iterator<Item = &'static TechRule> {
-    compiled().iter().map(|c| &c.rule)
+#[derive(Deserialize, Default)]
+#[serde(default)]
+struct UpstreamTech {
+    n: String,
+    c: String,
+    h: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+    k: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+    m: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+    x: Vec<Vec<serde_json::Value>>,
+    s: Vec<Vec<serde_json::Value>>,
+    u: Vec<Vec<serde_json::Value>>,
+    i: Vec<String>,
+    r: Vec<String>,
+    e: Vec<String>,
+    cpe: Option<String>,
+    w: Option<String>,
+}
+
+/// Gunzips and parses an upstream table.
+pub fn parse_upstream(gz: &[u8]) -> Result<usize, String> {
+    Ok(read_upstream(gz)?.len())
+}
+
+fn read_upstream(gz: &[u8]) -> Result<Vec<UpstreamTech>, String> {
+    let mut text = String::new();
+    flate2::read::GzDecoder::new(gz)
+        .read_to_string(&mut text)
+        .map_err(|e| format!("gzip: {e}"))?;
+    let f: UpstreamFile = serde_json::from_str(&text).map_err(|e| format!("json: {e}"))?;
+    Ok(f.technologies)
+}
+
+fn build_db(upstream: Vec<UpstreamTech>) -> Db {
+    let f: RulesFile = serde_json::from_str(RULES_JSON).expect("data/tech.json");
+    let kv = |m: &BTreeMap<String, String>, lower: bool| {
+        m.iter()
+            .map(|(k, v)| {
+                let k = if lower {
+                    k.to_ascii_lowercase()
+                } else {
+                    k.clone()
+                };
+                (k, Pat::new(v))
+            })
+            .collect::<Vec<_>>()
+    };
+    let mut techs: Vec<Compiled> = f
+        .technologies
+        .into_iter()
+        .map(|r| Compiled {
+            headers: kv(&r.headers, true),
+            meta: kv(&r.meta, true),
+            cookies: kv(&r.cookies, false),
+            html: r.html.iter().map(|p| Pat::new(p)).collect(),
+            scripts: r.scripts.iter().map(|p| Pat::new(p)).collect(),
+            url: Vec::new(),
+            rule: r,
+        })
+        .collect();
+    let hand = techs.len();
+    let mut by_name: HashMap<String, usize> = techs
+        .iter()
+        .enumerate()
+        .map(|(i, c)| (c.rule.name.clone(), i))
+        .collect();
+    let mut lits = Vec::new();
+    let mut seen = HashMap::new();
+    let n_up = upstream.len();
+    for u in upstream {
+        let idx = match by_name.get(&u.n) {
+            Some(&i) => i,
+            None => {
+                techs.push(Compiled {
+                    rule: TechRule {
+                        name: u.n.clone(),
+                        cat: u.c.clone(),
+                        ..TechRule::default()
+                    },
+                    headers: Vec::new(),
+                    meta: Vec::new(),
+                    cookies: Vec::new(),
+                    html: Vec::new(),
+                    scripts: Vec::new(),
+                    url: Vec::new(),
+                });
+                by_name.insert(u.n.clone(), techs.len() - 1);
+                techs.len() - 1
+            }
+        };
+        let mut pats = |m: &BTreeMap<String, Vec<Vec<serde_json::Value>>>| {
+            let mut out = Vec::new();
+            for (k, ps) in m {
+                for p in ps {
+                    out.push((k.clone(), Pat::upstream(p, &mut lits, &mut seen)));
+                }
+            }
+            out
+        };
+        let (h, k, m) = (pats(&u.h), pats(&u.k), pats(&u.m));
+        let mut list = |v: &[Vec<serde_json::Value>]| {
+            v.iter()
+                .map(|p| Pat::upstream(p, &mut lits, &mut seen))
+                .collect::<Vec<_>>()
+        };
+        let (x, s, url) = (list(&u.x), list(&u.s), list(&u.u));
+        let t = &mut techs[idx];
+        t.headers.extend(h);
+        t.cookies.extend(k);
+        t.meta.extend(m);
+        t.html.extend(x);
+        t.scripts.extend(s);
+        t.url.extend(url);
+        for i in u.i {
+            if !t.rule.implies.contains(&i) && i != t.rule.name {
+                t.rule.implies.push(i);
+            }
+        }
+        t.rule.requires = u.r;
+        t.rule.excludes = u.e;
+        if t.rule.cpe.is_none() {
+            t.rule.cpe = u.cpe;
+        }
+        if t.rule.website.is_none() {
+            t.rule.website = u.w;
+        }
+    }
+    let lits = (!lits.is_empty()).then(|| {
+        AhoCorasickBuilder::new()
+            .ascii_case_insensitive(true)
+            .match_kind(MatchKind::Standard)
+            .build(&lits)
+            .expect("literal prefilter")
+    });
+    Db {
+        techs,
+        by_name,
+        lits,
+        hand,
+        upstream: n_up,
+    }
+}
+
+fn db_slot() -> &'static RwLock<Option<Arc<Db>>> {
+    static DB: RwLock<Option<Arc<Db>>> = RwLock::new(None);
+    &DB
+}
+
+fn db() -> Arc<Db> {
+    if let Some(d) = db_slot().read().ok().and_then(|g| g.clone()) {
+        return d;
+    }
+    let mut g = db_slot().write().unwrap_or_else(|e| e.into_inner());
+    g.get_or_insert_with(|| Arc::new(build_db(read_upstream(UPSTREAM_GZ).unwrap_or_default())))
+        .clone()
+}
+
+/// Replaces the upstream table (a signed signature bundle) and returns its technology count.
+/// The hand rules stay; an invalid table leaves the current rules untouched.
+pub fn install_upstream(gz: &[u8]) -> Result<usize, String> {
+    let up = read_upstream(gz)?;
+    let n = up.len();
+    let new = Arc::new(build_db(up));
+    *db_slot().write().unwrap_or_else(|e| e.into_inner()) = Some(new);
+    Ok(n)
+}
+
+/// Loaded rule numbers: hand rules, upstream records and merged technologies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct TechCounts {
+    pub hand: usize,
+    pub upstream: usize,
+    pub technologies: usize,
+    pub with_cpe: usize,
+}
+
+/// Numbers of the rule database in use.
+pub fn counts() -> TechCounts {
+    let d = db();
+    TechCounts {
+        hand: d.hand,
+        upstream: d.upstream,
+        technologies: d.techs.len(),
+        with_cpe: d.techs.iter().filter(|t| t.rule.cpe.is_some()).count(),
+    }
 }
 
 /// A downloaded page: URL, response headers (as received, case-insensitive) and HTML body.
@@ -140,6 +457,9 @@ pub struct Technology {
     /// Why the version is outdated, if it is.
     pub outdated: Option<String>,
     pub website: Option<String>,
+    /// CPE 2.3 name of the product (upstream table), for matching against vulnerability data.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cpe: Option<String>,
 }
 
 /// Compares versions by numeric components (`1.12.4` < `3.5.0`).
@@ -166,17 +486,6 @@ pub fn version_lt(a: &str, b: &str) -> bool {
         }
     }
     false
-}
-
-fn version_of(re: &Regex, s: &str) -> Option<Option<String>> {
-    let c = re.captures(s)?;
-    let v = c
-        .iter()
-        .skip(1)
-        .flatten()
-        .map(|m| m.as_str().trim_matches('.').to_string())
-        .find(|v| v.chars().any(|c| c.is_ascii_digit()));
-    Some(v)
 }
 
 fn tag_re(name: &str) -> Regex {
@@ -255,6 +564,7 @@ fn clip(s: &str, n: usize) -> String {
 
 /// Detects the technologies of a page. The order is deterministic: by category, then name.
 pub fn detect(page: &PageInput) -> Vec<Technology> {
+    let db = db();
     let headers: Vec<(String, String)> = page
         .headers
         .iter()
@@ -263,64 +573,74 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
     let cookies = cookies_from_headers(&headers);
     let meta = extract_meta(&page.html);
     let scripts = extract_script_srcs(&page.html);
+    // Literal prefilter: which upstream html/script/url patterns can match at all.
+    let present = |text: &str| -> HashSet<usize> {
+        db.lits.as_ref().map_or_else(HashSet::new, |ac| {
+            ac.find_overlapping_iter(text)
+                .map(|m| m.pattern().as_usize())
+                .collect()
+        })
+    };
+    let in_html = present(&page.html);
+    let in_scripts = present(&scripts.join("\n"));
+    let in_url = present(&page.url);
     let mut found: BTreeMap<String, Acc> = BTreeMap::new();
-    for c in compiled() {
+    for c in &db.techs {
         let mut acc = Acc::default();
-        for (h, r) in &c.headers {
+        for (h, p) in &c.headers {
             for (_, v) in headers.iter().filter(|(k, _)| k == h) {
-                match r {
-                    None => acc.hit(100, None, format!("header {h}")),
-                    Some(r) => {
-                        if let Some(ver) = version_of(r, v) {
-                            acc.hit(100, ver, format!("header {h}: {}", clip(v, 80)));
-                        }
-                    }
+                if let Some(ver) = p.version(v) {
+                    let ev = if p.presence_only() {
+                        format!("header {h}")
+                    } else {
+                        format!("header {h}: {}", clip(v, 80))
+                    };
+                    acc.hit(p.weight(100), ver, ev);
                 }
             }
         }
-        for (m, r) in &c.meta {
+        for (m, p) in &c.meta {
             for (_, v) in meta.iter().filter(|(k, _)| k == m) {
-                let hit = match r {
-                    None => Some(None),
-                    Some(r) => version_of(r, v),
-                };
-                if let Some(ver) = hit {
-                    acc.hit(100, ver, format!("meta {m}: {}", clip(v, 80)));
+                if let Some(ver) = p.version(v) {
+                    acc.hit(p.weight(100), ver, format!("meta {m}: {}", clip(v, 80)));
                 }
             }
         }
-        for (name, r) in &c.cookies {
+        for (name, p) in &c.cookies {
             for (n, v) in cookies.iter().filter(|(n, _)| n.starts_with(name.as_str())) {
-                let hit = match r {
-                    None => Some(None),
-                    Some(r) => version_of(r, v),
-                };
-                if let Some(ver) = hit {
-                    acc.hit(100, ver, format!("cookie {n}"));
+                if let Some(ver) = p.version(v) {
+                    acc.hit(p.weight(100), ver, format!("cookie {n}"));
                 }
             }
         }
-        for r in &c.scripts {
+        for p in c.scripts.iter().filter(|p| p.may_match(&in_scripts)) {
             for s in &scripts {
-                if let Some(ver) = version_of(r, s) {
-                    acc.hit(75, ver, format!("script: {}", clip(s, 120)));
+                if let Some(ver) = p.version(s) {
+                    acc.hit(p.weight(75), ver, format!("script: {}", clip(s, 120)));
                 }
             }
         }
-        for r in &c.html {
+        for p in c.html.iter().filter(|p| p.may_match(&in_html)) {
+            let Some(r) = p.re() else { continue };
             if let Some(m) = r.find(&page.html) {
-                let ver = version_of(r, m.as_str()).flatten();
-                acc.hit(50, ver, format!("html: {}", clip(m.as_str(), 80)));
+                let ver = p.version(m.as_str()).flatten();
+                acc.hit(p.weight(50), ver, format!("html: {}", clip(m.as_str(), 80)));
+            }
+        }
+        for p in c.url.iter().filter(|p| p.may_match(&in_url)) {
+            if let Some(ver) = p.version(&page.url) {
+                acc.hit(p.weight(50), ver, format!("url: {}", clip(&page.url, 80)));
             }
         }
         if acc.conf > 0 {
             found.insert(c.rule.name.clone(), acc);
         }
     }
+    let rule = |n: &str| db.by_name.get(n).map(|&i| &db.techs[i]);
     // Resolve `implies` transitively, guarding against cycles.
     let mut queue: Vec<String> = found.keys().cloned().collect();
     while let Some(n) = queue.pop() {
-        let Some(c) = compiled().iter().find(|c| c.rule.name == n) else {
+        let Some(c) = rule(&n) else {
             continue;
         };
         let conf = found.get(&n).map(|a| a.conf.min(100)).unwrap_or(0);
@@ -333,10 +653,24 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
             }
         }
     }
+    // `excludes` and `requires` (upstream semantics): drop excluded names, then names whose
+    // required companion is absent.
+    let excluded: HashSet<String> = found
+        .keys()
+        .filter_map(|n| rule(n))
+        .flat_map(|c| c.rule.excludes.iter().cloned())
+        .collect();
+    found.retain(|n, _| !excluded.contains(n));
+    let names: HashSet<String> = found.keys().cloned().collect();
+    found.retain(|n, _| {
+        rule(n).is_none_or(|c| {
+            c.rule.requires.is_empty() || c.rule.requires.iter().any(|r| names.contains(r))
+        })
+    });
     let mut out: Vec<Technology> = found
         .into_iter()
         .filter_map(|(name, acc)| {
-            let c = compiled().iter().find(|c| c.rule.name == name)?;
+            let c = rule(&name)?;
             let branch_eol = acc
                 .version
                 .as_deref()
@@ -356,6 +690,7 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
                 evidence: acc.evidence,
                 outdated,
                 website: c.rule.website.clone(),
+                cpe: c.rule.cpe.clone(),
                 name,
             })
         })
@@ -465,25 +800,111 @@ mod tests {
             ("Nginx", "1.18.0"),
             ("jQuery", "2.2.4"),
         ] {
-            let r = compiled().iter().find(|c| c.rule.name == name).unwrap();
-            let note = eol_branch_note(&r.rule.eol_branches, ver);
+            let r = rule_of(name);
+            let note = eol_branch_note(&r.eol_branches, ver);
             assert!(note.is_some(), "{name} {ver}");
         }
-        let php = compiled().iter().find(|c| c.rule.name == "PHP").unwrap();
-        assert_eq!(eol_branch_note(&php.rule.eol_branches, "8.2.0"), None);
+        let php = rule_of("PHP");
+        assert_eq!(eol_branch_note(&php.eol_branches, "8.2.0"), None);
+    }
+
+    fn rule_of(name: &str) -> TechRule {
+        let d = db();
+        let i = d.by_name[name];
+        d.techs[i].rule.clone()
     }
 
     #[test]
     fn rules_load_and_compile() {
-        let n = rules().count();
-        assert!((100..=200).contains(&n), "{n}");
-        for c in compiled() {
-            assert_eq!(c.html.len(), c.rule.html.len(), "{}", c.rule.name);
-            assert_eq!(c.scripts.len(), c.rule.scripts.len(), "{}", c.rule.name);
-            for i in &c.rule.implies {
-                assert!(rules().any(|r| &r.name == i), "{} implies {i}", c.rule.name);
+        let c = counts();
+        assert!((100..=200).contains(&c.hand), "{c:?}");
+        assert!(c.upstream > 5000, "{c:?}");
+        assert!(c.technologies > c.upstream, "{c:?}");
+        assert!(c.with_cpe > 400, "{c:?}");
+        let d = db();
+        // Every hand pattern compiles; the upstream ones were checked by the ingest script.
+        for t in &d.techs[..d.hand] {
+            for p in t.html.iter().chain(&t.scripts) {
+                assert!(p.re().is_some(), "{}: {p:?}", t.rule.name);
+            }
+            for i in &t.rule.implies {
+                assert!(d.by_name.contains_key(i), "{} implies {i}", t.rule.name);
             }
         }
+        // Hand rules keep their tuned fields after the merge.
+        let nginx = rule_of("Nginx");
+        assert_eq!(nginx.cat, "Веб-сервер");
+        assert_eq!(nginx.outdated_below.as_deref(), Some("1.20"));
+        assert_eq!(
+            nginx.cpe.as_deref(),
+            Some("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*")
+        );
+        // Upstream names are aliased onto the hand ones (`IIS` -> `Microsoft IIS`).
+        assert!(!d.by_name.contains_key("IIS"));
+        assert!(rule_of("Microsoft IIS").cpe.is_some());
+    }
+
+    #[test]
+    fn version_templates() {
+        let r = Regex::new(r"nginx(?:/([\d.]+))?").unwrap();
+        let c = r.captures("nginx/1.25.3").unwrap();
+        assert_eq!(apply_version_template(r"\1", &c).as_deref(), Some("1.25.3"));
+        assert_eq!(
+            apply_version_template(r"\1?new:old", &c).as_deref(),
+            Some("new")
+        );
+        let c = r.captures("nginx").unwrap();
+        assert_eq!(apply_version_template(r"\1", &c), None);
+        assert_eq!(
+            apply_version_template(r"\1?new:old", &c).as_deref(),
+            Some("old")
+        );
+    }
+
+    #[test]
+    fn upstream_rules_detect_more_stacks() {
+        let p = PageInput {
+            url: "https://shop.example/".into(),
+            headers: vec![
+                ("Server".into(), "Microsoft-IIS/8.5".into()),
+                ("X-Powered-By".into(), "ASP.NET".into()),
+                ("Set-Cookie".into(), "ci_session=abc; path=/".into()),
+            ],
+            html: concat!(
+                "<html><head><meta name=\"generator\" content=\"Hugo 0.111.3\">",
+                "<script src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js\"></script>",
+                "</head><body>hi</body></html>"
+            )
+            .into(),
+        };
+        let t = detect(&p);
+        let iis = get(&t, "Microsoft IIS");
+        assert_eq!(iis.version.as_deref(), Some("8.5"));
+        assert!(iis.cpe.as_deref().unwrap().contains(":microsoft:"));
+        assert_eq!(get(&t, "Hugo").version.as_deref(), Some("0.111.3"));
+        assert_eq!(get(&t, "CodeIgniter").category, "Фреймворк");
+        // A plain page gets nothing from the upstream rules.
+        let empty = detect(&PageInput {
+            url: "https://x.example/".into(),
+            headers: vec![],
+            html: "<html><body>hello</body></html>".into(),
+        });
+        assert!(empty.is_empty(), "{empty:?}");
+    }
+
+    #[test]
+    fn startup_and_detect_stay_fast() {
+        // The merged database is built once; measure a fresh build and one detect on a page.
+        let t0 = std::time::Instant::now();
+        let d = build_db(read_upstream(UPSTREAM_GZ).unwrap());
+        let build = t0.elapsed();
+        assert!(d.techs.len() > 5000);
+        let t1 = std::time::Instant::now();
+        let _ = detect(&page());
+        let first = t1.elapsed();
+        eprintln!("tech db build {build:?}, first detect {first:?}");
+        // Generous bounds for debug builds on a loaded CI box.
+        assert!(build.as_secs() < 5, "{build:?}");
     }
 
     #[test]

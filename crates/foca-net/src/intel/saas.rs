@@ -6,7 +6,9 @@
 //! module is passive with respect to the target; matching itself is pure and table-driven.
 
 use std::collections::BTreeSet;
+use std::sync::{Arc, RwLock};
 
+use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 
 use crate::dns::{norm_name, DnsLookup, RType};
@@ -503,6 +505,124 @@ pub fn unknown_verification(txt: &str) -> Option<String> {
     None
 }
 
+/// webappanalyzer DNS rules (GPL-3.0, enthec), converted by
+/// `foca-analysis/signatures/tools/update_webappanalyzer.py`: regexes over MX hosts, TXT records
+/// and CNAME targets. They only add services the hand tables above do not know.
+pub const UPSTREAM_DNS_JSON: &str = include_str!("../../data/saas_dns.json");
+
+#[derive(Deserialize)]
+struct UpstreamDnsFile {
+    rules: Vec<UpstreamDnsDef>,
+}
+
+#[derive(Deserialize)]
+struct UpstreamDnsDef {
+    name: String,
+    cat: String,
+    dns: std::collections::BTreeMap<String, Vec<String>>,
+}
+
+struct DnsRule {
+    name: String,
+    cat: String,
+    /// (record type, regex)
+    res: Vec<(String, Regex)>,
+}
+
+fn parse_upstream_dns(json: &str) -> Result<Vec<DnsRule>, String> {
+    let f: UpstreamDnsFile = serde_json::from_str(json).map_err(|e| e.to_string())?;
+    Ok(f.rules
+        .into_iter()
+        .map(|d| DnsRule {
+            res: d
+                .dns
+                .into_iter()
+                .flat_map(|(t, ps)| ps.into_iter().map(move |p| (t.clone(), p)))
+                .filter_map(|(t, p)| {
+                    let re = RegexBuilder::new(&p)
+                        .case_insensitive(true)
+                        .size_limit(1 << 20)
+                        .build()
+                        .ok()?;
+                    Some((t, re))
+                })
+                .collect(),
+            name: d.name,
+            cat: d.cat,
+        })
+        .collect())
+}
+
+fn upstream_slot() -> &'static RwLock<Option<Arc<Vec<DnsRule>>>> {
+    static S: RwLock<Option<Arc<Vec<DnsRule>>>> = RwLock::new(None);
+    &S
+}
+
+fn upstream_dns() -> Arc<Vec<DnsRule>> {
+    if let Some(r) = upstream_slot().read().ok().and_then(|g| g.clone()) {
+        return r;
+    }
+    let mut g = upstream_slot().write().unwrap_or_else(|e| e.into_inner());
+    g.get_or_insert_with(|| Arc::new(parse_upstream_dns(UPSTREAM_DNS_JSON).unwrap_or_default()))
+        .clone()
+}
+
+/// Replaces the upstream DNS rules (a signed signature bundle); returns the rule count.
+pub fn install_upstream_dns(json: &str) -> Result<usize, String> {
+    let rules = parse_upstream_dns(json)?;
+    let n = rules.len();
+    *upstream_slot().write().unwrap_or_else(|e| e.into_inner()) = Some(Arc::new(rules));
+    Ok(n)
+}
+
+/// Number of upstream DNS rules in use.
+pub fn upstream_dns_count() -> usize {
+    upstream_dns().len()
+}
+
+fn slug(name: &str) -> String {
+    let s: String = name
+        .to_ascii_lowercase()
+        .chars()
+        .map(|c| if c.is_ascii_alphanumeric() { c } else { '_' })
+        .collect();
+    s.trim_matches('_').to_string()
+}
+
+/// Services recognized by the upstream rules from TXT, MX and CNAME values.
+pub fn fingerprint_upstream(txt: &[String], mx: &[String], cnames: &[String]) -> Vec<SaasHit> {
+    let mut out = Vec::new();
+    let rules = upstream_dns();
+    let mx_hosts: Vec<String> = mx
+        .iter()
+        .filter_map(|v| v.split_whitespace().last().map(norm_name))
+        .collect();
+    let cn: Vec<String> = cnames.iter().map(|c| norm_name(c)).collect();
+    for r in rules.iter() {
+        let found = r.res.iter().find_map(|(t, re)| {
+            let (vals, kind): (&[String], EvidenceKind) = match t.as_str() {
+                "TXT" => (txt, EvidenceKind::Txt),
+                "MX" => (&mx_hosts, EvidenceKind::Mx),
+                "CNAME" => (&cn, EvidenceKind::Cname),
+                _ => return None,
+            };
+            vals.iter()
+                .find(|v| re.is_match(v.trim()))
+                .map(|v| (kind, v.trim().to_string()))
+        });
+        if let Some((evidence, record)) = found {
+            out.push(SaasHit {
+                id: slug(&r.name),
+                name: r.name.clone(),
+                category: r.cat.clone(),
+                evidence,
+                record,
+            });
+        }
+    }
+    out
+}
+
 /// Map of the SaaS/cloud services of a domain.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SaasMap {
@@ -550,6 +670,15 @@ pub fn analyze_saas(
     }
     for h in cnames.iter().filter_map(|c| fingerprint_cname(c)) {
         m.push(h);
+    }
+    // Upstream rules only add services the hand tables did not recognize.
+    for h in fingerprint_upstream(txt, mx, cnames) {
+        let same = |x: &SaasHit| {
+            x.name.eq_ignore_ascii_case(&h.name) || x.id == h.id || x.record == h.record
+        };
+        if !m.hits.iter().any(same) {
+            m.push(h);
+        }
     }
     if let Some(t) = amazonses_txt.iter().find(|t| !t.trim().is_empty()) {
         m.push(SaasHit {
@@ -608,6 +737,35 @@ pub async fn saas_map(dns: &dyn DnsLookup, domain: &str) -> SaasMap {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn upstream_dns_rules_add_unknown_services_only() {
+        assert!(upstream_dns_count() > 100, "{}", upstream_dns_count());
+        // DanDomain MX is not in the hand table: the upstream rules recognize it.
+        let m = analyze_saas(
+            "contoso.ua",
+            &[],
+            &[
+                "10 mx1.dandomain.dk.".to_string(),
+                "10 aspmx.l.google.com.".to_string(),
+            ],
+            &[],
+            &[],
+        );
+        assert!(
+            m.hits
+                .iter()
+                .any(|h| h.name == "DanDomain email" && h.evidence == EvidenceKind::Mx),
+            "{m:?}"
+        );
+        // A record the hand table matched is not reported twice under an upstream name.
+        let google = m
+            .hits
+            .iter()
+            .filter(|h| h.record == "aspmx.l.google.com")
+            .count();
+        assert_eq!(google, 1, "{m:?}");
+    }
     use crate::dns::StaticDns;
 
     fn s(v: &[&str]) -> Vec<String> {

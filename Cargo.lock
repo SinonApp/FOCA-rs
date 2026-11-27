@@ -1271,6 +1271,8 @@ dependencies = [
 name = "foca-recon"
 version = "2.0.0-beta.3"
 dependencies = [
+ "aho-corasick",
+ "flate2",
  "foca-core",
  "foca-net",
  "regex",
