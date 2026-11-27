@@ -1,6 +1,37 @@
 {
  "_about": "Pinned upstream versions of the ingested signature sources",
  "sources": {
+  "gitleaks": {
+   "repo": "https://github.com/gitleaks/gitleaks",
+   "tag": "v8.30.1",
+   "commit": "5f6ec56cfa6f8c67648d863582c7ae2f206d5c1c",
+   "license": "MIT",
+   "license_file": "LICENSE",
+   "license_sha256": "e3884b252b3bfc045e55be43a34d1e80da070bc6f804ac95bf4660e97d62ebc6",
+   "attribution": "Secret detection rules from gitleaks, Copyright (c) 2019 Zachary Rice, MIT License, https://github.com/gitleaks/gitleaks",
+   "inputs": {
+    "config/gitleaks.toml": "e163e53b9e7e8a8511e77271e2b323ed057759542a6d988258afe3a1fa329caf",
+    "LICENSE": "e3884b252b3bfc045e55be43a34d1e80da070bc6f804ac95bf4660e97d62ebc6"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-analysis/signatures/secrets_gitleaks.toml",
+     "bytes": 60829,
+     "sha256": "6a07415b2a72c1c47f2aa23c0c94f9d94614efbdf635ed8afd66531c334788f2"
+    }
+   ],
+   "stats": {
+    "rules_upstream": 222,
+    "rules_kept": 197,
+    "skipped": {
+     "covered": 20,
+     "path_only": 5,
+     "regex": 0,
+     "allowlist_paths": 0
+    },
+    "allowlist_regexes_dropped": 3
+   }
+  },
   "webappanalyzer": {
    "repo": "https://github.com/enthec/webappanalyzer",
    "commit": "7dba7bf3e8b4f25c6a5b4b2c9f5e7a0e73e6a1bf",

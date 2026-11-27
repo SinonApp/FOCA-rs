@@ -3683,6 +3683,18 @@
       "rules": "reqlog,mail-mta_sts_policy_unreachable",
       "pattern": "{} {} через DoH: {}",
       "text": "{} {} через DoH: {}"
+    },
+    {
+      "id": "f615",
+      "rules": "secret,rdp-password,ica-password,recon.js_secret",
+      "pattern": "Ключ или токен {}",
+      "text": "Ключ или токен {}"
+    },
+    {
+      "id": "f616",
+      "rules": "secret,rdp-password,ica-password,recon.js_secret",
+      "pattern": "Учётные данные в команде curl",
+      "text": "Учётные данные в команде curl"
     }
   ],
   "tech_cats": {

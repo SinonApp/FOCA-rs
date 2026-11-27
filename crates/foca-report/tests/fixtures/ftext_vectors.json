@@ -3685,6 +3685,18 @@
  },
  {
   "lang": "en",
+  "rule": "secret",
+  "text": "Ключ или токен X1",
+  "out": "X1 key or token"
+ },
+ {
+  "lang": "en",
+  "rule": "secret",
+  "text": "Учётные данные в команде curl",
+  "out": "Credentials in a curl command"
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7378,6 +7390,18 @@
   "rule": "reqlog",
   "text": "X1 X2 через DoH: X3",
   "out": "X1 X2 через DoH: X3"
+ },
+ {
+  "lang": "uk",
+  "rule": "secret",
+  "text": "Ключ или токен X1",
+  "out": "Ключ або токен X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "secret",
+  "text": "Учётные данные в команде curl",
+  "out": "Облікові дані в команді curl"
  },
  {
   "lang": "uk",
