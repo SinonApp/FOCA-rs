@@ -20,10 +20,10 @@ use crate::analysis::rules;
 use crate::engine::{lock, Core, Engine, Run};
 use crate::scan::selection::Selection;
 use crate::scan::{
-    self, core_scope_for, default_modules, egress_label, expand_exts, fuzz, incomplete_sources,
-    infra, known_hosts, minutes_between, opts_key, ports, profile_id, recon, source_enabled,
-    source_modules, warn_key, Ctx, Stop, ACTIVE_MODULES, RECON_SOURCES, SEARCH_SOURCES, SOURCES,
-    SRC_SUBDOMAINS, SRC_TLS, STAGES, TARGET_MODULES, WEBVIEW_SOURCES,
+    self, core_scope_for, crawl, default_modules, egress_label, expand_exts, fuzz,
+    incomplete_sources, infra, known_hosts, minutes_between, opts_key, ports, profile_id, recon,
+    source_enabled, source_modules, warn_key, Ctx, Stop, ACTIVE_MODULES, RECON_SOURCES,
+    SEARCH_SOURCES, SOURCES, SRC_SUBDOMAINS, SRC_TLS, STAGES, TARGET_MODULES, WEBVIEW_SOURCES,
 };
 use crate::services::resume::RunState;
 use crate::util::{arg_str, base36};
@@ -536,6 +536,7 @@ impl Engine {
             canary: None,
             headless,
             substep: None,
+            crawl: None,
             followup: vec![],
             only: sel.as_ref().map(Selection::keys).unwrap_or_default(),
             dorks_pending: 0,
@@ -582,6 +583,10 @@ impl Engine {
         if let Some(fo) = a.get("fuzz").filter(|v| v.is_object()) {
             // brute-force parameters of this run (wizard), surviving a resume
             facts::put(&lock(&db), &fuzz::run_key(&scan_id), fo)?;
+        }
+        if let Some(co) = a.get("crawl").filter(|v| v.is_object()) {
+            // crawl parameters of this run (wizard), surviving a resume
+            facts::put(&lock(&db), &crawl::run_key(&scan_id), co)?;
         }
         if let Some(so) = a.get("subdomains").filter(|v| v.is_object()) {
             // subdomain enumeration parameters of this run (wordlist), surviving a resume

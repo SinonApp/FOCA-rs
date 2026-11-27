@@ -270,6 +270,9 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
                     End::Done(Ok(u)) => {
                         site.url = u.clone();
                         site.via = if archive { "archive" } else { "site" }.into();
+                        if !archive {
+                            crawled_scripts(c, recon_net, host, &mut input).await;
+                        }
                     }
                     End::Done(Err(e)) => site.error = Some(e.clone()),
                     _ => {}
@@ -781,4 +784,32 @@ pub fn snapshot_of(rf: &ReconFacts) -> Value {
         "endpoints": endpoints, "endpoints_total": ep_total, "secrets": secrets,
         "buckets": buckets, "code": code, "web": web_sites,
     })
+}
+
+/// Script files the crawler saw on this host beyond the home page's own (secrets and endpoints
+/// analysis), fetched directly; standard and active profiles only.
+const CRAWLED_SCRIPTS: usize = 10;
+
+async fn crawled_scripts(c: &Ctx, net: &foca_net::NetClient, host: &str, input: &mut ReconInput) {
+    let all: std::collections::BTreeMap<String, Vec<String>> =
+        facts::get(&lock(&c.db), super::crawl::K_SCRIPTS);
+    let Some(list) = all.get(&host.to_ascii_lowercase()) else {
+        return;
+    };
+    let mut n = 0;
+    for u in list {
+        if n >= CRAWLED_SCRIPTS || net.is_cancelled() {
+            break;
+        }
+        if input.scripts.iter().any(|s| &s.url == u) {
+            continue;
+        }
+        if let Ok(f) = collect::fetch(net, u, None, 2 << 20).await {
+            input.scripts.push(foca_recon::report::ScriptInput {
+                url: u.clone(),
+                body: String::from_utf8_lossy(&f.body).into_owned(),
+            });
+            n += 1;
+        }
+    }
 }

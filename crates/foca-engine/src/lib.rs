@@ -302,6 +302,9 @@ pub struct Endpoints {
     /// Base URL overrides for keyless sources by id (`anubis` -> `http://127.0.0.1:...`; tests and
     /// mirrors). Empty means the public endpoints.
     pub sources: HashMap<String, String>,
+    /// Public external storage providers (Drive, Docs, OneDrive): download, export and folder
+    /// listing bases.
+    pub storage: foca_search::storage::StorageEndpoints,
 }
 
 impl Default for Endpoints {
@@ -328,6 +331,7 @@ impl Default for Endpoints {
             ip_echo: "https://api.ipify.org?format=json".into(),
             ip_geo: "https://ipinfo.io/{ip}/json".into(),
             sources: HashMap::new(),
+            storage: Default::default(),
         }
     }
 }

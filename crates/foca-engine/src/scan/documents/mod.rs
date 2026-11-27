@@ -1,7 +1,12 @@
 //! Document stages: download queue, metadata extraction and analysis.
 
+pub(crate) mod crawl;
+
 use std::sync::Arc;
 
+use std::collections::HashSet;
+
+use foca_core::api::DocProvenance;
 use foca_core::DocStatus;
 use foca_search::download::{DownloadConfig, Downloader, TaskQueue};
 use foca_search::store::StoreQueue;
@@ -21,6 +26,8 @@ pub(super) fn downloader(c: &Ctx) -> Downloader {
     if let Some(mb) = lock(&c.st).max_size_mb {
         cfg.max_size = mb * 1024 * 1024;
     }
+    // exactly the external storage items linked from in-scope pages
+    cfg.storage = Arc::new(crawl::storage_allow(c));
     let dir = c.e.cfg.data_dir.join("files").join(&lock(&c.st).project);
     let target_net = c.group_net("target").unwrap_or_else(|_| c.net.clone());
     Downloader::new(target_net, dir, cfg)
@@ -43,6 +50,11 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
     let conc = c.e.cfg.download_concurrency.max(1);
     let mut finished = 0usize;
     let max_attempts = DownloadConfig::default().max_attempts;
+    // crawled images share a byte budget; past it the rest are skipped, not fetched
+    let image_budget = crawl::image_budget(c);
+    let mut image_bytes = 0u64;
+    let mut storage_urls: Vec<String> = Vec::new();
+    let mut private = 0usize;
     loop {
         c.gate().await?;
         let batch = q.claim(conc).map_err(Stop::Error)?;
@@ -51,6 +63,15 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
         }
         let mut set = tokio::task::JoinSet::new();
         for t in batch {
+            if crawled_image(&t) && image_bytes >= image_budget {
+                q.failed(&t, "skipped: бюджет трафика на изображения исчерпан", true)
+                    .map_err(Stop::Error)?;
+                finished += 1;
+                continue;
+            }
+            if is_storage(&d, &t.url) {
+                storage_urls.push(t.url.clone());
+            }
             let d = d.clone();
             let wb = c.e.cfg.endpoints.wayback.clone();
             set.spawn(async move {
@@ -69,15 +90,26 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
             let Ok((t, r)) = j else { continue };
             match r {
                 Ok(x) => {
+                    if crawled_image(&t) {
+                        image_bytes += x.size;
+                    }
                     q.done(&t, &x).map_err(Stop::Error)?;
                 }
                 Err(foca_net::NetError::Cancelled) => {}
                 Err(e) => {
-                    let perm = matches!(e, foca_net::NetError::Status(404 | 410))
-                        || e.is_scope_denial()
-                        || t.attempts >= max_attempts;
-                    q.failed(&t, &format!("{}: {e}", e.code()), perm)
-                        .map_err(Stop::Error)?;
+                    let closed = is_storage(&d, &t.url)
+                        && matches!(e, foca_net::NetError::Status(401 | 403 | 404 | 410));
+                    if closed {
+                        // a private or removed file on external storage is a fact, not an error
+                        private += 1;
+                        q.failed(&t, PRIVATE_FILE, true).map_err(Stop::Error)?;
+                    } else {
+                        let perm = matches!(e, foca_net::NetError::Status(404 | 410))
+                            || e.is_scope_denial()
+                            || t.attempts >= max_attempts;
+                        q.failed(&t, &format!("{}: {e}", e.code()), perm)
+                            .map_err(Stop::Error)?;
+                    }
                 }
             }
             finished += 1;
@@ -90,6 +122,15 @@ pub(super) async fn download_queue(c: &Ctx, stage: usize) -> Result<(), Stop> {
         if c.cancel.is_cancelled() {
             return Err(Stop::Cancelled);
         }
+    }
+    storage_urls.sort();
+    storage_urls.dedup();
+    crawl::annotate_storage(c, &storage_urls);
+    if !storage_urls.is_empty() {
+        let got = storage_urls.len().saturating_sub(private);
+        let note = storage_note(got, private);
+        tracing::info!(target: "foca::scan", "{}: {note}", c.scan_id);
+        c.sub_note("storage", got, storage_urls.len(), &note);
     }
     Ok(())
 }
@@ -118,18 +159,82 @@ pub(crate) fn wayback_fallback(
     Some(foca_search::sources::copy_url(wayback, &year, url))
 }
 
+/// Summary of linked external storage downloads (core message `download.storage`).
+pub(crate) fn storage_note(got: usize, private: usize) -> String {
+    format!("внешние хранилища: скачано {got}, без публичного доступа {private}")
+}
+
+/// Task error of a file on external storage that is not public (or was removed).
+pub(crate) const PRIVATE_FILE: &str = "private: файл во внешнем хранилище закрыт или удалён";
+
+fn crawled_image(t: &foca_search::QueuedTask) -> bool {
+    t.source == "crawler"
+        && foca_search::filter::ext_of_url(&t.url)
+            .is_some_and(|e| foca_search::filter::is_image_ext(&e))
+}
+
+fn is_storage(d: &Downloader, url: &str) -> bool {
+    d.is_storage(url)
+}
+
 pub(super) async fn stage_meta(c: &mut Ctx) -> Result<(), Stop> {
-    meta_pending(c, 2).await
+    meta_pending(c, 2).await?;
+    follow_doc_links(c, 2).await
+}
+
+/// Follows links found inside documents analyzed in this scan: in-scope document links and
+/// linked external storage files are downloaded with provenance `doc`, up to
+/// `doc_link_depth` steps from a crawled page or search result, within the download limit.
+pub(super) async fn follow_doc_links(c: &Ctx, stage: usize) -> Result<(), Stop> {
+    let cfg = crawl::cfg(c);
+    if !cfg.doc_links || cfg.doc_link_depth == 0 {
+        return Ok(());
+    }
+    let mut done: HashSet<u64> = HashSet::new();
+    let mut budget = lock(&c.st).limit;
+    for _ in 0..cfg.doc_link_depth {
+        c.gate().await?;
+        if budget == 0 {
+            break;
+        }
+        let items: Vec<(foca_search::FoundUrl, DocProvenance)> =
+            crawl::doc_link_items(c, &cfg, &mut done)?
+                .into_iter()
+                .take(budget)
+                .collect();
+        if items.is_empty() {
+            break;
+        }
+        let known: HashSet<String> = lock(&c.db)
+            .task_urls()?
+            .iter()
+            .map(|u| foca_search::filter::target_key(u))
+            .collect();
+        let queue = StoreQueue::new(c.db.clone(), Some(c.scan_id.clone()));
+        let added = crawl::enqueue(c, &queue, items, &known)?;
+        tracing::info!(target: "foca::scan", "{}: ссылки из документов: в загрузку {added}", c.scan_id);
+        if added == 0 {
+            break;
+        }
+        budget = budget.saturating_sub(added);
+        download_queue(c, stage).await?;
+        meta_pending(c, stage).await?;
+    }
+    Ok(())
 }
 
 /// Parses downloaded documents (the metadata extraction stage, or after brute force).
 pub(super) async fn meta_pending(c: &Ctx, stage: usize) -> Result<(), Stop> {
-    let todo: Vec<(u64, String, String)> = {
+    let exports = crawl::export_urls(c);
+    let todo: Vec<(u64, String, String, bool)> = {
         let db = lock(&c.db);
         db.documents(false)?
             .into_iter()
             .filter(|d| d.doc.status == DocStatus::Downloaded)
-            .filter_map(|d| Some((d.doc.id, d.local_path?, d.doc.name)))
+            .filter_map(|d| {
+                let export = d.doc.url.as_ref().is_some_and(|u| exports.contains(u));
+                Some((d.doc.id, d.local_path?, d.doc.name, export))
+            })
             .collect()
     };
     let total = todo.len().max(1);
@@ -145,7 +250,7 @@ pub(super) async fn meta_pending(c: &Ctx, stage: usize) -> Result<(), Stop> {
         // keep up to meta_concurrency parses in flight; pause/cancel is checked between documents
         while set.len() < c.e.cfg.meta_concurrency.max(1) {
             c.gate().await?;
-            let Some((id, path, name)) = it.next() else {
+            let Some((id, path, name, export)) = it.next() else {
                 break;
             };
             let permit = sem
@@ -174,8 +279,12 @@ pub(super) async fn meta_pending(c: &Ctx, stage: usize) -> Result<(), Stop> {
                     std::fs::read(&path)
                         .map_err(|e| e.to_string())
                         .and_then(|b| {
-                            let m = foca_meta::extract(&b, Some(&name), &lim)
+                            let mut m = foca_meta::extract(&b, Some(&name), &lim)
                                 .map_err(|e| e.to_string())?;
+                            if export {
+                                // Google rendered this file: its metadata is not the author's
+                                crawl::strip_export(&mut m);
+                            }
                             let mut t = foca_meta::text(&b, &lim).ok();
                             if let Some(ot) = crate::services::ocr::maybe_ocr(
                                 &ocr_c,

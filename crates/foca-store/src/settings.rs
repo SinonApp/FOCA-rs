@@ -44,6 +44,11 @@ pub(crate) fn defaults() -> Value {
             "wordlists": [], "follow_redirects": false, "show_paths": false
         },
         "ports": { "top": 100, "list": "", "max_hosts": 20, "banners": true },
+        "crawl": {
+            "max_depth": 5, "max_pages": 1000, "max_minutes": 20, "max_rendered": 30,
+            "nofollow": false, "resume": true, "storage": true, "images": true,
+            "max_images": 300, "max_image_mb": 200, "doc_links": true, "doc_link_depth": 2
+        },
         "alerts": {
             "enabled": false,
             "min_severity": "warn",

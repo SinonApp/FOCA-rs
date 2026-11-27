@@ -501,6 +501,8 @@ impl Core {
             "sources": st.sources,
             // running sub-step of the stage (network: brute force 640/1500, ...)
             "substep": st.substep,
+            // crawler counters of the search stage (pages, queue, documents, storage, rate state)
+            "crawl": st.crawl,
             // per-item controls: supported actions, items held by the user, queued restarts
             "controls": control::caps(),
             "held": control::held(&r.skip),
@@ -515,6 +517,12 @@ impl Core {
 }
 
 impl Engine {}
+
+/// A storage download summary as the core emits it (for the i18n sample test).
+#[cfg(test)]
+pub(crate) fn documents_storage_note_sample() -> String {
+    documents::storage_note(3, 1)
+}
 
 pub(crate) async fn pipeline(mut c: Ctx) -> Result<(), Stop> {
     let mut i = c.start_stage;
@@ -619,6 +627,7 @@ pub(crate) mod plugins;
 pub(crate) mod ports;
 pub(crate) mod recon;
 pub(crate) mod search;
+pub(crate) use documents::crawl;
 pub(crate) mod selection;
 pub(crate) mod sources;
 pub(crate) mod steps;

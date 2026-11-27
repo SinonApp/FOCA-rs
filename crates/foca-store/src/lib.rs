@@ -31,7 +31,7 @@ pub use erase::{RequestLogFilter, ScanErase};
 pub use lock::{DataDirLock, LockOwner};
 pub use project::{
     AddDoc, DocAdded, DocErrorKind, FindingPatch, ProjectDb, RequestLog, Task, TaskCounts,
-    TaskState, UndoEntry,
+    TaskState, UndoEntry, PROVENANCE_KEY,
 };
 pub use search::{SearchHit, SearchOpts, SearchPage};
 

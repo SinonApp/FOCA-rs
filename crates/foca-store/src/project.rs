@@ -8,7 +8,8 @@ use std::sync::Arc;
 use foca_analysis::rules::{RuleError, RuleSet, RulesConfig};
 use foca_analysis::{analyze, Analysis, DocInput, PrevFinding, PrevState};
 use foca_core::api::{
-    self, Doc, Finding, Note, Photo, ProjectInfo, ProjectSummary, Report, Scan, ScopeDto, Snapshot,
+    self, Doc, DocProvenance, Finding, Note, Photo, ProjectInfo, ProjectSummary, Report, Scan,
+    ScopeDto, Snapshot,
 };
 use foca_core::{Clock, DocStatus, Document, FindingStatus, Metadata, Scope, Severity};
 use rusqlite::{params, Connection, OptionalExtension, Row};
@@ -97,6 +98,10 @@ pub struct FindingPatch {
     pub photos: Option<Vec<Photo>>,
     pub status: Option<FindingStatus>,
 }
+
+/// Project setting with the provenance of documents by their download URL
+/// (`BTreeMap<String, DocProvenance>`), written by the scan engine and read into `Doc.provenance`.
+pub const PROVENANCE_KEY: &str = "docs.provenance";
 
 /// An entry of the outgoing request log.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -1814,6 +1819,10 @@ impl ProjectDb {
     pub fn ui_docs(&self) -> Result<Vec<Doc>> {
         let analyzed: Vec<Doc> = self.entity_vec("docs")?;
         let by_id: BTreeMap<u64, Doc> = analyzed.into_iter().map(|d| (d.id, d)).collect();
+        let prov: BTreeMap<String, DocProvenance> = self
+            .setting(PROVENANCE_KEY)?
+            .and_then(|v| serde_json::from_value(v).ok())
+            .unwrap_or_default();
         let mut out = Vec::new();
         for d in self.documents(true)? {
             let st = ui_status(d.doc.status);
@@ -1838,6 +1847,7 @@ impl ProjectDb {
             };
             x.deleted = d.deleted;
             x.first_scan = d.first_scan.clone();
+            x.provenance = d.doc.url.as_ref().and_then(|u| prov.get(u)).cloned();
             if st == "error" {
                 x.error_reason = d.doc.error.clone().filter(|e| !e.trim().is_empty());
                 let kind = d

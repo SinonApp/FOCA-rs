@@ -52,6 +52,9 @@ pub(crate) struct RunState {
     pub headless: bool,
     /// Running sub-step of the current stage (`id`, `state`, `done`, `total`, ...), if any.
     pub substep: Option<serde_json::Value>,
+    /// Latest crawler counters of this run (`crawl` event payload), if the crawler ran.
+    #[serde(default)]
+    pub crawl: Option<serde_json::Value>,
     /// Restarts queued for a follow-up run (`kind:id`, see `scan_control`).
     pub followup: Vec<String>,
     /// Chosen items of a narrowed run (`scan_start { only }`); empty for a normal scan.

@@ -306,6 +306,38 @@ pub struct Doc {
     /// imported), `download` (the fetch failed) or `http` (the server returned an HTTP error).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub error_kind: Option<String>,
+    /// Where the document link came from (crawler page, another document, public storage).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provenance: Option<DocProvenance>,
+}
+
+/// How a document was reached: the in-scope page that linked it, or the downloaded document it
+/// was found in; files on public external storage carry the provider and the link as found.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DocProvenance {
+    /// `page` (linked from a crawled page) | `doc` (a link inside another document).
+    pub kind: String,
+    /// Page URL, or the name of the document the link was found in.
+    pub from: String,
+    /// Id of that document (`kind == "doc"`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub from_doc: Option<u64>,
+    /// Storage provider of a linked external file: `gdrive` | `gdocs` | `onedrive` | `dropbox` | `sharepoint`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub storage: Option<String>,
+    /// The storage link as found (the download URL differs).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<String>,
+    /// Exported by Google (Docs/Sheets/Slides): the metadata is Google's, not the author's.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub export: bool,
+    /// Steps of "found in a document" from a crawled page or search result (0 for direct links).
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub depth: u8,
+}
+
+fn is_zero(v: &u8) -> bool {
+    *v == 0
 }
 
 /// `Person`. Extra fields outside the contract: `aliases`, `service`, `emails`, `dept`,

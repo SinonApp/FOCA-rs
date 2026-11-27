@@ -4,6 +4,7 @@ mod common;
 
 mod scan {
     mod auto_resume;
+    mod crawl;
     mod followup;
     mod lifecycle;
     mod render_sources;

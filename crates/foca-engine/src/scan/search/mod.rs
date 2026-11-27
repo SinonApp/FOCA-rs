@@ -15,7 +15,7 @@ use crate::engine::lock;
 
 pub(crate) mod dorks;
 
-use super::documents::downloader;
+use super::documents::{crawl, downloader};
 use super::sources::WEB_ENGINES;
 use super::*;
 
@@ -131,17 +131,19 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
         }
         list.push(Box::new(s));
     }
-    let (limit, exts, crawl_depth) = {
+    let (limit, exts) = {
         let s = lock(&c.st);
-        (s.limit, s.exts.clone(), s.crawl_depth)
+        (s.limit, s.exts.clone())
     };
+    // crawling is a request to the target: never at the passive level
+    let crawl_cfg = crawl::cfg(c);
+    let mut crawl_out = None;
     if want("crawler") && c.level != "external" {
-        let mut cr = foca_search::sources::Crawler::default();
-        if let Some(d) = crawl_depth {
-            cr = cr.with_max_depth(d);
-        }
+        let cr = crawl::crawler(c, &crawl_cfg);
+        crawl_out = Some(cr.out.clone());
         list.push(Box::new(cr));
     }
+    let mut crawl_extra: Vec<(FoundUrl, foca_core::api::DocProvenance)> = Vec::new();
     // wizard document types filter sources, dorks (filetype:) and the download queue
     let ext_filter = (!exts.is_empty()).then(|| foca_search::filter::ExtFilter::new(&exts));
     let enq = Enqueuer::new(c, ext_filter.clone(), limit);
@@ -284,6 +286,19 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
                 }
                 merge_hosts(&mut ct_hosts, &mut host_src, &res);
                 found.extend(res.urls);
+                // what the crawl of this domain left besides document URLs
+                let ran = res.sources.iter().any(|r| {
+                    r.id == "crawler"
+                        && !matches!(
+                            r.status,
+                            foca_search::SourceStatus::Skipped | foca_search::SourceStatus::Nokey
+                        )
+                });
+                if let (Some(out), true, 0) = (&crawl_out, ran, pass) {
+                    let o = std::mem::take(&mut *lock(out));
+                    let x = crawl::after_domain(cref, &crawl_cfg, d, o, &search_net).await?;
+                    crawl_extra.extend(x.items);
+                }
                 let retry_ids = take_retries(&cref.skip);
                 // after a manual check the engine is healthy again and takes the remaining dork groups
                 for id in &retry_ids {
@@ -329,6 +344,12 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
     }
     let c: &Ctx = cref;
     let drop = enq.enqueue(found, &known)?;
+    // storage files linked from in-scope pages and selected images have their own caps
+    if !crawl_extra.is_empty() {
+        let queue = StoreQueue::new(c.db.clone(), Some(c.scan_id.clone()));
+        let n = crawl::enqueue(c, &queue, crawl_extra, &known)?;
+        tracing::info!(target: "foca::scan", "{}: в загрузку из обхода (хранилища, изображения): {n}", c.scan_id);
+    }
     if drop.found > 0 {
         let note = queue_note(&drop);
         c.sub_note("queue", drop.added, drop.found, &note);
