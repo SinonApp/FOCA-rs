@@ -31,7 +31,7 @@ export default async (page, { out, prep }) => {
     const pm = await ev(() => (FOCA.state.launch.fzEst || {}).per_module || {});
     ok("vhost enabled: estimate recomputed (per module)", pm.vhost > 0 && /запросов/.test(est2), [est2, pm]);
     ok("vhost in wizard modules", await ev(() => FOCA.state.launch.fzMods.includes("vhost")));
-    await act("la-step", "fzRate:1:1:10"); await wait(400);
+    await act("nf-step", "la-fzRate:1"); await wait(400);
     ok("rate 6 req/s", await ev(() => FOCA.state.launch.fzRate === 6));
     // One-tap launch (no confirmation).
     t = await ev(() => FOCA.page().textContent);
