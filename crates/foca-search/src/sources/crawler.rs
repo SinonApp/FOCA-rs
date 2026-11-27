@@ -15,7 +15,7 @@
 //! * Output: document URLs as [`Found`], plus files on public external storage linked from the
 //!   pages, image candidates and script files with the page that linked them ([`CrawlOutput`]).
 
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet, VecDeque};
+use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -310,6 +310,44 @@ const PROBE_TIMEOUT: Duration = Duration::from_secs(8);
 const RENDER_TIMEOUT: Duration = Duration::from_secs(45);
 /// A rate-limited page goes back to the queue at most this many times.
 const MAX_REQUEUE: u8 = 2;
+/// Start hosts probed at once.
+const SEED_PARALLEL: usize = 4;
+
+/// A fetched start page: final URL after redirects and body.
+type StartPage = (Url, Vec<u8>);
+
+/// Outcome of probing one start host.
+#[derive(Default)]
+struct Probe {
+    /// The origin that answered, with its start page when it is HTML.
+    origin: Option<(Url, Option<StartPage>)>,
+    /// Network failures (one per scheme tried).
+    errors: usize,
+    /// The scope refused the host.
+    denied: bool,
+}
+
+/// Start hosts in crawl order: the domain, its `www.` name when known, then the other known
+/// hosts as given, at most `max_hosts` besides the domain.
+pub(crate) fn seed_order(domain: &str, known: &[String], max_hosts: usize) -> Vec<String> {
+    let apex = domain.trim_end_matches('.').to_ascii_lowercase();
+    let www = format!("www.{apex}");
+    let mut known: Vec<String> = known
+        .iter()
+        .map(|h| h.trim_end_matches('.').to_ascii_lowercase())
+        .filter(|h| *h != apex)
+        .collect();
+    known.dedup();
+    if let Some(i) = known.iter().position(|h| *h == www) {
+        let w = known.remove(i);
+        known.insert(0, w);
+    }
+    let mut seen: HashSet<String> = HashSet::new();
+    std::iter::once(apex)
+        .chain(known.into_iter().take(max_hosts))
+        .filter(|h| seen.insert(h.clone()))
+        .collect()
+}
 
 fn text_of(body: &[u8]) -> String {
     String::from_utf8_lossy(body).into_owned()
@@ -459,27 +497,30 @@ impl Crawler {
 
     /// Picks the host scheme: https with a short timeout, falling back to http on a network error.
     /// Returns the start page (if it is HTML) and whether the server answered at all.
-    async fn pick_origin(
-        &self,
-        st: &mut State<'_>,
-        h: &str,
-    ) -> Result<Option<(Url, Option<(Url, Vec<u8>)>)>, NetError> {
+    async fn pick_origin(&self, ctx: &SearchCtx, h: &str) -> Result<Probe, NetError> {
         let port = self.site_port.map(|p| format!(":{p}")).unwrap_or_default();
+        let mut p = Probe::default();
         for scheme in ["https", "http"] {
             let Ok(u) = Url::parse(&format!("{scheme}://{h}{port}/")) else {
                 continue;
             };
-            match fetch(st.ctx, &u, self.max_page_bytes, true, PROBE_TIMEOUT).await? {
-                Fetch::Body(fu, t) => return Ok(Some((u, Some((fu, t))))),
-                Fetch::Answered | Fetch::Limited(_) => return Ok(Some((u, None))),
-                Fetch::Denied => {
-                    st.stats().scope_skipped += 1;
-                    return Ok(None);
+            match fetch(ctx, &u, self.max_page_bytes, true, PROBE_TIMEOUT).await? {
+                Fetch::Body(fu, t) => {
+                    p.origin = Some((u, Some((fu, t))));
+                    break;
                 }
-                Fetch::Failed => st.stats().errors += 1,
+                Fetch::Answered | Fetch::Limited(_) => {
+                    p.origin = Some((u, None));
+                    break;
+                }
+                Fetch::Denied => {
+                    p.denied = true;
+                    break;
+                }
+                Fetch::Failed => p.errors += 1,
             }
         }
-        Ok(None)
+        Ok(p)
     }
 
     /// Fetches the origin's robots.txt and sitemap.xml in parallel, one attempt each.
@@ -583,19 +624,45 @@ impl Crawler {
         let ctx = st.ctx;
         let mut sitemap_origins: HashSet<String> = HashSet::new();
         let mut first_pages: Vec<(Url, Vec<u8>)> = Vec::new();
-        let mut hosts: BTreeSet<String> = BTreeSet::new();
-        hosts.insert(domain.to_ascii_lowercase());
-        hosts.extend(ctx.hosts.iter().take(self.max_hosts).cloned());
-        for h in hosts {
+        let mut hosts: Vec<String> = Vec::new();
+        for h in seed_order(domain, &ctx.hosts, self.max_hosts) {
+            if ctx.net.host_in_scope(&h) {
+                hosts.push(h);
+            } else {
+                st.stats().scope_skipped += 1;
+            }
+        }
+        // start pages are probed a few hosts at once (dead CT names cost a timeout each) and
+        // handled in seed order, so the domain itself and its www come first
+        let mut probes: VecDeque<(String, Probe)> = VecDeque::new();
+        let mut next = 0usize;
+        loop {
             if ctx.net.is_cancelled() {
                 return Err(NetError::Cancelled);
             }
             if st.out_of_time() {
                 break;
             }
-            if !ctx.net.host_in_scope(&h) {
+            if probes.is_empty() {
+                if next >= hosts.len() {
+                    break;
+                }
+                let chunk: Vec<String> =
+                    hosts[next..].iter().take(SEED_PARALLEL).cloned().collect();
+                next += chunk.len();
+                let got =
+                    futures_util::future::join_all(chunk.iter().map(|h| self.pick_origin(ctx, h)))
+                        .await;
+                for (h, p) in chunk.into_iter().zip(got) {
+                    probes.push_back((h, p?));
+                }
+            }
+            let Some((h, probe)) = probes.pop_front() else {
+                break;
+            };
+            st.stats().errors += probe.errors;
+            if probe.denied {
                 st.stats().scope_skipped += 1;
-                continue;
             }
             // the host was already reached as another host's redirect target (test. -> www.test.), skip it
             if ["https", "http"].iter().any(|s| {
@@ -603,7 +670,7 @@ impl Crawler {
             }) {
                 continue;
             }
-            let Some((o, page)) = self.pick_origin(st, &h).await? else {
+            let Some((o, page)) = probe.origin else {
                 continue;
             };
             st.seen.insert(visit_key(&o));
@@ -1031,5 +1098,38 @@ impl DocumentSource for Crawler {
         domain: &'a str,
     ) -> BoxFuture<'a, Result<Found, NetError>> {
         Box::pin(async move { self.crawl(ctx, domain).await.map(|x| x.0) })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::seed_order;
+
+    #[test]
+    fn seeds_start_with_the_domain_and_its_www() {
+        let known: Vec<String> = [
+            "admin.example.test",
+            "api.example.test",
+            "www.example.test",
+            "example.test",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        assert_eq!(
+            seed_order("Example.test.", &known, 20),
+            vec![
+                "example.test",
+                "www.example.test",
+                "admin.example.test",
+                "api.example.test"
+            ]
+        );
+        // the cap keeps www even when many names sort before it
+        assert_eq!(
+            seed_order("example.test", &known, 1),
+            vec!["example.test", "www.example.test"]
+        );
+        assert_eq!(seed_order("example.test", &[], 20), vec!["example.test"]);
     }
 }
