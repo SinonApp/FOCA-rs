@@ -16,7 +16,7 @@ Path: `crates/foca-fuzz/` · `src/` lines: 4,633 · tests: 48 · depends on: [fo
 
 - **Active profile only**: every request goes through `foca_net::NetClient` with `Access::Active`, enforcing project scope, host/IP exclusions, path exclusions (`FuzzConfig::exclude_paths`), per-hop redirect validation, and full request logging.
 - **Polite default limits**: 4 workers, 5 req/s, jitter, request budget, and `max_time`. Fuzzers of several hosts running at once can share one budget (`Fuzzer::with_shared_budget`): every request of every holder counts toward `max_requests`.
-- **Automatic backoff stop**: halts on bursts of HTTP 429/403/5xx or transport errors ("target rate-limited requests: fuzzing stopped"). Zero WAF/rate-limit evasion (no IP/UA rotation, no path obfuscation), no parameter/payload fuzzing, no credential brute-forcing, and no bulk repository/database dumping.
+- **Automatic backoff stop**: halts on bursts of HTTP 429/403/5xx ("target rate-limited requests: fuzzing stopped"). Network errors without any HTTP answer (refused, timeout, DNS or TLS failure) stop the host with the reason `unreachable` and the `fuzz_unreachable` warning instead. Zero WAF/rate-limit evasion (no IP/UA rotation, no path obfuscation), no parameter/payload fuzzing, no credential brute-forcing, and no bulk repository/database dumping.
 - **Minimal masked evidence**: records availability and a short masked snippet capped by `FuzzConfig::body_limit`, full files are never downloaded.
 
 Built-in gzipped wordlists live in `crates/foca-fuzz/wordlists/` (SecLists, MIT). Site test fixture: `tests/fixtures/fuzz-site/`.
