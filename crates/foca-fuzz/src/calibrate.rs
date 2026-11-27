@@ -182,6 +182,20 @@ impl Sample {
         }
     }
 
+    /// Returns `true` if both are 2xx answers with the same page: the same normalized body, or
+    /// sizes within 3% with the same title or tag sequence (a catch-all page with a token).
+    pub fn same_catch_all(&self, other: &Sample) -> bool {
+        if !(200..300).contains(&self.status) || !(200..300).contains(&other.status) {
+            return false;
+        }
+        if self.norm_hash == other.norm_hash {
+            return true;
+        }
+        let near = self.size.abs_diff(other.size) * 100 <= other.size.max(1) * 3;
+        near && ((other.title.is_some() && self.title == other.title)
+            || (other.tags >= 5 && self.skeleton == other.skeleton))
+    }
+
     pub fn is_redirect(&self) -> bool {
         matches!(self.status, 301 | 302 | 303 | 307 | 308)
     }

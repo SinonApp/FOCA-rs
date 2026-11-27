@@ -60,6 +60,8 @@
   "core.fuzz.unreachable": "host unreachable. Brute force stopped ({detail})",
   "core.fuzz.blocked_warn": "The site rate-limited requests. Brute force stopped (no retries)",
   "core.fuzz.unreachable_warn": "Unreachable hosts: {hosts}. No connection could be made (refused, timeout or DNS), so brute force stopped on them: this is not a rate limit",
+  "core.fuzz.catch_all": "the site answers any address with the same page: brute force stopped ({detail})",
+  "core.fuzz.catch_all_warn": "Hosts answering any address with the same page: {hosts}. Brute force stopped on them: found paths cannot be told from missing ones",
   "core.fuzz.no_http": "{n} network errors without an HTTP answer: {error}",
   "core.fuzz.denied": "active requests are not allowed: {detail}",
   "core.fuzz.wordlist_error": "wordlist {id}: {error}",

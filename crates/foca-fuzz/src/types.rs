@@ -179,6 +179,9 @@ pub enum StopReason {
     Unreachable { detail: String },
     /// Active requests are denied by the scope or project settings.
     Denied { detail: String },
+    /// The site answers every path, random canaries of every class included, with the same
+    /// page (HTTP 200): nothing can be told apart, so the host is stopped early.
+    CatchAll { detail: String },
 }
 
 impl StopReason {
@@ -195,6 +198,9 @@ impl StopReason {
                 format!("хост недоступен: перебор остановлен ({detail})")
             }
             StopReason::Denied { detail } => format!("активные запросы запрещены: {detail}"),
+            StopReason::CatchAll { detail } => format!(
+                "сайт отвечает одинаковой страницей на любой адрес: перебор остановлен ({detail})"
+            ),
         }
     }
 }

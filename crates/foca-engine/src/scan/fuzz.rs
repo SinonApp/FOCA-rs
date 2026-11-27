@@ -611,6 +611,15 @@ pub(crate) fn unreachable_warning(hosts: usize) -> String {
     )
 }
 
+/// Warning for hosts that answer any address with their home page (random canaries of every
+/// path class included): nothing there can be told apart, so the brute force stopped early.
+pub(crate) fn catch_all_warning(hosts: usize) -> String {
+    format!(
+        "Хостов, отвечающих одинаковой страницей на любой адрес: {hosts}. Перебор на них \
+         остановлен: найденные пути нельзя отличить от несуществующих"
+    )
+}
+
 /// Returns the `fuzz` source status for a stop reason.
 fn stop_status(s: &StopReason) -> &'static str {
     match s {
@@ -620,7 +629,8 @@ fn stop_status(s: &StopReason) -> &'static str {
         StopReason::Cancelled
         | StopReason::Budget
         | StopReason::MaxTime
-        | StopReason::Unreachable { .. } => "stopped",
+        | StopReason::Unreachable { .. }
+        | StopReason::CatchAll { .. } => "stopped",
     }
 }
 
@@ -712,10 +722,11 @@ struct HostOut {
 /// unreachable host, then a denial.
 fn stage_stop(outs: &[HostOut]) -> StopReason {
     let rank = |s: &StopReason| match s {
-        StopReason::Cancelled => 6,
-        StopReason::Budget => 5,
-        StopReason::MaxTime => 4,
-        StopReason::Blocked { .. } => 3,
+        StopReason::Cancelled => 7,
+        StopReason::Budget => 6,
+        StopReason::MaxTime => 5,
+        StopReason::Blocked { .. } => 4,
+        StopReason::CatchAll { .. } => 3,
         StopReason::Unreachable { .. } => 2,
         StopReason::Denied { .. } => 1,
         StopReason::Completed => 0,
@@ -940,6 +951,10 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
         .iter()
         .filter(|o| matches!(o.stop, StopReason::Unreachable { .. }))
         .count();
+    let catch_all_hosts = outs
+        .iter()
+        .filter(|o| matches!(o.stop, StopReason::CatchAll { .. }))
+        .count();
     // documents in host order (the order hosts finished in does not matter)
     let docs: Vec<String> = outs.into_iter().flat_map(|o| o.docs).collect();
     let status = stop_status(&final_stop);
@@ -949,6 +964,9 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
     }
     if unreachable_hosts > 0 {
         c.warn("fuzz_unreachable", &unreachable_warning(unreachable_hosts));
+    }
+    if catch_all_hosts > 0 {
+        c.warn("fuzz_catch_all", &catch_all_warning(catch_all_hosts));
     }
     // documents go to the regular download queue (deduplicated against known ones before the limit) and parsing
     let added = {

@@ -608,3 +608,41 @@ async fn challenge_page_stops_at_once() {
     );
     assert!(srv.requests().len() <= 6 + consecutive + 8);
 }
+
+/// A site that answers every address (random canaries of every class included) with the same
+/// ~64 KB page and a per-request token: the host is stopped after the canary signature matched
+/// the first candidates instead of spending the whole budget, and nothing is reported.
+#[tokio::test]
+async fn catch_all_site_stops_early_without_findings() {
+    let n = Arc::new(AtomicUsize::new(0));
+    let c = n.clone();
+    let srv = TestServer::start(move |r| {
+        let i = c.fetch_add(1, Ordering::Relaxed);
+        let filler = "<p>Новини університету та оголошення для студентів.</p>\n".repeat(1100);
+        let body = format!(
+            "<!DOCTYPE html><html><head><title>University portal</title></head><body>\
+             <div class=\"nav\"><a href=\"/\">Home</a></div><main>{filler}</main>\
+             <footer>req {i} path {}</footer></body></html>",
+            r.path()
+        );
+        TestResponse::ok(body).header("Content-Type", "text/html; charset=utf-8")
+    })
+    .await;
+    let mut words: Vec<String> = (0..400).map(|i| format!("dir{i}/")).collect();
+    words.extend((0..400).map(|i| format!("backup{i}.zip")));
+    words.extend((0..300).map(|i| format!("config{i}.php")));
+    let rep = content_run(&srv, &words.join("\n"), fast_cfg()).await;
+    assert!(rep.hits.is_empty(), "{:?}", rep.hits);
+    assert!(
+        matches!(&rep.stop, StopReason::CatchAll { detail } if detail.contains("HTTP 200")),
+        "{:?}",
+        rep.stop
+    );
+    assert!(rep
+        .stop
+        .message_ru()
+        .contains("одинаковой страницей на любой адрес"));
+    let sent = n.load(Ordering::Relaxed);
+    assert!(sent <= 70, "{sent} requests, {:?}", rep.stats);
+    assert!(rep.stats.requests <= 70, "{:?}", rep.stats);
+}

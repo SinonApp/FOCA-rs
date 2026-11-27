@@ -64,6 +64,14 @@ static SEQ: AtomicU64 = AtomicU64::new(1);
 
 /// Soft 404: status 200 with a body containing a random "request id" of varying length.
 pub fn soft404(path: &str) -> TestResponse {
+    // the home page is a real page: a site that serves its home page for every address is a
+    // catch-all and is stopped early (`catch_all_site_stops_early_without_findings`)
+    if path == "/" {
+        return TestResponse::ok(
+            "<!doctype html><html><head><title>Contoso home</title></head><body><nav><a href=\"/news\">News</a></nav><main>Welcome</main></body></html>",
+        )
+        .header("Content-Type", "text/html; charset=utf-8");
+    }
     let n = SEQ.fetch_add(1, Ordering::Relaxed);
     let junk: String = format!("{:x}", n.wrapping_mul(0x9e37_79b9_7f4a_7c15))
         .chars()

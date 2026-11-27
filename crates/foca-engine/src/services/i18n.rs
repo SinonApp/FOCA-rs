@@ -531,6 +531,7 @@ mod tests {
             crate::scan::fuzz::BLOCKED_WARNING.into(),
             crate::scan::search::cc_lane::LEFT_NOTE.into(),
             crate::scan::fuzz::unreachable_warning(2),
+            crate::scan::fuzz::catch_all_warning(1),
             crate::scan::documents_storage_note_sample(),
             "Токен Telegram-бота не задан".into(),
             "Не указан chat_id".into(),
@@ -597,6 +598,9 @@ mod tests {
             },
             StopReason::Unreachable {
                 detail: "5 сетевых ошибок без ответа HTTP: network: connection refused".into(),
+            },
+            StopReason::CatchAll {
+                detail: "HTTP 200, ~64 KB".into(),
             },
         ] {
             v.push(r.message_ru());

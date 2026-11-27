@@ -104,6 +104,9 @@ pub struct Fuzzer {
 /// Origin and explicit `Host` of a root page.
 type RootKey = (String, Option<String>);
 
+/// Candidates that must get the catch-all page before the host is stopped.
+const CATCH_ALL_STOP: u32 = 50;
+
 struct Shared {
     net: NetClient,
     cfg: FuzzConfig,
@@ -153,6 +156,9 @@ enum TaskOut {
         /// The root page of the context's origin (first fetch only counts as a request).
         root: Option<Sample>,
         root_requests: u64,
+        /// Extra canaries of other path classes (a static file, a nested directory), asked once
+        /// per origin when the context's own canaries all got the same 2xx page.
+        cross: Vec<Sample>,
     },
     Job {
         job: Job,
@@ -449,7 +455,7 @@ impl Shared {
         (Some(sample), Some(probe))
     }
 
-    async fn calibrate(&self, ctx: &CtxKey, samples_n: usize) -> TaskOut {
+    async fn calibrate(&self, ctx: &CtxKey, samples_n: usize, cross_probe: bool) -> TaskOut {
         let mut samples = Vec::new();
         let mut probes = Vec::new();
         let mut bad = 0;
@@ -516,6 +522,7 @@ impl Shared {
                             err: Some(FetchErr::Net(e)),
                             root,
                             root_requests,
+                            cross: Vec::new(),
                         };
                     }
                 }
@@ -528,8 +535,47 @@ impl Shared {
                         err: Some(e),
                         root,
                         root_requests,
+                        cross: Vec::new(),
                     }
                 }
+            }
+        }
+        // Every canary got the same 2xx page: ask other path classes too. A site that also
+        // answers a random static file and a random nested path with it serves one page for
+        // any address (only then the host is stopped early; an app shell with real 404s for
+        // static files is fuzzed as usual).
+        let mut cross = Vec::new();
+        let catch_all_like =
+            samples.len() >= 2 && bad == 0 && samples.iter().all(|s| s.same_catch_all(&samples[0]));
+        if cross_probe && ctx.ext != "vhost" && catch_all_like {
+            let words = [
+                format!("{}.txt", rand::token(12)),
+                format!("{}/{}.json", rand::token(10), rand::token(8)),
+            ];
+            for word in words {
+                let Ok(url) = Url::parse(&format!("{}/{word}", ctx.origin.trim_end_matches('/')))
+                else {
+                    continue;
+                };
+                let Ok(f) = self.fetch(&url, ctx.vhost.as_deref()).await else {
+                    break;
+                };
+                probes.push(Filtered {
+                    url: url.to_string(),
+                    status: f.status,
+                    size: f.size,
+                    content_type: f.content_type.clone(),
+                    reason: FilterReason::Calibration,
+                });
+                let body = String::from_utf8_lossy(&f.body);
+                cross.push(Sample::with_type(
+                    f.status,
+                    f.size,
+                    &body,
+                    f.location.as_deref(),
+                    &word,
+                    f.content_type.as_deref(),
+                ));
             }
         }
         TaskOut::Calib {
@@ -540,6 +586,7 @@ impl Shared {
             err: None,
             root,
             root_requests,
+            cross,
         }
     }
 }
@@ -584,6 +631,10 @@ struct Run<'a> {
     /// Normalized hashes of 2xx HTML pages served for random paths, per origin and `Host`:
     /// such a page is "not found" in every context of the site.
     not_found_pages: HashMap<RootKey, HashSet<u64>>,
+    /// Origins that answer any address with one page: the page and how many candidates got it.
+    catch_all: HashMap<RootKey, (Sample, u32)>,
+    /// Origins whose other path classes were already probed for a catch-all page.
+    cross_asked: HashSet<RootKey>,
     progress_tick: u64,
 }
 
@@ -785,6 +836,8 @@ impl Fuzzer {
             },
             want_control: None,
             not_found_pages: HashMap::new(),
+            catch_all: HashMap::new(),
+            cross_asked: HashSet::new(),
             progress_tick: 0,
         };
         let scope = self.net.scope();
@@ -878,12 +931,19 @@ impl Fuzzer {
                     }
                     Some(CalState::Pending(v)) => v.push(job),
                     None => {
-                        if cfg.calibrate && cfg.calibration_samples > 0 {
+                        let root_key = (job.ctx.origin.clone(), job.ctx.vhost.clone());
+                        if run.catch_all.contains_key(&root_key) && job.ctx.ext != "vhost" {
+                            // the whole origin serves one page: its signature filters this
+                            // context too, new canaries would only spend the budget
+                            cal.insert(job.ctx.clone(), CalState::Ready(Baseline::default()));
+                            queue.push_front(job);
+                        } else if cfg.calibrate && cfg.calibration_samples > 0 {
                             let ctx = job.ctx.clone();
                             cal.insert(ctx.clone(), CalState::Pending(vec![job]));
                             let sh = shared.clone();
                             let n = cfg.calibration_samples;
-                            running.spawn(async move { sh.calibrate(&ctx, n).await });
+                            let cross = run.cross_asked.insert(root_key);
+                            running.spawn(async move { sh.calibrate(&ctx, n, cross).await });
                         } else {
                             cal.insert(job.ctx.clone(), CalState::Ready(Baseline::default()));
                             queue.push_front(job);
@@ -914,10 +974,25 @@ impl Fuzzer {
                     err,
                     root,
                     root_requests,
+                    cross,
                 } => {
                     let room = FILTERED_CAP.saturating_sub(run.filtered.len());
                     run.filtered.extend(probes.into_iter().take(room));
-                    let n = samples.len() as u64 + u64::from(bad) + root_requests;
+                    let n =
+                        samples.len() as u64 + u64::from(bad) + root_requests + cross.len() as u64;
+                    // one page for any address, and it is the home page itself: a distinct "not
+                    // found" page with status 200 is only a soft 404 and fuzzing goes on
+                    let home = root.as_ref().is_some_and(|r| {
+                        samples[0].same_catch_all(r) || samples[0].same_page_as(r)
+                    });
+                    if home
+                        && !cross.is_empty()
+                        && cross.iter().all(|s| s.same_catch_all(&samples[0]))
+                    {
+                        run.catch_all
+                            .entry((ctx.origin.clone(), ctx.vhost.clone()))
+                            .or_insert_with(|| (samples[0].clone(), 0));
+                    }
                     run.stats.requests += n;
                     run.stats.calibration_requests += n;
                     for s in &samples {
@@ -1059,6 +1134,27 @@ impl Fuzzer {
         }
     }
 
+    /// Filters a candidate that got the origin's catch-all page and stops the host once
+    /// [`CATCH_ALL_STOP`] candidates got it: nothing on such a site can be told apart.
+    fn catch_all_hit(&self, run: &mut Run<'_>, job: &Job, sample: &Sample) -> bool {
+        if job.expect == Expect::Vhost {
+            return false;
+        }
+        let key = (job.ctx.origin.clone(), job.ctx.vhost.clone());
+        let Some((sig, n)) = run.catch_all.get_mut(&key) else {
+            return false;
+        };
+        if !sample.same_catch_all(sig) {
+            return false;
+        }
+        *n += 1;
+        if *n >= CATCH_ALL_STOP {
+            let detail = format!("HTTP {}, ~{} KB", sig.status, sig.size.div_ceil(1024));
+            run.set_stop(StopReason::CatchAll { detail });
+        }
+        true
+    }
+
     fn handle(
         &self,
         run: &mut Run<'_>,
@@ -1160,6 +1256,8 @@ impl Fuzzer {
                         .get(&(job.ctx.origin.clone(), job.ctx.vhost.clone()))
                         .is_some_and(|p| p.contains(&sample.norm_hash)))
         };
+        let catch_all = self.catch_all_hit(run, &job, &sample);
+        let soft = soft || catch_all;
         if soft {
             run.stats.filtered_calibration += 1;
             run.filter(&job.url, &f, FilterReason::Soft404);
