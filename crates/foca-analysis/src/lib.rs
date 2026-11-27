@@ -38,7 +38,7 @@ pub mod roles;
 pub mod timeline;
 pub mod util;
 
-pub use analytics::{anomalies, chain, correlate, graphview, insights, netmap};
+pub use analytics::{anomalies, chain, clusters, correlate, graphview, insights, netmap};
 pub use assess::{attack_paths, findings, forensic, infra, playbooks, portmerge, standards};
 pub use content::{artifacts, links, pii, rules, secrets};
 pub use identity::{emails, orgchart, people, translit, wordlist};

@@ -348,6 +348,7 @@ fn template_key_for(rule: &str, category: &str) -> &'static str {
         | "doc.pdf_removed_text"
         | "doc.pdf_revision_authors"
         | "doc.lineage"
+        | "doc.author_cluster"
         | "doc.ai_generated"
         | "zip.path_traversal" => "doc-sanitize",
 

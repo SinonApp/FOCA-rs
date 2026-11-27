@@ -1115,5 +1115,10 @@
   "forensics.s_ai": "AI-generated",
   "forensics.s_form": "Form fields",
   "forensics.s_fonts": "Fonts",
-  "insights.code.sw.cve": "Known CVEs of the product version from the offline NVD database."
+  "insights.code.sw.cve": "Known CVEs of the product version from the offline NVD database.",
+  "insights.clusters": "Same author or computer",
+  "insights.cl_template": "Shared template",
+  "insights.cl_build_folder": "Shared build folder",
+  "insights.cl_printer_author": "Same printer and author",
+  "insights.cl_camera_serial": "Same camera"
 }

@@ -1115,5 +1115,10 @@
   "forensics.s_ai": "Сгенерировано ИИ",
   "forensics.s_form": "Поля формы",
   "forensics.s_fonts": "Шрифты",
-  "insights.code.sw.cve": "Известные CVE версии продукта из офлайн-базы NVD."
+  "insights.code.sw.cve": "Известные CVE версии продукта из офлайн-базы NVD.",
+  "insights.clusters": "Тот же автор или компьютер",
+  "insights.cl_template": "Общий шаблон",
+  "insights.cl_build_folder": "Общая папка сборки",
+  "insights.cl_printer_author": "Тот же принтер и автор",
+  "insights.cl_camera_serial": "Та же камера"
 }

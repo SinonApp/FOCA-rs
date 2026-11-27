@@ -21,6 +21,7 @@ use serde::Serialize;
 use time::OffsetDateTime;
 
 use crate::anomalies::{self, Anomaly};
+use crate::clusters::{self, TraceCluster};
 use crate::correlate::{self, Correlation};
 use crate::kev::{self, KevMatch};
 use crate::netmap::{self, NetMap, PkiInput};
@@ -32,6 +33,8 @@ use crate::{Analysis, DocInput};
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct Insights {
     pub correlation: Correlation,
+    /// Same-author and same-machine document clusters.
+    pub clusters: Vec<TraceCluster>,
     pub org: OrgChart,
     pub anomalies: Vec<Anomaly>,
     pub kev: Vec<KevMatch>,
@@ -61,6 +64,7 @@ pub fn build_with_kev(
     let graph = extended_graph(&a.graph, &correlation, &netmap);
     Insights {
         org: orgchart::build(inputs, a),
+        clusters: clusters::clusters(inputs),
         anomalies: anomalies::detect(inputs, now),
         kev: kev::lookup(kev_cat, &kev::subjects_from(a)),
         cve: crate::cve::doc_matches(a, &crate::cve::db()),

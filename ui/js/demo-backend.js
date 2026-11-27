@@ -5681,9 +5681,29 @@
     });
     const g = graphOf(snap);
     const attack_paths = attackPathsOf(id, snap);
+    // Same-author clusters (clusters.rs): full template paths and printer + author pairs.
+    const traceMap = new Map();
+    snap.docs
+      .filter(d => !d.deleted)
+      .forEach(d => {
+        const traces = [];
+        if (typeof d.template === "string" && /[\\/]/.test(d.template)) traces.push(["template", d.template]);
+        const prs = d.printers || (d.printer ? [d.printer] : []);
+        if (d.author) prs.forEach(p => traces.push(["printer_author", `${p} / ${d.author}`]));
+        traces.forEach(([kind, value]) => {
+          const key = `${kind}:${value.toLowerCase()}`;
+          if (!traceMap.has(key)) traceMap.set(key, { id: key, kind, value, docs: [] });
+          const c = traceMap.get(key);
+          if (!c.docs.includes(d.id)) c.docs.push(d.id);
+        });
+      });
+    const clusters = [...traceMap.values()]
+      .filter(c => c.docs.length >= 2)
+      .sort((x, y) => y.docs.length - x.docs.length || (x.id < y.id ? -1 : 1));
     return {
       org: { organizations: [], departments, people },
       correlation: { links, lineages },
+      clusters,
       anomalies,
       kev,
       netmap: { nodes: netNodes, links: [] },
@@ -5705,6 +5725,7 @@
         people: people.length,
         lineages: lineages.length,
         links: links.length,
+        clusters: clusters.length,
         anomalies: anomalies.length,
         kev: kev.length,
         net_nodes: netNodes.length,
@@ -12403,7 +12424,7 @@
     os: 19,
     secrets: 221,
     std_rules: 81,
-    std_refs: 470,
+    std_refs: 473,
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
   const DEMO_SIG_TABLES = [

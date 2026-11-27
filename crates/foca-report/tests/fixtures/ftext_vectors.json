@@ -3949,6 +3949,48 @@
  },
  {
   "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "Документы одного автора или компьютера: 2 документов",
+  "out": "Documents of one author or computer: 2 groups"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "Общий шаблон с полным путём, папка сборки программы, пара принтер и автор или серийный номер камеры связывают документы с одним человеком или рабочим местом.",
+  "out": "A shared template with a full path, a program build folder, a printer and author pair or a camera serial number tie the documents to one person or workstation."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "Удалять пути шаблонов, папки сборки и серийные номера устройств из публикуемых файлов (очистка метаданных, сборка без отладочных путей).",
+  "out": "Remove template paths, build folders and device serial numbers from published files (metadata cleaning, builds without debug paths)."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "шаблон: X1",
+  "out": "template: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "папка сборки: X1",
+  "out": "build folder: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "принтер и автор: X1",
+  "out": "printer and author: X1"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.author_cluster",
+  "text": "серийный номер камеры: X1",
+  "out": "camera serial number: X1"
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7906,6 +7948,48 @@
   "rule": "sw.cve",
   "text": "Обновить продукт до версии без известных уязвимостей; сверить список CVE с бюллетенями производителя.",
   "out": "Оновити продукт до версії без відомих вразливостей; звірити список CVE з бюлетенями виробника."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "Документы одного автора или компьютера: 2 документов",
+  "out": "Документи одного автора або комп'ютера: 2 групи"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "Общий шаблон с полным путём, папка сборки программы, пара принтер и автор или серийный номер камеры связывают документы с одним человеком или рабочим местом.",
+  "out": "Спільний шаблон із повним шляхом, тека збирання програми, пара принтер і автор або серійний номер камери пов'язують документи з однією людиною чи робочим місцем."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "Удалять пути шаблонов, папки сборки и серийные номера устройств из публикуемых файлов (очистка метаданных, сборка без отладочных путей).",
+  "out": "Видаляти шляхи шаблонів, теки збирання та серійні номери пристроїв із публікованих файлів (очищення метаданих, збирання без налагоджувальних шляхів)."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "шаблон: X1",
+  "out": "шаблон: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "папка сборки: X1",
+  "out": "тека збирання: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "принтер и автор: X1",
+  "out": "принтер і автор: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.author_cluster",
+  "text": "серийный номер камеры: X1",
+  "out": "серійний номер камери: X1"
  },
  {
   "lang": "uk",

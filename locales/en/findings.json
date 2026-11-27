@@ -3947,6 +3947,48 @@
       "rules": "sw.cve,sw.kev,eol-software,eol-os",
       "pattern": "Обновить продукт до версии без известных уязвимостей; сверить список CVE с бюллетенями производителя.",
       "text": "Update the product to a version without known vulnerabilities; check the CVE list against the vendor advisories."
+    },
+    {
+      "id": "f659",
+      "rules": "doc.author_cluster",
+      "pattern": "Документы одного автора или компьютера: {n} {w}",
+      "text": "Documents of one author or computer: {0:group|groups|groups}"
+    },
+    {
+      "id": "f660",
+      "rules": "doc.author_cluster",
+      "pattern": "Общий шаблон с полным путём, папка сборки программы, пара принтер и автор или серийный номер камеры связывают документы с одним человеком или рабочим местом.",
+      "text": "A shared template with a full path, a program build folder, a printer and author pair or a camera serial number tie the documents to one person or workstation."
+    },
+    {
+      "id": "f661",
+      "rules": "doc.author_cluster",
+      "pattern": "Удалять пути шаблонов, папки сборки и серийные номера устройств из публикуемых файлов (очистка метаданных, сборка без отладочных путей).",
+      "text": "Remove template paths, build folders and device serial numbers from published files (metadata cleaning, builds without debug paths)."
+    },
+    {
+      "id": "f662",
+      "rules": "doc.author_cluster",
+      "pattern": "шаблон: {}",
+      "text": "template: {0}"
+    },
+    {
+      "id": "f663",
+      "rules": "doc.author_cluster",
+      "pattern": "папка сборки: {}",
+      "text": "build folder: {0}"
+    },
+    {
+      "id": "f664",
+      "rules": "doc.author_cluster",
+      "pattern": "принтер и автор: {}",
+      "text": "printer and author: {0}"
+    },
+    {
+      "id": "f665",
+      "rules": "doc.author_cluster",
+      "pattern": "серийный номер камеры: {}",
+      "text": "camera serial number: {0}"
     }
   ],
   "tech_cats": {

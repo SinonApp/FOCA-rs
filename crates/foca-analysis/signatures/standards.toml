@@ -509,6 +509,12 @@ iso27001 = ["5.9", "5.12"]
 kszi = ["6.1.2.5"]
 
 [[rule]]
+id = "doc.author_cluster"
+mitre = ["T1589.003"]
+cwe = ["CWE-212"]
+iso27001 = ["8.12"]
+
+[[rule]]
 id = "mail.internal_relay"
 mitre = ["T1590.005"]
 cwe = ["CWE-497"]

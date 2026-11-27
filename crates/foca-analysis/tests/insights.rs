@@ -242,6 +242,59 @@ fn synthetic_organization() {
         .contains("derived_from"));
 }
 
+/// New metadata sources feed the clusters and the network map: a shared PDB build folder,
+/// a database server from a spreadsheet connection and an internal mail hop.
+#[test]
+fn clusters_and_infrastructure_from_new_sources() {
+    let exe = |id: u64, pdb: &str| {
+        let mut m = Metadata::new(DocFormat::Exe);
+        m.paths.push(PathRef {
+            source: "pe:pdb".into(),
+            ..path(pdb, PathKind::Windows, Some("jdev"))
+        });
+        doc(id, &format!("tool{id}.exe"), m)
+    };
+    let mut x = Metadata::new(DocFormat::Xlsx);
+    x.add_server("sql01.corp.example.test", "xl:connection");
+    x.connections.push(foca_core::DataConnection {
+        kind: "oledb".into(),
+        server: Some("sql01.corp.example.test".into()),
+        ..Default::default()
+    });
+    let mut e = Metadata::new(DocFormat::Eml);
+    e.add_server("mx-int.corp.example.test", "mail header");
+    let docs = vec![
+        exe(1, r"C:\Users\jdev\src\Billing\obj\Release\Billing.pdb"),
+        exe(
+            2,
+            r"C:\Users\jdev\src\Billing\bin\x64\Debug\Billing.Core.pdb",
+        ),
+        doc(3, "book.xlsx", x),
+        doc(4, "mail.eml", e),
+    ];
+    let inputs: Vec<DocInput> = docs.iter().map(DocInput::new).collect();
+    let a = analyze(&inputs, &Scope::default(), &PrevState::default());
+    let ins = insights::build(&inputs, &a, &[], datetime!(2026-11-22 12:00 UTC));
+    let c = ins
+        .clusters
+        .iter()
+        .find(|c| c.kind == "build_folder")
+        .expect("build folder cluster");
+    assert_eq!(c.docs, vec![1, 2]);
+    assert_eq!(c.value, r"C:\Users\jdev\src\Billing");
+    let servers: Vec<&str> = ins
+        .netmap
+        .of_kind(NetKind::Server)
+        .map(|n| n.label.as_str())
+        .collect();
+    for s in ["sql01.corp.example.test", "mx-int.corp.example.test"] {
+        assert!(
+            servers.iter().any(|x| x.eq_ignore_ascii_case(s)),
+            "{s} not in {servers:?}"
+        );
+    }
+}
+
 fn corpus_files() -> Vec<PathBuf> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/corpus");
     let mut out = Vec::new();

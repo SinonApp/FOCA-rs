@@ -26,7 +26,8 @@ FOCA-rs is an Android app for OSINT and document metadata reconnaissance. You gi
 - Offline analysis of a local folder or ZIP, and files shared to FOCA-rs from other apps through the Android share menu.
 
 ### Analyse
-- Metadata and forensics for OOXML, ODF, PDF (revisions, hidden text, bad redactions), legacy Office, images (EXIF/GPS), video, e-mail, RDP/ICA, LNK and archives.
+- Metadata and forensics for 65 file types: OOXML, ODF, PDF (revisions, hidden text, bad redactions, form fields), legacy Office (with VBA strings and data connections), images (EXIF/GPS, maker notes, AI generator markers, C2PA), audio and video, e-mail, RDP/ICA, LNK, Windows executables and installers, Java and Android packages, AutoCAD drawings, PostScript, KML/GPX, source maps, notebooks and archives (ZIP, 7z, TAR, gzip, RAR).
+- Documents that share a template path, a build folder, a printer and author or a camera are grouped as one author or workstation.
 - Digital signatures, including Ukrainian qualified signatures (КЕП).
 - People, e-mail patterns, software with end-of-life dates and CVEs (offline CISA KEV with EPSS scores), vulnerable JavaScript libraries, internal hosts and a relationship graph, timeline and org view. Detection data comes from pinned open sources (webappanalyzer technology fingerprints, gitleaks secret rules, endoflife.date, Retire.js, Recog, can-i-take-over-xyz) and updates from a signed (Ed25519) feed.
 - Every finding has a severity, evidence, a fix and references to the standards listed below.

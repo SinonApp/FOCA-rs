@@ -1159,6 +1159,29 @@
           )}</div>${lin && lin.root ? `<p class="fhint ins-lin">${ic("info")}<span>${esc(F.t("insights.lin_root", { name: docName(lin.root) }, "Вероятный оригинал линии: {name}."))}</span></p>` : ""}`,
       );
     }
+    const cl = (r.clusters || []).filter(c => (c.docs || []).includes(doc.id));
+    if (cl.length) {
+      const CL_KIND = {
+        template: F.t("insights.cl_template", "Общий шаблон"),
+        build_folder: F.t("insights.cl_build_folder", "Общая папка сборки"),
+        printer_author: F.t("insights.cl_printer_author", "Тот же принтер и автор"),
+        camera_serial: F.t("insights.cl_camera_serial", "Та же камера"),
+      };
+      out.push(
+        `${ui.secH(F.t("insights.clusters", "Тот же автор или компьютер"), cl.length)}<div class="list">${cl
+          .map(c => {
+            const others = c.docs.filter(d => d !== doc.id);
+            return ui.row({
+              lead: ui.leadIcon("link"),
+              cls: "ins-dr",
+              title: esc(CL_KIND[c.kind] || c.kind),
+              sub: `${esc(c.value)} · ${esc(others.slice(0, 5).map(docName).join(", "))}${others.length > 5 ? ` +${others.length - 5}` : ""}`,
+              act: others.length ? `go:/p/doc/${others[0]}` : "",
+            });
+          })
+          .join("")}</div>`,
+      );
+    }
     const sw = doc.software && (r.kev || []).find(k => k.subject && k.subject.id === doc.software);
     if (sw)
       out.push(

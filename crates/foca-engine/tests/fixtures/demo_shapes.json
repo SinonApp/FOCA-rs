@@ -9860,6 +9860,43 @@
       }
      }
     },
+    "clusters": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "id": {
+        "t": [
+         "string"
+        ]
+       },
+       "kind": {
+        "t": [
+         "string"
+        ]
+       },
+       "value": {
+        "t": [
+         "string"
+        ]
+       },
+       "docs": {
+        "t": [
+         "array"
+        ],
+        "items": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      }
+     }
+    },
     "anomalies": {
      "t": [
       "array"
@@ -10624,6 +10661,11 @@
        ]
       },
       "links": {
+       "t": [
+        "number"
+       ]
+      },
+      "clusters": {
        "t": [
         "number"
        ]

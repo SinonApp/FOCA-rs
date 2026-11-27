@@ -619,7 +619,15 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
     fx.insert("connections".into(), serde_json::to_value(&m.connections)?);
     fx.insert("mail_hops".into(), serde_json::to_value(&m.mail_hops)?);
     fx.insert("fonts".into(), serde_json::to_value(&m.fonts)?);
-    fx.insert("form_fields".into(), serde_json::to_value(&m.form_fields)?);
+    // form values can hold personal data: masked like the other document texts
+    fx.insert(
+        "form_fields".into(),
+        json!(m
+            .form_fields
+            .iter()
+            .map(|f| json!({ "name": red(&f.name), "value": f.value.as_deref().map(red) }))
+            .collect::<Vec<_>>()),
+    );
     let mut links: Vec<Value> = Vec::new();
     let mut seen = std::collections::BTreeSet::new();
     let found = stored

@@ -31,6 +31,7 @@ pub use super::draft::RULE_KEV;
 pub const RULE_LINEAGE: &str = "doc.lineage";
 pub const RULE_ORG: &str = "org.structure";
 pub const RULE_NETMAP: &str = "net.internal_map";
+pub const RULE_CLUSTER: &str = "doc.author_cluster";
 
 /// Minimum anomaly confidence that becomes a finding (weaker ones stay in `insights_get`).
 const ANOMALY_MIN_CONFIDENCE: u8 = 50;
@@ -525,6 +526,63 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
         out.push(f);
     }
 
+    // Same-author and same-machine clusters.
+    if !ins.clusters.is_empty() {
+        let kind_ru = |k: &str| match k {
+            "template" => "шаблон",
+            "build_folder" => "папка сборки",
+            "printer_author" => "принтер и автор",
+            "camera_serial" => "серийный номер камеры",
+            _ => "след",
+        };
+        let docs: Vec<u64> = ins
+            .clusters
+            .iter()
+            .flat_map(|c| c.docs.iter().copied())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .take(50)
+            .collect();
+        let evidence = ins
+            .clusters
+            .iter()
+            .take(20)
+            .map(|c| {
+                format!(
+                    "{}: {} ({})",
+                    kind_ru(&c.kind),
+                    c.value,
+                    c.docs
+                        .iter()
+                        .take(8)
+                        .map(|d| name(*d))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let mut f = finding(
+            RULE_CLUSTER,
+            "clusters",
+            format!(
+                "Документы одного автора или компьютера: {}",
+                ru_n(ins.clusters.len(), "группа", "группы", "групп")
+            ),
+            Severity::Info,
+            "people",
+            "T1589.003",
+            "Общий шаблон с полным путём, папка сборки программы, пара принтер и автор или серийный номер камеры связывают документы с одним человеком или рабочим местом.".into(),
+            "Удалять пути шаблонов, папки сборки и серийные номера устройств из публикуемых файлов (очистка метаданных, сборка без отладочных путей).",
+            evidence,
+            docs,
+            now,
+            scan,
+        );
+        f.tags = vec!["forensics".into()];
+        out.push(f);
+    }
+
     // Org chart (social engineering, MITRE T1591.004).
     let depts = ins
         .org
@@ -684,6 +742,7 @@ pub fn view(c: &Computed, args: &Value) -> Value {
     json!({
         "org": ins.org,
         "correlation": ins.correlation,
+        "clusters": ins.clusters,
         "anomalies": ins.anomalies,
         "kev": ins.kev,
         "netmap": ins.netmap,
@@ -697,6 +756,7 @@ pub fn view(c: &Computed, args: &Value) -> Value {
             "people": ins.org.people.len(),
             "lineages": ins.correlation.lineages.len(),
             "links": ins.correlation.links.len(),
+            "clusters": ins.clusters.len(),
             "anomalies": ins.anomalies.len(),
             "kev": ins.kev.len(),
             "net_nodes": ins.netmap.nodes.len(),

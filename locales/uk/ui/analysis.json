@@ -1115,5 +1115,10 @@
   "forensics.s_ai": "Згенеровано ШІ",
   "forensics.s_form": "Поля форми",
   "forensics.s_fonts": "Шрифти",
-  "insights.code.sw.cve": "Відомі CVE версії продукту з офлайн-бази NVD."
+  "insights.code.sw.cve": "Відомі CVE версії продукту з офлайн-бази NVD.",
+  "insights.clusters": "Той самий автор або комп'ютер",
+  "insights.cl_template": "Спільний шаблон",
+  "insights.cl_build_folder": "Спільна тека збирання",
+  "insights.cl_printer_author": "Той самий принтер і автор",
+  "insights.cl_camera_serial": "Та сама камера"
 }
