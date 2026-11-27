@@ -6,7 +6,7 @@ date: 2026-11-20
 template: compliance
 lang: en
 risk: 88
-findings: 106
+findings: 107
 ---
 
 # КСЗІ / Standards compliance
@@ -55,42 +55,42 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | 30 | Medium | Signer data (qualified signature) in the document signed.pdf: Іван Петренко | T1589.001 | \- | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
 | 31 | Medium | Signer data (qualified signature) in the document signed\_hidden.docx: John Doe | T1589.001 | \- | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
 | 32 | Medium | Adobe Acrobat Pro XI (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 33 | Medium | Document with VBA macros: legacy.doc | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
-| 34 | Medium | Internal domain in Message-ID (budget.msg) | \- | \- | \- | \- | \- | \- | \- |
-| 35 | Medium | Document with VBA macros: budget.xls | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
-| 36 | Medium | Adobe Photoshop CC 2019 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 37 | Medium | GPS coordinates in 6 photos | T1591.001 | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
-| 38 | Medium | Outdated OS iOS 16.6 in 1 document | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 39 | Medium | Document with VBA macros: schedule.xlsx | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
-| 40 | Medium | Reply-To differs from the sender (budget.eml) | T1566 | \- | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
-| 41 | Medium | Exchange structure (X.500) in the message (budget.msg) | \- | \- | \- | \- | \- | \- | \- |
-| 42 | Medium | Personal contacts in business cards (contacts.vcf) | \- | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
-| 43 | Medium | iOS 16.6 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 44 | Medium | Reply-To differs from the sender (backup.zip) | T1566 | \- | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
-| 45 | Medium | Outdated OS iOS 17.4 in 2 documents | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 46 | Medium | LNK shortcut points to a network share (network.lnk) | T1135 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 47 | Medium | Internal domain in Message-ID (budget.eml) | \- | \- | \- | \- | \- | \- | \- |
-| 48 | Medium | EXIF thumbnail may differ from the photo (photo.jpg) | T1591 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 49 | Medium | Internal domain in Message-ID (backup.zip) | \- | \- | \- | \- | \- | \- | \- |
-| 50 | Medium | Online meeting links in the calendar (meeting.ics) | \- | \- | \- | \- | \- | \- | \- |
-| 51 | Medium | Tracked changes and deleted text kept in contract.docx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 52 | Medium | Device serial number in a media file (iphone.mov) | T1592.001 | \- | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 53 | Medium | External data sources in hidden.xlsx | T1590 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 54 | Medium | Document with VBA macros: vbaProject.bin | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
-| 55 | Medium | Personal contacts in business cards (backup.zip) | \- | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
-| 56 | Medium | Different authors or programs in PDF revisions (signed\_modified.pdf) | \- | CWE-212 | \- | 8.10 | AC-22, SI-12(1) | \- | 6.1.2.7 |
-| 57 | Medium | PDF contains JavaScript: report.pdf | T1204.002 | \- | \- | 8.7 | SC-18 | \- | \- |
-| 58 | Medium | Hidden sheets in budget.xls: Зарплати, Службовий | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 59 | Medium | Hidden sheets in schedule.xlsx: Зарплати, Паролі | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 60 | Medium | Tracked changes and deleted text kept in letter.odt | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 61 | Medium | Different authors or programs in PDF revisions (report.pdf) | \- | CWE-212 | \- | 8.10 | AC-22, SI-12(1) | \- | 6.1.2.7 |
-| 62 | Medium | iOS 17.4 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 63 | Medium | Different authors or programs in PDF revisions (revisions.pdf) | \- | CWE-212 | \- | 8.10 | AC-22, SI-12(1) | \- | 6.1.2.7 |
-| 64 | Medium | Signer data (qualified signature) in the document signed\_modified.pdf: Іван Петренко | T1589.001 | \- | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
-| 65 | Medium | External data sources in network.vsdx | T1590 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 66 | Medium | Device serial number in a media file (photo.heic) | T1592.001 | \- | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 67 | Medium | Microsoft Office Word 2013 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 68 | Medium | Names and logins of 20 employees exposed | T1589.003 | CWE-359, A01:2025 | WSTG-INFO-01 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 33 | Medium | Contacts of people in document text: 1 person | T1589.003, T1589.002 | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
+| 34 | Medium | Document with VBA macros: legacy.doc | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
+| 35 | Medium | Internal domain in Message-ID (budget.msg) | \- | \- | \- | \- | \- | \- | \- |
+| 36 | Medium | Document with VBA macros: budget.xls | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
+| 37 | Medium | Adobe Photoshop CC 2019 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 38 | Medium | GPS coordinates in 6 photos | T1591.001 | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
+| 39 | Medium | Outdated OS iOS 16.6 in 1 document | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 40 | Medium | Document with VBA macros: schedule.xlsx | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
+| 41 | Medium | Reply-To differs from the sender (budget.eml) | T1566 | \- | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
+| 42 | Medium | Exchange structure (X.500) in the message (budget.msg) | \- | \- | \- | \- | \- | \- | \- |
+| 43 | Medium | Personal contacts in business cards (contacts.vcf) | \- | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 44 | Medium | iOS 16.6 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 45 | Medium | Reply-To differs from the sender (backup.zip) | T1566 | \- | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
+| 46 | Medium | Outdated OS iOS 17.4 in 2 documents | T1592.002 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 47 | Medium | LNK shortcut points to a network share (network.lnk) | T1135 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 48 | Medium | Internal domain in Message-ID (budget.eml) | \- | \- | \- | \- | \- | \- | \- |
+| 49 | Medium | EXIF thumbnail may differ from the photo (photo.jpg) | T1591 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 50 | Medium | Internal domain in Message-ID (backup.zip) | \- | \- | \- | \- | \- | \- | \- |
+| 51 | Medium | Online meeting links in the calendar (meeting.ics) | \- | \- | \- | \- | \- | \- | \- |
+| 52 | Medium | Tracked changes and deleted text kept in contract.docx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 53 | Medium | Device serial number in a media file (iphone.mov) | T1592.001 | \- | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 54 | Medium | External data sources in hidden.xlsx | T1590 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 55 | Medium | Document with VBA macros: vbaProject.bin | T1059.005 | \- | \- | 8.7 | SC-18 | \- | \- |
+| 56 | Medium | Personal contacts in business cards (backup.zip) | \- | CWE-359, A01:2025 | \- | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 57 | Medium | Different authors or programs in PDF revisions (signed\_modified.pdf) | \- | CWE-212 | \- | 8.10 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 58 | Medium | PDF contains JavaScript: report.pdf | T1204.002 | \- | \- | 8.7 | SC-18 | \- | \- |
+| 59 | Medium | Hidden sheets in budget.xls: Зарплати, Службовий | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 60 | Medium | Hidden sheets in schedule.xlsx: Зарплати, Паролі | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 61 | Medium | Tracked changes and deleted text kept in letter.odt | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 62 | Medium | Different authors or programs in PDF revisions (report.pdf) | \- | CWE-212 | \- | 8.10 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 63 | Medium | iOS 17.4 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 64 | Medium | Different authors or programs in PDF revisions (revisions.pdf) | \- | CWE-212 | \- | 8.10 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 65 | Medium | Signer data (qualified signature) in the document signed\_modified.pdf: Іван Петренко | T1589.001 | \- | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
+| 66 | Medium | External data sources in network.vsdx | T1590 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 67 | Medium | Device serial number in a media file (photo.heic) | T1592.001 | \- | \- | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 68 | Medium | Microsoft Office Word 2013 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
 | 69 | Low | Microsoft Excel 2010 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
 | 70 | Low | Microsoft PowerPoint 2002 (XP) (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
 | 71 | Low | Reviewer comments kept in schedule.xlsx | T1213 | CWE-212 | \- | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
@@ -123,12 +123,13 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | 98 | Low | Remote access settings exposed in the file SRV-TS01.rdp | T1590.002 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
 | 99 | Low | OpenOffice.org 3.2 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | \- | 8.8 | SA-22 | \- | 6.1.2.4 |
 | 100 | Low | Remote access settings exposed in the file buh.ica | T1590.002 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 101 | Low | Internal addresses and host names in the document (1) · network.vsdx | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 102 | Info | Corporate e-mail pattern identified: {f}.{last}@contoso.example | T1589.002 | \- | WSTG-INFO-01 | 6.3 | AT-2(3) | \- | 6.1.2.7 |
-| 103 | Info | Scan without a text layer: exiftool-PDF.pdf | \- | \- | \- | \- | \- | \- | \- |
-| 104 | Info | Scan without a text layer: scan.pdf | \- | \- | \- | \- | \- | \- | \- |
-| 105 | Info | Scan without a text layer: exiftool-PDF2.pdf | \- | \- | \- | \- | \- | \- | \- |
-| 106 | Info | Shared/service accounts in metadata: Administrator, admin, author, scan, user name | T1087 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.7 |
+| 101 | Low | Names and logins of 19 employees exposed | T1589.003 | CWE-359, A01:2025 | WSTG-INFO-01 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 102 | Low | Internal addresses and host names in the document (1) · network.vsdx | T1590.005 | CWE-497, A01:2025 | WSTG-INFO-01 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 103 | Info | Corporate e-mail pattern identified: {f}.{last}@contoso.example | T1589.002 | \- | WSTG-INFO-01 | 6.3 | AT-2(3) | \- | 6.1.2.7 |
+| 104 | Info | Scan without a text layer: exiftool-PDF.pdf | \- | \- | \- | \- | \- | \- | \- |
+| 105 | Info | Scan without a text layer: scan.pdf | \- | \- | \- | \- | \- | \- | \- |
+| 106 | Info | Scan without a text layer: exiftool-PDF2.pdf | \- | \- | \- | \- | \- | \- | \- |
+| 107 | Info | Shared/service accounts in metadata: Administrator, admin, author, scan, user name | T1087 | CWE-497, A01:2025 | \- | 8.12 | AC-22 | \- | 6.1.2.7 |
 
 НД ТЗІ 2.5-004-99 and НД ТЗІ 3.7-003-05 are given for systems certified under КСЗІ. НД ТЗІ 3.6-006-24 measure codes are the NIST SP 800-53 codes.
 
@@ -136,23 +137,23 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 
 | Control | Name | Findings |
 | --- | --- | --- |
-| AC-22 | Publicly Accessible Content | 55 |
+| AC-22 | Publicly Accessible Content | 56 |
 | AT-2(3) | Literacy Training and Awareness \| Social Engineering and Mining | 3 |
 | IA-5(7) | Authenticator Management \| No Embedded Unencrypted Static Authenticators | 7 |
 | SA-22 | Unsupported System Components | 19 |
 | SC-18 | Mobile Code | 5 |
 | SI-10 | Information Input Validation | 1 |
-| SI-12(1) | Information Management and Retention \| Limit Personally Identifiable Information Elements | 15 |
+| SI-12(1) | Information Management and Retention \| Limit Personally Identifiable Information Elements | 16 |
 
 ## Personal data protection (GDPR, Law No. 2297-VI)
 
 | Name | Findings |
 | --- | --- |
-| GDPR Art. 5(1)(c): data minimisation | 16 |
+| GDPR Art. 5(1)(c): data minimisation | 17 |
 | GDPR Art. 5(1)(f): integrity and confidentiality | 16 |
-| GDPR Art. 32: security of processing | 16 |
-| Law of Ukraine No. 2297-VI "On Personal Data Protection", Art. 6(3): data relevant, adequate and not excessive | 16 |
-| Law of Ukraine No. 2297-VI "On Personal Data Protection", Art. 24: protection of personal data | 16 |
+| GDPR Art. 32: security of processing | 17 |
+| Law of Ukraine No. 2297-VI "On Personal Data Protection", Art. 6(3): data relevant, adequate and not excessive | 17 |
+| Law of Ukraine No. 2297-VI "On Personal Data Protection", Art. 24: protection of personal data | 17 |
 
 ## НД ТЗІ 2.5-004-99 functional services (for systems certified under КСЗІ)
 
@@ -167,13 +168,13 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | Control | Name | Findings |
 | --- | --- | --- |
 | A.5.17 | Authentication information | 7 |
-| A.5.34 | Privacy and protection of PII | 12 |
+| A.5.34 | Privacy and protection of PII | 13 |
 | A.6.3 | Information security awareness, education and training | 3 |
 | A.8.7 | Protection against malware | 6 |
 | A.8.8 | Management of technical vulnerabilities | 19 |
 | A.8.10 | Information deletion | 20 |
 | A.8.11 | Data masking | 6 |
-| A.8.12 | Data leakage prevention | 56 |
+| A.8.12 | Data leakage prevention | 57 |
 | A.8.21 | Security of network services | 5 |
 | A.8.24 | Use of cryptography | 2 |
 
@@ -182,7 +183,7 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 | Clause | Work | Findings |
 | --- | --- | --- |
 | 6.1.2.4 | Survey of the ITS computing system | 43 |
-| 6.1.2.5 | Survey of the information environment | 32 |
+| 6.1.2.5 | Survey of the information environment | 33 |
 | 6.1.2.7 | Survey of the user environment | 13 |
 
 Findings without a standards mapping: 10.

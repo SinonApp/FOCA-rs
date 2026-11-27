@@ -114,7 +114,7 @@
       "url": "https://files.contoso.example/corpus/forensics/scan.pdf"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-01T09:55:00",
       "ext": "pdf",
       "flags": [
@@ -301,7 +301,7 @@
       "url": "https://files.contoso.example/corpus/legacy/budget.wpd"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-01T09:00:00",
       "ext": "pub",
       "flags": [],
@@ -315,7 +315,7 @@
       "url": "https://files.contoso.example/corpus/legacy/leaflet.pub"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-01T09:00:00",
       "ext": "wps",
       "flags": [],
@@ -329,7 +329,7 @@
       "url": "https://files.contoso.example/corpus/legacy/letter.wps"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-01T09:00:00",
       "ext": "vsd",
       "flags": [],
@@ -431,7 +431,7 @@
       "url": "https://files.contoso.example/corpus/mail/broken.msg"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-14T18:42:07",
       "ext": "eml",
       "flags": [
@@ -448,7 +448,7 @@
       "url": "https://files.contoso.example/corpus/mail/budget.eml"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-14T16:42:07",
       "ext": "msg",
       "flags": [
@@ -510,7 +510,7 @@
       "url": "https://files.contoso.example/corpus/media/iphone.mov"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-14T18:42:00",
       "ext": "heic",
       "flags": [
@@ -1036,7 +1036,7 @@
       "url": "https://files.contoso.example/corpus/svg/logo.svg"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "created": "2024-03-10T08:00:00",
       "ext": "vsdx",
       "flags": [
@@ -1080,14 +1080,14 @@
       "addr": "i.petrenko@contoso.example",
       "found": true,
       "login": "i.petrenko",
-      "name": "i.petrenko",
+      "name": "Іван Петренко",
       "source": "Текст документа"
     },
     {
       "addr": "i.petrenko@example.com",
       "found": true,
       "login": "i.petrenko",
-      "name": "i.petrenko",
+      "name": "Іван Петренко",
       "source": "Текст документа"
     },
     {
@@ -1100,7 +1100,7 @@
     {
       "addr": "ivan.petrenko@example.com",
       "found": true,
-      "login": "ivan.petrenko",
+      "login": "i.petrenko",
       "name": "Іван Петренко",
       "source": "Метаданные документа"
     },
@@ -2421,6 +2421,39 @@
     },
     {
       "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": 5.3,
+      "description": "Рядом с именами в опубликованных документах указаны контакты: телефон: 1, e-mail: 1, личные идентификаторы: 1. Такие данные используют для фишинга и социальной инженерии; значения телефонов и идентификаторов хранятся только в виде масок.",
+      "documents": [],
+      "evidence": "Іван Петренко: •••••••00; passport",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "contoso.example",
+      "id": 925046224129330,
+      "mitre": "T1589.003 · Gather Victim Identity Information: Employee Names",
+      "module": "people",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "text"
+        ],
+        "rule": "people.text_contacts"
+      },
+      "recommendation": "Убрать личные контакты и идентификаторы из публикуемых документов (оставить общие контакты подразделений), обезличить списки людей; предупредить сотрудников о целевом фишинге.",
+      "severity": "warn",
+      "severity_label": "Средний",
+      "source": "Люди из текста документов",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Контакты людей в тексте документов: 1 человек",
+      "url": null
+    },
+    {
+      "active": false,
       "category": "docs",
       "cve": [],
       "cvss": 4.3,
@@ -3737,35 +3770,6 @@
     },
     {
       "active": false,
-      "category": "people",
-      "cve": [],
-      "cvss": null,
-      "description": "Метаданные документов раскрывают 20 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.",
-      "documents": [],
-      "evidence": "john.doe - John Doe\ni.petrenko - i.petrenko\nivan.petrenko - Іван Петренко\no.kovalenko - Olena Kovalenko\nm.shevchuk - Марина Шевчук\na.bondar - Андрій Бондар\np.harvey - Phil Harvey\nt.melnyk - Тетяна Мельник",
-      "first_scan": "s1",
-      "fixed_scan": null,
-      "host": "contoso.example",
-      "id": 8482479149507769,
-      "mitre": "T1589.003 · Gather Victim Identity Information: Employee Names",
-      "module": "analysis",
-      "notes": [],
-      "provenance": {
-        "fields": [],
-        "rule": "mass-names"
-      },
-      "recommendation": "Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.",
-      "severity": "warn",
-      "severity_label": "Средний",
-      "source": "Люди и e-mail",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Раскрыты имена и логины 20 сотрудников",
-      "url": null
-    },
-    {
-      "active": false,
       "category": "sw",
       "cve": [],
       "cvss": null,
@@ -4488,7 +4492,7 @@
           "name": "network.vsdx"
         }
       ],
-      "evidence": "комментарий ivan.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»",
+      "evidence": "комментарий i.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -5068,6 +5072,35 @@
       "time": "2026-11-20T12:00:00",
       "title": "Параметры удалённого доступа раскрыты в файле buh.ica",
       "url": "https://files.contoso.example/corpus/remote/buh.ica"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "Метаданные документов раскрывают 19 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.",
+      "documents": [],
+      "evidence": "i.petrenko - Іван Петренко\njohn.doe - John Doe\no.kovalenko - Olena Kovalenko\nm.shevchuk - Марина Шевчук\na.bondar - Андрій Бондар\np.harvey - Phil Harvey\nt.melnyk - Тетяна Мельник\nv.tkachenko - Віктор Ткаченко",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "contoso.example",
+      "id": 8482479149507769,
+      "mitre": "T1589.003 · Gather Victim Identity Information: Employee Names",
+      "module": "analysis",
+      "notes": [],
+      "provenance": {
+        "fields": [],
+        "rule": "mass-names"
+      },
+      "recommendation": "Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.",
+      "severity": "low",
+      "severity_label": "Низкий",
+      "source": "Люди и e-mail",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Раскрыты имена и логины 19 сотрудников",
+      "url": null
     },
     {
       "active": false,
@@ -5776,29 +5809,24 @@
     "hosts_internal": 18,
     "paths": 27,
     "pcs": 9,
-    "people": 25,
+    "people": 24,
     "printers": 2,
     "secrets": 18,
     "servers": 6,
     "software": 33,
     "top_people": [
       {
-        "docs": 14,
+        "docs": 22,
+        "login": "i.petrenko",
+        "name": "Іван Петренко"
+      },
+      {
+        "docs": 15,
         "login": "john.doe",
         "name": "John Doe"
       },
       {
-        "docs": 13,
-        "login": "i.petrenko",
-        "name": "i.petrenko"
-      },
-      {
-        "docs": 12,
-        "login": "ivan.petrenko",
-        "name": "Іван Петренко"
-      },
-      {
-        "docs": 9,
+        "docs": 10,
         "login": "o.kovalenko",
         "name": "Olena Kovalenko"
       },
@@ -5831,6 +5859,11 @@
         "docs": 2,
         "login": "n.burch",
         "name": "Nick Burch"
+      },
+      {
+        "docs": 2,
+        "login": "s.lysenko",
+        "name": "Сергій Лисенко"
       }
     ],
     "top_software": [
@@ -6112,51 +6145,39 @@
   "people": [
     {
       "aliases": [
+        "Ivan Petrenko",
+        "i.petrenko",
+        "i.petrenko@contoso.example",
+        "i.petrenko@example.com",
+        "ipetrenko",
+        "ivan.petrenko@example.com",
+        "Іван Петренко",
+        "Петренко Іван"
+      ],
+      "docs": 22,
+      "emails": [
+        "i.petrenko@contoso.example",
+        "i.petrenko@example.com",
+        "ivan.petrenko@example.com"
+      ],
+      "login": "i.petrenko",
+      "name": "Іван Петренко",
+      "pc": null,
+      "role": "",
+      "service": false
+    },
+    {
+      "aliases": [
         "Doe, John",
         "John Doe",
         "john.doe@example.org"
       ],
-      "docs": 14,
+      "docs": 15,
       "emails": [
         "john.doe@example.org"
       ],
       "login": "john.doe",
       "name": "John Doe",
-      "pc": null,
-      "role": "",
-      "service": false
-    },
-    {
-      "aliases": [
-        "i.petrenko",
-        "i.petrenko@contoso.example",
-        "i.petrenko@example.com",
-        "ipetrenko"
-      ],
-      "docs": 13,
-      "emails": [
-        "i.petrenko@contoso.example",
-        "i.petrenko@example.com"
-      ],
-      "login": "i.petrenko",
-      "name": "i.petrenko",
-      "pc": null,
-      "role": "",
-      "service": false
-    },
-    {
-      "aliases": [
-        "Ivan Petrenko",
-        "ivan.petrenko@example.com",
-        "Іван Петренко",
-        "Петренко Іван"
-      ],
-      "docs": 12,
-      "emails": [
-        "ivan.petrenko@example.com"
-      ],
-      "login": "ivan.petrenko",
-      "name": "Іван Петренко",
       "pc": null,
       "role": "",
       "service": false
@@ -6169,7 +6190,7 @@
         "o.kovalenko@example.com",
         "Олена Коваленко"
       ],
-      "docs": 9,
+      "docs": 10,
       "emails": [
         "o.kovalenko@contoso.example",
         "o.kovalenko@example.com"
@@ -6946,7 +6967,7 @@
       "crit": 4,
       "high": 25,
       "info": 5,
-      "low": 33,
+      "low": 34,
       "warn": 39
     },
     "fixed": 1,
@@ -6954,6 +6975,6 @@
     "project_risk": 88,
     "risk": 88,
     "risk_level": "high",
-    "total": 106
+    "total": 107
   }
 }

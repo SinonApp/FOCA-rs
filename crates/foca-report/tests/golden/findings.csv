@@ -84,6 +84,7 @@ E-mail: ivan.petrenko@example.com
 Время подписи: 2026-11-22T01:06:57Z","Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.",https://files.contoso.example/corpus/forensics/signed_hidden.docx,doc.signer_identity,s1,
 F-267007005377796,warn,new,Adobe Acrobat Pro XI (EOL) у 1 документа,files.contoso.example,sw,T1203 · Exploitation for Client Execution,,,"1 документ создан в Adobe Acrobat Pro XI (11.0.23), поддержка завершена 2017-10-15. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.","Сигнатура: Adobe Acrobat Pro XI (11.0.23)
 Документов: 1",Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.,https://files.contoso.example/corpus/pdf/report.pdf,eol-software,s1,
+F-925046224129330,warn,new,Контакты людей в тексте документов: 1 человек,'-,people,T1589.003 · Gather Victim Identity Information: Employee Names,,5.3,"Рядом с именами в опубликованных документах указаны контакты: телефон: 1, e-mail: 1, личные идентификаторы: 1. Такие данные используют для фишинга и социальной инженерии; значения телефонов и идентификаторов хранятся только в виде масок.",Іван Петренко: •••••••00; passport,"Убрать личные контакты и идентификаторы из публикуемых документов (оставить общие контакты подразделений), обезличить списки людей; предупредить сотрудников о целевом фишинге.",,people.text_contacts,s1,
 F-1002006954531649,warn,new,Документ с макросами VBA: legacy.doc,files.contoso.example,docs,T1059.005 · Command and Scripting Interpreter: Visual Basic,,4.3,"Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.","Модули: AutoOpen, ThisDocument",Не публиковать документы с макросами; проверить код макросов на секреты и пути.,https://files.contoso.example/corpus/ole/legacy.doc,macros,s1,
 F-1669500316956834,warn,new,Внутренний домен в Message-ID (budget.msg),files.contoso.example,docs,,,,Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.,exch01.corp.example.test,Настроить почтовый сервер на внешнее имя в Message-ID.,https://files.contoso.example/corpus/mail/budget.msg,mail.internal_domain,s1,
 F-2365130770357058,warn,new,Документ с макросами VBA: budget.xls,files.contoso.example,docs,T1059.005 · Command and Scripting Interpreter: Visual Basic,,4.3,"Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.",Модули: Module1,Не публиковать документы с макросами; проверить код макросов на секреты и пути.,https://files.contoso.example/corpus/ole/budget.xls,macros,s1,
@@ -157,14 +158,6 @@ visio:data.01.file: C:\Users\i.petrenko\Documents\assets.xlsx",Удалять п
 F-8408687877458873,warn,new,Серийный номер устройства в медиафайле (photo.heic),files.contoso.example,docs,T1592.001 · Gather Victim Host Information: Hardware,,,Видео или фото содержит серийный номер камеры/телефона: по нему связываются другие публикации с того же устройства.,EXAMPLE-BODY-0042,Удалять метаданные медиафайлов перед публикацией.,https://files.contoso.example/corpus/media/photo.heic,media.device_serial,s1,
 F-8414048656935777,warn,new,Microsoft Office Word 2013 (EOL) у 2 документов,files.contoso.example,sw,T1203 · Exploitation for Client Execution,,,"2 документа созданы в Microsoft Office Word 2013 (15), поддержка завершена 2023-04-11. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.","Сигнатура: Microsoft Office Word 2013 (15)
 Документов: 2",Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.,https://files.contoso.example/corpus/ooxml/contract.docx,eol-software,s1,
-F-8482479149507769,warn,new,Раскрыты имена и логины 20 сотрудников,'-,people,T1589.003 · Gather Victim Identity Information: Employee Names,,,Метаданные документов раскрывают 20 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.,"john.doe - John Doe
-i.petrenko - i.petrenko
-ivan.petrenko - Іван Петренко
-o.kovalenko - Olena Kovalenko
-m.shevchuk - Марина Шевчук
-a.bondar - Андрій Бондар
-p.harvey - Phil Harvey
-t.melnyk - Тетяна Мельник",Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.,,mass-names,s1,
 F-491807216422307,low,new,Microsoft Excel 2010 (EOL) у 1 документа,files.contoso.example,sw,T1203 · Exploitation for Client Execution,,,"1 документ создан в Microsoft Excel 2010 (14), поддержка завершена 2020-10-13. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.","Сигнатура: Microsoft Excel 2010 (14)
 Документов: 1
 Исторические данные (2023): документы из веб-архива или старше 3 лет, важность понижена",Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.,https://files.contoso.example/corpus/ooxml/schedule.xlsx,eol-software,s1,
@@ -203,7 +196,7 @@ F-3243320745739716,low,new,Устаревшая ОС Windows XP у 2 докум�
 Документов: 2
 Исторические данные (2008): документы из веб-архива или старше 3 лет, важность понижена",Вывести из эксплуатации или изолировать рабочие места с неподдерживаемой ОС.,https://files.contoso.example/corpus/real/poi-SampleDoc.doc,eol-os,s1,
 F-3378053975663024,low,new,Идентификатор арендатора Microsoft 365 в письме (budget.eml),files.contoso.example,docs,,,,Заголовки письма содержат идентификатор арендатора Microsoft 365 организации.,00000000-1111-2222-3333-444444444444,Учитывать при оценке поверхности атаки облачной инфраструктуры.,https://files.contoso.example/corpus/mail/budget.eml,mail.m365_tenant,s1,
-F-3507499325971348,low,new,Комментарии рецензентов сохранены в network.vsdx,files.contoso.example,docs,T1213 · Data from Information Repositories,,3.1,"В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 1 комментарий: видны прежние формулировки и внутренняя переписка.","комментарий ivan.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»",Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.,https://files.contoso.example/corpus/visio/network.vsdx,revisions,s1,
+F-3507499325971348,low,new,Комментарии рецензентов сохранены в network.vsdx,files.contoso.example,docs,T1213 · Data from Information Repositories,,3.1,"В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 1 комментарий: видны прежние формулировки и внутренняя переписка.","комментарий i.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»",Принимать все исправления и удалять комментарии перед публикацией; для внешних документов использовать PDF.,https://files.contoso.example/corpus/visio/network.vsdx,revisions,s1,
 F-3795182609131782,low,new,Внутренние адреса и имена хостов в документе (4),files.contoso.example,docs,T1590.005 · Gather Victim Network Information: IP Addresses,,3.7,"Текст или поля документа «backup.zip» раскрывают внутреннюю адресацию сети: 10.20.30.42, 10.20.0.15, 192.168.10.17, 10.20.0.16.","текст, строка 32: [скрыто], 10.20.0.15
 текст, строка 32: 10.20.30.42, [скрыто]
 текст, строка 52: [скрыто], 10.20.0.16
@@ -244,6 +237,14 @@ F-8290697254337959,low,new,OpenOffice.org 3.2 (EOL) у 1 документа,file
 F-8364734392160472,low,new,Параметры удалённого доступа раскрыты в файле buh.ica,files.contoso.example,docs,T1590.002 · Gather Victim Network Information: DNS,,3.7,"Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.","full address: 10.10.1.40:1494
 username: o.kovalenko
 gateway: ctx.contoso.example:8080","Удалить файл с сайта, не публиковать служебные файлы конфигурации.",https://files.contoso.example/corpus/remote/buh.ica,remote-file,s1,
+F-8482479149507769,low,new,Раскрыты имена и логины 19 сотрудников,'-,people,T1589.003 · Gather Victim Identity Information: Employee Names,,,Метаданные документов раскрывают 19 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.,"i.petrenko - Іван Петренко
+john.doe - John Doe
+o.kovalenko - Olena Kovalenko
+m.shevchuk - Марина Шевчук
+a.bondar - Андрій Бондар
+p.harvey - Phil Harvey
+t.melnyk - Тетяна Мельник
+v.tkachenko - Віктор Ткаченко",Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.,,mass-names,s1,
 F-8582214742420188,low,new,Внутренние адреса и имена хостов в документе (1),files.contoso.example,docs,T1590.005 · Gather Victim Network Information: IP Addresses,,3.7,Текст или поля документа «network.vsdx» раскрывают внутреннюю адресацию сети: 10.20.0.10.,"текст, строка 1: DC01 [скрыто]","Удалять технические подробности (адреса, имена серверов) из публикуемых документов.",https://files.contoso.example/corpus/visio/network.vsdx,internal-addresses,s1,
 F-8926584716853994,low,false,Устаревшая ОС Windows XP x64 / Server 2003 у 1 документа,files.contoso.example,sw,T1592.002 · Gather Victim Host Information: Software,,,"Метаданные 1 документа указывают, что он создан в Windows XP x64 / Server 2003: ОС без обновлений безопасности.","ОС: Windows XP x64 / Server 2003
 Документов: 1

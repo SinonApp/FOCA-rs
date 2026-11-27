@@ -256,6 +256,8 @@
       "size": 6,
       "software": null,
       "status": "analyzed",
+      "text_contacts": 4,
+      "text_people": 3,
       "thumb_diff": false,
       "title": "backup",
       "url": "https://files.contoso.example/corpus/archive/backup.zip"
@@ -313,6 +315,7 @@
       "size": 4,
       "software": null,
       "status": "analyzed",
+      "text_people": 2,
       "thumb_diff": false,
       "title": "hidden",
       "url": "https://files.contoso.example/corpus/forensics/hidden.xlsx"
@@ -343,6 +346,8 @@
       "size": 2,
       "software": null,
       "status": "analyzed",
+      "text_contacts": 6,
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Довідка",
       "url": "https://files.contoso.example/corpus/forensics/personal.docx"
@@ -372,6 +377,8 @@
       "size": 2,
       "software": null,
       "status": "analyzed",
+      "text_contacts": 2,
+      "text_people": 1,
       "thumb_diff": false,
       "title": "redacted",
       "url": "https://files.contoso.example/corpus/forensics/redacted.pdf"
@@ -401,6 +408,7 @@
       "size": 2,
       "software": null,
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "revisions",
       "url": "https://files.contoso.example/corpus/forensics/revisions.pdf"
@@ -435,7 +443,7 @@
       "url": "https://files.contoso.example/corpus/forensics/scan.pdf"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": "ТОВ Приклад",
       "created_at": "2024-03-01T09:55:00",
@@ -459,6 +467,7 @@
       "size": 18,
       "software": null,
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "signed",
       "url": "https://files.contoso.example/corpus/forensics/signed.pdf"
@@ -488,6 +497,7 @@
       "size": 8,
       "software": null,
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "signed_hidden",
       "url": "https://files.contoso.example/corpus/forensics/signed_hidden.docx"
@@ -517,6 +527,7 @@
       "size": 18,
       "software": null,
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "signed_modified",
       "url": "https://files.contoso.example/corpus/forensics/signed_modified.pdf"
@@ -581,6 +592,7 @@
       "size": 3,
       "software": "ios166",
       "status": "analyzed",
+      "text_people": 2,
       "thumb_diff": true,
       "title": "photo",
       "url": "https://files.contoso.example/corpus/images/photo.jpg"
@@ -669,6 +681,7 @@
       "size": 11,
       "software": "indesign",
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Річний звіт 2023",
       "url": "https://files.contoso.example/corpus/legacy/annual.indd"
@@ -782,7 +795,7 @@
       "url": "https://files.contoso.example/corpus/legacy/budget.wpd"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": null,
       "created_at": "2024-03-01T09:00:00",
@@ -809,7 +822,7 @@
       "url": "https://files.contoso.example/corpus/legacy/leaflet.pub"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": null,
       "created_at": "2024-03-01T09:00:00",
@@ -836,7 +849,7 @@
       "url": "https://files.contoso.example/corpus/legacy/letter.wps"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": null,
       "created_at": "2024-03-01T09:00:00",
@@ -1053,7 +1066,7 @@
       "url": "https://files.contoso.example/corpus/mail/broken.msg"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": "Contoso Energy (fictional)",
       "created_at": "2024-03-14T18:42:07",
@@ -1078,12 +1091,14 @@
       "size": 4,
       "software": "outlook2016",
       "status": "analyzed",
+      "text_contacts": 1,
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Кошторис на 2024 рік",
       "url": "https://files.contoso.example/corpus/mail/budget.eml"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": null,
       "created_at": "2024-03-14T16:42:07",
@@ -1201,7 +1216,7 @@
       "url": "https://files.contoso.example/corpus/media/iphone.mov"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": "Apple iPhone 15 Pro",
       "company": null,
       "created_at": "2024-03-14T18:42:00",
@@ -1230,6 +1245,7 @@
       "size": 1,
       "software": "ios174",
       "status": "analyzed",
+      "text_people": 2,
       "thumb_diff": false,
       "title": "photo",
       "url": "https://files.contoso.example/corpus/media/photo.heic"
@@ -1263,6 +1279,7 @@
       "size": 1,
       "software": null,
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Site survey TES-2",
       "url": "https://files.contoso.example/corpus/media/survey.mp4"
@@ -1334,6 +1351,7 @@
       "size": 4,
       "software": "lo72",
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Лист-відповідь",
       "url": "https://files.contoso.example/corpus/odf/letter.odt"
@@ -1497,6 +1515,7 @@
       "size": 7,
       "software": "word2013",
       "status": "analyzed",
+      "text_contacts": 1,
       "thumb_diff": false,
       "title": "Договір постачання ТЕС-2",
       "url": "https://files.contoso.example/corpus/ooxml/contract.docx"
@@ -1644,6 +1663,7 @@
       "size": 4,
       "software": "word2013",
       "status": "analyzed",
+      "text_contacts": 1,
       "thumb_diff": false,
       "title": "Річний звіт 2024",
       "url": "https://files.contoso.example/corpus/pdf/report.pdf"
@@ -1731,6 +1751,8 @@
       "size": 2,
       "software": null,
       "status": "analyzed",
+      "text_contacts": 4,
+      "text_people": 2,
       "thumb_diff": false,
       "title": "contacts",
       "url": "https://files.contoso.example/corpus/pim/contacts.vcf"
@@ -1760,6 +1782,8 @@
       "size": 2,
       "software": null,
       "status": "analyzed",
+      "text_contacts": 3,
+      "text_people": 3,
       "thumb_diff": false,
       "title": "Фінансовий відділ",
       "url": "https://files.contoso.example/corpus/pim/meeting.ics"
@@ -1879,6 +1903,7 @@
       "size": 3,
       "software": "fujifilm",
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Communications",
       "url": "https://files.contoso.example/corpus/real/exiftool-GPS.jpg"
@@ -2050,6 +2075,7 @@
       "size": 3,
       "software": null,
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "MyFoo Financial Report",
       "url": "https://files.contoso.example/corpus/real/exiftool-XMP.svg"
@@ -2234,12 +2260,13 @@
       "size": 2,
       "software": "inkscape",
       "status": "analyzed",
+      "text_people": 1,
       "thumb_diff": false,
       "title": "Логотип Контосо",
       "url": "https://files.contoso.example/corpus/svg/logo.svg"
     },
     {
-      "author": "ivan.petrenko",
+      "author": "i.petrenko",
       "camera": null,
       "company": "Contoso Energy (fictional)",
       "created_at": "2024-03-10T08:00:00",
@@ -2266,7 +2293,7 @@
           "at": "2024-03-14T18:00:00",
           "kind": "com",
           "text": "Пароль адміна на стікері, прибрати",
-          "who": "ivan.petrenko"
+          "who": "i.petrenko"
         }
       ],
       "size": 4,
@@ -2306,7 +2333,7 @@
       "addr": "i.petrenko@contoso.example",
       "found": true,
       "login": "i.petrenko",
-      "name": "i.petrenko",
+      "name": "Іван Петренко",
       "role": false,
       "src": "Текст документа"
     },
@@ -2314,7 +2341,7 @@
       "addr": "i.petrenko@example.com",
       "found": true,
       "login": "i.petrenko",
-      "name": "i.petrenko",
+      "name": "Іван Петренко",
       "role": false,
       "src": "Текст документа"
     },
@@ -2329,7 +2356,7 @@
     {
       "addr": "ivan.petrenko@example.com",
       "found": true,
-      "login": "ivan.petrenko",
+      "login": "i.petrenko",
       "name": "Іван Петренко",
       "role": false,
       "src": "Метаданные документа"
@@ -3798,7 +3825,7 @@
         "pcs": [],
         "people": [
           "m.example",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -4167,7 +4194,6 @@
         "pcs": [],
         "people": [
           "john.doe",
-          "ivan.petrenko",
           "i.petrenko"
         ]
       },
@@ -4213,7 +4239,7 @@
         "pcs": [],
         "people": [
           "john.doe",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -4303,7 +4329,7 @@
         "pcs": [],
         "people": [
           "m.example",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -4595,7 +4621,7 @@
         "pcs": [],
         "people": [
           "john.doe",
-          "ivan.petrenko",
+          "i.petrenko",
           "i.britton"
         ]
       },
@@ -4873,7 +4899,7 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko",
+          "i.petrenko",
           "john.doe"
         ]
       },
@@ -4921,7 +4947,6 @@
         "pcs": [],
         "people": [
           "john.doe",
-          "ivan.petrenko",
           "i.petrenko"
         ]
       },
@@ -4966,9 +4991,8 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko",
-          "john.doe",
-          "i.petrenko"
+          "i.petrenko",
+          "john.doe"
         ]
       },
       "request": "",
@@ -5148,7 +5172,7 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -5195,7 +5219,7 @@
         "pcs": [],
         "people": [
           "john.doe",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -5242,7 +5266,7 @@
         "pcs": [],
         "people": [
           "m.example",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -5533,6 +5557,48 @@
       "active": false,
       "category": "people",
       "cve": [],
+      "cvss": 5.3,
+      "description": "Рядом с именами в опубликованных документах указаны контакты: телефон: 1, e-mail: 1, личные идентификаторы: 1. Такие данные используют для фишинга и социальной инженерии; значения телефонов и идентификаторов хранятся только в виде масок.",
+      "doc": null,
+      "evidence": "Іван Петренко: •••••••00; card, iban, passport, rnokpp",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "-",
+      "id": 925046224129330,
+      "mitre": "T1589.003 · Gather Victim Identity Information: Employee Names",
+      "module": "people",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [],
+        "fields": [
+          "text"
+        ],
+        "rule": "people.text_contacts"
+      },
+      "recommendation": "Убрать личные контакты и идентификаторы из публикуемых документов (оставить общие контакты подразделений), обезличить списки людей; предупредить сотрудников о целевом фишинге.",
+      "rel": {
+        "docs": [],
+        "pcs": [],
+        "people": [
+          "i.petrenko"
+        ]
+      },
+      "request": "",
+      "sev": "warn",
+      "source": "Люди из текста документов",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Контакты людей в тексте документов: 1 человек",
+      "url": null
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
       "cvss": null,
       "description": "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).",
       "doc": 1,
@@ -5605,7 +5671,6 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko",
           "i.petrenko",
           "john.doe"
         ]
@@ -5788,7 +5853,7 @@
         "pcs": [],
         "people": [
           "m.example",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -5799,63 +5864,6 @@
       "time": "2026-11-20T12:00:00",
       "title": "Разные авторы или программы в ревизиях PDF (signed_modified.pdf)",
       "url": "https://files.contoso.example/corpus/forensics/signed_modified.pdf"
-    },
-    {
-      "active": false,
-      "category": "people",
-      "cve": [],
-      "cvss": null,
-      "description": "Метаданные документов раскрывают 20 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.",
-      "doc": null,
-      "evidence": "john.doe - John Doe\ni.petrenko - i.petrenko\nivan.petrenko - Іван Петренко\no.kovalenko - Olena Kovalenko\nm.shevchuk - Марина Шевчук\na.bondar - Андрій Бондар\np.harvey - Phil Harvey\nt.melnyk - Тетяна Мельник",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "-",
-      "id": 8482479149507769,
-      "mitre": "T1589.003 · Gather Victim Identity Information: Employee Names",
-      "module": "analysis",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [],
-        "fields": [],
-        "rule": "mass-names"
-      },
-      "recommendation": "Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.",
-      "rel": {
-        "docs": [],
-        "pcs": [],
-        "people": [
-          "john.doe",
-          "i.petrenko",
-          "ivan.petrenko",
-          "o.kovalenko",
-          "m.shevchuk",
-          "a.bondar",
-          "p.harvey",
-          "t.melnyk",
-          "v.tkachenko",
-          "n.burch",
-          "s.lysenko",
-          "hogwarts",
-          "i.bird",
-          "i.britton",
-          "i.informatica",
-          "i.petrenko-2",
-          "j.roe",
-          "jeff",
-          "m.example",
-          "m.lambert"
-        ]
-      },
-      "request": "",
-      "sev": "warn",
-      "source": "Люди и e-mail",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Раскрыты имена и логины 20 сотрудников",
-      "url": null
     },
     {
       "active": false,
@@ -5931,7 +5939,7 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko",
+          "i.petrenko",
           "john.doe"
         ]
       },
@@ -6206,7 +6214,7 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko",
+          "i.petrenko",
           "john.doe"
         ]
       },
@@ -6868,9 +6876,8 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko",
-          "john.doe",
-          "i.petrenko"
+          "i.petrenko",
+          "john.doe"
         ]
       },
       "request": "",
@@ -7093,7 +7100,7 @@
           "o.kovalenko",
           "a.bondar",
           "john.doe",
-          "ivan.petrenko"
+          "m.shevchuk"
         ]
       },
       "request": "",
@@ -7138,7 +7145,7 @@
         "pcs": [],
         "people": [
           "john.doe",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -7319,7 +7326,7 @@
       "cvss": 3.1,
       "description": "В документе сохранены режим рецензирования (0 исправлений, из них 0 удалений) и 1 комментарий: видны прежние формулировки и внутренняя переписка.",
       "doc": 67,
-      "evidence": "комментарий ivan.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»",
+      "evidence": "комментарий i.petrenko, 2024-03-14T18:00:00: «Пароль адміна на стікері, прибрати»",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -7345,7 +7352,7 @@
         ],
         "pcs": [],
         "people": [
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -7640,6 +7647,62 @@
     },
     {
       "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "Метаданные документов раскрывают 19 сотрудников (ФИО и логины). Это основа для целевого фишинга и подбора паролей.",
+      "doc": null,
+      "evidence": "i.petrenko - Іван Петренко\njohn.doe - John Doe\no.kovalenko - Olena Kovalenko\nm.shevchuk - Марина Шевчук\na.bondar - Андрій Бондар\np.harvey - Phil Harvey\nt.melnyk - Тетяна Мельник\nv.tkachenko - Віктор Ткаченко",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "-",
+      "id": 8482479149507769,
+      "mitre": "T1589.003 · Gather Victim Identity Information: Employee Names",
+      "module": "analysis",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [],
+        "fields": [],
+        "rule": "mass-names"
+      },
+      "recommendation": "Очищать поля Author/LastModifiedBy при публикации; задать нейтральное имя автора в шаблонах.",
+      "rel": {
+        "docs": [],
+        "pcs": [],
+        "people": [
+          "i.petrenko",
+          "john.doe",
+          "o.kovalenko",
+          "m.shevchuk",
+          "a.bondar",
+          "p.harvey",
+          "t.melnyk",
+          "v.tkachenko",
+          "n.burch",
+          "s.lysenko",
+          "hogwarts",
+          "i.bird",
+          "i.britton",
+          "i.informatica",
+          "i.petrenko-2",
+          "j.roe",
+          "jeff",
+          "m.example",
+          "m.lambert"
+        ]
+      },
+      "request": "",
+      "sev": "low",
+      "source": "Люди и e-mail",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Раскрыты имена и логины 19 сотрудников",
+      "url": null
+    },
+    {
+      "active": false,
       "category": "docs",
       "cve": [],
       "cvss": null,
@@ -7766,7 +7829,7 @@
         "pcs": [],
         "people": [
           "m.example",
-          "ivan.petrenko"
+          "i.petrenko"
         ]
       },
       "request": "",
@@ -9068,6 +9131,26 @@
       {
         "from": "person:i.petrenko",
         "kind": "mentioned",
+        "to": "doc:10"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "author",
+        "to": "doc:20"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "author",
+        "to": "doc:21"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "author",
+        "to": "doc:22"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "mentioned",
         "to": "doc:25"
       },
       {
@@ -9077,7 +9160,7 @@
       },
       {
         "from": "person:i.petrenko",
-        "kind": "mentioned",
+        "kind": "author",
         "to": "doc:29"
       },
       {
@@ -9087,8 +9170,13 @@
       },
       {
         "from": "person:i.petrenko",
-        "kind": "mentioned",
+        "kind": "author",
         "to": "doc:30"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "author",
+        "to": "doc:34"
       },
       {
         "from": "person:i.petrenko",
@@ -9122,8 +9210,18 @@
       },
       {
         "from": "person:i.petrenko",
-        "kind": "mentioned",
+        "kind": "author",
         "to": "doc:67"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "author",
+        "to": "doc:8"
+      },
+      {
+        "from": "person:i.petrenko",
+        "kind": "mentioned",
+        "to": "doc:9"
       },
       {
         "from": "person:i.petrenko",
@@ -9136,64 +9234,14 @@
         "to": "email:i.petrenko@example.com"
       },
       {
+        "from": "person:i.petrenko",
+        "kind": "has_email",
+        "to": "email:ivan.petrenko@example.com"
+      },
+      {
         "from": "person:i.petrenko-2",
         "kind": "mentioned",
         "to": "doc:42"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "mentioned",
-        "to": "doc:10"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "author",
-        "to": "doc:20"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "author",
-        "to": "doc:21"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "author",
-        "to": "doc:22"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "mentioned",
-        "to": "doc:3"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "author",
-        "to": "doc:34"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "mentioned",
-        "to": "doc:49"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "author",
-        "to": "doc:67"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "author",
-        "to": "doc:8"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "mentioned",
-        "to": "doc:9"
-      },
-      {
-        "from": "person:ivan.petrenko",
-        "kind": "has_email",
-        "to": "email:ivan.petrenko@example.com"
       },
       {
         "from": "person:j.roe",
@@ -10025,17 +10073,12 @@
       {
         "id": "person:i.petrenko",
         "kind": "person",
-        "label": "i.petrenko"
+        "label": "Іван Петренко"
       },
       {
         "id": "person:i.petrenko-2",
         "kind": "person",
         "label": "Ігор Петренко"
-      },
-      {
-        "id": "person:ivan.petrenko",
-        "kind": "person",
-        "label": "Іван Петренко"
       },
       {
         "id": "person:j.roe",
@@ -11037,12 +11080,47 @@
   "people": [
     {
       "aliases": [
+        "Ivan Petrenko",
+        "i.petrenko",
+        "i.petrenko@contoso.example",
+        "i.petrenko@example.com",
+        "ipetrenko",
+        "ivan.petrenko@example.com",
+        "Іван Петренко",
+        "Петренко Іван"
+      ],
+      "color": "#2563eb",
+      "docs": 22,
+      "emails": [
+        "i.petrenko@contoso.example",
+        "i.petrenko@example.com",
+        "ivan.petrenko@example.com"
+      ],
+      "ids": [
+        "card",
+        "iban",
+        "passport",
+        "rnokpp"
+      ],
+      "login": "i.petrenko",
+      "name": "Іван Петренко",
+      "pc": null,
+      "phones": [
+        "•••••••00"
+      ],
+      "role": "",
+      "service": false,
+      "src": "Метаданные документов",
+      "src_kind": "meta"
+    },
+    {
+      "aliases": [
         "Doe, John",
         "John Doe",
         "john.doe@example.org"
       ],
-      "color": "#2563eb",
-      "docs": 14,
+      "color": "#0d9488",
+      "docs": 15,
       "emails": [
         "john.doe@example.org"
       ],
@@ -11052,48 +11130,8 @@
       "role": "",
       "service": false,
       "src": "Метаданные документов",
-      "src_kind": "meta"
-    },
-    {
-      "aliases": [
-        "i.petrenko",
-        "i.petrenko@contoso.example",
-        "i.petrenko@example.com",
-        "ipetrenko"
-      ],
-      "color": "#0d9488",
-      "docs": 13,
-      "emails": [
-        "i.petrenko@contoso.example",
-        "i.petrenko@example.com"
-      ],
-      "login": "i.petrenko",
-      "name": "i.petrenko",
-      "pc": null,
-      "role": "",
-      "service": false,
-      "src": "Метаданные документов",
-      "src_kind": "meta"
-    },
-    {
-      "aliases": [
-        "Ivan Petrenko",
-        "ivan.petrenko@example.com",
-        "Іван Петренко",
-        "Петренко Іван"
-      ],
-      "color": "#dc2626",
-      "docs": 12,
-      "emails": [
-        "ivan.petrenko@example.com"
-      ],
-      "login": "ivan.petrenko",
-      "name": "Іван Петренко",
-      "pc": null,
-      "role": "",
-      "service": false,
-      "src": "Метаданные документов",
-      "src_kind": "meta"
+      "src_kind": "meta",
+      "title": "головний бухгалтер"
     },
     {
       "aliases": [
@@ -11103,8 +11141,8 @@
         "o.kovalenko@example.com",
         "Олена Коваленко"
       ],
-      "color": "#c026d3",
-      "docs": 9,
+      "color": "#dc2626",
+      "docs": 10,
       "emails": [
         "o.kovalenko@contoso.example",
         "o.kovalenko@example.com"
@@ -11124,7 +11162,7 @@
         "mshevchuk",
         "Марина Шевчук"
       ],
-      "color": "#ea580c",
+      "color": "#c026d3",
       "docs": 5,
       "emails": [],
       "login": "m.shevchuk",
@@ -11140,7 +11178,7 @@
         "a.bondar",
         "Андрій Бондар"
       ],
-      "color": "#65a30d",
+      "color": "#ea580c",
       "docs": 3,
       "emails": [],
       "login": "a.bondar",
@@ -11155,7 +11193,7 @@
       "aliases": [
         "Phil Harvey"
       ],
-      "color": "#7c3aed",
+      "color": "#65a30d",
       "docs": 3,
       "emails": [],
       "login": "p.harvey",
@@ -11172,7 +11210,7 @@
         "tmelnyk",
         "Тетяна Мельник"
       ],
-      "color": "#0891b2",
+      "color": "#7c3aed",
       "docs": 3,
       "emails": [],
       "login": "t.melnyk",
@@ -11189,7 +11227,7 @@
         "v.tkachenko",
         "Віктор Ткаченко"
       ],
-      "color": "#64748b",
+      "color": "#0891b2",
       "docs": 3,
       "emails": [],
       "login": "v.tkachenko",
@@ -11204,7 +11242,7 @@
       "aliases": [
         "Nick Burch"
       ],
-      "color": "#db2777",
+      "color": "#64748b",
       "docs": 2,
       "emails": [],
       "login": "n.burch",
@@ -11221,7 +11259,7 @@
         "s.lysenko@contoso.example",
         "Сергій Лисенко"
       ],
-      "color": "#0f766e",
+      "color": "#db2777",
       "docs": 2,
       "emails": [
         "s.lysenko@contoso.example"
@@ -11238,7 +11276,7 @@
       "aliases": [
         "Administrator"
       ],
-      "color": "#9333ea",
+      "color": "#0f766e",
       "docs": 2,
       "emails": [],
       "login": "administrator",
@@ -11253,7 +11291,7 @@
       "aliases": [
         "Hogwarts"
       ],
-      "color": "#b45309",
+      "color": "#9333ea",
       "docs": 1,
       "emails": [],
       "login": "hogwarts",
@@ -11268,7 +11306,7 @@
       "aliases": [
         "Irving Bird"
       ],
-      "color": "#4f46e5",
+      "color": "#b45309",
       "docs": 1,
       "emails": [],
       "login": "i.bird",
@@ -11283,7 +11321,7 @@
       "aliases": [
         "Ian Britton"
       ],
-      "color": "#2563eb",
+      "color": "#4f46e5",
       "docs": 1,
       "emails": [],
       "login": "i.britton",
@@ -11298,7 +11336,7 @@
       "aliases": [
         "IDHW IDHW Informatica"
       ],
-      "color": "#0d9488",
+      "color": "#2563eb",
       "docs": 1,
       "emails": [],
       "login": "i.informatica",
@@ -11313,7 +11351,7 @@
       "aliases": [
         "Ігор Петренко"
       ],
-      "color": "#dc2626",
+      "color": "#0d9488",
       "docs": 1,
       "emails": [],
       "login": "i.petrenko-2",
@@ -11328,7 +11366,7 @@
       "aliases": [
         "Jane Roe"
       ],
-      "color": "#c026d3",
+      "color": "#dc2626",
       "docs": 1,
       "emails": [],
       "login": "j.roe",
@@ -11344,7 +11382,7 @@
         "Author: Jeff",
         "Jeff"
       ],
-      "color": "#ea580c",
+      "color": "#c026d3",
       "docs": 1,
       "emails": [],
       "login": "jeff",
@@ -11359,7 +11397,7 @@
       "aliases": [
         "Mallory Example"
       ],
-      "color": "#65a30d",
+      "color": "#ea580c",
       "docs": 1,
       "emails": [],
       "login": "m.example",
@@ -11374,7 +11412,7 @@
       "aliases": [
         "Mary Lambert"
       ],
-      "color": "#7c3aed",
+      "color": "#65a30d",
       "docs": 1,
       "emails": [],
       "login": "m.lambert",
@@ -11389,7 +11427,7 @@
       "aliases": [
         "admin"
       ],
-      "color": "#0891b2",
+      "color": "#7c3aed",
       "docs": 1,
       "emails": [],
       "login": "admin",
@@ -11404,7 +11442,7 @@
       "aliases": [
         "author"
       ],
-      "color": "#64748b",
+      "color": "#0891b2",
       "docs": 1,
       "emails": [],
       "login": "author",
@@ -11419,7 +11457,7 @@
       "aliases": [
         "scan"
       ],
-      "color": "#db2777",
+      "color": "#64748b",
       "docs": 1,
       "emails": [],
       "login": "scan",
@@ -11434,7 +11472,7 @@
       "aliases": [
         "user name"
       ],
-      "color": "#0f766e",
+      "color": "#db2777",
       "docs": 1,
       "emails": [],
       "login": "user.name",
@@ -11444,6 +11482,36 @@
       "service": true,
       "src": "Метаданные документов",
       "src_kind": "meta"
+    }
+  ],
+  "phones": [
+    {
+      "country": "",
+      "docs": 2,
+      "login": "i.petrenko",
+      "src_doc": 5,
+      "value": "•••••••00"
+    },
+    {
+      "country": "",
+      "docs": 1,
+      "login": null,
+      "src_doc": 49,
+      "value": "•••••••00"
+    },
+    {
+      "country": "",
+      "docs": 1,
+      "login": null,
+      "src_doc": 49,
+      "value": "•••••••01"
+    },
+    {
+      "country": "",
+      "docs": 1,
+      "login": null,
+      "src_doc": 4,
+      "value": "•••••••67"
     }
   ],
   "printers": [
