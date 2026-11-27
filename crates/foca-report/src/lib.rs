@@ -40,6 +40,7 @@ use time::OffsetDateTime;
 
 pub use data::{Counts, LogSummary, Overview, RequestEntry, ResultSnapshot};
 pub use export::{export, export_with_log, Artifact};
+pub use formats::logo::{self, LogoError, LogoImage, LOGO_MAX_BYTES, LOGO_MAX_SIDE};
 /// Finding text in a language (`text`, `provenance.rule`, `lang`), as reports show it.
 pub use ftext::translate as translate_finding_text;
 pub use opts::{

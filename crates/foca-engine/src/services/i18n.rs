@@ -563,6 +563,10 @@ mod tests {
             "Правило секрета sig_x в пакете не компилируется: Regex".into(),
             "Некорректный JSON пакета сигнатур: expected value at line 1 column 1".into(),
             "Нужен bundle_json или bundle (foca-sig-bundle/v2)".into(),
+            "Логотип: поддерживаются только PNG, JPEG и WebP".into(),
+            "Логотип больше 2 МБ".into(),
+            "Логотип больше 512 px по длинной стороне".into(),
+            "Логотип повреждён или не читается".into(),
         ];
         for e in [
             foca_net::notify::NotifyError::Rejected {

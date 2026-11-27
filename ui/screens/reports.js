@@ -1531,8 +1531,20 @@
 
       <h3 class="sub-h rp-h3">${esc(F.t("reports.header", "Шапка"))}</h3>
       <div class="list rp-opts">
-        <div class="row rp-tg"><div class="rp-logo">${draft.logo ? `<span>${esc(initials(draft.company))}</span>` : ic("camera")}</div><div class="body"><div class="t">${esc(F.t("reports.logo", "Логотип исполнителя"))}</div><div class="s">${draft.logo ? "logo.png · 512×512" : F.t("reports.not_chosen", "Не выбран")}</div></div><div class="tail"><button class="btn sm"
-          data-act="rp-logo">${draft.logo ? F.t("reports.remove", "Убрать") : F.t("reports.choose", "Выбрать")}</button></div></div>
+        ${(() => {
+          const l = logoOf();
+          const thumb = l
+            ? `<img src="${esc(l.data)}" alt="">`
+            : draft.logo
+              ? `<span>${esc(initials(draft.company))}</span>`
+              : ic("camera");
+          const sub = l
+            ? `${esc(l.name)} · ${l.w}×${l.h} · ${kb(l.bytes / 1024)}`
+            : esc(F.t("reports.not_chosen", "Не выбран"));
+          return `<div class="row rp-tg rp-logorow"><div class="rp-logo${l ? " has-img" : ""}">${thumb}</div><div class="body"><div class="t">${esc(F.t("reports.logo", "Логотип исполнителя"))}</div><div class="s">${sub}</div></div><div class="tail"><button class="btn sm"
+          data-act="rp-logo-pick">${esc(l ? F.t("reports.replace", "Заменить") : F.t("reports.choose", "Выбрать"))}</button>${l ? `<button class="btn sm text" data-act="rp-logo-del">${esc(F.t("reports.remove", "Убрать"))}</button>` : ""}</div></div>`;
+        })()}
+        ${ui.check(!!draft.logo, esc(F.t("reports.logo_in_report", "Логотип в отчёте")), "rp-logo", esc(F.t("reports.logo_in_report_sub", "В шапке и на титуле. Без картинки: инициалы компании")))}
       </div>
       <label class="flabel" for="rp-company">${esc(F.t("reports.company_l", "Исполнитель в колонтитуле"))}</label>
       <div class="field">${ic("contract")}<input id="rp-company" value="${esc(draft.company)}"
@@ -1597,6 +1609,101 @@
       .join("")
       .slice(0, 2)
       .toUpperCase() || "-";
+
+  // ---------- report logo (Settings → Report, report_logo_* in docs/API.md) ----------
+  // The core keeps one logo per user. The picker is the system chooser of <input type=file> (on
+  // Android the WebView opens the system file picker), the WebView downscales the picture to
+  // LOGO_SIDE px and the core checks it again before saving.
+  const LOGO_MAX_BYTES = 2 * 1024 * 1024;
+  const LOGO_SIDE = 512;
+  const LOGO_ACCEPT = "image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp";
+  // undefined: not loaded yet; null: no logo; else { data, mime, name, w, h, bytes }.
+  const logoOf = () => {
+    if (reps.logo === undefined) {
+      reps.logo = null;
+      F.api
+        .report_logo_get()
+        .then(r => {
+          reps.logo = (r && r.logo) || null;
+          if (reps.logo && F.cur && /^\/p\/report-(new|preview)$/.test(F.cur.path)) F.render(true);
+        })
+        .catch(() => {});
+    }
+    return reps.logo;
+  };
+  // Image type by signature: SVG and everything else is refused (SVG can carry scripts).
+  const sniffImage = b =>
+    b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47
+      ? "image/png"
+      : b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff
+        ? "image/jpeg"
+        : b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45
+          ? "image/webp"
+          : "";
+  const readAs = (file, how) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r[how](file);
+    });
+  const logoErr = (key, ru) => new Error(F.t(key, ru));
+  // Checks a picked file and returns { data, name } ready for report_logo_set: PNG/JPEG up to
+  // LOGO_SIDE px stay as they are, larger pictures and WebP are redrawn as PNG.
+  async function prepareLogo(file) {
+    if (file.size > LOGO_MAX_BYTES) throw logoErr("reports.logo_too_large", "Файл больше 2 МБ");
+    const head = new Uint8Array(await readAs(file.slice(0, 16), "readAsArrayBuffer"));
+    const mime = sniffImage(head);
+    if (!mime) throw logoErr("reports.logo_format", "Подходят только PNG, JPEG и WebP");
+    const src = await readAs(file, "readAsDataURL");
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(logoErr("reports.logo_broken", "Не удалось прочитать картинку"));
+      i.src = src;
+    });
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    if (!w || !h) throw logoErr("reports.logo_broken", "Не удалось прочитать картинку");
+    const keep = mime !== "image/webp" && Math.max(w, h) <= LOGO_SIDE;
+    if (keep) return { data: `data:${mime};base64,${String(src).split(",")[1]}`, name: file.name };
+    const k = Math.min(1, LOGO_SIDE / Math.max(w, h));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * k));
+    c.height = Math.max(1, Math.round(h * k));
+    const g = c.getContext("2d");
+    g.imageSmoothingQuality = "high";
+    g.drawImage(img, 0, 0, c.width, c.height);
+    const name = String(file.name || "logo").replace(/\.[^.]*$/, "") + ".png";
+    return { data: c.toDataURL("image/png"), name };
+  }
+  function pickLogo() {
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = LOGO_ACCEPT;
+    inp.onchange = () => {
+      const file = inp.files && inp.files[0];
+      if (!file) return;
+      prepareLogo(file)
+        .then(x => F.api.report_logo_set(x))
+        .then(r => {
+          reps.logo = (r && r.logo) || null;
+          D0().logo = true;
+          saveDraft();
+          F.snack(F.t("reports.logo_saved", "Логотип сохранён"));
+          F.render(true);
+        })
+        .catch(e => F.snack(e.message));
+    };
+    inp.click();
+  }
+  // Logo markup for the preview: the saved image, else the initials (option on), else nothing.
+  const logoMark = (draft, cls) => {
+    if (!draft.logo) return "";
+    const l = logoOf();
+    if (l && l.data) return `<img class="${cls} rp-logoimg" src="${esc(l.data)}" alt="">`;
+    return draft.company ? `<i class="${cls}">${esc(initials(draft.company))}</i>` : "";
+  };
 
   F.route("/p/report-new", {
     title: () => F.t("reports.new_report", "Новый отчёт"),
@@ -1678,6 +1785,16 @@
       saveDraft();
       F.render(true);
     },
+    "rp-logo-pick": () => pickLogo(),
+    "rp-logo-del": () =>
+      F.api
+        .report_logo_clear()
+        .then(() => {
+          reps.logo = null;
+          F.snack(F.t("reports.logo_removed", "Логотип убран"));
+          F.render(true);
+        })
+        .catch(e => F.snack(e.message)),
     "rp-custody": () => {
       const d = D0();
       d.custody = !d.custody;
@@ -2118,7 +2235,7 @@
       ${titleNote(draft.lang)}
       <div class="rp-scroll"><div class="rp-paperw" style="--z:1">
         <section class="rp-paper rp-fixedp"><div class="rp-pi">
-          <div class="rp-ph"><span>${by}</span><span>${esc(F.db.project ? F.db.project.name : "")}</span></div>
+          <div class="rp-ph"><span>${logoMark(draft, "rp-plogo")}${by}</span><span>${esc(F.db.project ? F.db.project.name : "")}</span></div>
           <h2>${esc(ct ? ct.title : tpl.t)}</h2>
           <p>${esc(ct ? ct.description : tpl.d)}</p>
           <ol>${(fl.outline[draft.tpl] || FIXED_TPL[draft.tpl]).map(x => `<li>${esc(x)}</li>`).join("")}</ol>
@@ -2224,7 +2341,7 @@
     // The footer counts the sheets of this preview; the file estimate stays in the info line.
     const total = sheets.length + 1;
     const head = n =>
-      `<div class="rp-ph"><span>${draft.logo && draft.company ? `<i class="rp-plogo">${esc(initials(draft.company))}</i>` : ""}${by}</span><span>${tr.conf}</span></div><div class="rp-pf"><span>${esc(F.db.project ? F.db.project.name : "")}</span><span>${tr.page} ${n} / ${total}</span></div>`;
+      `<div class="rp-ph"><span>${logoMark(draft, "rp-plogo")}${by}</span><span>${tr.conf}</span></div><div class="rp-pf"><span>${esc(F.db.project ? F.db.project.name : "")}</span><span>${tr.page} ${n} / ${total}</span></div>`;
     const tail = `<p class="rp-more rp-end">${esc(tr.tail(pages))}</p>`;
     return `
       <div class="rp-ptools">
@@ -2242,7 +2359,7 @@
         <section class="rp-paper rp-title"><div class="rp-pi">
           ${head(1)}
           <div class="rp-tmain">
-            ${draft.logo && draft.company ? `<div class="rp-tlogo">${esc(initials(draft.company))}</div>` : ""}
+            ${logoMark(draft, "rp-tlogo")}
             <div class="rp-tkind">${tr.conf.toUpperCase()}</div>
             <h1>${tr.title}</h1>
             <div class="rp-tline"></div>

@@ -937,6 +937,11 @@
     report_list: () => run("report_list", { project: cur() }),
     // Report templates of the core (docs/API.md → report_templates): [{ id, title, description }].
     report_templates: lang => run("report_templates", lang ? { lang } : {}),
+    // Report logo of Settings → Report (docs/API.md → report_logo_get): { logo: null | { data, mime,
+    // name, w, h, bytes } }; set takes { data: "data:image/…;base64,…", name }.
+    report_logo_get: () => run("report_logo_get", {}),
+    report_logo_set: o => run("report_logo_set", o || {}),
+    report_logo_clear: () => run("report_logo_clear", {}),
     // template: fixed-structure core template (executive | compliance | lab); omitted for the full report.
     report_build: (opts, template) =>
       run("report_build", template ? { project: cur(), opts, template } : { project: cur(), opts }, r => {

@@ -43,6 +43,7 @@ Layout: `lib.rs` builds the report context; `sections/` prepare rows per report 
 | `src/export.rs` | 1,276 | Table exports: list, `.txt` wordlist, CSV, JSON, Maltego CSV, GraphML, Markdown |
 | `src/formats/docx.rs` | 1,370 | Pure-Rust `.docx` (OOXML WordprocessingML) report generator |
 | `src/formats/html.rs` | 1,168 | Self-contained A4 HTML report (inline CSS, no JS, no external resources) |
+| `src/formats/logo.rs` | 266 | Report logo checks: PNG/JPEG/WebP signature, 2 MB and 512 px limits, header-only size reading (SVG refused) |
 | `src/formats/md.rs` | 853 | Obsidian-compatible Markdown report with YAML front matter and safe escaping |
 | `src/formats/stix.rs` | 463 | Pure-Rust OASIS STIX 2.1 JSON bundle generator (`ExportFormat::Stix`) |
 | `src/formats/tabular.rs` | 267 | RFC 4180 CSV (with BOM and formula escaping) and JSON v1 report renderers |
@@ -73,6 +74,7 @@ Re-exports in `src/lib.rs`:
 
 - `data::{Counts, LogSummary, Overview, RequestEntry, ResultSnapshot}`
 - `export::{export, export_with_log, Artifact}`
+- `formats::logo::{self, LogoError, LogoImage, LOGO_MAX_BYTES, LOGO_MAX_SIDE}` (as `foca_report::logo`)
 - `opts::{DictKind, ExportFormat, ExportKind, ExportOptions, Lang, Logo, MdLayout, ReportFormat, ReportOptions, SecretMode, Sections, Template}`
 - `svg::Visuals`
 
@@ -88,10 +90,12 @@ Full API docs: `cargo doc -p foca-report --no-deps --open`.
 |---|---|
 | `tests/report.rs` | 481 |
 | `tests/svg.rs` | 291 |
+| `tests/logo.rs` | 5 |
 
 ## Pitfalls
 
 - Always pass untrusted metadata strings through `safe.rs` (and `svg::clean` for SVG labels).
+- Report logo per format: HTML embeds a `data:` URL (the PDF is printed from that HTML, the CSP allows only `img-src data:`), DOCX adds `word/media/logo.{png,jpg}` above the title (WebP is skipped: older Word cannot show it), Markdown has no logo on purpose (data URIs bloat the file and many viewers block them).
 - Golden fixtures: regenerate with `UPDATE_GOLDEN=1 cargo test -p foca-report --test report`; `generator: "FOCA-rs <ver>"` in `tests/golden/*` and `examples/out/*` must be updated on every version bump.
 - PDF export renders self-contained HTML and delegates printing to Android's print framework (`platform_print`).
 - When adding a new finding rule, add matching entries to `locales/{en,ru,uk}/findings.json` so English and Ukrainian reports translate properly instead of falling back to raw core text.

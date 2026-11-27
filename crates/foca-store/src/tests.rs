@@ -851,6 +851,29 @@ fn report_result_snapshot_roundtrip_and_settings_reset() {
 }
 
 #[test]
+fn report_logo_is_kept_apart_from_settings_and_wiped_with_them() {
+    let dir = tempfile::tempdir().unwrap();
+    let s = store(dir.path());
+    assert!(s.report_logo().unwrap().is_none());
+    let logo = serde_json::json!({ "data": "data:image/png;base64,AAAA", "name": "logo.png",
+        "w": 8, "h": 4, "bytes": 3, "mime": "image/png" });
+    s.set_report_logo(Some(&logo)).unwrap();
+    assert_eq!(s.report_logo().unwrap(), Some(logo.clone()));
+    // the settings JSON never carries the image
+    assert!(!s.settings_get().unwrap().to_string().contains("base64"));
+    // reopening keeps it, removing clears it
+    drop(s);
+    let s = store(dir.path());
+    assert_eq!(s.report_logo().unwrap(), Some(logo.clone()));
+    s.set_report_logo(None).unwrap();
+    assert!(s.report_logo().unwrap().is_none());
+    // wipe_all resets settings and drops the logo
+    s.set_report_logo(Some(&logo)).unwrap();
+    s.settings_reset().unwrap();
+    assert!(s.report_logo().unwrap().is_none());
+}
+
+#[test]
 fn archive_copy_keeps_original_host() {
     use crate::project::archive_original;
     assert_eq!(

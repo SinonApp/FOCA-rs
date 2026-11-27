@@ -650,14 +650,13 @@ pub(crate) fn render_html(c: &Ctx) -> String {
         crate::page::CSS,
         c.o.tpl.id()
     );
-    let _ = writeln!(
-        h,
-        "<header class=\"head-data\"><h1>{}</h1><div class=\"muted\">{} · {} · {}</div></header>",
-        esc(&kind),
-        esc(&c.r(&c.snap.project.name)),
-        esc(&c.r(&c.snap.scope.client)),
-        esc(&c.date())
+    let sub = format!(
+        "{} · {} · {}",
+        c.r(&c.snap.project.name),
+        c.r(&c.snap.scope.client),
+        c.date()
     );
+    crate::page::head_data(c, &mut h, &kind, &sub);
     if c.o.tpl == Template::Executive {
         h.push_str("<div class=\"onepage\">\n");
     } else {

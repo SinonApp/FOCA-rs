@@ -118,6 +118,9 @@ fn target_kind(v: &str) -> &'static str {
 /// Size of the buffer used to overwrite deleted project files.
 const WIPE_CHUNK: usize = 64 * 1024;
 
+/// Key of the report logo in the index `settings` table.
+const REPORT_LOGO_KEY: &str = "report.logo";
+
 /// Overwrites `len` bytes with zeros through a fixed-size buffer, so wiping a large database
 /// never allocates its whole size in memory.
 fn zero_fill<W: std::io::Write>(w: &mut W, len: u64) -> std::io::Result<()> {
@@ -529,11 +532,47 @@ impl Store {
         Ok(s)
     }
 
-    /// Resets the global settings to their defaults (used by `wipe_all`).
+    /// Resets the global settings to their defaults and drops the report logo (used by
+    /// `wipe_all`).
     pub fn settings_reset(&self) -> Result<Value> {
-        self.index
-            .execute("DELETE FROM settings WHERE key = 'settings'", [])?;
+        self.index.execute(
+            "DELETE FROM settings WHERE key IN ('settings', ?1)",
+            [REPORT_LOGO_KEY],
+        )?;
         self.settings_get()
+    }
+
+    /// Report logo saved in Settings → Report (`report_logo_get`): the checked image as a
+    /// `data:` URL with its file name and size. Kept apart from the settings JSON so that
+    /// `settings_get` stays small.
+    pub fn report_logo(&self) -> Result<Option<Value>> {
+        let j: Option<String> = self
+            .index
+            .query_row(
+                "SELECT value_json FROM settings WHERE key = ?1",
+                [REPORT_LOGO_KEY],
+                |r| r.get(0),
+            )
+            .optional()?;
+        Ok(match j {
+            Some(j) => Some(serde_json::from_str(&j)?),
+            None => None,
+        })
+    }
+
+    /// Saves (`Some`) or removes (`None`) the report logo; the caller checks the image.
+    pub fn set_report_logo(&self, logo: Option<&Value>) -> Result<()> {
+        match logo {
+            Some(v) => self.index.execute(
+                "INSERT INTO settings (key, value_json) VALUES (?1, ?2)
+                 ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json",
+                [REPORT_LOGO_KEY, &serde_json::to_string(v)?],
+            )?,
+            None => self
+                .index
+                .execute("DELETE FROM settings WHERE key = ?1", [REPORT_LOGO_KEY])?,
+        };
+        Ok(())
     }
 
     /// Implements `key_set`: the key value goes to the Keystore outside the core; only its mask and status are stored here.

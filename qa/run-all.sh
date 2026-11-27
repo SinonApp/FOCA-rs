@@ -18,7 +18,7 @@ fail() { echo "FAIL: $*"; FAILS=$((FAILS+1)); }
 pass() { echo "ok:   $*"; }
 
 if [ "$WHAT" = all ] || [ "$WHAT" = static ]; then
-  for f in ui/js/*.js ui/screens/*.js qa/*.mjs qa/scenarios/{launch-wizard,scan-screen,findings-gestures,data-navigation,reports-export,graph-map-tools,project-switch,regression-scan-scope,regression-screens,regression-logic,regression-a11y,regression-round2,first-run-debug,site-fuzz,back-navigation,infra-1-2,forensics-1-3,insights-1-4,real-core,ui-remediation,android-remediation,subdomain-bulk,scan-controls,scan-followup,hosts-parallel,scan-delete,journal-clear,ai-summary,background-setup,standards-2025,beta-note,ux-polish,report-preview-scroll}/*.mjs qa/scenarios/i18n-*/*.mjs qa/tauri-shim.js; do
+  for f in ui/js/*.js ui/screens/*.js qa/*.mjs qa/scenarios/{launch-wizard,scan-screen,findings-gestures,data-navigation,reports-export,graph-map-tools,project-switch,regression-scan-scope,regression-screens,regression-logic,regression-a11y,regression-round2,first-run-debug,site-fuzz,back-navigation,infra-1-2,forensics-1-3,insights-1-4,real-core,ui-remediation,android-remediation,subdomain-bulk,scan-controls,scan-followup,hosts-parallel,scan-delete,journal-clear,ai-summary,background-setup,standards-2025,beta-note,ux-polish,report-logo,report-preview-scroll}/*.mjs qa/scenarios/i18n-*/*.mjs qa/tauri-shim.js; do
     [ -f "$f" ] || continue
     node --check "$f" 2>"$OUT/logs/check.err" || fail "node --check $f: $(head -c 300 "$OUT/logs/check.err")"
   done
@@ -103,6 +103,7 @@ if [ "$WHAT" = all ] || [ "$WHAT" = steps ]; then
               journal-clear/steps journal-clear/steps@--w_360_--theme_light_--fs_2 \
               ai-summary/steps ai-summary/steps@--w_360_--theme_light_--fs_2 \
               background-setup/steps ux-polish/steps standards-2025/steps beta-note/steps beta-note/steps@--w_360_--theme_light_--fs_2 \
+              report-logo/steps report-logo/steps@--w_360_--theme_light_--fs_2 \
               report-preview-scroll/steps report-preview-scroll/steps@--w_360_--theme_light_--fs_2 \
               $I18N_STEPS; do
     s=${item%%@*}; cfg=""; [ "$item" != "$s" ] && cfg=$(echo "${item#*@}" | tr _ ' ')

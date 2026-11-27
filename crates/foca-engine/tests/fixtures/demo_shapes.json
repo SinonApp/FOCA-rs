@@ -15390,6 +15390,106 @@
     }
    }
   },
+  "report_logo_set": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "logo": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "data": {
+       "t": [
+        "string"
+       ]
+      },
+      "mime": {
+       "t": [
+        "string"
+       ]
+      },
+      "name": {
+       "t": [
+        "string"
+       ]
+      },
+      "w": {
+       "t": [
+        "number"
+       ]
+      },
+      "h": {
+       "t": [
+        "number"
+       ]
+      },
+      "bytes": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "report_logo_get": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "logo": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "data": {
+       "t": [
+        "string"
+       ]
+      },
+      "mime": {
+       "t": [
+        "string"
+       ]
+      },
+      "name": {
+       "t": [
+        "string"
+       ]
+      },
+      "w": {
+       "t": [
+        "number"
+       ]
+      },
+      "h": {
+       "t": [
+        "number"
+       ]
+      },
+      "bytes": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "report_logo_clear": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "logo": {
+     "t": [
+      "null"
+     ]
+    }
+   }
+  },
   "report_verify": {
    "t": [
     "object"

@@ -2,6 +2,7 @@
 
 pub mod docx;
 pub(crate) mod html;
+pub mod logo;
 pub(crate) mod md;
 pub mod stix;
 pub(crate) mod tabular;

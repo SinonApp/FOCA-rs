@@ -299,5 +299,9 @@
   "core.search.crawl": "обход: страниц {pages}, документов {docs}, файлов в хранилищах {storage}, изображений {images}",
   "core.search.crawl_rate_limited": "Обход остановлен на хостах, которые повторно отвечали 429/503: {hosts}. Оставшиеся страницы продолжатся в следующем скане",
   "core.search.crawl_no_render": "Страниц-приложений на JavaScript без отрисовки: {pages}. Встроенный браузер есть только в Android, поэтому ссылки взяты только из HTML и часть документов могла остаться ненайденной",
-  "core.download.storage": "внешние хранилища: скачано {got}, без публичного доступа {private}"
+  "core.download.storage": "внешние хранилища: скачано {got}, без публичного доступа {private}",
+  "core.report.logo_format": "Логотип: поддерживаются только PNG, JPEG и WebP",
+  "core.report.logo_too_large": "Логотип больше 2 МБ",
+  "core.report.logo_too_big": "Логотип больше 512 px по длинной стороне",
+  "core.report.logo_corrupt": "Логотип повреждён или не читается"
 }

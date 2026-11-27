@@ -10,7 +10,7 @@ use foca_core::Severity;
 
 use crate::data::{dmy, sev_id, SEV_ORDER};
 use crate::i18n;
-use crate::opts::{Logo, Template};
+use crate::opts::Template;
 use crate::page::{CSP, CSS};
 use crate::safe::{html as esc, safe_href};
 use crate::table::html_table;
@@ -33,14 +33,13 @@ pub(crate) fn render(c: &Ctx) -> String {
         c.h(&title)
     );
     if c.o.tpl == Template::Data {
-        let _ = writeln!(
-            h,
-            "<header class=\"head-data\"><h1>{}</h1><div class=\"muted\">{} · {} · {}</div></header>",
-            c.h(&c.snap.project.name),
-            esc(c.tpl_label()),
-            c.h(&c.snap.scope.client),
-            esc(&c.date())
+        let sub = format!(
+            "{} · {} · {}",
+            c.tpl_label(),
+            c.r(&c.snap.scope.client),
+            c.date()
         );
+        crate::page::head_data(c, &mut h, &c.r(&c.snap.project.name), &sub);
     } else {
         cover(c, &mut h);
         toc(c, &mut h);
@@ -144,46 +143,10 @@ fn empty(h: &mut String, text: &str) {
     let _ = writeln!(h, "<p class=\"empty\">{}</p>", esc(text));
 }
 
-/// Legal entity forms, skipped when building logo initials.
-const ORG_FORMS: &[&str] = &[
-    "тов", "тоо", "ооо", "пат", "ат", "прат", "пао", "зао", "оао", "фоп", "чп", "пп", "ип", "llc",
-    "ltd", "inc", "gmbh", "corp", "plc", "llp", "ag", "sa", "co",
-];
-
-/// Returns logo initials from a company name, skipping quotes and legal forms
-/// (`LLC "Cyber Audit"` → `CA`).
-pub(crate) fn initials(s: &str) -> String {
-    let i: String = s
-        .split(|c: char| c.is_whitespace() || c == ',')
-        .map(|w| w.trim_matches(|c: char| !c.is_alphanumeric()))
-        .filter(|w| !w.is_empty())
-        .filter(|w| !ORG_FORMS.contains(&w.trim_end_matches('.').to_lowercase().as_str()))
-        .filter_map(|w| w.chars().next())
-        .take(2)
-        .collect();
-    if i.is_empty() {
-        "F".into()
-    } else {
-        i.to_uppercase()
-    }
-}
-
 fn cover(c: &Ctx, h: &mut String) {
     let t = c.t;
     let sc = &c.snap.scope;
-    let logo = match &c.o.logo {
-        Logo::None => String::new(),
-        Logo::Initials => format!(
-            "<div class=\"initials\" aria-hidden=\"true\">{}</div>",
-            esc(&initials(&c.o.company))
-        ),
-        // The MIME type comes from a whitelisted signature and the base64 alphabet is validated.
-        Logo::Image { mime, b64 } => format!(
-            "<img src=\"data:{};base64,{}\" alt=\"\">",
-            esc(mime),
-            esc(b64)
-        ),
-    };
+    let logo = crate::page::logo_html(c);
     let _ = write!(
         h,
         "<header class=\"cover\">\n<div class=\"top\"><div class=\"logo\">{logo}</div><div class=\"conf\">{}</div></div>\n\
@@ -1163,7 +1126,7 @@ fn appx(c: &Ctx, h: &mut String) {
 
 #[cfg(test)]
 mod tests {
-    use super::initials;
+    use crate::page::initials;
 
     #[test]
     fn logo_initials_skip_org_forms_and_quotes() {

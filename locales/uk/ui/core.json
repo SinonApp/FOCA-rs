@@ -299,5 +299,9 @@
   "core.search.crawl": "обхід: сторінок {pages}, документів {docs}, файлів у сховищах {storage}, зображень {images}",
   "core.search.crawl_rate_limited": "Обхід зупинено на хостах, які повторно відповідали 429/503: {hosts}. Решта сторінок продовжиться в наступному скані",
   "core.search.crawl_no_render": "Сторінок-застосунків на JavaScript без відтворення: {pages}. Вбудований браузер є лише в Android, тому посилання взято тільки з HTML і частина документів могла лишитися не знайденою",
-  "core.download.storage": "зовнішні сховища: завантажено {got}, без публічного доступу {private}"
+  "core.download.storage": "зовнішні сховища: завантажено {got}, без публічного доступу {private}",
+  "core.report.logo_format": "Логотип: підтримуються лише PNG, JPEG і WebP",
+  "core.report.logo_too_large": "Логотип більший за 2 МБ",
+  "core.report.logo_too_big": "Логотип більший за 512 px за довшою стороною",
+  "core.report.logo_corrupt": "Логотип пошкоджений або не читається"
 }

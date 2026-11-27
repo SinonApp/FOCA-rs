@@ -334,6 +334,13 @@ async fn contract_shape_matches_demo_backend_inner() {
         "report_templates",
         json!({ "lang": "UA" })
     );
+    c!(
+        "report_logo_set",
+        "report_logo_set",
+        json!({ "data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAECAIAAAA8r+mnAAAAJUlEQVR42mNgCDghF3DCJuBEVMCJioAT0wJObAk4cSngBAP1JAAgOzAh+r1X4QAAAABJRU5ErkJggg==", "name": "logo.png" })
+    );
+    c!("report_logo_get", "report_logo_get", json!({}));
+    c!("report_logo_clear", "report_logo_clear", json!({}));
     c!("report_list", "report_list", json!({ "project": id }));
     let rep_cust = c!(
         "report_build",

@@ -15,4 +15,6 @@ mod reports {
     #[cfg(feature = "report")]
     mod report_after_scan;
     mod report_company;
+    #[cfg(feature = "report")]
+    mod report_logo;
 }

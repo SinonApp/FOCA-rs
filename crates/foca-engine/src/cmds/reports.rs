@@ -13,6 +13,35 @@ use crate::services::ai_text::{client_and_domain, unredact_client};
 use crate::util::{self, arg_str};
 use crate::{CmdError, CmdResult, Engine};
 
+/// Core messages of a refused report logo (`report_logo_set`).
+#[cfg(feature = "report")]
+pub(crate) const LOGO_FORMAT: &str = "Логотип: поддерживаются только PNG, JPEG и WebP";
+#[cfg(feature = "report")]
+pub(crate) const LOGO_TOO_LARGE: &str = "Логотип больше 2 МБ";
+#[cfg(feature = "report")]
+pub(crate) const LOGO_TOO_BIG: &str = "Логотип больше 512 px по длинной стороне";
+#[cfg(feature = "report")]
+pub(crate) const LOGO_CORRUPT: &str = "Логотип повреждён или не читается";
+
+/// File name shown next to the logo thumbnail: the last path part, without control or markup
+/// characters, at most 80 characters; a generic name when nothing is left.
+#[cfg(feature = "report")]
+fn logo_name(raw: &str, mime: &str) -> String {
+    let leaf = raw.rsplit(['/', '\\']).next().unwrap_or("");
+    let clean: String = leaf
+        .chars()
+        .filter(|c| !c.is_control() && !matches!(c, '<' | '>' | '"' | '\'' | '`'))
+        .take(80)
+        .collect();
+    let clean = clean.trim();
+    if clean.is_empty() {
+        let ext = mime.rsplit('/').next().unwrap_or("png");
+        format!("logo.{}", if ext == "jpeg" { "jpg" } else { ext })
+    } else {
+        clean.to_string()
+    }
+}
+
 /// Template ids accepted by `report_build.template` (see `report_templates`).
 pub(crate) const REPORT_TEMPLATES: [&str; 4] = ["full", "executive", "compliance", "lab"];
 
@@ -183,6 +212,19 @@ impl Engine {
                 }
             }
         }
+        // `logo: true` means "use the logo from Settings → Report": the saved image replaces
+        // the flag; without one the report falls back to the company initials.
+        if let Some(o) = opts.as_object_mut() {
+            if o.get("logo") == Some(&Value::Bool(true)) {
+                if let Some(data) = self
+                    .store()
+                    .report_logo()?
+                    .and_then(|l| l["data"].as_str().map(str::to_string))
+                {
+                    o.insert("logo".into(), json!(data));
+                }
+            }
+        }
         if let Some(o) = opts.as_object_mut() {
             if !o.contains_key(AI_SUMMARY_DATA_KEY) {
                 if let Some(mut sum) = lock(&db).setting(AI_SUMMARY_KEY)?.filter(|v| !v.is_null()) {
@@ -208,6 +250,72 @@ impl Engine {
         let mut v = json!([serde_json::to_value(saved)?]);
         self.add_report_paths(&id, &mut v);
         Ok(v[0].take())
+    }
+
+    /// `report_logo_get {}`: `{ logo: null | { data, mime, name, w, h, bytes } }`, the logo saved
+    /// in Settings → Report.
+    pub(crate) fn report_logo_get(&self) -> CmdResult {
+        Ok(json!({ "logo": self.store().report_logo()? }))
+    }
+
+    /// `report_logo_set { data, name? }`: checks and saves the report logo. `data` is a
+    /// `data:image/…;base64,` URL of a PNG, JPEG or WebP file up to 2 MB whose longest side is
+    /// at most 512 px (the UI downscales before saving); SVG and other types are refused.
+    #[cfg(feature = "report")]
+    pub(crate) fn report_logo_set(&self, a: &Value) -> CmdResult {
+        use foca_report::{LogoError, LOGO_MAX_BYTES};
+        let data = util::req_str(a, "data")?.trim();
+        let refuse = |e: LogoError| {
+            let msg = match e {
+                LogoError::Format => LOGO_FORMAT,
+                LogoError::TooLarge => LOGO_TOO_LARGE,
+                LogoError::TooBig { .. } => LOGO_TOO_BIG,
+                LogoError::Corrupt => LOGO_CORRUPT,
+            };
+            CmdError::new(e.code(), msg)
+        };
+        let (head, b64) = data
+            .strip_prefix("data:")
+            .and_then(|r| r.split_once(','))
+            .ok_or_else(|| refuse(LogoError::Format))?;
+        let declared = head
+            .strip_suffix(";base64")
+            .ok_or_else(|| refuse(LogoError::Format))?
+            .to_ascii_lowercase();
+        // base64 grows by 4/3: refuse oversized input before decoding it
+        if b64.len() > LOGO_MAX_BYTES / 3 * 4 + 8 {
+            return Err(refuse(LogoError::TooLarge));
+        }
+        let b64: String = b64.chars().filter(|c| !c.is_whitespace()).collect();
+        let bytes = foca_core::b64::decode(&b64).ok_or_else(|| refuse(LogoError::Corrupt))?;
+        let info = foca_report::logo::inspect(&bytes).map_err(refuse)?;
+        let same = declared == info.mime || (declared == "image/jpg" && info.mime == "image/jpeg");
+        if !same {
+            return Err(refuse(LogoError::Format));
+        }
+        let name = logo_name(arg_str(a, "name").unwrap_or(""), info.mime);
+        let logo = json!({
+            "data": format!("data:{};base64,{}", info.mime, foca_core::b64::encode(&bytes)),
+            "mime": info.mime,
+            "name": name,
+            "w": info.width,
+            "h": info.height,
+            "bytes": bytes.len(),
+        });
+        self.store().set_report_logo(Some(&logo))?;
+        Ok(json!({ "logo": logo }))
+    }
+
+    #[cfg(not(feature = "report"))]
+    pub(crate) fn report_logo_set(&self, _a: &Value) -> CmdResult {
+        Err(CmdError::new("unavailable", "Сборщик отчётов не подключён"))
+    }
+
+    /// `report_logo_clear {}`: removes the saved logo; reports with the logo option on show the
+    /// company initials again. Returns `{ logo: null }`.
+    pub(crate) fn report_logo_clear(&self) -> CmdResult {
+        self.store().set_report_logo(None)?;
+        Ok(json!({ "logo": null }))
     }
 
     /// `report_templates { lang? }`: `[{ id, title, description }]` in the UI language (`lang`

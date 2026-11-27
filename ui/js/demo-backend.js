@@ -7688,6 +7688,88 @@
     k >= 1024
       ? `${(k / 1024).toFixed(1).replace(".", ",")}\u00a0МБ`
       : `${Math.max(1, Math.round(k))}\u00a0КБ`;
+  // Report logo checks as in foca-report logo.rs and report_logo_set: PNG/JPEG/WebP only, up to
+  // 2 MB, longest side up to 512 px; the type comes from the file signature, never from the name.
+  const LOGO_MSG = {
+    logo_format: "Логотип: поддерживаются только PNG, JPEG и WebP",
+    logo_too_large: "Логотип больше 2 МБ",
+    logo_too_big: "Логотип больше 512 px по длинной стороне",
+    logo_corrupt: "Логотип повреждён или не читается",
+  };
+  const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  // Base64 → byte array without atob (the QA vm contexts have none); null on bad input.
+  function b64Bytes(s) {
+    const clean = s.replace(/=+$/, "");
+    if (/[^A-Za-z0-9+/]/.test(clean)) return null;
+    const out = [];
+    let acc = 0;
+    let bits = 0;
+    for (const ch of clean) {
+      acc = (acc << 6) | B64.indexOf(ch);
+      bits += 6;
+      if (bits >= 8) {
+        bits -= 8;
+        out.push((acc >> bits) & 0xff);
+      }
+    }
+    return out;
+  }
+  function logoCheck(data, name) {
+    const fail = code => {
+      throw apiErr(code, LOGO_MSG[code], { code: `report.${code}`, params: {} });
+    };
+    const m = /^data:([^;,]+);base64,(.*)$/s.exec(String(data || "").trim());
+    if (!m) fail("logo_format");
+    const b64 = m[2].replace(/\s+/g, "");
+    if (b64.length > ((2 * 1024 * 1024) / 3) * 4 + 8) fail("logo_too_large");
+    const b = b64Bytes(b64);
+    if (!b) fail("logo_corrupt");
+    if (b.length > 2 * 1024 * 1024) fail("logo_too_large");
+    const be = (i, n) => b.slice(i, i + n).reduce((a, x) => a * 256 + x, 0);
+    const le = (i, n) => b.slice(i, i + n).reduceRight((a, x) => a * 256 + x, 0);
+    let mime = "";
+    let w = 0;
+    let h = 0;
+    if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
+      mime = "image/png";
+      if (String.fromCharCode(...b.slice(12, 16)) === "IHDR") [w, h] = [be(16, 4), be(20, 4)];
+    } else if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) {
+      mime = "image/jpeg";
+      for (let i = 2; i + 9 < b.length && b[i] === 0xff;) {
+        const mk = b[i + 1];
+        if (mk >= 0xc0 && mk <= 0xcf && ![0xc4, 0xc8, 0xcc].includes(mk)) {
+          [w, h] = [be(i + 7, 2), be(i + 5, 2)];
+          break;
+        }
+        i += 2 + be(i + 2, 2);
+      }
+    } else if (
+      String.fromCharCode(...b.slice(0, 4)) === "RIFF" &&
+      String.fromCharCode(...b.slice(8, 12)) === "WEBP"
+    ) {
+      mime = "image/webp";
+      const kind = String.fromCharCode(...b.slice(12, 16));
+      if (kind === "VP8 ") [w, h] = [le(26, 2) & 0x3fff, le(28, 2) & 0x3fff];
+      else if (kind === "VP8L") {
+        const v = le(21, 4);
+        [w, h] = [(v & 0x3fff) + 1, ((v >>> 14) & 0x3fff) + 1];
+      } else if (kind === "VP8X") [w, h] = [le(24, 3) + 1, le(27, 3) + 1];
+    } else fail("logo_format");
+    if (!w || !h) fail("logo_corrupt");
+    if (Math.max(w, h) > 512) fail("logo_too_big");
+    const declared = m[1].toLowerCase();
+    if (declared !== mime && !(declared === "image/jpg" && mime === "image/jpeg")) fail("logo_format");
+    const leaf = String(name || "")
+      .split(/[\\/]/)
+      .pop();
+    const clean = [...leaf]
+      .filter(c => c >= " " && !"<>\"'`".includes(c))
+      .slice(0, 80)
+      .join("")
+      .trim();
+    const ext = mime === "image/jpeg" ? "jpg" : mime.split("/")[1];
+    return { data: `data:${mime};base64,${b64}`, mime, name: clean || `logo.${ext}`, w, h, bytes: b.length };
+  }
   // Report templates of report_templates / report_build.template (same ids and texts as the core).
   const REPORT_TEMPLATES = {
     UA: [
@@ -10780,6 +10862,19 @@
     report_list: ({ project }) => clone(P(project).reports),
     // Report templates (docs/API.md → report_templates): ids are fixed, texts follow the UI language.
     report_templates: ({ lang } = {}) => reportTemplates(lang),
+    // Report logo of Settings → Report (docs/API.md → report_logo_get).
+    report_logo_get: () => ({ logo: clone(load().reportLogo || null) }),
+    report_logo_set: ({ data, name } = {}) => {
+      const S = load();
+      S.reportLogo = logoCheck(data, name);
+      save();
+      return { logo: clone(S.reportLogo) };
+    },
+    report_logo_clear: () => {
+      delete load().reportLogo;
+      save();
+      return { logo: null };
+    },
     report_build: ({ project, opts = {}, template, custody }) => {
       const st = P(project);
       const id = (st.reports.reduce((a, r) => Math.max(a, r.id), 0) || 0) + 1;
@@ -11726,6 +11821,7 @@
       S.order = [];
       S.settings = defaultSettings();
       S.settings.last_project = null;
+      delete S.reportLogo;
       delete S.run;
       S.terms = null;
       save();

@@ -4,6 +4,8 @@
 //! including a raster severity-distribution bar chart PNG (`word/media/chart_sev.png`) encoded
 //! purely in Rust (`flate2` zlib + CRC-32). All dynamic content passes through `Ctx::r` for
 //! secret masking and `xml_clean` so no invalid XML 1.0 control characters ever enter the package.
+//! A PNG or JPEG report logo goes in as `word/media/logo.{png,jpg}` above the title; a WebP logo
+//! is left out because Word versions before 2021 cannot show it.
 
 use std::io::{Cursor, Write as _};
 
@@ -31,12 +33,43 @@ const CHART_H: u32 = 180;
 const CHART_CX_EMU: &str = "5486400";
 const CHART_CY_EMU: &str = "1543050";
 
+/// Logo box on the title (EMUs): at most 2 cm high and 6 cm wide, aspect ratio kept.
+const LOGO_MAX_CY_EMU: u64 = 720_000;
+const LOGO_MAX_CX_EMU: u64 = 2_160_000;
+const LOGO_RID: &str = "rIdLogo1";
+
+/// The report logo as a DOCX image part: bytes, part extension and display size in EMUs.
+struct DocxLogo {
+    bytes: Vec<u8>,
+    ext: &'static str,
+    cx: u64,
+    cy: u64,
+}
+
+fn docx_logo(c: &Ctx) -> Option<DocxLogo> {
+    let (bytes, info) = super::logo::image_of(&c.o.logo)?;
+    let ext = match info.mime {
+        "image/png" => "png",
+        "image/jpeg" => "jpg",
+        _ => return None,
+    };
+    let (w, h) = (u64::from(info.width), u64::from(info.height));
+    // fit into the box: limited by height unless the logo is very wide
+    let (mut cx, mut cy) = (LOGO_MAX_CY_EMU * w / h, LOGO_MAX_CY_EMU);
+    if cx > LOGO_MAX_CX_EMU {
+        cx = LOGO_MAX_CX_EMU;
+        cy = (LOGO_MAX_CX_EMU * h / w).max(1);
+    }
+    Some(DocxLogo { bytes, ext, cx, cy })
+}
+
 pub(crate) fn render(c: &Ctx) -> Vec<u8> {
     let png = render_severity_chart_png(c);
-    let document_xml = build_document_xml(c);
-    let content_types = build_content_types_xml();
+    let logo = docx_logo(c);
+    let document_xml = build_document_xml(c, logo.as_ref());
+    let content_types = build_content_types_xml(logo.as_ref());
     let root_rels = build_root_rels_xml();
-    let doc_rels = build_doc_rels_xml();
+    let doc_rels = build_doc_rels_xml(logo.as_ref());
     let styles_xml = build_styles_xml();
     let core_xml = build_core_xml(c);
     let app_xml = build_app_xml();
@@ -47,7 +80,8 @@ pub(crate) fn render(c: &Ctx) -> Vec<u8> {
         .compression_method(CompressionMethod::Deflated)
         .last_modified_time(zip::DateTime::default());
 
-    let entries: &[(&str, &[u8])] = &[
+    let logo_name = logo.as_ref().map(|l| format!("word/media/logo.{}", l.ext));
+    let mut entries: Vec<(&str, &[u8])> = vec![
         ("[Content_Types].xml", content_types.as_slice()),
         ("_rels/.rels", root_rels.as_slice()),
         ("docProps/core.xml", core_xml.as_slice()),
@@ -57,8 +91,11 @@ pub(crate) fn render(c: &Ctx) -> Vec<u8> {
         ("word/document.xml", document_xml.as_slice()),
         ("word/media/chart_sev.png", png.as_slice()),
     ];
+    if let (Some(name), Some(l)) = (logo_name.as_deref(), logo.as_ref()) {
+        entries.push((name, l.bytes.as_slice()));
+    }
     for (name, data) in entries {
-        if zw.start_file(*name, opts).is_ok() {
+        if zw.start_file(name, opts).is_ok() {
             let _ = zw.write_all(data);
         }
     }
@@ -360,6 +397,18 @@ impl DocWriter {
     }
 
     fn chart_drawing(&mut self, rid: &str, caption: &str) {
+        self.picture(
+            rid,
+            caption,
+            "chart_sev.png",
+            "1",
+            (CHART_CX_EMU, CHART_CY_EMU),
+        );
+    }
+
+    /// An inline picture paragraph: `rid` names the image part, `id` must be unique per document.
+    fn picture(&mut self, rid: &str, caption: &str, file: &str, id: &str, size: (&str, &str)) {
+        let (cx, cy) = size;
         self.start("w:p", &[]);
         self.start("w:r", &[]);
         self.start("w:drawing", &[]);
@@ -372,8 +421,8 @@ impl DocWriter {
                 ("distR", "0"),
             ],
         );
-        self.empty("wp:extent", &[("cx", CHART_CX_EMU), ("cy", CHART_CY_EMU)]);
-        self.empty("wp:docPr", &[("id", "1"), ("name", caption)]);
+        self.empty("wp:extent", &[("cx", cx), ("cy", cy)]);
+        self.empty("wp:docPr", &[("id", id), ("name", caption)]);
         self.start("a:graphic", &[]);
         self.start(
             "a:graphicData",
@@ -384,7 +433,7 @@ impl DocWriter {
         );
         self.start("pic:pic", &[]);
         self.start("pic:nvPicPr", &[]);
-        self.empty("pic:cNvPr", &[("id", "1"), ("name", "chart_sev.png")]);
+        self.empty("pic:cNvPr", &[("id", id), ("name", file)]);
         self.empty("pic:cNvPicPr", &[]);
         self.end("pic:nvPicPr");
         self.start("pic:blipFill", &[]);
@@ -396,7 +445,7 @@ impl DocWriter {
         self.start("pic:spPr", &[]);
         self.start("a:xfrm", &[]);
         self.empty("a:off", &[("x", "0"), ("y", "0")]);
-        self.empty("a:ext", &[("cx", CHART_CX_EMU), ("cy", CHART_CY_EMU)]);
+        self.empty("a:ext", &[("cx", cx), ("cy", cy)]);
         self.end("a:xfrm");
         self.start("a:prstGeom", &[("prst", "rect")]);
         self.empty("a:avLst", &[]);
@@ -416,7 +465,7 @@ impl DocWriter {
 // Document content builders
 // ---------------------------------------------------------------------------
 
-fn build_document_xml(c: &Ctx) -> Vec<u8> {
+fn build_document_xml(c: &Ctx, logo: Option<&DocxLogo>) -> Vec<u8> {
     let mut w = DocWriter::new();
     w.start(
         "w:document",
@@ -453,7 +502,12 @@ fn build_document_xml(c: &Ctx) -> Vec<u8> {
         c.r(&sc.client)
     };
 
-    // Cover / Title block.
+    // Cover / Title block, with the logo above the title.
+    if let Some(l) = logo {
+        let (cx, cy) = (l.cx.to_string(), l.cy.to_string());
+        let file = format!("logo.{}", l.ext);
+        w.picture(LOGO_RID, "Logo", &file, "2", (&cx, &cy));
+    }
     w.heading(1, &format!("{} - {}", t.title, c.r(&c.snap.project.name)));
     w.muted_para(&format!(
         "{} · {} · {} ({}){}",
@@ -925,7 +979,7 @@ fn render_classic(c: &Ctx, w: &mut DocWriter) {
 // Static / small OOXML metadata XML parts
 // ---------------------------------------------------------------------------
 
-fn build_content_types_xml() -> Vec<u8> {
+fn build_content_types_xml(logo: Option<&DocxLogo>) -> Vec<u8> {
     let mut w = DocWriter::new();
     w.start(
         "Types",
@@ -952,6 +1006,12 @@ fn build_content_types_xml() -> Vec<u8> {
         "Default",
         &[("Extension", "png"), ("ContentType", "image/png")],
     );
+    if logo.is_some_and(|l| l.ext == "jpg") {
+        w.empty(
+            "Default",
+            &[("Extension", "jpg"), ("ContentType", "image/jpeg")],
+        );
+    }
     w.empty(
         "Override",
         &[
@@ -1042,7 +1102,7 @@ fn build_root_rels_xml() -> Vec<u8> {
     w.finish()
 }
 
-fn build_doc_rels_xml() -> Vec<u8> {
+fn build_doc_rels_xml(logo: Option<&DocxLogo>) -> Vec<u8> {
     let mut w = DocWriter::new();
     w.start(
         "Relationships",
@@ -1073,6 +1133,20 @@ fn build_doc_rels_xml() -> Vec<u8> {
             ("Target", "media/chart_sev.png"),
         ],
     );
+    if let Some(l) = logo {
+        let target = format!("media/logo.{}", l.ext);
+        w.empty(
+            "Relationship",
+            &[
+                ("Id", LOGO_RID),
+                (
+                    "Type",
+                    "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image",
+                ),
+                ("Target", &target),
+            ],
+        );
+    }
     w.end("Relationships");
     w.finish()
 }

@@ -42,6 +42,7 @@ Third beta. It fixes the projects that disappeared after an upgrade, makes Pause
 - **Dependencies**: sha2 0.11, toml 1.2, rusqlite 0.43, url, zip and anyhow updates, and newer GitHub Actions.
 
 ### Added
+- **Custom report logo**: Choose in the report builder opens the system file picker; PNG, JPEG and WebP up to 2 MB are accepted (SVG is refused), pictures larger than 512 px are scaled down, and the builder shows the thumbnail with file name and size. The logo is saved in the settings and appears in the preview header and title page, on the HTML/PDF cover and template headers, and above the title in DOCX. Remove brings back the company initials. New commands `report_logo_get`, `report_logo_set`, `report_logo_clear`.
 - **Delete a scan**: from the scan history, a stopped scan or a paused one. A hold-to-confirm sheet shows what goes away first: the scan record, its request log, documents only it downloaded and findings that no other scan backs. Data a later scan also saw stays.
 - **Hosts at once** (Settings → Network and the scan wizard, default 4, warning above 8): liveness, TLS, ports, site recon and site search work on several hosts together. The scan screen shows how many hosts are running and done. Rate limits stay per host, and a host that answers 429 stops alone.
 - **Clear the request log**: Debug → Requests and the request log export in Reports can clear the whole log, entries older than 7, 30 or 90 days, or one scan, with counts shown before you confirm. A running or paused scan keeps its entries.
