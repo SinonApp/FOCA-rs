@@ -260,6 +260,10 @@
   display: flex;
   flex-direction: column;
 }
+.ins-nm-h .body b {
+  /* Long AD domain names (corp.contoso.example) wrap instead of widening the page at large fonts. */
+  overflow-wrap: anywhere;
+}
 .ins-nm-h .s {
   font-size: 0.8em;
   color: var(--text-2);
