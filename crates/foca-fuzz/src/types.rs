@@ -171,9 +171,12 @@ pub enum StopReason {
     Budget,
     /// `max_time` elapsed.
     MaxTime,
-    /// The site started throttling requests (a run of 429/403/5xx/errors) and fuzzing stopped.
-    /// No evasion is attempted.
+    /// The site started throttling requests (429, 503 with `Retry-After`, a challenge page, or
+    /// 403/5xx confirmed by a control request) and fuzzing stopped. No evasion is attempted.
     Blocked { detail: String },
+    /// The host gave no HTTP answer (connection refused, timeouts, DNS or TLS failures): it is
+    /// unreachable, which is not a rate limit.
+    Unreachable { detail: String },
     /// Active requests are denied by the scope or project settings.
     Denied { detail: String },
 }
@@ -187,6 +190,9 @@ impl StopReason {
             StopReason::MaxTime => "истекло отведённое время: перебор остановлен".into(),
             StopReason::Blocked { detail } => {
                 format!("сайт ограничил запросы: перебор остановлен ({detail})")
+            }
+            StopReason::Unreachable { detail } => {
+                format!("хост недоступен: перебор остановлен ({detail})")
             }
             StopReason::Denied { detail } => format!("активные запросы запрещены: {detail}"),
         }

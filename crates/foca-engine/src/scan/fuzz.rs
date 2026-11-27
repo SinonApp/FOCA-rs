@@ -599,13 +599,28 @@ fn hit_finding(
     Some(f)
 }
 
+/// Warning when a host limited requests (429, 503 with `Retry-After`, a challenge page).
+pub(crate) const BLOCKED_WARNING: &str =
+    "Сайт ограничил запросы: перебор остановлен (повторных попыток нет)";
+
+/// Warning for hosts that gave no HTTP answer at all (refused connections, timeouts, DNS).
+pub(crate) fn unreachable_warning(hosts: usize) -> String {
+    format!(
+        "Хостов недоступно: {hosts}. Соединение не установлено (отказ, таймаут или DNS), перебор \
+         на них остановлен: это не ограничение запросов"
+    )
+}
+
 /// Returns the `fuzz` source status for a stop reason.
 fn stop_status(s: &StopReason) -> &'static str {
     match s {
         StopReason::Completed => "ok",
         StopReason::Blocked { .. } => "blocked",
         StopReason::Denied { .. } => "error",
-        StopReason::Cancelled | StopReason::Budget | StopReason::MaxTime => "stopped",
+        StopReason::Cancelled
+        | StopReason::Budget
+        | StopReason::MaxTime
+        | StopReason::Unreachable { .. } => "stopped",
     }
 }
 
@@ -693,13 +708,15 @@ struct HostOut {
 }
 
 /// The stop reason of the whole stage from the hosts' own: a user stop, the shared budget or
-/// time first, then a host that limited requests (it stopped only that host), then a denial.
+/// time first, then a host that limited requests (it stopped only that host), then an
+/// unreachable host, then a denial.
 fn stage_stop(outs: &[HostOut]) -> StopReason {
     let rank = |s: &StopReason| match s {
-        StopReason::Cancelled => 5,
-        StopReason::Budget => 4,
-        StopReason::MaxTime => 3,
-        StopReason::Blocked { .. } => 2,
+        StopReason::Cancelled => 6,
+        StopReason::Budget => 5,
+        StopReason::MaxTime => 4,
+        StopReason::Blocked { .. } => 3,
+        StopReason::Unreachable { .. } => 2,
         StopReason::Denied { .. } => 1,
         StopReason::Completed => 0,
     };
@@ -918,15 +935,20 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
         .iter()
         .filter(|o| matches!(o.stop, StopReason::Blocked { .. }))
         .count();
+    // hosts that never answered are unreachable: a separate note, not the rate-limit one
+    let unreachable_hosts = outs
+        .iter()
+        .filter(|o| matches!(o.stop, StopReason::Unreachable { .. }))
+        .count();
     // documents in host order (the order hosts finished in does not matter)
     let docs: Vec<String> = outs.into_iter().flat_map(|o| o.docs).collect();
     let status = stop_status(&final_stop);
     let detail = final_stop.message_ru();
     if blocked_hosts > 0 {
-        c.warn(
-            "fuzz_blocked",
-            "Сайт ограничил запросы: перебор остановлен (повторных попыток нет)",
-        );
+        c.warn("fuzz_blocked", BLOCKED_WARNING);
+    }
+    if unreachable_hosts > 0 {
+        c.warn("fuzz_unreachable", &unreachable_warning(unreachable_hosts));
     }
     // documents go to the regular download queue (deduplicated against known ones before the limit) and parsing
     let added = {
@@ -956,7 +978,7 @@ pub(super) async fn stage_fuzz(c: &mut Ctx) -> Result<(), Stop> {
         status,
         &total,
         json!({ "detail": detail, "documents": added, "stop": final_stop,
-            "blocked_hosts": blocked_hosts }),
+            "blocked_hosts": blocked_hosts, "unreachable_hosts": unreachable_hosts }),
     );
     if added > 0 {
         download_queue(c, idx).await?;
@@ -1209,6 +1231,24 @@ impl Engine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unreachable_hosts_do_not_count_as_rate_limited() {
+        let out = |stop: StopReason| HostOut { stop, docs: vec![] };
+        let un = StopReason::Unreachable {
+            detail: "3 сетевых ошибок без ответа HTTP: network".into(),
+        };
+        assert_eq!(stop_status(&un), "stopped");
+        assert_eq!(
+            stage_stop(&[out(StopReason::Completed), out(un.clone())]),
+            un
+        );
+        // a real rate limit on another host still wins
+        let bl = StopReason::Blocked {
+            detail: "HTTP 429".into(),
+        };
+        assert_eq!(stage_stop(&[out(un), out(bl.clone())]), bl);
+    }
 
     #[test]
     fn safe_names() {

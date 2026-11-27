@@ -527,6 +527,8 @@ mod tests {
             crate::scan::crawl::crawl_note_sample(),
             crate::scan::crawl::rate_warning(&["example.test".to_string()]),
             crate::scan::crawl::no_render_warning(2),
+            crate::scan::fuzz::BLOCKED_WARNING.into(),
+            crate::scan::fuzz::unreachable_warning(2),
             crate::scan::documents_storage_note_sample(),
             "Токен Telegram-бота не задан".into(),
             "Не указан chat_id".into(),
@@ -584,6 +586,9 @@ mod tests {
             StopReason::MaxTime,
             StopReason::Blocked {
                 detail: "HTTP 429".into(),
+            },
+            StopReason::Unreachable {
+                detail: "5 сетевых ошибок без ответа HTTP: network: connection refused".into(),
             },
         ] {
             v.push(r.message_ru());

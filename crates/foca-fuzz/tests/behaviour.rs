@@ -157,6 +157,35 @@ async fn autostop_on_429_series() {
     assert!(rep.hits.is_empty());
 }
 
+/// A host that refuses connections is unreachable, not rate limited: its own stop reason and
+/// text, never the "site limited requests" one.
+#[tokio::test]
+async fn unreachable_host_is_not_reported_as_rate_limited() {
+    let port = {
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        l.local_addr().unwrap().port()
+    };
+    let (net, _sink) = client("127.0.0.1", "", true);
+    let base = format!("http://127.0.0.1:{port}/");
+    let mut task = FuzzTask::new(Url::parse(&base).unwrap(), vec![Module::Content]);
+    let words: String = (0..100).map(|i| format!("p{i}\n")).collect();
+    task.content = Some(ContentSpec {
+        template: Template::path(&format!("{base}FUZZ")),
+        wordlist: Wordlist::from_text("t", &words),
+        extensions: vec![],
+    });
+    let rep = Fuzzer::new(net, fast_cfg()).run(&task).await;
+    assert!(
+        matches!(rep.stop, StopReason::Unreachable { .. }),
+        "{:?}",
+        rep.stop
+    );
+    let msg = rep.stop.message_ru();
+    assert!(msg.contains("хост недоступен"), "{msg}");
+    assert!(!msg.contains("ограничил"), "{msg}");
+    assert!(rep.stats.requests < 40, "stops early: {:?}", rep.stats);
+}
+
 #[tokio::test]
 async fn redirect_out_of_scope_not_followed() {
     let srv = start_site(SiteOpts::default()).await;

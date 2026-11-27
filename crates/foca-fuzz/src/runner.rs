@@ -173,12 +173,16 @@ enum Signal {
     /// 403 or 5xx on a single path: Apache denies every `.ht*` file, apps fail on odd paths.
     /// Counts as a block only after a control request confirms it.
     Soft,
-    /// 429, 503 with `Retry-After`, a challenge page or a network error.
+    /// 429, 503 with `Retry-After` or a challenge page.
     Hard,
+    /// No HTTP answer at all: connection refused, timeout, DNS or TLS failure.
+    Net,
 }
 
 enum Trip {
     Stop(String),
+    /// Only network errors and no HTTP answer in the run: the host is unreachable, not limiting.
+    Unreachable(String),
     /// The run of bad answers holds path-specific ones: confirm with a control request.
     Confirm(String),
 }
@@ -189,6 +193,8 @@ struct Breaker {
     window: VecDeque<Signal>,
     cfg: crate::config::AutoStop,
     control_pending: bool,
+    /// The latest network error, for the unreachable stop reason.
+    last_net: String,
 }
 
 impl Breaker {
@@ -203,6 +209,13 @@ impl Breaker {
             self.window.pop_front();
         }
         let detail = self.tripped()?;
+        if self.only_net() {
+            return Some(Trip::Unreachable(format!(
+                "{} сетевых ошибок без ответа HTTP: {}",
+                self.window.iter().filter(|b| **b == Signal::Net).count(),
+                self.last_net
+            )));
+        }
         if !self.window.contains(&Signal::Soft) {
             return Some(Trip::Stop(detail));
         }
@@ -211,6 +224,20 @@ impl Breaker {
         }
         self.control_pending = true;
         Some(Trip::Confirm(detail))
+    }
+
+    /// Records a network error and counts it.
+    fn net_error(&mut self, e: &str) -> Option<Trip> {
+        self.last_net = e.to_string();
+        self.observe(Signal::Net)
+    }
+
+    /// Every bad signal in the window is a network error: nothing hinted at a rate limit.
+    fn only_net(&self) -> bool {
+        self.window
+            .iter()
+            .filter(|b| **b != Signal::Ok)
+            .all(|b| *b == Signal::Net)
     }
 
     fn tripped(&self) -> Option<String> {
@@ -754,6 +781,7 @@ impl Fuzzer {
                 window: VecDeque::new(),
                 cfg: cfg.autostop.clone(),
                 control_pending: false,
+                last_net: String::new(),
             },
             want_control: None,
             not_found_pages: HashMap::new(),
@@ -898,8 +926,14 @@ impl Fuzzer {
                         } else {
                             Signal::Ok
                         };
-                        if let Some(Trip::Stop(d) | Trip::Confirm(d)) = run.breaker.observe(sig) {
-                            run.set_stop(StopReason::Blocked { detail: d });
+                        match run.breaker.observe(sig) {
+                            Some(Trip::Stop(d) | Trip::Confirm(d)) => {
+                                run.set_stop(StopReason::Blocked { detail: d })
+                            }
+                            Some(Trip::Unreachable(d)) => {
+                                run.set_stop(StopReason::Unreachable { detail: d })
+                            }
+                            None => {}
                         }
                     }
                     if let Some(e) = err {
@@ -911,13 +945,17 @@ impl Fuzzer {
                                 run.stats.skipped_excluded += 1;
                                 tracing::debug!(target: "foca::fuzz", "калибровка {}: {d}", ctx.label());
                             }
-                            FetchErr::Net(_) => {
+                            FetchErr::Net(e) => {
                                 run.stats.errors += u64::from(bad);
                                 for _ in 0..bad {
-                                    if let Some(Trip::Stop(d) | Trip::Confirm(d)) =
-                                        run.breaker.observe(Signal::Hard)
-                                    {
-                                        run.set_stop(StopReason::Blocked { detail: d });
+                                    match run.breaker.net_error(&e) {
+                                        Some(Trip::Stop(d) | Trip::Confirm(d)) => {
+                                            run.set_stop(StopReason::Blocked { detail: d })
+                                        }
+                                        Some(Trip::Unreachable(d)) => {
+                                            run.set_stop(StopReason::Unreachable { detail: d })
+                                        }
+                                        None => {}
                                     }
                                 }
                             }
@@ -960,9 +998,16 @@ impl Fuzzer {
                     run.stats.calibration_requests += 1;
                     let blocked = match &res {
                         Ok(f) => f.challenge || matches!(f.status, 403 | 429 | 503),
-                        Err(FetchErr::Net(_)) => true,
                         Err(_) => false,
                     };
+                    // the control path got no HTTP answer at all: the host stopped answering
+                    if let Err(FetchErr::Net(e)) = &res {
+                        run.breaker.controlled(true);
+                        run.set_stop(StopReason::Unreachable {
+                            detail: format!("{detail}; контрольный запрос {}: {e}", url.path()),
+                        });
+                        continue;
+                    }
                     let mut note = None;
                     if let Ok(f) = &res {
                         run.filter(&url, f, FilterReason::Calibration);
@@ -1041,8 +1086,14 @@ impl Fuzzer {
                 run.stats.errors += 1;
                 run.stats.requests += 1;
                 tracing::debug!(target: "foca::fuzz", "{}: {e}", job.url);
-                if let Some(Trip::Stop(d) | Trip::Confirm(d)) = run.breaker.observe(Signal::Hard) {
-                    run.set_stop(StopReason::Blocked { detail: d });
+                match run.breaker.net_error(&e) {
+                    Some(Trip::Stop(d) | Trip::Confirm(d)) => {
+                        run.set_stop(StopReason::Blocked { detail: d })
+                    }
+                    Some(Trip::Unreachable(d)) => {
+                        run.set_stop(StopReason::Unreachable { detail: d })
+                    }
+                    None => {}
                 }
                 return;
             }
@@ -1062,6 +1113,10 @@ impl Fuzzer {
         match run.breaker.observe(sig) {
             Some(Trip::Stop(d)) => {
                 run.set_stop(StopReason::Blocked { detail: d });
+                return;
+            }
+            Some(Trip::Unreachable(d)) => {
+                run.set_stop(StopReason::Unreachable { detail: d });
                 return;
             }
             Some(Trip::Confirm(d)) => run.want_control = Some(d),
