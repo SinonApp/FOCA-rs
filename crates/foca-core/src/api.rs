@@ -413,6 +413,56 @@ pub struct Software {
     pub cves: Vec<(String, f32)>,
     pub dev: Option<String>,
     pub docs: u32,
+    /// NVD CPE `vendor:product` keys of the product (offline CVE table).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cpe: Vec<String>,
+    /// `server` (generator that runs on the site's servers) or `workstation` (desktop software
+    /// of the document authors); empty when unknown.
+    #[serde(default)]
+    pub side: String,
+    /// Date of the newest document made with this version (`YYYY-MM-DD`).
+    #[serde(default)]
+    pub last_doc: Option<String>,
+    /// Offline NVD CVE summary of this version.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cve_sum: Option<CveSummary>,
+}
+
+/// One CVE of a [`CveSummary`].
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CveRef {
+    pub id: String,
+    pub cvss: Option<f32>,
+    pub kev: bool,
+    pub epss: Option<f32>,
+}
+
+/// Offline NVD CVE summary of one product version (`docs/API.md`, "CVE summary").
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CveSummary {
+    /// Matched CPE keys (`vendor:product`, plugins `vendor:product@wordpress`), comma separated.
+    pub product: String,
+    /// Version used for matching (empty when not determined).
+    pub version: String,
+    pub version_known: bool,
+    /// Where the version comes from: `header`, `html`, `js`, `plugin_path`, `readme`, `meta`.
+    pub source: String,
+    /// CVEs of the product in the table (any version).
+    pub known: u32,
+    /// CVEs whose affected ranges contain the version.
+    pub matched: u32,
+    pub critical: u32,
+    pub high: u32,
+    pub medium: u32,
+    pub low: u32,
+    pub max_cvss: Option<f32>,
+    /// Matched CVEs in CISA KEV.
+    pub kev: u32,
+    pub max_epss: Option<f32>,
+    /// Matched CVEs: KEV first, then by CVSS and EPSS.
+    pub cves: Vec<CveRef>,
 }
 
 /// `Host`. Extra field: `scope`, one of `in_scope` | `excluded` | `out_of_scope`.

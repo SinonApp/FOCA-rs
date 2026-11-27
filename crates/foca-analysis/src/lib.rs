@@ -42,7 +42,7 @@ pub use analytics::{anomalies, chain, correlate, graphview, insights, netmap};
 pub use assess::{attack_paths, findings, forensic, infra, playbooks, portmerge, standards};
 pub use content::{artifacts, links, pii, rules, secrets};
 pub use identity::{emails, orgchart, people, translit, wordlist};
-pub use products::{kev, software, vercmp};
+pub use products::{cve, kev, software, vercmp};
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -133,6 +133,15 @@ pub struct OsInfo {
     pub eol_date: Option<String>,
     pub eol: bool,
     pub docs: u32,
+    /// NVD CPE `vendor:product` keys (offline CVE table).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub cpe: Vec<String>,
+    /// Date of the newest document from this OS (`YYYY-MM-DD`).
+    #[serde(default)]
+    pub last_doc: Option<String>,
+    /// Offline NVD CVE summary (an OS without a patch level has no version: count only).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cve_sum: Option<api::CveSummary>,
 }
 
 /// Analysis result. Fields `docs` … `events` follow the snapshot format in `docs/API.md`
@@ -870,6 +879,10 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             cves: vec![],
             dev,
             docs: docs.len() as u32,
+            cpe: m.cpe,
+            side: m.side,
+            last_doc: None,
+            cve_sum: None,
         })
         .collect();
     software_list.sort_by(|a, b| b.docs.cmp(&a.docs).then(a.id.cmp(&b.id)));
@@ -883,6 +896,9 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             released: m.released,
             eol_date: m.eol_date,
             docs: docs.len() as u32,
+            cpe: m.cpe,
+            last_doc: None,
+            cve_sum: None,
         })
         .collect();
     os_list.sort_by(|a, b| b.docs.cmp(&a.docs).then(a.id.cmp(&b.id)));

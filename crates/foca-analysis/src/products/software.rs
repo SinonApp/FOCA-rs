@@ -38,6 +38,12 @@ struct SigDef {
     /// support (legacy). Defaults to the lowest version in a numeric `versions` table, so that
     /// e.g. Distiller 3.0, older than anything in the table, is not reported as current.
     legacy_below: Option<u32>,
+    /// NVD CPE `vendor:product` keys, space separated (`{app_lc}` = application in lower case).
+    #[serde(default)]
+    cpe: Option<String>,
+    /// `server` or `workstation`.
+    #[serde(default)]
+    side: Option<String>,
 }
 
 /// Returns the leading number of a version: `3.0` → 3, `m84` → 84, `CS3` → 3.
@@ -96,6 +102,10 @@ pub struct SwMatch {
     pub legacy: bool,
     /// The metadata string the signature matched.
     pub matched: String,
+    /// NVD CPE `vendor:product` keys (offline CVE table).
+    pub cpe: Vec<String>,
+    /// `server` (generator on the site's servers) or `workstation`; empty when unknown.
+    pub side: String,
 }
 
 impl SwMatch {
@@ -247,6 +257,15 @@ impl Signatures {
                     .or_else(|| ver_def.is_none().then(|| d.eol.clone()).flatten()),
                 legacy: ver_def.map(|v| v.legacy).unwrap_or(false) || d.legacy || below,
                 matched: s.to_string(),
+                cpe: d
+                    .cpe
+                    .as_deref()
+                    .unwrap_or_default()
+                    .split_whitespace()
+                    .map(|c| c.replace("{app_lc}", &app.to_ascii_lowercase()))
+                    .filter(|c| !c.contains('{'))
+                    .collect(),
+                side: d.side.clone().unwrap_or_default(),
             });
         }
         None

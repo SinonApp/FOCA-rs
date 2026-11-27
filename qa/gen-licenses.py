@@ -338,6 +338,7 @@ SIGNATURE_LICENSES = {
     "CC0-1.0": "CC0-1.0",
     "CC-BY-4.0": "CC-BY-4.0",
     "FIRST-EPSS-terms": "EPSS (attribution requested)",
+    "NVD-public-domain": "Public Domain (U.S. Gov, NVD)",
 }
 
 

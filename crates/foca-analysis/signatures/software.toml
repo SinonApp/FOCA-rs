@@ -13,6 +13,12 @@
 # {version} the captured version, {ver_id} the version without dots, {key} the version key without dots.
 # A version without `id` gets id = <entry id> + {key}.
 #
+# cpe lists NVD CPE `vendor:product` pairs of the product (space separated; `{app_lc}` is the
+# captured application in lower case) used for the offline CVE table (`nvd_cve.tsv.gz`).
+# side = "server" marks generators that run on the servers of the site (the file was produced by
+# the site itself: wkhtmltopdf, TCPDF, iText, Ghostscript, Crystal Reports, 1C, SSRS);
+# "workstation" marks desktop software of the document authors (Office, Acrobat, LibreOffice).
+#
 # eol is the vendor end-of-support date (ISO); legacy = true means the product is out of
 # support with no published date. A document is "outdated" if eol < today or legacy.
 # Date sources: Microsoft Lifecycle, Adobe Support Lifecycle, LibreOffice Release Plan,
@@ -23,12 +29,16 @@
 
 [[software]]
 id = "{app_id}365"
+cpe = "microsoft:365_apps microsoft:office"
+side = "workstation"
 name = "Microsoft {app} для Microsoft 365"
 kind = "office"
 re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|OneNote)(?:®)?\s+(?:for|für|pour|para|per|для)\s+(?:Microsoft|Office)\s*365'
 
 [[software]]
 id = "{app_id}"
+cpe = "microsoft:office microsoft:{app_lc}"
+side = "workstation"
 name = "Microsoft Office {app}"
 kind = "office"
 re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|OneNote|Access)(?:®)?\s+(?P<v>20\d\d)\b'
@@ -45,6 +55,8 @@ versions = [
 
 [[software]]
 id = "mac{app_id}"
+cpe = "microsoft:office microsoft:{app_lc}"
+side = "workstation"
 name = "Microsoft {app} для Mac"
 kind = "office"
 re = '(?i)^Microsoft\s+Macintosh\s+(?P<app>Word|Excel|PowerPoint|Outlook)(?:\s+(?P<v>\d+)\.\d+)?'
@@ -59,6 +71,8 @@ versions = [
 # app.xml: Application + AppVersion ("Microsoft Office Word 15.0000")
 [[software]]
 id = "{app_id}"
+cpe = "microsoft:office microsoft:{app_lc}"
+side = "workstation"
 name = "Microsoft Office {app}"
 kind = "office"
 re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|Access)(?:®)?\s+(?P<v>\d{1,2})\.\d+'
@@ -76,18 +90,23 @@ versions = [
 # OLE2 / app.xml without a version
 [[software]]
 id = "{app_id}"
+cpe = "microsoft:office microsoft:{app_lc}"
+side = "workstation"
 name = "Microsoft Office {app}"
 kind = "office"
 re = '(?i)^Microsoft(?:®)?\s+(?:Office\s+)?(?P<app>Word|Excel|PowerPoint|Outlook|Visio|Publisher|Access)(?:®)?\s*$'
 
 [[software]]
 id = "msprint2pdf"
+side = "workstation"
 name = "Microsoft Print to PDF"
 kind = "pdf"
 re = '(?i)Microsoft:?\s*Print\s+To\s+PDF'
 
 [[software]]
 id = "msreporting"
+cpe = "microsoft:sql_server_reporting_services"
+side = "server"
 name = "Microsoft SQL Server Reporting Services"
 kind = "pdf"
 re = '(?i)Microsoft\s+Reporting\s+Services(?:\s+(?P<v>\d+(?:\.\d+)*))?'
@@ -96,6 +115,8 @@ re = '(?i)Microsoft\s+Reporting\s+Services(?:\s+(?P<v>\d+(?:\.\d+)*))?'
 
 [[software]]
 id = "lo"
+cpe = "libreoffice:libreoffice"
+side = "workstation"
 name = "LibreOffice"
 kind = "office"
 re = '(?i)^LibreOffice(?:/|\s+)(?P<v>\d+(?:\.\d+)*)'
@@ -124,6 +145,8 @@ versions = [
 
 [[software]]
 id = "ooo"
+cpe = "openoffice:openoffice.org"
+side = "workstation"
 name = "OpenOffice.org"
 kind = "office"
 re = '(?i)^OpenOffice\.org(?:/|\s+)(?P<v>\d+(?:\.\d+)*)'
@@ -135,6 +158,8 @@ versions = [
 
 [[software]]
 id = "aoo"
+cpe = "apache:openoffice"
+side = "workstation"
 name = "Apache OpenOffice"
 kind = "office"
 re = '(?i)^(?:Apache[_ ])?OpenOffice(?:/|\s+)(?P<v>\d+(?:\.\d+)*)'
@@ -146,6 +171,7 @@ versions = [
 
 [[software]]
 id = "staroffice"
+side = "workstation"
 name = "StarOffice"
 kind = "office"
 re = '(?i)^StarOffice(?:/|\s+)?(?P<v>\d+(?:\.\d+)*)?'
@@ -155,6 +181,8 @@ legacy = true
 
 [[software]]
 id = "acro"
+cpe = "adobe:acrobat adobe:acrobat_dc adobe:acrobat_reader_dc"
+side = "workstation"
 name = "Adobe Acrobat"
 kind = "pdf"
 re = '(?i)^Adobe\s+Acrobat(?:\s+(?:Pro|Standard|Professional))?(?:\s+(?:DC|XI|X|IX|VIII|9|8|2017|2020))?\s+(?P<v>\d+(?:\.\d+)*)'
@@ -170,6 +198,8 @@ versions = [
 
 [[software]]
 id = "distiller"
+cpe = "adobe:acrobat"
+side = "workstation"
 name = "Acrobat Distiller"
 kind = "pdf"
 re = '(?i)Acrobat\s+Distiller\s+(?P<v>\d+(?:\.\d+)*)'
@@ -185,6 +215,8 @@ versions = [
 
 [[software]]
 id = "pdfmaker"
+cpe = "adobe:acrobat"
+side = "workstation"
 name = "Acrobat PDFMaker"
 kind = "pdf"
 re = '(?i)Acrobat\s+PDFMaker\s+(?P<v>\d+(?:\.\d+)*)'
@@ -196,6 +228,7 @@ versions = [
 
 [[software]]
 id = "pdflib"
+side = "workstation"
 name = "Adobe PDF Library"
 kind = "pdf"
 re = '(?i)Adobe\s+PDF\s+Library\s+(?P<v>\d+(?:\.\d+)*)'
@@ -204,6 +237,8 @@ legacy_below = 15
 
 [[software]]
 id = "gs"
+cpe = "artifex:ghostscript"
+side = "server"
 name = "Ghostscript"
 kind = "pdf"
 re = '(?i)(?:GPL\s+|AFPL\s+|Artifex\s+|ESP\s+)?Ghostscript\s+(?P<v>\d+(?:\.\d+)*)'
@@ -214,24 +249,29 @@ versions = [
 
 [[software]]
 id = "pdftex"
+side = "server"
 name = "pdfTeX"
 kind = "pdf"
 re = '(?i)pdfTeX-(?P<v>\d+(?:\.\d+)*)'
 
 [[software]]
 id = "luatex"
+side = "server"
 name = "LuaTeX"
 kind = "pdf"
 re = '(?i)LuaTeX-(?P<v>\d+(?:\.\d+)*)'
 
 [[software]]
 id = "xetex"
+side = "server"
 name = "XeTeX (xdvipdfmx)"
 kind = "pdf"
 re = '(?i)xdvipdfmx\s*\(?(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "itext"
+cpe = "itextpdf:itext"
+side = "server"
 name = "iText"
 kind = "pdf"
 re = '(?i)\biText(?:Sharp|®)?\s*®?\s*(?:Core\s+)?(?P<v>\d+(?:\.\d+)*)'
@@ -243,48 +283,62 @@ versions = [
 
 [[software]]
 id = "quartz"
+cpe = "apple:macos apple:mac_os_x"
+side = "workstation"
 name = "macOS Quartz PDFContext"
 kind = "pdf"
 re = '(?i)(?:Mac\s+OS\s+X|macOS)\s*(?:Version\s*)?(?P<v>\d+(?:\.\d+)*).*Quartz\s+PDFContext'
 
 [[software]]
 id = "quartz"
+cpe = "apple:macos apple:mac_os_x"
+side = "workstation"
 name = "macOS Quartz PDFContext"
 kind = "pdf"
 re = '(?i)Quartz\s+PDFContext'
 
 [[software]]
 id = "pdfcreator"
+side = "workstation"
 name = "PDFCreator"
 kind = "pdf"
 re = '(?i)^PDFCreator\s+(?:Free\s+)?(?P<v>\d+(?:\.\d+)*)'
 
 [[software]]
 id = "pdf24"
+side = "workstation"
 name = "PDF24 Creator"
 kind = "pdf"
 re = '(?i)PDF24\s+Creator(?:\s+(?P<v>\d+(?:\.\d+)*))?'
 
 [[software]]
 id = "nitro"
+cpe = "gonitro:nitro_pro nitropdf:nitro_pro"
+side = "workstation"
 name = "Nitro PDF"
 kind = "pdf"
 re = '(?i)Nitro\s+(?:PDF\s+)?Pro(?:fessional)?\s*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "foxit"
+cpe = "foxit:pdf_reader foxit:phantompdf foxit:pdf_editor foxit:reader"
+side = "workstation"
 name = "Foxit PDF"
 kind = "pdf"
 re = '(?i)Foxit\s+(?:PhantomPDF|PDF\s+Editor|Reader|Software)[^\d]*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "pdfxchange"
+cpe = "pdf-xchange:pdf-xchange_editor"
+side = "workstation"
 name = "PDF-XChange"
 kind = "pdf"
 re = '(?i)PDF-XChange(?:\s+\w+)*?\s*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "skia"
+cpe = "google:chrome"
+side = "workstation"
 name = "Chromium (Skia/PDF)"
 kind = "pdf"
 re = '(?i)Skia/PDF\s*(?P<v>m\d+)?'
@@ -292,7 +346,33 @@ re = '(?i)Skia/PDF\s*(?P<v>m\d+)?'
 legacy_below = 120
 
 [[software]]
+id = "tcpdf"
+name = "TCPDF"
+kind = "pdf"
+cpe = "tecnick:tcpdf"
+side = "server"
+re = '(?i)\bTCPDF\s+(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
+id = "dompdf"
+name = "Dompdf"
+kind = "pdf"
+cpe = "dompdf_project:dompdf dompdf:dompdf"
+side = "server"
+re = '(?i)\bdompdf\s+(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
+id = "mpdf"
+name = "mPDF"
+kind = "pdf"
+cpe = "mpdf_project:mpdf"
+side = "server"
+re = '(?i)\bmPDF\s+(?P<v>\d+(?:\.\d+)*)'
+
+[[software]]
 id = "wkhtmltopdf"
+cpe = "wkhtmltopdf:wkhtmltopdf"
+side = "server"
 name = "wkhtmltopdf"
 kind = "pdf"
 re = '(?i)wkhtmltopdf\s*(?P<v>\d+(?:\.\d+)*)?'
@@ -300,18 +380,23 @@ legacy = true
 
 [[software]]
 id = "abbyy"
+cpe = "abbyy:finereader"
+side = "workstation"
 name = "ABBYY FineReader"
 kind = "pdf"
 re = '(?i)ABBYY\s+FineReader(?:\s+PDF)?\s*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "crystal"
+cpe = "sap:crystal_reports"
+side = "server"
 name = "Crystal Reports"
 kind = "pdf"
 re = '(?i)Crystal\s+Reports?(?:\s+(?P<v>\d+(?:\.\d+)*))?'
 
 [[software]]
 id = "1c"
+side = "server"
 name = "1С:Предприятие"
 kind = "office"
 re = '(?i)(?:1C|1С)[:\s]*(?:Enterprise|Предприятие|Підприємство)\s*(?P<v>\d+(?:\.\d+)*)?'
@@ -334,6 +419,7 @@ re = '(?i)^(?:KONICA\s+MINOLTA|bizhub|Xerox|RICOH|KYOCERA|SHARP\s+MX|Brother\s+(
 
 [[software]]
 id = "ios{ver_id}"
+cpe = "apple:iphone_os apple:ipados"
 name = "iOS {version}"
 kind = "camera"
 re = '^Apple\s+(?:iPhone|iPad|iPod)[^|]*\|\s*(?P<v>\d+(?:\.\d+)*)\s*$'
@@ -367,6 +453,7 @@ re = '(?i)^samsung\s+(?:SM-|GT-|Galaxy)'
 
 [[software]]
 id = "android"
+cpe = "google:android"
 name = "Android-смартфон"
 kind = "camera"
 re = '(?i)^(?:Google\s+Pixel|Xiaomi|Redmi|POCO|HUAWEI|HONOR|OnePlus|OPPO|vivo|motorola|realme|Nokia\s+\d|HMD|Meizu|ZTE|Sony\s+(?:Xperia|[A-Z]\d{4}|XQ-))'
@@ -405,6 +492,8 @@ re = '(?i)^(?:OLYMPUS|Panasonic|PENTAX|RICOH\s+IMAGING|LEICA|GoPro|DJI|KODAK|CAS
 
 [[software]]
 id = "ps"
+cpe = "adobe:photoshop adobe:photoshop_cc"
+side = "workstation"
 name = "Adobe Photoshop"
 kind = "image"
 re = '(?i)^Adobe\s+Photoshop\s+(?:Lightroom\s+)?(?P<v>CS\d?|CC(?:\s+20\d\d)?|20\d\d|\d+(?:\.\d+)*)'
@@ -428,12 +517,16 @@ versions = [
 
 [[software]]
 id = "lightroom"
+cpe = "adobe:lightroom"
+side = "workstation"
 name = "Adobe Lightroom"
 kind = "image"
 re = '(?i)Adobe\s+(?:Photoshop\s+)?Lightroom(?:\s+Classic)?\s*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "illustrator"
+cpe = "adobe:illustrator"
+side = "workstation"
 name = "Adobe Illustrator"
 kind = "image"
 re = '(?i)Adobe\s+Illustrator\s*(?P<v>CS\d?|CC(?:\s+20\d\d)?|\d+(?:\.\d+)*)?'
@@ -450,6 +543,8 @@ versions = [
 
 [[software]]
 id = "indesign"
+cpe = "adobe:indesign"
+side = "workstation"
 name = "Adobe InDesign"
 kind = "image"
 re = '(?i)Adobe\s+InDesign\s*(?P<v>CS\d?|CC(?:\s+20\d\d)?|\d+(?:\.\d+)*)?'
@@ -466,6 +561,8 @@ versions = [
 
 [[software]]
 id = "gimp"
+cpe = "gimp:gimp"
+side = "workstation"
 name = "GIMP"
 kind = "image"
 re = '(?i)^GIMP\s+(?P<v>\d+(?:\.\d+)*)'
@@ -476,6 +573,8 @@ versions = [
 
 [[software]]
 id = "inkscape"
+cpe = "inkscape:inkscape"
+side = "workstation"
 name = "Inkscape"
 kind = "image"
 re = '(?i)^Inkscape\s+(?P<v>\d+(?:\.\d+)*)'
@@ -485,18 +584,23 @@ versions = [
 
 [[software]]
 id = "coreldraw"
+cpe = "corel:coreldraw"
+side = "workstation"
 name = "CorelDRAW"
 kind = "image"
 re = '(?i)Corel(?:DRAW|\s+PDF\s+Engine)\s*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "greenshot"
+side = "workstation"
 name = "Greenshot"
 kind = "image"
 re = '(?i)^Greenshot\s+(?P<v>\d+(?:\.\d+)*)'
 
 [[software]]
 id = "paintnet"
+cpe = "dotpdn:paint.net"
+side = "workstation"
 name = "Paint.NET"
 kind = "image"
 re = '(?i)Paint\.NET\s*v?(?P<v>\d+(?:\.\d+)*)?'
@@ -509,6 +613,8 @@ re = '(?i)^GraphicConverter\s*(?P<v>\d+(?:\.\d+)*)?'
 
 [[software]]
 id = "picasa"
+cpe = "google:picasa"
+side = "workstation"
 name = "Picasa"
 kind = "image"
 re = '(?i)^Picasa\s*(?P<v>\d+(?:\.\d+)*)?'
@@ -524,6 +630,7 @@ legacy = true
 
 [[os]]
 id = "winnt4"
+cpe = "microsoft:windows_nt microsoft:windows_95"
 name = "Windows NT 4.0 / 95"
 re = '(?i)^Windows\s+NT\s+4\.0/95'
 released = 1996
@@ -531,6 +638,7 @@ eol = "2004-12-31"
 
 [[os]]
 id = "win98"
+cpe = "microsoft:windows_98"
 name = "Windows 98"
 re = '(?i)^Windows\s+98'
 released = 1998
@@ -538,6 +646,7 @@ eol = "2006-07-11"
 
 [[os]]
 id = "winme"
+cpe = "microsoft:windows_me"
 name = "Windows Me"
 re = '(?i)^Windows\s+Me\b'
 released = 2000
@@ -545,6 +654,7 @@ eol = "2006-07-11"
 
 [[os]]
 id = "win2000"
+cpe = "microsoft:windows_2000"
 name = "Windows 2000"
 re = '(?i)^Windows\s+2000'
 released = 2000
@@ -552,6 +662,7 @@ eol = "2010-07-13"
 
 [[os]]
 id = "winxp64"
+cpe = "microsoft:windows_xp microsoft:windows_server_2003"
 name = "Windows XP x64 / Server 2003"
 re = '(?i)^Windows\s+XP\s+x64'
 released = 2003
@@ -559,6 +670,7 @@ eol = "2015-07-14"
 
 [[os]]
 id = "winxp"
+cpe = "microsoft:windows_xp"
 name = "Windows XP"
 re = '(?i)^Windows\s+XP\b'
 released = 2001
@@ -566,6 +678,7 @@ eol = "2014-04-08"
 
 [[os]]
 id = "winvista"
+cpe = "microsoft:windows_vista microsoft:windows_server_2008"
 name = "Windows Vista / Server 2008"
 re = '(?i)^Windows\s+Vista'
 released = 2007
@@ -573,6 +686,7 @@ eol = "2020-01-14"
 
 [[os]]
 id = "win7"
+cpe = "microsoft:windows_7 microsoft:windows_server_2008"
 name = "Windows 7 / Server 2008 R2"
 re = '(?i)^Windows\s+7\b'
 released = 2009
@@ -580,6 +694,7 @@ eol = "2020-01-14"
 
 [[os]]
 id = "win81"
+cpe = "microsoft:windows_8.1 microsoft:windows_server_2012"
 name = "Windows 8.1 / Server 2012 R2"
 re = '(?i)^Windows\s+8\.1'
 released = 2013
@@ -587,6 +702,7 @@ eol = "2023-10-10"
 
 [[os]]
 id = "win8"
+cpe = "microsoft:windows_8 microsoft:windows_server_2012"
 name = "Windows 8 / Server 2012"
 re = '(?i)^Windows\s+8\b'
 released = 2012
@@ -594,12 +710,14 @@ eol = "2023-10-10"
 
 [[os]]
 id = "win10"
+cpe = "microsoft:windows_10 microsoft:windows_11"
 name = "Windows 10/11"
 re = '(?i)^Windows\s+10'
 released = 2015
 
 [[os]]
 id = "ios{ver_id}"
+cpe = "apple:iphone_os apple:ipados"
 name = "iOS {version}"
 re = '^Apple\s+(?:iPhone|iPad|iPod)[^|]*\|\s*(?P<v>\d+(?:\.\d+)*)\s*$'
 versions = [
@@ -616,16 +734,19 @@ versions = [
 
 [[os]]
 id = "ios"
+cpe = "apple:iphone_os"
 name = "iOS"
 re = '^Apple\s+(?:iPhone|iPad|iPod)'
 
 [[os]]
 id = "android"
+cpe = "google:android"
 name = "Android"
 re = '(?i)^(?:samsung\s+(?:SM-|GT-|Galaxy)|Google\s+Pixel|Xiaomi|Redmi|POCO|HUAWEI|HONOR|OnePlus|OPPO|vivo|motorola|realme)'
 
 [[os]]
 id = "macos{key}"
+cpe = "apple:macos apple:mac_os_x"
 name = "macOS {version}"
 re = '(?i)(?:Mac\s+OS\s+X|macOS)\s*(?:Version\s*)?(?P<v>\d+(?:\.\d+)?)'
 versions = [
@@ -639,6 +760,7 @@ versions = [
 
 [[os]]
 id = "macos"
+cpe = "apple:macos apple:mac_os_x"
 name = "macOS"
 re = '(?i)(?:\bMacintosh\b|\(Macintosh\)|\$MacOSX|Mac\s+OS)'
 

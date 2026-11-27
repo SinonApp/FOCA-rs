@@ -103,6 +103,62 @@
     "allowlist_regexes_dropped": 3
    }
   },
+  "nvd": {
+   "url": "https://nvd.nist.gov/vuln/data-feeds",
+   "version": "2026-11-27",
+   "license": "NVD-public-domain",
+   "license_note": "NVD data is in the public domain (17 U.S.C. 105); NIST asks for the notice 'This product uses data from the NVD API but is not endorsed or certified by the NVD.'",
+   "attribution": "This product uses data from the NVD API but is not endorsed or certified by the NVD. CVE data from the NIST National Vulnerability Database (public domain), https://nvd.nist.gov",
+   "snapshot": "2026-11-27",
+   "epss": "2026-11-26",
+   "inputs": {
+    "nvdcve-2.0-2002.json.gz": "f15e1ded843f02f6d506b61270d21e9afd092e19c93c4a611e34c8ebab9024a6",
+    "nvdcve-2.0-2003.json.gz": "d23483e89b1406872b1406546d060905fdc2fe483e05c5288160a493704925c1",
+    "nvdcve-2.0-2004.json.gz": "8dbd1651a3b5e42e785732322a09daf5ccdd3fea27429221e546ca00ea2944c5",
+    "nvdcve-2.0-2005.json.gz": "380190361c509d26704ce988756bf64281abf055920e11a98158d31b18516331",
+    "nvdcve-2.0-2006.json.gz": "bfb7f255160fc3532a380fa8821a9c64914f4e088977366a9359521298c34bd4",
+    "nvdcve-2.0-2007.json.gz": "7eea8dc7f0a12ec0570f671fbdeb3acb727bee489abcd8522c4120c415da072e",
+    "nvdcve-2.0-2008.json.gz": "ae226cd881378a652f929d48de546b1e369623faf874dee9b71ec05b54f2333e",
+    "nvdcve-2.0-2009.json.gz": "14fa2f01392bc72ba38ea191523957f953a13a5894b0169bad56093a0579e2db",
+    "nvdcve-2.0-2010.json.gz": "78462f43ed5f4a92881050c3913e015fc388c8f2e319315d5659b2a0d3fb0d57",
+    "nvdcve-2.0-2011.json.gz": "7ee63e5a74eb60d1e8c70ab8da7022dd9051b953f65497fb8c0cb468d812fb9e",
+    "nvdcve-2.0-2012.json.gz": "464eb9bcf8b61a6c0e1a08c999c99de524f90eb27b8287094e8056e33a592b15",
+    "nvdcve-2.0-2013.json.gz": "a505d04db4e6c24a93ba372e69b5abc9f6186c453015c7e3a957975229448138",
+    "nvdcve-2.0-2014.json.gz": "0ac663f2d98cea9e213b0ad5b2e2dca0cc6db62adc93d976e3fcad02e6ab22b3",
+    "nvdcve-2.0-2015.json.gz": "a5c632306b9e5dfffc38690af0397f291c1b8a4ce74a16232a5db5cca7c881cb",
+    "nvdcve-2.0-2016.json.gz": "93b25534a5a64797692c8971fbc10e800c74a67652000e4bf57213342d2ece90",
+    "nvdcve-2.0-2017.json.gz": "1f2e8516b5add6835e098bf8e0290a09d4b5f34e314bb5755d2afb3991f677b8",
+    "nvdcve-2.0-2018.json.gz": "e0a324f262433b1b5ca5939ed21054f19162b9bd2dcb26339ad1da0caf373e30",
+    "nvdcve-2.0-2019.json.gz": "c8aa7208a3378f0cfdc2359f3a293c9f8e2ae393ac0f619176fa8efa41afe212",
+    "nvdcve-2.0-2020.json.gz": "d16745191a3d371f99b055b2ee21b8d97735e3a80821d96e793865a69b58e085",
+    "nvdcve-2.0-2021.json.gz": "ba92e3b1001d2804f16d44e32796ade4349521e9594bc25cfe8c6c86500d1364",
+    "nvdcve-2.0-2022.json.gz": "314ad182a8a017176f14f6d6b7d9e31f7ba74b08caeeb68fdf8cb69316be5611",
+    "nvdcve-2.0-2023.json.gz": "02ba1354589842796a81cd2a7d77ca128973ef3427b461357fc38dcb48afd099",
+    "nvdcve-2.0-2024.json.gz": "5d522b181f5ea0f91379d38c8a682bf357eaeeae8be208f1cd009210f7e0ac51",
+    "nvdcve-2.0-2025.json.gz": "51fcf1cf27f60241905a9693de07da83ab6bb061f433c2f3c3c42860d5cf4231",
+    "nvdcve-2.0-2026.json.gz": "c14ab33d81e309eab977027ea0022b9c87831cd52e0ec0dc43287c052f14de1d",
+    "epss_scores-2026-11-26.csv.gz": "7d002768523501d6f1d6ee076a777f2eaa6aabf3e2546773eeeda795653a8c0e"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-analysis/signatures/nvd_cve.tsv.gz",
+     "bytes": 1280821,
+     "sha256": "eb47f9a5a6753ff2de9ac0b7727e383da7acf778e5c3f053b7fe6f26d5801667"
+    }
+   ],
+   "stats": {
+    "cves": 108019,
+    "products": 9248,
+    "ranges": 537268,
+    "site": 71087,
+    "plugin": 17245,
+    "doc": 30418,
+    "os": 24315,
+    "kev": 609,
+    "with_epss": 108019,
+    "software_cpes_without_cves": []
+   }
+  },
   "psl": {
    "repo": "https://github.com/publicsuffix/list",
    "commit": "88b076a1fb2ae58cd2a6959d570f075e04d21867",

@@ -11,6 +11,7 @@ Signature data sources:
 * End-of-life dates from endoflife.date, Copyright 2020 endoflife.date contributors, MIT License, https://endoflife.date
 * EPSS scores from FIRST.org (https://www.first.org/epss), 2026-11-26
 * Secret detection rules from gitleaks, Copyright (c) 2019 Zachary Rice, MIT License, https://github.com/gitleaks/gitleaks
+* This product uses data from the NVD API but is not endorsed or certified by the NVD. CVE data from the NIST National Vulnerability Database (public domain), https://nvd.nist.gov
 * Public Suffix List, Mozilla Foundation and contributors, MPL-2.0, https://publicsuffix.org (shipped unmodified)
 * Service and favicon fingerprints from Recog, Copyright (c) 2014-2015, Rapid7, BSD 2-Clause License, https://github.com/rapid7/recog
 * JavaScript library vulnerability data from Retire.js, Copyright 2018 Erlend Oftedal, Apache License 2.0, https://github.com/RetireJS/retire.js
@@ -29,3 +30,4 @@ can-i-take-over-xyz fingerprints are licensed under CC BY 4.0
 values and status-code-only fingerprints dropped (crates/foca-net/data/takeover.json).
 
 EPSS scores from FIRST.org: FIRST does not endorse FOCA-rs. CISA does not endorse FOCA-rs.
+This product uses data from the NVD API but is not endorsed or certified by the NVD.

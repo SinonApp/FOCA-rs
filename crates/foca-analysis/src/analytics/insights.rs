@@ -35,6 +35,9 @@ pub struct Insights {
     pub org: OrgChart,
     pub anomalies: Vec<Anomaly>,
     pub kev: Vec<KevMatch>,
+    /// Offline NVD CVE matches of document software, OS and (filled by the engine) web
+    /// technologies.
+    pub cve: Vec<crate::cve::CveMatch>,
     pub netmap: NetMap,
     /// Relation graph extended with lineage and network map nodes/edges.
     pub graph: Graph,
@@ -60,6 +63,7 @@ pub fn build_with_kev(
         org: orgchart::build(inputs, a),
         anomalies: anomalies::detect(inputs, now),
         kev: kev::lookup(kev_cat, &kev::subjects_from(a)),
+        cve: crate::cve::doc_matches(a, &crate::cve::db()),
         correlation,
         netmap,
         graph,

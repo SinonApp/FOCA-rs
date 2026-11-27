@@ -3,7 +3,7 @@
   "app_license": "GPL-3.0",
   "repository": "https://github.com/SinonApp/FOCA-rs",
   "counts": {
-    "data_assets": 20,
+    "data_assets": 21,
     "rust_total": 535,
     "rust_direct": 44,
     "android_total": 9,
@@ -115,6 +115,13 @@
       "license": "MIT",
       "url": "https://github.com/gitleaks/gitleaks",
       "notes": "Secret detection rules from gitleaks, Copyright (c) 2019 Zachary Rice, MIT License, https://github.com/gitleaks/gitleaks. Signature data in `crates/foca-analysis/signatures/secrets_gitleaks.toml`."
+    },
+    {
+      "name": "nvd (pinned 2026-11-27)",
+      "category": "Dataset",
+      "license": "Public Domain (U.S. Gov, NVD)",
+      "url": "https://nvd.nist.gov/vuln/data-feeds",
+      "notes": "This product uses data from the NVD API but is not endorsed or certified by the NVD. CVE data from the NIST National Vulnerability Database (public domain), https://nvd.nist.gov. Signature data in `crates/foca-analysis/signatures/nvd_cve.tsv.gz`."
     },
     {
       "name": "psl (pinned 88b076a1fb2a)",
