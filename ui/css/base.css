@@ -1081,8 +1081,8 @@ html[data-theme="light"] .seg button.on {
 }
 /* Button rows stacked under each other (finding screen: To the document, Relation chain) keep a gap. */
 .btnrow + .btnrow,
-:is(.card, .list, .banner) + .btnrow,
-.btnrow + :is(.card, .list, .banner) {
+:is(.card, .list, .banner) + :is(.btnrow, .btn.block),
+:is(.btnrow, .btn.block) + :is(.card, .list, .banner) {
   margin-top: var(--form-gap);
 }
 

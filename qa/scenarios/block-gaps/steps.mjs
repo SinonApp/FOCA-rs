@@ -24,13 +24,13 @@ export default async (page, { out, W, fsc, theme }) => {
     ev(min => {
       const page = FOCA.page();
       if (!page) return [];
-      const isBlock = el => el.matches(".card, .list, .banner, .btnrow");
+      const isBlock = el => el.matches(".card, .list, .banner, .btnrow, .btn.block");
       const vis = el => {
         const r = el.getBoundingClientRect();
         return r.height > 0 && r.width > 0 && getComputedStyle(el).visibility !== "hidden";
       };
       const bad = [];
-      for (const el of page.querySelectorAll(".card, .list, .banner, .btnrow")) {
+      for (const el of page.querySelectorAll(".card, .list, .banner, .btnrow, .btn.block")) {
         const nx = el.nextElementSibling;
         if (!nx || !isBlock(nx) || !vis(el) || !vis(nx)) continue;
         const ps = getComputedStyle(el.parentElement);
