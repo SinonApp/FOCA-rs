@@ -116,6 +116,7 @@ The full setup, flavors and signing steps are in [docs/dev/build.md](docs/dev/bu
 - [UI ⇄ core API](docs/API.md) and [architecture decisions](docs/adr/README.md)
 - [Testing](docs/testing/README.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Privacy policy](docs/PRIVACY.md)
 
 ## Contributing
 

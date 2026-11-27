@@ -55,6 +55,7 @@ Patch release after phone testing of 2.0.0-beta.4.
 - Downloads go by priority: office files and PDF first, then other metadata-rich files, media, and site graphics last.
 
 ### Added
+- Privacy policy (docs/PRIVACY.md, Russian in docs/ru/PRIVACY.md): what stays on the device, which requests leave it and why, and the optional ML Kit OCR in the play build.
 
 - People from document text in 22 languages and scripts (Cyrillic with case forms and patronymics, Latin with particles, titles and suffixes, Arabic, Hebrew, CJK family-first, Georgian, Armenian, Kazakh), with per-language data files under `signatures/people/`; positions, units and signature blocks are attached to the person; authors named only in bibliography entries get the role "cited author".
 - Contacts and identifiers by country: E.164 and national phone formats, obfuscated e-mails (at/dot, собака, arroba, Klammeraffe), RU INN/SNILS/OGRN, PL PESEL/NIP, DE Steuer-ID, UK NINO, ES DNI/NIE, IT codice fiscale, IBAN of all countries with checksums; US SSN, FR NIR and passports only with context. Values stay masked.

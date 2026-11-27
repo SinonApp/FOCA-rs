@@ -116,6 +116,7 @@ bash qa/android-build.sh apk               # APK для Android (потрібн�
 - [API між інтерфейсом і ядром](docs/API.md) та [архітектурні рішення](docs/adr/README.md)
 - [Тестування](docs/testing/README.md)
 - [Плани](docs/ROADMAP.md)
+- [Політика конфіденційності](docs/ru/PRIVACY.md) (рос.), [англ.](docs/PRIVACY.md)
 
 Документація поки що англійською (є також [російська версія](docs/ru/README.md)).
 

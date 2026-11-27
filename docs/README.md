@@ -53,6 +53,7 @@ FOCA-rs 2.0.0-beta.4.1 is an Android application (Tauri v2 + Rust core) for auth
 | Document | Contents |
 |---|---|
 | [Roadmap](ROADMAP.md) | What shipped in the 2.0 betas, what comes next, what is out of scope |
+| [Privacy policy](PRIVACY.md) | What data the app handles, what leaves the device and when |
 | [Changelog](../CHANGELOG.md) | Release-by-release changes |
 
 ## Repository Directories
