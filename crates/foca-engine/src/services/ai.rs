@@ -81,7 +81,7 @@ impl AiGenOpts {
         }
     }
 
-    fn thinking_active(&self) -> bool {
+    pub(crate) fn thinking_active(&self) -> bool {
         (self.thinking != "auto" && self.thinking != "off") || self.thinking_budget > 0
     }
 }

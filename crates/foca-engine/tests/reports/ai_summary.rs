@@ -220,3 +220,71 @@ async fn ai_prompt_and_answer_language_follow_the_ui_language() {
         .await;
     assert_eq!(er.code, "stale_preview");
 }
+
+async fn use_route(e: &common::Env, route: &str) {
+    e.call(
+        "settings_set",
+        json!({ "patch": { "ai": { "provider": "custom", "base_url": format!("{}/ai/{route}", e.server.url()), "model": "reason-model" } } }),
+    )
+    .await;
+}
+
+/// The history regression of the phone test: reasoning answers, streamed answers and
+/// reasoning-only answers. Every answer with text is saved, comes back with the history on top
+/// and survives an engine restart; an answer without text is a visible error.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn reasoning_and_streamed_answers_are_saved_and_survive_a_restart() {
+    let e = common::env(0).await;
+    let id = setup(&e).await;
+    let opts = json!({ "project": id, "opts": { "show_thoughts": true } });
+
+    use_route(&e, "reason").await;
+    let r = e.call("ai_summarize", opts.clone()).await;
+    assert!(
+        r["md"].as_str().unwrap().contains("Exposed documents"),
+        "{r}"
+    );
+    assert!(
+        r["thoughts"].as_str().unwrap().contains("First I look"),
+        "{r}"
+    );
+    let h = &r["history"];
+    assert_eq!(h["items"][0]["id"], r["id"], "{h}");
+    assert_eq!(h["report_id"], r["id"]);
+    assert_eq!(h["running"], false);
+
+    use_route(&e, "sse").await;
+    let s = e.call("ai_summarize", opts.clone()).await;
+    assert_eq!(s["md"], "## Streamed summary", "{s}");
+    assert_eq!(s["model"], "sse-model");
+    assert_eq!(s["history"]["items"][0]["id"], s["id"]);
+    assert_eq!(s["history"]["items"][1]["id"], r["id"]);
+
+    use_route(&e, "thinkonly").await;
+    let er = e.err("ai_summarize", opts.clone()).await;
+    assert_eq!(er.code, "empty");
+    assert!(
+        er.message.contains("только ход рассуждений"),
+        "{}",
+        er.message
+    );
+    let h = list(&e, &id).await;
+    assert_eq!(h["items"].as_array().unwrap().len(), 2, "{h}");
+    assert_eq!(h["running"], false);
+
+    // a new engine on the same data (app restart): the history and the report pick stay
+    e.engine.abandon().await;
+    let (again, _, _) = common::open(e.dir.path(), &e.server.url(), e.keys.clone());
+    let h = again
+        .invoke("ai_summaries_list", json!({ "project": id }))
+        .await
+        .unwrap();
+    let items = h["items"].as_array().unwrap();
+    assert_eq!(items.len(), 2, "{h}");
+    assert_eq!(items[0]["id"], s["id"]);
+    assert_eq!(h["report_id"], s["id"]);
+    assert!(items[1]["thoughts"]
+        .as_str()
+        .unwrap()
+        .contains("First I look"));
+}

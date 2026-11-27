@@ -241,6 +241,23 @@ pub async fn server(delay_ms: u64) -> TestServer {
             )
             .delay(Duration::from_millis(700));
         }
+        // reasoning models: answer plus reasoning, reasoning only (token limit), a stream
+        if p == "/ai/reason/chat/completions" {
+            return TestResponse::ok(
+                br###"{"model":"reason-model","choices":[{"message":{"content":"## Summary\n1. Exposed documents.","reasoning_content":"First I look at the findings."}}],"usage":{"prompt_tokens":10,"completion_tokens":40,"completion_tokens_details":{"reasoning_tokens":30}}}"###.to_vec(),
+            );
+        }
+        if p == "/ai/thinkonly/chat/completions" {
+            return TestResponse::ok(
+                br###"{"model":"reason-model","choices":[{"message":{"content":"","reasoning_content":"Still thinking about the findings..."},"finish_reason":"length"}],"usage":{"prompt_tokens":10,"completion_tokens":64}}"###.to_vec(),
+            );
+        }
+        if p == "/ai/sse/chat/completions" {
+            return TestResponse::ok(
+                b"data: {\"model\":\"sse-model\",\"choices\":[{\"delta\":{\"reasoning_content\":\"Hm.\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"## Streamed\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\" summary\"}}],\"usage\":{\"prompt_tokens\":9,\"completion_tokens\":3}}\n\ndata: [DONE]\n\n".to_vec(),
+            )
+            .header("content-type", "text/event-stream");
+        }
         if p == "/ai/chat/completions" || p.ends_with("/chat/completions") && p.starts_with("/ai/")
         {
             return TestResponse::ok(

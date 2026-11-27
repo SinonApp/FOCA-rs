@@ -1493,7 +1493,7 @@
           : `<h3 class="sub-h rp-h3">${esc(F.t("reports.sections", "Разделы"))} <span class="muted">${esc(F.t("reports.n_of_m", { n: secN, m: SECTIONS.length }, "{n} из {m}"))}</span></h3>
       <div class="list rp-secs">${SECTIONS.map(([k, t, s]) => ui.check(draft.sec[k], esc(F.t(`reports.sec_${k}`, t)), `rp-sec:${k}`, esc(F.t(`reports.sec_${k}_sub`, s)))).join("")}</div>`
       }
-      ${draft.fmt === "csv" || draft.fmt === "json" ? "" : `<div class="list rp-ai">${ui.check(draft.aiSummary !== false, F.t("reports.ai_sum", "Резюме для руководства (с помощью ИИ)"), "rp-ai", F.t("reports.ai_sum_sub", "Последнее ИИ-резюме проекта с пометкой об источнике; если резюме не создавалось, раздел не добавляется"))}</div>`}
+      ${draft.fmt === "csv" || draft.fmt === "json" ? "" : `<div class="list rp-ai">${ui.check(draft.aiSummary !== false, F.t("reports.ai_sum", "Резюме для руководства (с помощью ИИ)"), "rp-ai", F.t("reports.ai_sum_sub", "Последнее ИИ-резюме проекта с пометкой об источнике; если резюме не создавалось, раздел не добавляется"))}${draft.aiSummary !== false ? rpAiRow() : ""}</div>`}
 
       <h3 class="sub-h rp-h3">${esc(F.t("reports.in_report", "Находки в отчёте"))} <span class="muted">${plural(n, "reports.pl_finding", "находка", "находки", "находок")}${nf ? ` + ${esc(F.t("reports.n_fixed", { n: nf }, "{n} испр."))}` : ""}</span></h3>
       <div class="list rp-opts">${ui.check(draft.confirmed, F.t("reports.conf_only", "Только подтверждённые"), "rp-conf", F.t("reports.conf_only_sub", "Новые и принятые риски не попадут в отчёт; ложные: никогда"))}${pk ? ui.check(draft.pickedOnly, F.t("reports.picked_only", { n: pk }, "Только выбранные ({n})"), "rp-picked", F.t("reports.picked_sub", "Отмечены «Добавить в отчёт» в находках")) : `<div class="row rp-tg rp-pk0"><div class="body"><div class="t">${esc(F.t("reports.picked_0", "Только выбранные (0)"))}</div><div class="s">${esc(F.t("reports.picked_0_sub", "Отметьте находки через «Добавить в отчёт», здесь появится выборка"))}</div></div></div>`}</div>
@@ -1733,6 +1733,7 @@
       }),
     mount(page) {
       page.classList.add("rp-pg", "rp-nopb", "no-pb");
+      rpAiLoad();
       const c = page.querySelector("#rp-company");
       if (c)
         c.addEventListener("input", () => {
@@ -1744,7 +1745,66 @@
     },
   });
 
+  // AI summary of the report: the project's history from the core, newest first; the one the
+  // report uses is `report_id` (the latest by default, `ai_summary_use` picks another).
+  let rpAi = null;
+  const rpAiPid = () => (F.db.project || {}).id || "";
+  const rpAiSet = r => {
+    rpAi = { pid: rpAiPid(), items: r.items || [], report_id: r.report_id || null };
+  };
+  function rpAiLoad() {
+    if (!F.api.ai_summaries_list) return;
+    F.api.ai_summaries_list().then(
+      r => {
+        const was = JSON.stringify(rpAi);
+        rpAiSet(r);
+        if (JSON.stringify(rpAi) !== was && F.current() === "/p/report-new") F.render(true);
+      },
+      () => {},
+    );
+  }
+  const rpAiWhen = iso => {
+    const d = new Date(iso || "");
+    return Number.isNaN(d.getTime())
+      ? iso || ""
+      : d.toLocaleString(F.i18n.lang() === "en" ? "en-GB" : F.i18n.lang() === "uk" ? "uk-UA" : "ru-RU", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  };
+  const rpAiLabel = e => [rpAiWhen(e.created), e.model].filter(Boolean).join(" · ");
+  function rpAiRow() {
+    const h = rpAi && rpAi.pid === rpAiPid() ? rpAi : null;
+    if (!h || !h.items.length) return "";
+    const cur = h.items.find(e => e.id === h.report_id);
+    return `<div class="row tap rp-aipick" data-act="rp-aipick"><div class="body"><div class="t">${esc(F.t("reports.ai_pick", "Какая сводка"))}</div><div class="s">${esc(cur ? rpAiLabel(cur) : F.t("reports.ai_pick_none", "Не выбрана: раздел не добавится"))}</div></div>${ic("chev", "chev")}</div>`;
+  }
+
   Object.assign(F.actions, {
+    "rp-aipick": () => {
+      const h = rpAi;
+      if (!h || !h.items.length) return;
+      F.choose({
+        title: F.t("reports.ai_pick", "Какая сводка"),
+        value: h.report_id,
+        options: h.items.map((e, i) => ({
+          v: e.id,
+          t: rpAiLabel(e),
+          s: i === 0 ? F.t("reports.ai_pick_latest", "последняя") : "",
+        })),
+        onPick: v =>
+          F.api.ai_summary_use(v).then(
+            r => {
+              rpAiSet(r);
+              F.render(true);
+            },
+            e => F.snack(F.t("ai.failed", "Не удалось: ") + e.message),
+          ),
+      });
+    },
     "rp-d": a => {
       const [k, v] = a.split(":");
       if (k === "tpl") switchTpl(v);

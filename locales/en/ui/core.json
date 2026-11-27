@@ -3,6 +3,8 @@
   "core.ai.busy": "An AI summary for this project is already being generated",
   "core.ai.cancelled": "The AI request was cancelled",
   "core.ai.not_found": "AI summary not found",
+  "core.ai.empty": "The AI provider returned no summary text",
+  "core.ai.only_thoughts": "The model returned only its reasoning, no answer: raise the token limit or turn Thinking off",
   "core.ai.stale_preview": "Project data has changed: refresh the preview",
   "core.ai.pick_model": "Choose a model in “Settings → AI summary” (refresh the model list from the provider)",
   "core.ai.key_rejected": "The AI key was rejected: HTTP {status}",

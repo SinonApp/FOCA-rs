@@ -36,6 +36,62 @@ const AI_PICK_MODEL: &str =
     "Выберите модель в «Настройки → ИИ-сводка» (обновите список моделей от провайдера)";
 const AI_KEY_REJECTED: &str = "Ключ ИИ отклонён: HTTP {status}";
 const AI_MODELS_NEED_KEY: &str = "Укажите ключ API, чтобы загрузить список моделей от провайдера";
+const AI_EMPTY: &str = "ИИ-провайдер не вернул текст сводки";
+const AI_ONLY_THOUGHTS: &str =
+    "Модель вернула только ход рассуждений без ответа: увеличьте лимит токенов или отключите Thinking";
+
+/// An OpenAI-compatible answer sent as a server-sent event stream (some proxies stream even
+/// without `stream: true`): the chunks folded into the shape of a plain answer.
+fn fold_sse_chat(text: &str) -> Option<Value> {
+    let t = text.trim_start();
+    if !t.starts_with("data:") && !t.starts_with("event:") && !t.starts_with(':') {
+        return None;
+    }
+    let (mut content, mut reasoning, mut model) = (String::new(), String::new(), String::new());
+    let mut usage = Value::Null;
+    let mut chunks = 0;
+    for line in t.lines() {
+        let Some(d) = line.trim().strip_prefix("data:") else {
+            continue;
+        };
+        let d = d.trim();
+        if d == "[DONE]" || d.is_empty() {
+            continue;
+        }
+        let Ok(v) = serde_json::from_str::<Value>(d) else {
+            continue;
+        };
+        chunks += 1;
+        if let Some(m) = v["model"].as_str() {
+            model = m.to_string();
+        }
+        if v["usage"].is_object() {
+            usage = v["usage"].clone();
+        }
+        let delta = &v["choices"][0]["delta"];
+        let msg = if delta.is_object() {
+            delta
+        } else {
+            &v["choices"][0]["message"]
+        };
+        if let Some(c) = msg["content"].as_str() {
+            content.push_str(c);
+        }
+        if let Some(r) = msg["reasoning_content"]
+            .as_str()
+            .or_else(|| msg["reasoning"].as_str())
+        {
+            reasoning.push_str(r);
+        }
+    }
+    (chunks > 0).then(|| {
+        json!({
+            "model": model,
+            "choices": [{ "message": { "content": content, "reasoning_content": reasoning } }],
+            "usage": usage,
+        })
+    })
+}
 
 struct ParsedAiSummary {
     md: String,
@@ -735,7 +791,12 @@ impl Engine {
         let req = attach_ai_headers(req, &provider, &key)
             .header("Content-Type", "application/json")
             .body(serde_json::to_vec(&body)?)
-            .timeout(Duration::from_secs(180));
+            // Reasoning models think for minutes; a timeout here loses a paid answer.
+            .timeout(Duration::from_secs(if gen_opts.thinking_active() {
+                600
+            } else {
+                300
+            }));
         let fetch = async {
             let r = net.send(req).await.map_err(|e| net_err(&e))?;
             let st = r.status();
@@ -761,9 +822,20 @@ impl Engine {
                 crate::analysis::redact::redact(&format_ai_http_error(st, &text), &secrets),
             ));
         }
-        let v: Value = serde_json::from_str(&text).map_err(|e| net_err(&e))?;
+        let v: Value = match serde_json::from_str(&text) {
+            Ok(v) => v,
+            Err(e) => fold_sse_chat(&text).ok_or_else(|| net_err(&e))?,
+        };
         let fallback_in = p["tokens"].as_u64().unwrap_or(0);
         let parsed = parse_ai_summary_response(&provider, &model, fallback_in, &v);
+        // An answer without text is an error the user sees, never a silent "nothing saved".
+        if parsed.md.trim().is_empty() {
+            return Err(if parsed.thoughts.trim().is_empty() {
+                CmdError::new("empty", AI_EMPTY)
+            } else {
+                CmdError::new("empty", AI_ONLY_THOUGHTS)
+            });
+        }
         let thoughts = if gen_opts.show_thoughts() {
             parsed.thoughts
         } else {
@@ -784,7 +856,7 @@ impl Engine {
         });
         // Every summary goes into the project history; the newest one is also the report's
         // optional "Executive summary (AI-assisted)" section (report option `ai_summary`).
-        if !parsed.md.trim().is_empty() {
+        {
             let db = self.db(&id)?;
             let g = lock(&db);
             let mut items = history_with_legacy(
@@ -796,7 +868,12 @@ impl Engine {
             g.set_setting(AI_HISTORY_KEY, &Value::Array(items))?;
             g.set_setting(AI_SUMMARY_KEY, &entry)?;
         }
+        // The saved history goes back with the answer: the screen shows the new summary on top
+        // at once instead of waiting for another list request.
+        let mut history = self.ai_history_json(&id)?;
+        history["running"] = json!(false); // this request is the one still marked as running
         Ok(json!({
+            "history": history,
             "id": entry["id"],
             "md": entry["text"],
             "thoughts": entry["thoughts"],

@@ -201,6 +201,15 @@ export default async (page, { W, fsc, theme, out, prep }) => {
     n: FOCA_DEMO_BACKEND.invokeSync("ai_summaries_list", { project: "contoso" }).items.length,
   }));
   ok("cancel stops the request and keeps the history", /Запрос отменён/.test(can.snack) && can.btn === false && can.n === 1, can);
+  // a failed or cancelled request never empties the history on screen (it used to vanish until the
+  // screen was reopened, which looked like "not saved")
+  await ev(() => FOCA.actions["v2ai-step"](0));
+  await wait(300);
+  const kept0 = await ev(() => ({
+    latest: !!document.querySelector(".v2ai-out.done .v2ai-md"),
+    text: (FOCA.page() || document.body).innerText,
+  }));
+  ok("history stays on screen after a cancelled request", kept0.latest && /Последняя сводка/.test(kept0.text), kept0.text.slice(0, 200));
 
   // ---- the summary is kept after leaving the screen and reloading ----
   await ev(() => FOCA.actions["v2ai-send"]());
@@ -220,6 +229,30 @@ export default async (page, { W, fsc, theme, out, prep }) => {
   ok("no em dash on the AI screen", !kept.text.includes("\u2014"));
   ok("no horizontal overflow on the AI screen", (await overflow()) <= 1, await overflow());
   await shot("history");
+  // the report builder offers every saved summary, the latest one by default
+  await go("/p/report-new");
+  await wait(400);
+  const rp = await ev(() => {
+    const r = document.querySelector('[data-act="rp-aipick"]');
+    if (r) r.scrollIntoView({ block: "center" });
+    return { row: !!r, s: r ? r.querySelector(".s").textContent : "" };
+  });
+  ok("report builder shows the summary picker", rp.row && rp.s.length > 4, rp);
+  await shot("report-pick");
+  await ev(() => document.querySelector('[data-act="rp-aipick"]').click());
+  await wait(400);
+  const opts = await ev(() => [...document.querySelectorAll(".pick-sh.show .pk-o")].map(o => o.classList.contains("on")));
+  ok("picker lists both summaries, the latest chosen", opts.length === 2 && opts[0] === true, opts);
+  await ev(() => document.querySelectorAll(".pick-sh.show .pk-o")[1].click());
+  await wait(400);
+  const picked = await ev(() => {
+    const l = FOCA_DEMO_BACKEND.invokeSync("ai_summaries_list", { project: "contoso" });
+    return l.report_id === l.items[1].id;
+  });
+  ok("picking the older summary puts it into the report", picked);
+  ok("no horizontal overflow on the report builder", (await overflow()) <= 1, await overflow());
+  await go("/p/ai");
+  await wait(300);
   // open the older one, put it into the report, then delete it
   await ev(() => document.querySelectorAll('.v2ai-hist [data-act^="v2ai-open:"]')[1].click());
   await wait(400);

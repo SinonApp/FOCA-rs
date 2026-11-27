@@ -9630,7 +9630,13 @@
       h.report_id = entry.id;
       save();
       const { text, ...rest } = entry;
-      return { ...rest, md: text, preview_id, source_badge: "Cloud API" };
+      return {
+        ...rest,
+        md: text,
+        preview_id,
+        source_badge: "Cloud API",
+        history: { ...aiHistOut(pid), running: false },
+      };
     };
     if (!aiDelayMs) return finish();
     return new Promise((resolve, reject) => {

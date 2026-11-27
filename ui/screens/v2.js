@@ -3946,9 +3946,11 @@
       }
       F.render(true);
       const opts = AI();
+      // The history is never dropped from the screen: a failed request keeps the list and
+      // reloads it (a slow answer may have been saved meanwhile), a successful one puts the
+      // saved summary on top at once.
       const done = () => {
         aiState.busy = false;
-        aiState.hist = null; // reload: the core saved the summary
       };
       F.api
         .ai_summarize((aiState.prev || {}).id, {
@@ -3964,6 +3966,8 @@
           r => {
             done();
             if (aiPid() !== pid) return; // another project was opened meanwhile
+            if (r.history) aiSetHist(r.history);
+            else aiLoadHist();
             aiState.sum = r.md;
             aiState.lastId = r.id || "";
             aiState.thoughts = r.thoughts || "";
@@ -3973,13 +3977,13 @@
             aiState.step = 2;
             aiState.out = "";
             aiState.done = false;
-            aiLoadHist();
             if (F.current() !== "/p/ai") return;
             F.render(true);
             F.page().scrollTop = 0;
           },
           e => {
             done();
+            if (aiPid() === pid) aiLoadHist();
             if (F.current() === "/p/ai") F.render(true);
             if (e.code === "cancelled") F.snack(F.t("ai.request_cancelled", "Запрос отменён"));
             else if (e.code === "no_key")
