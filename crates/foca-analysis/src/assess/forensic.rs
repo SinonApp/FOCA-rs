@@ -583,6 +583,7 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
                 foca_core::SignatureKind::Vba => "vba".into(),
                 foca_core::SignatureKind::Authenticode => "authenticode".into(),
                 foca_core::SignatureKind::Jar => "jar".into(),
+                foca_core::SignatureKind::Cms => "cms".into(),
             },
             name,
             org: c.organization.clone(),

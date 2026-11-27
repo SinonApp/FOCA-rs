@@ -42,6 +42,7 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 - Signed PDFs: a PAdES-LTV increment after the signature (DSS with VRI, certificate, OCSP and CRL streams, a document timestamp, a catalog or Info rewritten without other changes) is no longer reported as "modified after signing"; page, content stream, annotation and form value changes still are. On a real corpus of 41 signed PDFs the false finding went from 41 to 0.
 - PDF revisions: "Old PDF revisions kept" is reported only when an older revision really differs (page text, or a changed author, creator, producer, modification date, title, subject or keywords); empty Word increments, converter re-saves and LTV data stay a document fact.
 - Internal host names: a `www.` name or a name that goes on after a dash, soft hyphen or letter (`www.corp-media.lg.ua`, `www.corporation.com.ua` cut by text extraction) is no longer reported as an internal host.
+- КЕП wrappers: a file that is a CMS/PKCS#7 SignedData with the document inside (a Ukrainian `.p7s`, or a `.pdf` that is really such a wrapper) is recognised by content; the inner document is parsed as usual and the signer's certificate (name, surname and given name, masked РНОКПП, ЄДРПОУ, organisation, title, CA, signing time) is kept, giving one Medium "signer data in the document" finding per file. 6 such files in the real corpus had no signer before.
 
 ### Changed
 

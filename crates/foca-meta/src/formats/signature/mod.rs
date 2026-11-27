@@ -375,6 +375,22 @@ pub(crate) struct Cms {
     econtent: Option<Vec<u8>>,
 }
 
+/// A file that is a CMS SignedData with the document inside (Ukrainian КЕП `.p7s`, or a signed
+/// `.pdf` that is really such a wrapper): the parsed signature and the inner bytes. Detected
+/// by content (a DER/BER SEQUENCE that parses as SignedData with attached `data`), never by
+/// the file name.
+pub(crate) fn cms_wrapper(b: &[u8]) -> Option<(Cms, Vec<u8>)> {
+    if b.first() != Some(&0x30) || !matches!(b.get(1), Some(0x80..=0x84)) {
+        return None;
+    }
+    let mut cms = parse_cms(b)?;
+    if cms.econtent_type.as_deref() != Some("1.2.840.113549.1.7.1") {
+        return None;
+    }
+    let inner = cms.econtent.take().filter(|c| !c.is_empty())?;
+    Some((cms, inner))
+}
+
 impl Cms {
     /// Compares `messageDigest` with the hash of `parts`. `None` if the algorithm is not
     /// supported here (SHA-1, DSTU/GOST) or there are no signed attributes.

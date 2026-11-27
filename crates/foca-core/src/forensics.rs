@@ -63,6 +63,9 @@ pub enum SignatureKind {
     Authenticode,
     /// JAR/APK signature block (`META-INF/*.RSA`, `*.DSA`, `*.EC`).
     Jar,
+    /// A CMS/PKCS#7 SignedData file wrapping the document (Ukrainian КЕП `.p7s`, a signed
+    /// `.pdf` published as such a wrapper).
+    Cms,
 }
 
 /// Identity fields of an X.509 certificate. Personal tax numbers are never stored in full.

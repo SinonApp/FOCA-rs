@@ -283,6 +283,17 @@ fn extract_embedded(bytes: &[u8], name: &str, ctx: &Ctx) -> Option<Result<Metada
 }
 
 fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metadata, MetaError> {
+    // a CMS SignedData wrapper (КЕП): the document inside is parsed as the document itself,
+    // the signer's certificate goes to its signatures
+    if let Some((cms, inner)) = formats::signature::cms_wrapper(bytes) {
+        let mut meta = extract_ctx(&inner, name_hint, ctx)?;
+        let mut s = formats::signature::from_cms(foca_core::SignatureKind::Cms, "cms", &cms);
+        s.digest_valid = cms.digest_matches(&[&inner]);
+        meta.signatures.push(s);
+        meta.fields.insert("cms:wrapper".into(), "true".into());
+        formats::signature::apply_signers(&mut meta, "signature:cms");
+        return Ok(meta);
+    }
     let format = detect_with_hint(bytes, name_hint);
     let mut meta = match format {
         DocFormat::Docx | DocFormat::Xlsx | DocFormat::Pptx => ooxml::extract(bytes, format, ctx)?,
@@ -370,6 +381,10 @@ pub fn text(bytes: &[u8], limits: &Limits) -> Result<String, MetaError> {
 }
 
 fn text_ctx(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
+    // the text of a КЕП wrapper is the text of the signed document inside
+    if let Some((_, inner)) = formats::signature::cms_wrapper(bytes) {
+        return text_ctx(&inner, ctx);
+    }
     match detect(bytes) {
         DocFormat::Docx | DocFormat::Xlsx | DocFormat::Pptx => ooxml::text(bytes, ctx),
         DocFormat::Odt | DocFormat::Ods | DocFormat::Odp | DocFormat::Odg | DocFormat::Sxw => {

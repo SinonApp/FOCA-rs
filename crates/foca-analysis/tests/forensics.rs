@@ -62,6 +62,14 @@ fn forensic_findings_from_fixtures() {
         "{}",
         kep.evidence
     );
+    // a КЕП wrapper published as .pdf: one signer finding for the document, Medium (РНОКПП)
+    let cms = has("doc.signer_identity", "kep_wrapped.pdf").expect("cms signer");
+    assert_eq!(cms.sev, Severity::Medium);
+    assert!(
+        cms.evidence.contains("РНОКПП: ********"),
+        "{}",
+        cms.evidence
+    );
     assert!(has("doc.hidden_content", "hidden.xlsx").is_some());
     assert!(has("doc.hidden_content", "signed_hidden.docx").is_some());
     assert!(has("doc.pdf_removed_text", "revisions.pdf").is_some());
@@ -90,7 +98,7 @@ fn pdf_revisions_differ_only_on_real_changes() {
         revision: n,
         objects,
         producer: producer.map(str::to_string),
-        author: Some("Olena".into()).filter(|_| objects > 0),
+        author: (objects > 0).then(|| "Olena".to_string()),
         ..Default::default()
     };
     let mut m = Metadata {

@@ -418,9 +418,27 @@ def xlsx():
     ])
 
 
-def main():
+def kep_wrapped(d):
+    """A Ukrainian КЕП wrapper: the PDF inside a CMS SignedData (attached content), saved
+    under a `.pdf` name the way signing tools publish it."""
+    inner = revisions_pdf()
+    with open(os.path.join(d, "inner.pdf"), "wb") as f:
+        f.write(inner)
+    run(["openssl", "cms", "-sign", "-binary", "-nodetach", "-in", "inner.pdf", "-signer",
+         "signer.crt", "-inkey", "signer.key", "-certfile", "ca.crt", "-md", "sha256",
+         "-outform", "DER", "-out", "wrapped.der"], d)
+    return open(os.path.join(d, "wrapped.der"), "rb").read()
+
+
+def main(only=None):
     with tempfile.TemporaryDirectory() as d:
         pki(d)
+        if only == "kep_wrapped.pdf":
+            data = kep_wrapped(d)
+            with open(os.path.join(HERE, only), "wb") as f:
+                f.write(data)
+            print(only, len(data))
+            return
         signed, modified = signed_pdf(d)
         out = {
             "signed.pdf": signed,
@@ -431,6 +449,7 @@ def main():
             "scan.pdf": scan_pdf(),
             "signed_hidden.docx": docx(d),
             "hidden.xlsx": xlsx(),
+            "kep_wrapped.pdf": kep_wrapped(d),
         }
         for name, data in out.items():
             with open(os.path.join(HERE, name), "wb") as f:
@@ -439,4 +458,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    # `make_forensics.py kep_wrapped.pdf` writes only that fixture
+    main(sys.argv[1] if len(sys.argv) > 1 else None)
