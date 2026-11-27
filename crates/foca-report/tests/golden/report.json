@@ -1234,15 +1234,15 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 7.5,
-      "description": "Конфиденциальный фрагмент закрыт чёрным или белым прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
+      "cvss": 9.1,
+      "description": "Конфиденциальный фрагмент закрыт тёмным прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
       "documents": [
         {
           "id": 5,
           "name": "redacted.pdf"
         }
       ],
-      "evidence": "стр. 1 (black): «Passport AB123456 Ivan Petrenko»\nстр. 1 (white): «Phone +380 44 000 00 00»\nстр. 2 (black): «Account UA00 0000 0000 secret»",
+      "evidence": "стр. 1 (black): «Passport AB123456 Ivan Petrenko»\nстр. 2 (black): «Account UA00 0000 0000 secret»",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -1635,42 +1635,6 @@
       "time": "2026-11-20T12:00:00",
       "title": "РНОКПП (ІПН) физлица в документе (personal.docx)",
       "url": "https://files.contoso.example/corpus/forensics/personal.docx"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": 5.3,
-      "description": "Фото отредактировано в графическом редакторе, но встроенная миниатюра EXIF сохранена: она может показывать исходный (необрезанный, незамазанный) кадр.",
-      "documents": [
-        {
-          "id": 12,
-          "name": "photo.jpg"
-        }
-      ],
-      "evidence": "Apple iPhone 13 Pro\nПО: ios166, ps2019",
-      "first_scan": "s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 4395653510081468,
-      "mitre": "T1591 · Gather Victim Org Information",
-      "module": "meta",
-      "notes": [],
-      "provenance": {
-        "fields": [
-          "thumbnail"
-        ],
-        "rule": "thumbnail"
-      },
-      "recommendation": "Удалять EXIF и миниатюры перед публикацией; сравнить миниатюру с изображением.",
-      "severity": "high",
-      "severity_label": "Высокий",
-      "source": "Метаданные",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Миниатюра EXIF может отличаться от фото (photo.jpg)",
-      "url": "https://files.contoso.example/corpus/images/photo.jpg"
     },
     {
       "active": false,
@@ -3136,6 +3100,42 @@
       "time": "2026-11-20T12:00:00",
       "title": "Внутренний домен в Message-ID (budget.eml)",
       "url": "https://files.contoso.example/corpus/mail/budget.eml"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": 5.3,
+      "description": "Фото отредактировано в графическом редакторе, но встроенная миниатюра EXIF сохранена: она может показывать исходный (необрезанный, незамазанный) кадр.",
+      "documents": [
+        {
+          "id": 12,
+          "name": "photo.jpg"
+        }
+      ],
+      "evidence": "Apple iPhone 13 Pro\nПО: ios166, ps2019",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 4395653510081468,
+      "mitre": "T1591 · Gather Victim Org Information",
+      "module": "meta",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "thumbnail"
+        ],
+        "rule": "thumbnail"
+      },
+      "recommendation": "Удалять EXIF и миниатюры перед публикацией; сравнить миниатюру с изображением.",
+      "severity": "warn",
+      "severity_label": "Средний",
+      "source": "Метаданные",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Миниатюра EXIF может отличаться от фото (photo.jpg)",
+      "url": "https://files.contoso.example/corpus/images/photo.jpg"
     },
     {
       "active": false,
@@ -4867,7 +4867,7 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 4.3,
+      "cvss": 3.7,
       "description": "Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.",
       "documents": [
         {
@@ -4944,7 +4944,7 @@
       "active": false,
       "category": "docs",
       "cve": [],
-      "cvss": 4.3,
+      "cvss": 3.7,
       "description": "Опубликованный файл подключения (RDP/ICA) содержит адрес сервера, шлюз и имя пользователя по умолчанию.",
       "documents": [
         {
@@ -6729,10 +6729,10 @@
   "summary": {
     "counts": {
       "crit": 4,
-      "high": 26,
+      "high": 25,
       "info": 3,
       "low": 28,
-      "warn": 41
+      "warn": 42
     },
     "fixed": 1,
     "pages": null,

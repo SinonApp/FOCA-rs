@@ -37,7 +37,7 @@ Study open sources about «contoso.example» with OSINT methods: collect publish
 
 1. Document collection: 67 (65 analysed).
 2. Metadata extraction: people 25, e-mail addresses 25, hosts 27, software 30.
-3. Analysis: findings 102 (critical 4, high 26, medium 41, low 28, info 3).
+3. Analysis: findings 102 (critical 4, high 25, medium 42, low 28, info 3).
 4. Network requests: 5 (passive 2, active 2).
 
 ## 5. Findings with standards mapping
@@ -55,46 +55,46 @@ Study open sources about «contoso.example» with OSINT methods: collect publish
 | 9 | High | Deleted text is recoverable from older PDF revisions (revisions.pdf) | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
 | 10 | High | Payment card number in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
 | 11 | High | Individual tax number (RNOKPP) in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
-| 12 | High | EXIF thumbnail may differ from the photo (photo.jpg) | T1591 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 13 | High | RDP file with a saved password (SRV-TS01.rdp) | T1552.001 | CWE-256, A06:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
-| 14 | High | Deleted text is recoverable from older PDF revisions (signed\_modified.pdf) | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 15 | High | Password in document text · objstm.pdf | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
-| 16 | High | Hidden text and hidden rows/columns in hidden.xlsx | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 17 | High | IBAN account number in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
-| 18 | High | Document modified after signing (signed\_modified.pdf) | T1565.001 | \- | 8.24 | \- | ЦВ, НА | 6.1.2.5 |
-| 19 | High | Archive with dangerous paths (Zip-Slip): backup.zip | T1204.002 | CWE-22 (Top 25), A01:2025 | 8.7 | SI-10 | \- | \- |
-| 20 | High | External data sources in schedule.xlsx | T1590 | CWE-497, A01:2025 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 21 | High | Password in document text · legacy.doc | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
-| 22 | High | Sender IP address in the message headers (budget.msg) | \- | CWE-497, A01:2025 | 8.21 | AC-22 | \- | 6.1.2.4 |
-| 23 | High | Internal mail servers and addresses in the message headers (backup.zip) | T1590.005 | CWE-497, A01:2025 | 8.12, 8.21 | AC-22 | \- | 6.1.2.4 |
-| 24 | High | Password in a data connection string | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
-| 25 | High | Hidden text and hidden rows/columns in signed\_hidden.docx | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
-| 26 | High | Sender IP address in the message headers (backup.zip) | \- | CWE-497, A01:2025 | 8.21 | AC-22 | \- | 6.1.2.4 |
-| 27 | High | Azure SAS token | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
-| 28 | High | Sender IP address in the message headers (budget.eml) | \- | CWE-497, A01:2025 | 8.21 | AC-22 | \- | 6.1.2.4 |
-| 29 | High | Access restriction marking in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
-| 30 | High | Passport series and number in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
-| 31 | Medium | Signer data (qualified signature) in the document signed.pdf: Іван Петренко | T1589.001 | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
-| 32 | Medium | Signer data (qualified signature) in the document signed\_hidden.docx: John Doe | T1589.001 | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
-| 33 | Medium | Adobe Acrobat Pro XI (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 34 | Medium | Scan without a text layer: exiftool-PDF.pdf | \- | \- | \- | \- | \- | \- |
-| 35 | Medium | Document with VBA macros: legacy.doc | T1059.005 | \- | 8.7 | SC-18 | \- | \- |
-| 36 | Medium | Scan without a text layer: scan.pdf | \- | \- | \- | \- | \- | \- |
-| 37 | Medium | Internal domain in Message-ID (budget.msg) | \- | \- | \- | \- | \- | \- |
-| 38 | Medium | Document with VBA macros: budget.xls | T1059.005 | \- | 8.7 | SC-18 | \- | \- |
-| 39 | Medium | Scan without a text layer: exiftool-PDF2.pdf | \- | \- | \- | \- | \- | \- |
-| 40 | Medium | Adobe Photoshop CC 2019 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 41 | Medium | GPS coordinates in 6 photos | T1591.001 | CWE-359, A01:2025 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
-| 42 | Medium | Outdated OS iOS 16.6 in 1 document | T1592.002 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 43 | Medium | Document with VBA macros: schedule.xlsx | T1059.005 | \- | 8.7 | SC-18 | \- | \- |
-| 44 | Medium | Reply-To differs from the sender (budget.eml) | T1566 | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
-| 45 | Medium | Exchange structure (X.500) in the message (budget.msg) | \- | \- | \- | \- | \- | \- |
-| 46 | Medium | Personal contacts in business cards (contacts.vcf) | \- | CWE-359, A01:2025 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
-| 47 | Medium | iOS 16.6 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 48 | Medium | Reply-To differs from the sender (backup.zip) | T1566 | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
-| 49 | Medium | Outdated OS iOS 17.4 in 2 documents | T1592.002 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
-| 50 | Medium | LNK shortcut points to a network share (network.lnk) | T1135 | CWE-497, A01:2025 | 8.12 | AC-22 | \- | 6.1.2.4 |
-| 51 | Medium | Internal domain in Message-ID (budget.eml) | \- | \- | \- | \- | \- | \- |
+| 12 | High | RDP file with a saved password (SRV-TS01.rdp) | T1552.001 | CWE-256, A06:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
+| 13 | High | Deleted text is recoverable from older PDF revisions (signed\_modified.pdf) | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 14 | High | Password in document text · objstm.pdf | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
+| 15 | High | Hidden text and hidden rows/columns in hidden.xlsx | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 16 | High | IBAN account number in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
+| 17 | High | Document modified after signing (signed\_modified.pdf) | T1565.001 | \- | 8.24 | \- | ЦВ, НА | 6.1.2.5 |
+| 18 | High | Archive with dangerous paths (Zip-Slip): backup.zip | T1204.002 | CWE-22 (Top 25), A01:2025 | 8.7 | SI-10 | \- | \- |
+| 19 | High | External data sources in schedule.xlsx | T1590 | CWE-497, A01:2025 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 20 | High | Password in document text · legacy.doc | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
+| 21 | High | Sender IP address in the message headers (budget.msg) | \- | CWE-497, A01:2025 | 8.21 | AC-22 | \- | 6.1.2.4 |
+| 22 | High | Internal mail servers and addresses in the message headers (backup.zip) | T1590.005 | CWE-497, A01:2025 | 8.12, 8.21 | AC-22 | \- | 6.1.2.4 |
+| 23 | High | Password in a data connection string | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
+| 24 | High | Hidden text and hidden rows/columns in signed\_hidden.docx | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
+| 25 | High | Sender IP address in the message headers (backup.zip) | \- | CWE-497, A01:2025 | 8.21 | AC-22 | \- | 6.1.2.4 |
+| 26 | High | Azure SAS token | T1552.001 | CWE-798, A07:2025 | 5.17, 8.12 | IA-5(7) | НИ | 6.1.2.5 |
+| 27 | High | Sender IP address in the message headers (budget.eml) | \- | CWE-497, A01:2025 | 8.21 | AC-22 | \- | 6.1.2.4 |
+| 28 | High | Access restriction marking in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
+| 29 | High | Passport series and number in the document (personal.docx) | T1213 | CWE-359, A01:2025 | 5.34, 8.11, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
+| 30 | Medium | Signer data (qualified signature) in the document signed.pdf: Іван Петренко | T1589.001 | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
+| 31 | Medium | Signer data (qualified signature) in the document signed\_hidden.docx: John Doe | T1589.001 | \- | 5.34 | SI-12(1) | \- | 6.1.2.7 |
+| 32 | Medium | Adobe Acrobat Pro XI (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 33 | Medium | Scan without a text layer: exiftool-PDF.pdf | \- | \- | \- | \- | \- | \- |
+| 34 | Medium | Document with VBA macros: legacy.doc | T1059.005 | \- | 8.7 | SC-18 | \- | \- |
+| 35 | Medium | Scan without a text layer: scan.pdf | \- | \- | \- | \- | \- | \- |
+| 36 | Medium | Internal domain in Message-ID (budget.msg) | \- | \- | \- | \- | \- | \- |
+| 37 | Medium | Document with VBA macros: budget.xls | T1059.005 | \- | 8.7 | SC-18 | \- | \- |
+| 38 | Medium | Scan without a text layer: exiftool-PDF2.pdf | \- | \- | \- | \- | \- | \- |
+| 39 | Medium | Adobe Photoshop CC 2019 (EOL) in 2 documents | T1203 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 40 | Medium | GPS coordinates in 6 photos | T1591.001 | CWE-359, A01:2025 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.5 |
+| 41 | Medium | Outdated OS iOS 16.6 in 1 document | T1592.002 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 42 | Medium | Document with VBA macros: schedule.xlsx | T1059.005 | \- | 8.7 | SC-18 | \- | \- |
+| 43 | Medium | Reply-To differs from the sender (budget.eml) | T1566 | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
+| 44 | Medium | Exchange structure (X.500) in the message (budget.msg) | \- | \- | \- | \- | \- | \- |
+| 45 | Medium | Personal contacts in business cards (contacts.vcf) | \- | CWE-359, A01:2025 | 5.34, 8.12 | AC-22, SI-12(1) | \- | 6.1.2.7 |
+| 46 | Medium | iOS 16.6 (EOL) in 1 document | T1203 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 47 | Medium | Reply-To differs from the sender (backup.zip) | T1566 | \- | 6.3 | AT-2(3) | \- | 6.1.2.7 |
+| 48 | Medium | Outdated OS iOS 17.4 in 2 documents | T1592.002 | CWE-1104, A03:2025 | 8.8 | SA-22 | \- | 6.1.2.4 |
+| 49 | Medium | LNK shortcut points to a network share (network.lnk) | T1135 | CWE-497, A01:2025 | 8.12 | AC-22 | \- | 6.1.2.4 |
+| 50 | Medium | Internal domain in Message-ID (budget.eml) | \- | \- | \- | \- | \- | \- |
+| 51 | Medium | EXIF thumbnail may differ from the photo (photo.jpg) | T1591 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |
 | 52 | Medium | Internal domain in Message-ID (backup.zip) | \- | \- | \- | \- | \- | \- |
 | 53 | Medium | Online meeting links in the calendar (meeting.ics) | \- | \- | \- | \- | \- | \- |
 | 54 | Medium | Tracked changes and deleted text kept in contract.docx | T1213 | CWE-212 | 8.10, 8.12 | AC-22 | \- | 6.1.2.5 |

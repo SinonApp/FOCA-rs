@@ -615,8 +615,32 @@ fn sig_line(s: &SignerFacts) -> String {
 /// Severity of a bad redaction: high; critical only when the recovered text itself holds
 /// personal data (the stored text is already PII-masked, `********90`) or an e-mail address.
 fn redaction_severity(lines: &[String]) -> Severity {
+    // An identity document or account label next to a long number counts even when the number
+    // itself fails a checksum (`Passport AB123456`, `Account UA00 0000`).
+    const LABELS: &[&str] = &[
+        "passport",
+        "паспорт",
+        "iban",
+        "account",
+        "рахун",
+        "счёт",
+        "счет",
+        "рнокпп",
+        "іпн",
+        "инн",
+        "ідентифікаційн",
+        "card",
+        "картк",
+        "карта",
+    ];
+    let labelled = |t: &str| {
+        let low = t.to_lowercase();
+        LABELS.iter().any(|l| low.contains(l))
+            && t.chars().filter(char::is_ascii_digit).count() >= 6
+    };
     let sensitive = lines.iter().any(|t| {
-        t.contains("****")
+        labelled(t)
+            || t.contains("****")
             || !crate::content::pii::scan(t, "").is_empty()
             || t.split_whitespace().any(|w| {
                 let w = w.trim_matches(|c: char| !c.is_alphanumeric());
