@@ -25,7 +25,7 @@ All functions are pure (no network, no filesystem): bytes in, `Metadata` / clean
 
 ### Supported Formats & Forensics
 
-- **Office & Documents**: OOXML (`docx`/`xlsx`/`pptx`), ODF (`odt`/`ods`/`odp`/`odg`, StarOffice), OLE2 (`doc`/`xls`/`ppt` 97-2003), PDF (in-house parser, no `lopdf`), Visio (`.vsdx`/`.vsdm`), Publisher (`.pub`), InDesign (`.indd`/`.indt`), WordPerfect (`.wpd`) & Works, EPUB (`.epub`).
+- **Office & Documents**: RTF (`formats/office/rtf.rs`), OOXML (`docx`/`xlsx`/`pptx`, binary `xlsb` parts in `formats/office/xlsb.rs`), ODF (`odt`/`ods`/`odp`/`odg`, StarOffice), OLE2 (`doc`/`xls`/`ppt` 97-2003), PDF (in-house parser, no `lopdf`), Visio (`.vsdx`/`.vsdm`), Publisher (`.pub`), InDesign (`.indd`/`.indt`), WordPerfect (`.wpd`) & Works, EPUB (`.epub`).
 - **Mail, PIM & Remote**: EML (RFC 5322/MIME), Outlook MSG (MS-OXMSG), iCalendar (`.ics`), vCard (`.vcf`), Windows Shell Links (`.lnk`), RDP & Citrix ICA.
 - **Images, Media & Archives**: JPEG/PNG/TIFF (EXIF, XMP, GPS, thumbnail mismatch `thumbcmp.rs`), SVG, Photoshop (`.psd`/`.psb`), MP4/MOV/HEIF/HEIC/AVIF (`formats/media/isobmff.rs`), MP3 (ID3v1/ID3v2, `formats/media/mp3.rs`), ZIP (`formats/archive/zipfile.rs` with recursive child extraction and Zip-Slip detection), 7-Zip (`.7z`, `formats/archive/sevenz.rs`).
 - **Forensics (`foca_core::forensics`)**: XMP edit history & document IDs (`xmp.rs`), PDF incremental revisions with text diff & scan-without-text detection (`formats/pdf/mod.rs`), broken PDF redaction detector (`formats/pdf/redaction.rs`), hidden OOXML text/rows/columns (`formats/office/ooxml.rs`), PDF/OOXML/VBA CMS/PKCS#7 & RFC 3161 digital signatures (`formats/signature/mod.rs`), and Ukrainian qualified electronic signature (KEP) certificate fields (`formats/signature/kep.rs`, with RNOKPP strictly masked).
@@ -68,6 +68,11 @@ Layout and dependency direction (lower rows never use higher ones):
 | `src/formats/office/odf.rs` | 255 | ODF (`odt`/`ods`/`odp`/`odg`) and StarOffice 1.x |
 | `src/formats/office/ole.rs` | 1,046 | OLE2 (`doc`/`xls`/`ppt` 97-2003): property sets, user names, OLE cleaning |
 | `src/formats/office/ooxml.rs` | 1,076 | OOXML (`docx`/`xlsx`/`pptx`): core/app/custom props, comments, tracked changes, connections, hidden content |
+| `src/formats/office/rtf.rs` | 1,149 | RTF: `\info`, generator, user properties, revisions, annotations, fields, `\objdata` (OLE1) and `\pict`, code pages |
+| `src/formats/office/biff.rs` | 711 | Excel BIFF5/8 workbook stream: cell text, string pool, names, external books, comments, hidden rows/columns |
+| `src/formats/office/xlsb.rs` | 259 | Excel binary workbook (BIFF12 records) |
+| `src/formats/office/ole_objects.rs` | 403 | Embedded OLE objects (recursive), OfficeArt pictures and properties, CompObj |
+| `src/formats/office/ppt.rs` | 231 | PowerPoint 97-2003 records: text, comments, links, saves, ExOleObjStg |
 | `src/formats/office/publisher.rs` | 38 | Microsoft Publisher (`.pub`, OLE2 property sets) |
 | `src/formats/office/visio.rs` | 179 | Microsoft Visio (`.vsd`, `.vsdx`/`.vsdm`) |
 | `src/formats/pdf/mod.rs` | 1,443 | In-house PDF parser (no `lopdf`): object table, trailers, Info, XMP, revisions, text, signatures |
@@ -125,6 +130,10 @@ Full API docs: `cargo doc -p foca-meta --no-deps --open`.
 - Never call `unwrap()` or `panic!` on document bytes. Engine calls still wrap `extract` in `catch_unwind` (requiring `panic = "unwind"`, [ADR-0005](../../adr/0005-panic-strategy.md)).
 - Format detection is magic-byte driven (`formats/detect.rs`); file extensions are ignored except as hints for text RDP/ICA.
 - `Limits` decompression budgets are shared across a parent document and all nested attachments to stop zip bombs.
+- Embedded documents always go through `Ctx::attach_child`/`extract_child` (depth `max_depth`, shared budget); a child whose bytes hash equals a document on the current ancestor chain is skipped (cycle protection). Never create a fresh `Ctx` for a child.
+- Spreadsheet numbers are a cost trap: XLS/XLSB keep numeric cells only from the first two sheets, at most 20k cells, and only 6-19 digit integers (IDs, phones, card and account numbers); dates and amounts are dropped.
+- RTF is detected by the `{\rtf` magic only. `\uN` is followed by `\ucN` fallback characters to skip; `\'hh` runs are decoded together so double-byte code pages (Shift-JIS, GBK) stay intact.
+- BIFF8 string pool: a string split by a CONTINUE record, also right after its header, restarts with an option byte.
 - OLE2 embedded signatures (`\x05DigitalSignature`, `_VBA_PROJECT_CUR` in legacy `.doc`/`.xls`) are not parsed; Word style-inherited `w:vanish` is not resolved.
 - Redaction detection approximates glyph width at ~0.5 em, ignores form XObjects/transparency/clipping, and skips boxes > 80% of `MediaBox`. Revision text diffs skip PDFs with `pages × revisions > 5000`.
 - Signature digest verification (`digest_valid`) covers SHA-256/384/512 only (`None` for DSTU/GOST/SHA-1); certificate chains are not validated online.

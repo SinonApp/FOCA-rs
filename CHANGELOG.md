@@ -5,6 +5,26 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 ---
 
+## Unreleased
+
+### Added
+
+- RTF documents are parsed: author, operator, company, dates and counts of the information group, generator, template, user properties, revision and comment authors, hidden and deleted text, HYPERLINK/INCLUDEPICTURE/INCLUDETEXT/DDE targets, embedded objects (Package paths, Office documents parsed recursively) and pictures, and the text in its code pages (Cyrillic, CJK, Arabic, `\uN`).
+- Office 97-2003: embedded OLE objects (whole Word/Excel/PowerPoint documents, Package parts, PowerPoint objects) and pictures are parsed recursively with their own authors, paths and EXIF; picture source paths, alt text and the localized product name (CompObj) are reported.
+- Spreadsheets: XLS and XLSB cell text, sheet and defined names, external workbook paths, comments with authors, data validation lists, hidden rows and columns and the XLS printer. Numbers are kept only when they look like identifiers, phone, card or account numbers, from the first two sheets.
+- PowerPoint 97-2003: slide and notes text, comment authors with initials and dates, hyperlink targets, media paths and the number of saves.
+- OpenDocument: printer name, driver and port from the settings, hidden sheets, rows, columns, slides and sections, embedded objects.
+- Document thumbnails of OOXML, OpenDocument and Office 97-2003 files, hidden PowerPoint slides with their text, Publisher story text, picture paths and links.
+- Encrypted OOXML packages (with the encryption type) and encrypted PowerPoint 97-2003 files are flagged as encrypted.
+- Legacy code pages (Shift-JIS, GBK, Big5, EUC-KR, Windows 1250-1258, KOI8) decode correctly in Office and RTF strings.
+
+### Fixed
+
+- Word, Excel and PowerPoint files saved by LibreOffice no longer show the operating system as Windows 1.0.
+- An embedded document that contains itself is parsed once instead of repeating down to the depth limit.
+
+---
+
 ## 2.0.0-beta.4.1: 2026-11-27
 
 Patch release after phone testing of 2.0.0-beta.4.
