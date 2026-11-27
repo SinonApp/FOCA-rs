@@ -742,3 +742,18 @@ pub fn dmy_hm(iso: &str) -> String {
         _ => date,
     }
 }
+
+/// Role column of a person: the metadata role (translated), else the position and unit written
+/// next to the name in document text.
+pub(crate) fn person_role(p: &foca_core::api::Person, lang: crate::Lang) -> String {
+    let role = crate::ftext::role(&p.role, lang);
+    let text: Vec<&str> = [p.title.as_deref(), p.unit.as_deref()]
+        .into_iter()
+        .flatten()
+        .collect();
+    match (role.is_empty(), text.is_empty()) {
+        (_, true) => role,
+        (true, false) => text.join(", "),
+        (false, false) => format!("{role} · {}", text.join(", ")),
+    }
+}

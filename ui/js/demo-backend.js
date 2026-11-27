@@ -16,7 +16,7 @@
   // 10: port scan (Host.ports/ports_scan, ports stage); 9: technologies in scan snapshots;
   // 8: site recon (snapshot.recon); 7: Startpage/Brave via the browser; 6: no Google CSE;
   // 5: no allow_active / "active" target marks / confirmation log.
-  const GEN_VERSION = 25;
+  const GEN_VERSION = 26;
   // User rule presets of the core (foca-analysis::rules::presets), same ids, titles and patterns.
   const DEMO_RULE_PRESETS = [
     {
@@ -765,6 +765,11 @@
         role: "Закупівлі",
         src: "Текст документа",
         ext: "pdf",
+        title: "начальник відділу",
+        unit: "відділ закупівель",
+        phones: ["+38••••••••41"],
+        signatory: true,
+        src_line: 12,
       },
       { login: "d.moroz", name: "Петро Приклад", role: "Енергетика", src: "Текст документа", ext: "pdf" },
       {
@@ -773,6 +778,9 @@
         role: "Фінанси",
         src: "Текст документа",
         ext: "xlsx",
+        title: "головний бухгалтер",
+        ids: ["rnokpp"],
+        src_line: 3,
       },
     ],
     web: [
@@ -2035,6 +2043,10 @@
     textPeople.forEach((p, i) => {
       const doc = an.find(d => d.ext === p.ext && d.author !== p.login);
       if (!doc) return;
+      const extra = {};
+      ["title", "unit", "phones", "ids", "signatory", "src_line"].forEach(k => {
+        if (p[k] !== undefined) extra[k] = p[k];
+      });
       st.people.push({
         login: p.login,
         name: p.name,
@@ -2045,8 +2057,15 @@
         src_kind: "text",
         docs: 0,
         src_doc: doc.id,
+        ...extra,
       });
     });
+    // Phone numbers from document text (masked, like the core's `phones`).
+    st.phones = st.people
+      .filter(p => p.phones && p.phones.length)
+      .flatMap(p =>
+        p.phones.map(v => ({ value: v, country: "UA", docs: 1, src_doc: p.src_doc, login: p.login })),
+      );
     const swc = countBy(an, d => d.software);
     // Newest document date per software, like the core (`last_doc`).
     const swLast = new Map();
@@ -7708,6 +7727,7 @@
     "docs",
     "people",
     "emails",
+    "phones",
     "patterns",
     "hosts",
     "pcs",
@@ -12491,8 +12511,8 @@
     software: 57,
     os: 19,
     secrets: 221,
-    std_rules: 82,
-    std_refs: 473,
+    std_rules: 83,
+    std_refs: 486,
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
   const DEMO_SIG_TABLES = [

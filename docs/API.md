@@ -682,7 +682,7 @@ ProjectSummary { id, name, client, created_at, archived, last_scan_at|null, last
                  risk: number|null /* null when no scans completed */, scanning: bool, progress: number,
                  reference: bool /* built-in reference case (demo_case_import): kept out of recent projects */ }
 
-Snapshot { project, scope, docs[], people[], emails[], patterns[], hosts[], pcs[], software[], paths[], printers[],
+Snapshot { project, scope, docs[], people[], emails[], phones[], patterns[], hosts[], pcs[], software[], paths[], printers[],
            secrets[], findings[], gps[], events[], scans[], reports[], leaks{}, settings, scan /* ScanStatus */, oos[],
            recon /* ReconView */ }
            // derived entities are computed over live (non-deleted) documents; secrets are masked only
@@ -718,7 +718,7 @@ Doc { id, ext, name, url, host, title /* title from metadata or page: used for o
       author /* login */, last_modified_by, software /* id */, created_at, modified_at, folder, printer, company,
       camera, gps: { lat, lon, place }|null, revisions: [{ kind: "del"|"ins"|"com", who, at, text }],
       rdp: { full_address, username, gateway }|null, lnk: { machine, mac, volume_serial, target, target_dir }|null,
-      flags: ("path"|"secret"|"eol"|"gps"|"revisions")[], thumb_diff: bool,
+      flags: ("path"|"secret"|"eol"|"gps"|"revisions")[], thumb_diff: bool, text_people?: number /* unique names in text, omitted when 0 */, text_contacts?: number /* phones, e-mails and personal IDs in text */,
       // only when status = "error" (omitted otherwise):
       error_kind?: "parse"|"download"|"http" /* what failed: "parse" = the downloaded or imported file could not be
         parsed/imported; "download" = the fetch failed; "http" = the server answered with an HTTP error. Label the
@@ -734,7 +734,11 @@ Doc { id, ext, name, url, host, title /* title from metadata or page: used for o
       // status "error" is a downloaded or imported file that could not be parsed (error_kind "parse"), "download" and
       // "http" are reserved for fetch failures recorded on an existing document
 
-Person   { login, name, role, pc|null, color, src, src_kind: "meta"|"text", docs: number /* over live docs */, src_doc?, src_deleted? }
+Person   { login, name, role, pc|null, color, src, src_kind: "meta"|"text", docs: number /* over live docs */, src_doc?, src_deleted?,
+           title?: string /* position, academic title or degree written next to the name in text */, unit?: string /* department or unit */,
+           phones?: string[] /* masked, e.g. "+38••••••••67" */, ids?: string[] /* identifier kinds next to the name ("rnokpp", "pl_pesel"…), never values */,
+           signatory?: bool /* named in a signature block */, src_line?: number /* first text mention line for text people */ }
+Phone    { value /* masked */, country /* ISO code or "" */, docs, src_doc: id|null, login: string|null /* person written next to the number */ }
 Email    { addr, login|null, name|null, found: bool, src, role: bool /* role/service address */ }
 Software { id, name, ver, kind: "office"|"pdf"|"scanner"|"camera"|"image", released, eol_date|null, eol, cve /* matched NVD CVEs */, cves: [[id, cvss]], dev|null, docs,
            cpe?: string[] /* NVD vendor:product keys */, side: "server"|"workstation"|"" /* generator on the site's servers or authors' desktop software */,

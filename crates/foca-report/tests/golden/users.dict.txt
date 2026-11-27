@@ -31,8 +31,6 @@ informatica
 informatica.i
 ipetrenko
 ipetrenko-2
-ivan.petrenko
-ivanpetrenko
 j.roe
 jdoe
 jeff
@@ -65,7 +63,6 @@ petrenko
 petrenko-2
 petrenko-2.i
 petrenko.i
-petrenko.ivan
 pharvey
 roe
 roe.j

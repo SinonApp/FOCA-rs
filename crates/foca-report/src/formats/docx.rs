@@ -870,7 +870,7 @@ fn render_classic(c: &Ctx, w: &mut DocWriter) {
                 vec![
                     c.r(&p.login),
                     c.r(&p.name),
-                    c.r(&crate::ftext::role(&p.role, c.o.lang)),
+                    c.r(&crate::data::person_role(p, c.o.lang)),
                     c.r(&p.emails.join(", ")),
                     p.docs.to_string(),
                 ]

@@ -709,7 +709,7 @@ fn people(c: &Ctx, h: &mut String) {
                 vec![
                     login,
                     c.h(&p.name),
-                    c.h(&crate::ftext::role(&p.role, c.o.lang)),
+                    c.h(&crate::data::person_role(p, c.o.lang)),
                     c.h(p.pc.as_deref().unwrap_or("")),
                     c.h(&p.emails.join(", ")),
                     p.docs.to_string(),

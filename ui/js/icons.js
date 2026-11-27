@@ -1,6 +1,7 @@
 // Shared SVG icon sprite. Screens can register additional symbols via FOCA.addIcons('<symbol ...>').
 (function () {
   const base = `<symbol id="i-minus" viewBox="0 0 16 16"><path d="M3 8h10"/></symbol>
+<symbol id="i-phone" viewBox="0 0 16 16"><rect x="4.5" y="1.5" width="7" height="13" rx="1.5"/><path d="M7 12h2"/></symbol>
 <symbol id="i-trash"
   viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 9h5.8l.6-9M7 7v4.5M9 7v4.5"/></symbol>
 <symbol id="i-spark"

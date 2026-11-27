@@ -2413,6 +2413,24 @@
       "text": "Remove the personal data from the published document (anonymize) or take the document down; assess notifying the data subjects."
     },
     {
+      "id": "fpt1",
+      "rules": "people.text_contacts",
+      "pattern": "Контакты людей в тексте документов: {n} {w}",
+      "text": "Contacts of people in document text: {0:person|people|people}"
+    },
+    {
+      "id": "fpt2",
+      "rules": "people.text_contacts",
+      "pattern": "Рядом с именами в опубликованных документах указаны контакты: телефон: {n}, e-mail: {n}, личные идентификаторы: {n}. Такие данные используют для фишинга и социальной инженерии; значения телефонов и идентификаторов хранятся только в виде масок.",
+      "text": "Contacts are written next to names in published documents: phone: {0}, e-mail: {1}, personal identifiers: {2}. Such data is used for phishing and social engineering; phone numbers and identifiers are stored only as masks."
+    },
+    {
+      "id": "fpt3",
+      "rules": "people.text_contacts",
+      "pattern": "Убрать личные контакты и идентификаторы из публикуемых документов (оставить общие контакты подразделений), обезличить списки людей; предупредить сотрудников о целевом фишинге.",
+      "text": "Remove personal contacts and identifiers from published documents (keep shared department contacts), anonymize lists of people; warn staff about targeted phishing."
+    },
+    {
       "id": "f395",
       "rules": "doc.links",
       "pattern": "Ссылки на облачные пространства и URL с токенами в {}",

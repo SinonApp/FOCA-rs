@@ -530,6 +530,43 @@
       }
      }
     },
+    "phones": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "value": {
+        "t": [
+         "string"
+        ]
+       },
+       "country": {
+        "t": [
+         "string"
+        ]
+       },
+       "docs": {
+        "t": [
+         "number"
+        ]
+       },
+       "src_doc": {
+        "t": [
+         "number"
+        ]
+       },
+       "login": {
+        "t": [
+         "string"
+        ]
+       }
+      }
+     }
+    },
     "patterns": {
      "t": [
       "array"
@@ -4314,6 +4351,43 @@
        "role": {
         "t": [
          "bool"
+        ]
+       }
+      }
+     }
+    },
+    "phones": {
+     "t": [
+      "array"
+     ],
+     "items": {
+      "t": [
+       "object"
+      ],
+      "keys": {
+       "value": {
+        "t": [
+         "string"
+        ]
+       },
+       "country": {
+        "t": [
+         "string"
+        ]
+       },
+       "docs": {
+        "t": [
+         "number"
+        ]
+       },
+       "src_doc": {
+        "t": [
+         "number"
+        ]
+       },
+       "login": {
+        "t": [
+         "string"
         ]
        }
       }

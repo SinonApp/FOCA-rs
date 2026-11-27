@@ -185,6 +185,7 @@
     });
     const dBy = Object.fromEntries(db.docs.map(d => [d.id, d]));
     db.emails = (snap.emails || []).map(e => localized({ ...e }, { src: srcText }));
+    db.phones = snap.phones || [];
     db.patterns = snap.patterns || [];
     db.hosts = (snap.hosts || []).map(hostView);
     db.pcs = (snap.pcs || []).map(x => localized({ ...x }, { source: FT.hostSource }));

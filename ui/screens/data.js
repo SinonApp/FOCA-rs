@@ -271,6 +271,7 @@
     ["docs", F.t("app.documents", "Документы"), "doc"],
     ["people", F.t("app.people", "Люди"), "users"],
     ["emails", "E-mail", "mail"],
+    ["phones", F.t("data.phones", "Телефоны"), "phone"],
     ["hosts", F.t("app.hosts", "Хосты"), "server"],
     // Infrastructure modules (infra_get).
     ["certs", F.t("data.certificates", "Сертификаты"), "lock"],
@@ -295,6 +296,7 @@
       docs: () => (F.dataDocs ? F.dataDocs.count() : demo.docs.length),
       people: () => people.length,
       emails: () => emails.length + roleMail.length,
+      phones: () => (F.db.phones || []).length,
       hosts: () => demo.hosts.length,
       software: () => demo.software.length,
       os: () => F.sel.os().length,
@@ -430,7 +432,64 @@
       (org => (org ? org + ui.secH(F.t("data.all_people", "Все люди"), people.length) : ""))(
         F.ins ? F.ins.orgHtml() : "",
       ) +
-      `<div class="list">${list.map(({ p, n }) => navRow({ lead: avatar(p), title: esc(p.name), sub: `${esc(p.role)} · <span class="mono">${esc(p.login)}</span>`, tail: n ? `<span class="dt-num">${n}</span><span>${esc(F.t("data.docs", "док."))}</span>` : `<span class="pill mute">${esc(F.t("data.text", "в тексте"))}</span>`, path: F.dataEntityPath("person", p.login) })).join("")}</div>`
+      `<div class="list">${list
+        .slice(0, state.peopleAll ? list.length : PEOPLE_PAGE)
+        .map(({ p, n }) =>
+          navRow({
+            lead: avatar(p),
+            title: esc(p.name),
+            sub: `${esc(personSub(p))} · <span class="mono">${esc(p.login)}</span>`,
+            tail: n
+              ? `<span class="dt-num">${n}</span><span>${esc(F.t("data.docs", "док."))}</span>`
+              : `<span class="pill mute">${esc(F.t("data.text", "в тексте"))}</span>`,
+            path: F.dataEntityPath("person", p.login),
+          }),
+        )
+        .join("")}</div>` +
+      (list.length > PEOPLE_PAGE && !state.peopleAll
+        ? `<button class="btn text dt-more" data-act="dt-people-all">${esc(F.t("data.show_all_n", { n: list.length }, "Показать всех ({n})"))}</button>`
+        : "")
+    );
+  }
+  // Text-derived people can number in the thousands: render a first page, then all on request.
+  const PEOPLE_PAGE = 200;
+  F.actions["dt-people-all"] = () => {
+    state.peopleAll = true;
+    F.render(true);
+  };
+  /** Role line of a person: position from the text (with the unit) or the metadata role. */
+  const personSub = p => [p.title || p.role, p.unit].filter(Boolean).join(" · ") || "-";
+
+  // ---------- Phones ----------
+  function segPhones() {
+    const list = F.db.phones || [];
+    const owner = l => people.find(u => u.login === l);
+    return (
+      `<div class="card pad dt-ok">${ic("lock")}<span>${esc(F.t("data.phones_masked_note", "Номера хранятся в виде масок: полные значения не попадают в базу и отчёты."))}</span></div>` +
+      ui.secH(F.t("data.phones", "Телефоны"), list.length) +
+      `<div class="list">${list
+        .map(x => {
+          const o = x.login && owner(x.login);
+          const sub = [
+            x.country,
+            o ? o.name : "",
+            plural(
+              x.docs,
+              F.t("projects.document", "документ"),
+              F.t("projects.documents", "документа"),
+              F.t("projects.document_many", "документов"),
+            ),
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          return navRow({
+            lead: ui.leadIcon("phone", o ? "var(--warn)" : "var(--info)"),
+            title: `<span class="mono">${esc(x.value)}</span>`,
+            sub: esc(sub),
+            path: o ? F.dataEntityPath("person", o.login) : x.src_doc ? `/p/doc/${x.src_doc}` : null,
+          });
+        })
+        .join("")}</div>`
     );
   }
 
@@ -1356,6 +1415,7 @@
     code: segCode,
     people: segPeople,
     emails: segEmails,
+    phones: segPhones,
     hosts: segHosts,
     software: segSoftware,
     os: segOs,
@@ -1386,6 +1446,14 @@
       text: F.t(
         "data.pattern_determined_once_at_least",
         "Шаблон определится, когда найдутся хотя бы 2 личных адреса.",
+      ),
+    },
+    phones: {
+      icon: "phone",
+      title: F.t("data.no_phones_yet", "Телефонов пока нет"),
+      text: F.t(
+        "data.phones_appear_from_text",
+        "Появятся из текста документов; номера хранятся в виде масок.",
       ),
     },
     hosts: {
@@ -1741,14 +1809,23 @@
           lead: avatar(person, "dt-ava-l"),
           name: esc(person.name),
           type: "person",
-          pills: `<span class="pill mute">${esc(person.role)}</span>${leaks.length ? `<span class="pill crit">${ic("dt-leak")}${esc(F.t("data.leaks_2", "В утечках:"))} ${leaks.length}</span>` : ""}`,
+          pills: `<span class="pill mute">${esc(person.role)}</span>${person.signatory ? `<span class="pill info">${ic("contract")}${esc(F.t("data.signatory", "Подписант"))}</span>` : ""}${leaks.length ? `<span class="pill crit">${ic("dt-leak")}${esc(F.t("data.leaks_2", "В утечках:"))} ${leaks.length}</span>` : ""}`,
           facts: [
             [F.t("data.login", "Логин"), `<span class="mono">${esc(person.login)}</span>`],
+            ...(person.title ? [[F.t("data.position", "Должность"), esc(person.title)]] : []),
+            ...(person.unit ? [[F.t("data.unit", "Подразделение"), esc(person.unit)]] : []),
             [F.t("data.pc", "ПК"), esc(person.pc)],
             [F.t("data.documents_count", "Документов"), docs.length || "-"],
-            [F.t("data.source", "Источник"), esc(person.src)],
+            [
+              F.t("data.source", "Источник"),
+              esc(person.src) +
+                (person.src_line
+                  ? ` · ${esc(F.t("data.line_n", { n: person.src_line }, "строка {n}"))}`
+                  : ""),
+            ],
           ],
         }) +
+        textContacts(person) +
         searchBtns(person.login, docs.length ? { author: [person.login] } : null) +
         ui.secH(
           F.t("data.name_variants", "Варианты имени"),
@@ -1783,6 +1860,51 @@
         }),
     };
   }
+  /** Contacts and identifier kinds written next to the person's name in document text. */
+  function textContacts(person) {
+    const phones = person.phones || [];
+    const ids = person.ids || [];
+    if (!phones.length && !ids.length) return "";
+    const idLabel = k => F.t(`data.id_${k}`, ID_LABELS[k] || k);
+    return (
+      ui.secH(F.t("data.contacts_in_text", "Контакты в тексте")) +
+      `<div class="list">${phones
+        .map(v =>
+          ui.row({
+            lead: ui.leadIcon("phone", "var(--warn)"),
+            title: `<span class="mono">${esc(v)}</span>`,
+            sub: esc(F.t("data.phone_masked", "Телефон (маска)")),
+          }),
+        )
+        .join("")}${ids
+        .map(k =>
+          ui.row({
+            lead: ui.leadIcon("key", "var(--crit)"),
+            title: esc(idLabel(k)),
+            sub: esc(F.t("data.id_value_not_stored", "Значение не сохраняется")),
+          }),
+        )
+        .join("")}</div>`
+    );
+  }
+  const ID_LABELS = {
+    rnokpp: "РНОКПП (ІПН)",
+    passport: "Паспорт",
+    id_card: "ID-карта",
+    iban: "IBAN",
+    card: "Банковская карта",
+    birth_date: "Дата рождения",
+    student_id: "Номер зачётки / студбилета",
+    ru_inn: "ИНН (RU)",
+    ru_snils: "СНИЛС (RU)",
+    pl_pesel: "PESEL (PL)",
+    de_steuer_id: "Steuer-ID (DE)",
+    us_ssn: "SSN (US)",
+    uk_nino: "NINO (UK)",
+    es_dni: "DNI/NIE (ES)",
+    it_cf: "Codice fiscale (IT)",
+    fr_nir: "NIR (FR)",
+  };
   // Breaches only with a working HIBP key; otherwise say plainly that a key is needed.
   const hibpOk = () => {
     const k = ((F.db.settings || {}).keys || {}).hibp;

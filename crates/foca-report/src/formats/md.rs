@@ -144,7 +144,7 @@ pub(crate) fn render(c: &Ctx) -> String {
                         }
                     ),
                     c.m(&p.name),
-                    c.m(&crate::ftext::role(&p.role, c.o.lang)),
+                    c.m(&crate::data::person_role(p, c.o.lang)),
                     c.m(p.pc.as_deref().unwrap_or("")),
                     c.m(&p.emails.join(", ")),
                     p.docs.to_string(),
