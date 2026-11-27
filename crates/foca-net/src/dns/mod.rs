@@ -12,6 +12,7 @@ pub mod doh;
 pub mod mail;
 pub mod nsec;
 pub mod permute;
+pub mod psl;
 pub mod ptr;
 pub mod takeover;
 

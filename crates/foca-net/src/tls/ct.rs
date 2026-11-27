@@ -613,9 +613,13 @@ const CC_SECOND_LEVEL: &[&str] = &[
     "biz", "info", "ltd", "plc", "nic", "gob", "gv",
 ];
 
-/// Registrable domain approximation without the Public Suffix List: the last two labels, or
+/// Registrable domain by the Public Suffix List ([`crate::dns::psl`]). A name the list cannot
+/// split (a bare public suffix) falls back to the old approximation: the last two labels, or
 /// three under a ccTLD with a generic second level (`a.com.ua`, `b.co.uk`).
 pub fn registrable_domain(name: &str) -> String {
+    if let Some(r) = crate::dns::psl::registrable_domain(name) {
+        return r;
+    }
     let n = name.trim_start_matches("*.");
     let labels: Vec<&str> = n.split('.').collect();
     if labels.len() >= 3 {

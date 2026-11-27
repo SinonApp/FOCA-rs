@@ -78,6 +78,29 @@
     "allowlist_regexes_dropped": 3
    }
   },
+  "psl": {
+   "repo": "https://github.com/publicsuffix/list",
+   "commit": "88b076a1fb2ae58cd2a6959d570f075e04d21867",
+   "license": "MPL-2.0",
+   "license_file": "LICENSE",
+   "license_sha256": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172",
+   "attribution": "Public Suffix List, Mozilla Foundation and contributors, MPL-2.0, https://publicsuffix.org (shipped unmodified)",
+   "inputs": {
+    "public_suffix_list.dat": "a9f8906c8aa5067a0de9ad8e4b4c5d5a56080f5450187193ddc91ef90885b8d5",
+    "LICENSE": "66a3107d5ad6a058aab753eaac2047ccb2ed0e39465dd0fe5844da3e300d5172"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-net/data/public_suffix_list.dat.gz",
+     "bytes": 92644,
+     "sha256": "abc0e34204d700d776336b02d881fb3229ff4da090d109ba0b343e8244ce15a9"
+    }
+   ],
+   "stats": {
+    "rules": 10502,
+    "bytes_raw": 345236
+   }
+  },
   "recog": {
    "repo": "https://github.com/rapid7/recog",
    "commit": "f1191e24332c51d6a3d98457f64fba8dec340784",

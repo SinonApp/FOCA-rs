@@ -20,6 +20,7 @@ reqwest = { workspace = true }
 hickory-resolver = { workspace = true }
 bytes.workspace = true
 regex.workspace = true
+idna.workspace = true
 flate2.workspace = true
 # X.509/TLS inspector: certificate parsing, fingerprints, chain checks against Mozilla roots
 x509-parser.workspace = true

@@ -203,10 +203,14 @@ pub fn scope_sweep_targets(scope: &Scope, max: usize) -> Vec<PtrTarget> {
     out
 }
 
-/// Returns the registrable domain of a name, approximately: the last two labels, or three under
-/// a two-letter country TLD with a common second-level suffix (`shop.com.ua`).
+/// Returns the registrable domain of a name by the Public Suffix List ([`crate::dns::psl`]);
+/// a bare public suffix falls back to the last two labels, or three under a two-letter country
+/// TLD with a common second-level suffix (`shop.com.ua`).
 pub fn base_domain(name: &str) -> String {
     let n = norm_name(name);
+    if let Some(r) = crate::dns::psl::registrable_domain(&n) {
+        return r;
+    }
     let l: Vec<&str> = n.split('.').filter(|x| !x.is_empty()).collect();
     let k = if l.len() >= 3 && l[l.len() - 1].len() == 2 && SECOND_LEVEL.contains(&l[l.len() - 2]) {
         3
