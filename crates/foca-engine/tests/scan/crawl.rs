@@ -317,6 +317,26 @@ async fn storage_files_and_doc_links_stay_within_the_download_limit() {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn crawl_warns_when_app_shell_pages_cannot_be_rendered() {
+    let (e, _site) = env_with_site(|_, r: &TestRequest| match r.path() {
+        "/" => html(
+            r#"<!doctype html><html><head><script type="module" src="/assets/index.js"></script></head>
+            <body><div id="root"></div></body></html>"#,
+        ),
+        _ => TestResponse::status(404),
+    })
+    .await;
+    let id = e.project("shell").await;
+    crawl_scan(&e, &id, json!({})).await;
+    let w = e
+        .events()
+        .into_iter()
+        .find(|x| x["type"] == "warning" && x["code"] == "crawl_no_render")
+        .expect("no-render warning");
+    assert!(w["message"].as_str().unwrap().contains(": 1."), "{w}");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn images_off_are_neither_fetched_nor_counted_as_documents() {
     let (e, site) = env_with_site(site).await;
     let id = e.project("noimg").await;

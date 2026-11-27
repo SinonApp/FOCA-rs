@@ -526,6 +526,7 @@ mod tests {
             crate::scan::search::queue_note_sample(),
             crate::scan::crawl::crawl_note_sample(),
             crate::scan::crawl::rate_warning(&["example.test".to_string()]),
+            crate::scan::crawl::no_render_warning(2),
             crate::scan::documents_storage_note_sample(),
             "Токен Telegram-бота не задан".into(),
             "Не указан chat_id".into(),

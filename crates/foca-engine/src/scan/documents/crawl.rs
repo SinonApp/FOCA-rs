@@ -489,12 +489,25 @@ pub(crate) async fn after_domain(
         s.pages, s.docs, extra.storage_files, extra.images
     );
     c.sub_note("crawl", s.pages, s.pages + s.queued, &note);
-    tracing::info!(target: "foca::scan", "{}: {domain}: {note}; в очереди обхода {}, отрисовано {}, ловушек {}, 429/503 {}, темп {:?}",
-        c.scan_id, s.queued, s.rendered, s.trap_skipped, s.limited, s.rate);
+    tracing::info!(target: "foca::scan", "{}: {domain}: {note}; в очереди обхода {}, отрисовано {}, без браузера {}, ловушек {}, 429/503 {}, темп {:?}",
+        c.scan_id, s.queued, s.rendered, s.render_missing, s.trap_skipped, s.limited, s.rate);
     if !s.stopped_hosts.is_empty() {
         c.warn("crawl_rate_limited", &rate_warning(&s.stopped_hosts));
     }
+    if s.render_missing > 0 && s.rendered == 0 {
+        // CLI and desktop have no platform browser: say so instead of an empty crawl
+        c.warn("crawl_no_render", &no_render_warning(s.render_missing));
+    }
     Ok(extra)
+}
+
+/// Warning for app-shell pages the crawl could not render (no platform browser).
+pub(crate) fn no_render_warning(pages: usize) -> String {
+    format!(
+        "Страниц-приложений на JavaScript без отрисовки: {pages}. Встроенный браузер есть только \
+         в Android, поэтому ссылки взяты только из HTML и часть документов могла остаться \
+         ненайденной"
+    )
 }
 
 /// Warning for hosts the crawl stopped because of repeated 429/503 answers.
