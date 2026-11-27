@@ -12423,7 +12423,7 @@
     software: 57,
     os: 19,
     secrets: 221,
-    std_rules: 81,
+    std_rules: 82,
     std_refs: 473,
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
