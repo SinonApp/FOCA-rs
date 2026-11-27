@@ -371,13 +371,17 @@ impl Downloader {
         }
         let final_url = r.url().to_string();
         let mime = r.content_type().map(String::from);
+        // raw UTF-8 bytes, not `header()`: Google Drive sends non-ASCII names without `filename*`
         let disposition = r
-            .header("content-disposition")
-            .and_then(crate::storage::disposition_name);
+            .headers()
+            .get("content-disposition")
+            .map(|v| String::from_utf8_lossy(v.as_bytes()).into_owned())
+            .and_then(|v| crate::storage::disposition_name(&v));
         let tmp_dir = self.dir.join(".tmp");
         tokio::fs::create_dir_all(&tmp_dir).await?;
         let n = self.seq.fetch_add(1, Ordering::Relaxed);
         let tmp = tmp_dir.join(format!("{}-{n}.part", std::process::id()));
+        let mut head: Vec<u8> = Vec::with_capacity(8);
         let res: Result<(String, u64), NetError> = async {
             let mut f = tokio::fs::File::create(&tmp).await?;
             let mut h = Sha256::new();
@@ -386,6 +390,9 @@ impl Downloader {
                 total += c.len() as u64;
                 if total > max {
                     return Err(NetError::TooLarge { limit: max });
+                }
+                if head.len() < 8 {
+                    head.extend(c.iter().take(8 - head.len()));
                 }
                 h.update(&c);
                 f.write_all(&c).await?;
@@ -417,6 +424,7 @@ impl Downloader {
             None => ext_of_url(url)
                 .or_else(|| mime.as_deref().and_then(ext_from_mime).map(String::from)),
         }
+        .or_else(|| sniff_ext(&head).map(String::from))
         .unwrap_or_else(|| "bin".into());
         let files = self.files_dir();
         tokio::fs::create_dir_all(&files).await?;
@@ -779,6 +787,21 @@ impl TaskQueue for MemQueue {
     }
 }
 
+/// Extension from the first bytes of a file whose name and type say nothing (storage providers
+/// often answer `application/octet-stream` without a usable name). Only unambiguous signatures.
+fn sniff_ext(head: &[u8]) -> Option<&'static str> {
+    if head.starts_with(b"%PDF") {
+        Some("pdf")
+    } else if head.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        Some("jpg")
+    } else if head.starts_with(b"\x89PNG") {
+        Some("png")
+    } else if head.starts_with(b"GIF8") {
+        Some("gif")
+    } else {
+        None
+    }
+}
 #[cfg(test)]
 mod media_tests {
     #[test]

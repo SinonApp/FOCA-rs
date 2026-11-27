@@ -510,3 +510,44 @@ async fn storage_items_only_and_private_files() {
         "no HEAD probes on storage"
     );
 }
+
+/// Storage answers with `application/octet-stream`: the name comes from a raw UTF-8
+/// `Content-Disposition` (no `filename*`, as Google Drive sends it), and without any name the
+/// type is taken from the file signature instead of `.bin`.
+#[tokio::test]
+async fn storage_names_from_raw_utf8_disposition_or_signature() {
+    let srv = TestServer::start(|r| {
+        let id = r.query("id").unwrap_or_default();
+        let r = TestResponse::ok(pdf(3)).header("Content-Type", "application/octet-stream");
+        match id.as_str() {
+            "NAMED" => r.header(
+                "Content-Disposition",
+                "attachment; filename=\"Розклад занять.pdf\"",
+            ),
+            _ => r,
+        }
+    })
+    .await;
+    let dir = tempfile::tempdir().unwrap();
+    let (net, _sink) = net("site.example", "");
+    let mut cfg = DownloadConfig::default();
+    let u = |id: &str| format!("{}/uc?export=download&id={id}", srv.url());
+    let mut allow = std::collections::HashMap::new();
+    for id in ["NAMED", "BARE"] {
+        allow.insert(
+            u(id),
+            foca_search::download::StorageItem {
+                hosts: vec!["127.0.0.1".into()],
+                ext: None,
+                name: Some(format!("gdrive-{id}")),
+            },
+        );
+    }
+    cfg.storage = Arc::new(allow);
+    let d = Downloader::new(net, dir.path(), cfg);
+    let a = d.download(&u("NAMED")).await.unwrap();
+    assert_eq!(a.name, "Розклад занять.pdf");
+    let b = d.download(&u("BARE")).await.unwrap();
+    assert_eq!(b.name, "gdrive-BARE.pdf");
+    assert!(b.path.to_string_lossy().ends_with(".pdf"), "{:?}", b.path);
+}
