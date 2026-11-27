@@ -142,14 +142,14 @@
    "outputs": [
     {
      "path": "crates/foca-analysis/signatures/nvd_cve.tsv.gz",
-     "bytes": 1280821,
-     "sha256": "eb47f9a5a6753ff2de9ac0b7727e383da7acf778e5c3f053b7fe6f26d5801667"
+     "bytes": 1282654,
+     "sha256": "79ad0143ab3b83280f1e372c9af107328ffff7a4114a2650bda8e459187ecfd4"
     }
    ],
    "stats": {
     "cves": 108019,
     "products": 9248,
-    "ranges": 537268,
+    "ranges": 547884,
     "site": 71087,
     "plugin": 17245,
     "doc": 30418,

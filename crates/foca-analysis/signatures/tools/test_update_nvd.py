@@ -61,6 +61,32 @@ class FeedTests(unittest.TestCase):
         only = {"configurations": [{"nodes": [{"cpeMatch": [m("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*")]}]}]}
         self.assertEqual(u.product_ranges(only, {"google:chrome": {"s"}})["google:chrome"], ["*"])
 
+    def test_exact_unbounded_and_mixed_records(self):
+        def m(crit, **k):
+            return {"vulnerable": True, "criteria": crit, **k}
+
+        def cve(*matches):
+            return {"configurations": [{"nodes": [{"cpeMatch": [x]}]} for x in matches]}
+
+        want = {"apple:macos": {"o"}, "apple:mac_os_x": {"o"}}
+        # exact version CPEs without range keys stay exact, never "all versions"
+        got = u.product_ranges(cve(m("cpe:2.3:o:apple:mac_os_x:10.15.7:*:*:*:*:*:*:*"),
+                                   m("cpe:2.3:o:apple:mac_os_x:11.0:*:*:*:*:*:*:*")), want)
+        self.assertEqual(got, {"apple:mac_os_x": ["=10.15.7", "=11.0"]})
+        # range keys
+        got = u.product_ranges(cve(m("cpe:2.3:o:apple:macos:*:*:*:*:*:*:*:*",
+                                     versionStartIncluding="26.0", versionEndExcluding="26.2")), want)
+        self.assertEqual(got, {"apple:macos": ["[26.0,26.2)"]})
+        # unbounded alone stays `*` (the app marks it "range not specified in NVD")
+        got = u.product_ranges(cve(m("cpe:2.3:o:apple:macos:-:*:*:*:*:*:*:*")), want)
+        self.assertEqual(got, {"apple:macos": ["*"]})
+        # mixed: per product key, the bounded entry wins; the other key keeps its `*`
+        # (the matcher drops it when a queried key of the CVE is bounded)
+        got = u.product_ranges(cve(m("cpe:2.3:o:apple:macos:*:*:*:*:*:*:*:*", versionEndExcluding="26.1"),
+                                   m("cpe:2.3:o:apple:macos:*:*:*:*:*:*:*:*"),
+                                   m("cpe:2.3:o:apple:mac_os_x:*:*:*:*:*:*:*:*")), want)
+        self.assertEqual(got, {"apple:macos": ["[,26.1)"], "apple:mac_os_x": ["*"]})
+
     def test_software_cpes_expand_office_apps(self):
         got = u.software_cpes(TOML)
         self.assertEqual(got["microsoft:word"], {"d"})

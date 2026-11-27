@@ -10,7 +10,9 @@
 //! * versions are compared component by component ([`cmp_ver`]): numeric parts numerically,
 //!   pre-release tags (`alpha`, `beta`, `rc`, `dev`) sort before the release, a trailing letter
 //!   (`1.0.2k`) after it, build metadata after `+` is ignored, a leading `v`/`m` is dropped;
-//! * an NVD entry without version limits (`*`, `-`) matches every version;
+//! * an NVD entry without version limits (`*`, `-`) matches every version only when no
+//!   configuration of the CVE names the product with a range or an exact version; such
+//!   matches are flagged "range not specified in NVD" and never raise the severity;
 //! * Microsoft Office versions from document metadata are marketing editions: `14` = 2010,
 //!   `15` = 2013, `16` = 2016 and Microsoft 365 Apps (NVD cannot tell 2016, 2019, LTSC and 365
 //!   apart in `16.0`); the service pack level is unknown, so every CVE of the edition matches;
@@ -460,53 +462,131 @@ impl CveDb {
         out
     }
 
-    /// Looks a product version up. `None` when the table has no CVE for the product.
-    pub fn lookup(&self, q: &CveQuery) -> Option<CveSummary> {
+    /// Version candidates of a query for one product key (Office editions, normalized version).
+    fn candidates(k: &str, ver: Option<&str>) -> Vec<String> {
+        match ver {
+            Some(v) if is_office_key(k) => office_editions(v),
+            // Microsoft 365 Apps carries no version in NVD: Office `16` documents map here.
+            Some(v) if k == "microsoft:365_apps" => office_editions(v)
+                .into_iter()
+                .filter(|e| e == "2016")
+                .collect(),
+            Some(v) => norm_ver(v).into_iter().collect(),
+            None => vec![],
+        }
+    }
+
+    fn ranges_of(&self, a: u32, b: u32) -> impl Iterator<Item = (&str, VerRange)> {
+        self.text[a as usize..b as usize]
+            .split(' ')
+            .filter_map(|r| VerRange::parse(r).map(|v| (r, v)))
+    }
+
+    /// Matches a query: resolved keys, CVE indexes of the product and the hits.
+    ///
+    /// A CVE hits through a bounded entry (range or exact version) that contains the version.
+    /// An unbounded entry (`*`: NVD gives no version) hits only when no key of the query has a
+    /// bounded entry for that CVE; such hits are flagged ([`Hit::unbounded`]).
+    fn matches(&self, q: &CveQuery) -> Option<(Vec<String>, Vec<u32>, Vec<Hit>)> {
         let keys = self.resolve(q);
         if keys.is_empty() {
             return None;
         }
-        let ver = q
-            .version
-            .as_deref()
-            .map(str::trim)
-            .filter(|v| !v.is_empty() && *v != "-");
-        let mut known: Vec<u32> = Vec::new();
-        let mut hit: Vec<u32> = Vec::new();
+        let ver = query_version(q);
+        // CVE index -> (matched bounded range, any bounded entry, unbounded entry)
+        let mut per: std::collections::BTreeMap<u32, (Option<String>, bool, bool)> =
+            std::collections::BTreeMap::new();
         for k in &keys {
-            let cands: Vec<String> = match ver {
-                Some(v) if is_office_key(k) => office_editions(v),
-                // Microsoft 365 Apps carries no version in NVD: Office `16` documents map here.
-                Some(v) if k == "microsoft:365_apps" => office_editions(v)
-                    .into_iter()
-                    .filter(|e| e == "2016")
-                    .collect(),
-                Some(v) => norm_ver(v).into_iter().collect(),
-                None => vec![],
-            };
+            let cands = Self::candidates(k, ver);
             for (i, a, b) in self.products.get(k).into_iter().flatten() {
-                known.push(*i);
-                if cands.is_empty() {
-                    continue;
-                }
-                let ranges: Vec<VerRange> = self.text[*a as usize..*b as usize]
-                    .split(' ')
-                    .filter_map(VerRange::parse)
-                    .collect();
-                if cands.iter().any(|c| ranges.iter().any(|r| r.contains(c))) {
-                    hit.push(*i);
+                let e = per.entry(*i).or_default();
+                for (raw, r) in self.ranges_of(*a, *b) {
+                    if r == VerRange::All {
+                        e.2 |= !cands.is_empty();
+                        continue;
+                    }
+                    e.1 = true;
+                    if e.0.is_none() && cands.iter().any(|c| r.contains(c)) {
+                        e.0 = Some(raw.to_string());
+                    }
                 }
             }
         }
-        known.sort_unstable();
-        known.dedup();
-        hit.sort_unstable();
-        hit.dedup();
-        let before = hit.len();
-        if let Some(y) = q.until_year {
-            hit.retain(|i| self.cves[*i as usize].year <= y);
+        let known: Vec<u32> = per.keys().copied().collect();
+        let hits = per
+            .into_iter()
+            .filter_map(|(i, (range, bounded, all))| match range {
+                Some(r) => Some(Hit {
+                    idx: i,
+                    range: Some(r),
+                    unbounded: false,
+                }),
+                None if all && !bounded => Some(Hit {
+                    idx: i,
+                    range: None,
+                    unbounded: true,
+                }),
+                None => None,
+            })
+            .collect();
+        Some((keys, known, hits))
+    }
+
+    /// Lowest version outside every matched range: the highest exclusive upper bound of the
+    /// matched ranges, moved past any other range of the product that still contains it.
+    /// `None` when a matched range has no exclusive upper bound or the walk does not settle.
+    fn fixed_in(&self, keys: &[String], hits: &[Hit]) -> Option<String> {
+        let mut target: Option<String> = None;
+        for h in hits.iter().filter(|h| !h.unbounded) {
+            match VerRange::parse(h.range.as_deref()?)? {
+                VerRange::Exact(_) => {}
+                VerRange::Between(_, Some((v, false))) => {
+                    if target
+                        .as_deref()
+                        .is_none_or(|t| cmp_ver(&v, t) == Ordering::Greater)
+                    {
+                        target = Some(v);
+                    }
+                }
+                _ => return None,
+            }
         }
-        let later = (before - hit.len()) as u32;
+        let mut t = target?;
+        for _ in 0..16 {
+            let mut moved = false;
+            for k in keys {
+                for (_, a, b) in self.products.get(k).into_iter().flatten() {
+                    for (_, r) in self.ranges_of(*a, *b) {
+                        if r == VerRange::All || !r.contains(&t) {
+                            continue;
+                        }
+                        match r {
+                            VerRange::Between(_, Some((v, false))) => {
+                                t = v;
+                                moved = true;
+                            }
+                            VerRange::Exact(_) => {}
+                            _ => return None,
+                        }
+                    }
+                }
+            }
+            if !moved {
+                return Some(t);
+            }
+        }
+        None
+    }
+
+    /// Looks a product version up. `None` when the table has no CVE for the product.
+    pub fn lookup(&self, q: &CveQuery) -> Option<CveSummary> {
+        let (keys, known, mut hits) = self.matches(q)?;
+        let ver = query_version(q);
+        let before = hits.len();
+        if let Some(y) = q.until_year {
+            hits.retain(|h| self.cves[h.idx as usize].year <= y);
+        }
+        let later = (before - hits.len()) as u32;
         let version_known = ver.is_some_and(|v| norm_ver(v).is_some());
         let mut s = CveSummary {
             product: keys.join(","),
@@ -514,12 +594,17 @@ impl CveDb {
             version_known,
             source: q.source.clone(),
             known: known.len() as u32,
-            matched: hit.len() as u32,
+            matched: hits.len() as u32,
             later,
             ..Default::default()
         };
-        let mut refs: Vec<&CveRec> = hit.iter().map(|i| &self.cves[*i as usize]).collect();
-        for c in &refs {
+        for h in &hits {
+            let c = &self.cves[h.idx as usize];
+            if h.unbounded {
+                // Range not specified in NVD: listed, never counted into the severity.
+                s.unbounded += 1;
+                continue;
+            }
             match c.severity() {
                 Some(Severity::Critical) => s.critical += 1,
                 Some(Severity::High) => s.high += 1,
@@ -531,26 +616,82 @@ impl CveDb {
             s.max_cvss = max_opt(s.max_cvss, c.cvss);
             s.max_epss = max_opt(s.max_epss, c.epss);
         }
-        refs.sort_by(|a, b| {
-            b.kev
-                .cmp(&a.kev)
-                .then(cmp_f(b.cvss, a.cvss))
-                .then(cmp_f(b.epss, a.epss))
-                .then(b.year.cmp(&a.year))
-                .then(a.id_year.cmp(&b.id_year))
-                .then(a.id_num.cmp(&b.id_num))
-        });
-        s.cves = refs
-            .into_iter()
-            .map(|c| CveRef {
-                id: c.id(),
-                cvss: c.cvss,
-                kev: c.kev,
-                epss: c.epss,
+        if version_known && !hits.is_empty() {
+            s.fixed_in = self.fixed_in(&keys, &hits);
+        }
+        sort_hits(&mut hits, &self.cves);
+        s.cves = hits
+            .iter()
+            .map(|h| {
+                let c = &self.cves[h.idx as usize];
+                CveRef {
+                    id: c.id(),
+                    cvss: c.cvss,
+                    kev: c.kev,
+                    epss: c.epss,
+                    unbounded: h.unbounded,
+                }
             })
             .collect();
         Some(s)
     }
+
+    /// Every matched CVE of a query with its record and matched range, in [`CveSummary::cves`]
+    /// order (for the CVE list of a product).
+    pub fn list(&self, q: &CveQuery) -> Vec<(CveRec, Hit)> {
+        let Some((_, _, mut hits)) = self.matches(q) else {
+            return vec![];
+        };
+        if let Some(y) = q.until_year {
+            hits.retain(|h| self.cves[h.idx as usize].year <= y);
+        }
+        sort_hits(&mut hits, &self.cves);
+        hits.into_iter()
+            .map(|h| (self.cves[h.idx as usize].clone(), h))
+            .collect()
+    }
+}
+
+/// One matched CVE of a query.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Hit {
+    idx: u32,
+    /// Matched affected range in table syntax (`[1.1,1.20.1)`, `=2016`); `None` when unbounded.
+    pub range: Option<String>,
+    /// NVD names the product without any version limit and no bounded entry exists.
+    pub unbounded: bool,
+}
+
+impl Hit {
+    /// Fixed version of the matched range: its exclusive upper bound.
+    pub fn fixed(&self) -> Option<String> {
+        match VerRange::parse(self.range.as_deref()?)? {
+            VerRange::Between(_, Some((v, false))) => Some(v),
+            _ => None,
+        }
+    }
+}
+
+fn query_version(q: &CveQuery) -> Option<&str> {
+    q.version
+        .as_deref()
+        .map(str::trim)
+        .filter(|v| !v.is_empty() && *v != "-")
+}
+
+/// KEV first, then CVSS, EPSS, newer first; unbounded matches after the bounded ones.
+fn sort_hits(hits: &mut [Hit], cves: &[CveRec]) {
+    hits.sort_by(|x, y| {
+        let (a, b) = (&cves[x.idx as usize], &cves[y.idx as usize]);
+        x.unbounded
+            .cmp(&y.unbounded)
+            .then(b.kev.cmp(&a.kev))
+            .then(cmp_f(b.cvss, a.cvss))
+            .then(cmp_f(b.epss, a.epss))
+            .then(b.year.cmp(&a.year))
+            .then(a.id_year.cmp(&b.id_year))
+            .then(a.id_num.cmp(&b.id_num))
+    });
 }
 
 fn max_opt(a: Option<f32>, b: Option<f32>) -> Option<f32> {

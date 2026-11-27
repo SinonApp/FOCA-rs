@@ -565,6 +565,7 @@ fn cve_summary_per_product_in_reports() {
                 cvss: Some(9.8),
                 kev: true,
                 epss: Some(0.5),
+                ..Default::default()
             }],
             ..Default::default()
         }),

@@ -77,7 +77,7 @@ sides allowed). There is no size cut: every CVSS level, year and plugin stays. T
 and the SHA-256 of every yearly feed are pinned in `sources.lock.json` (`nvd`); a new snapshot needs
 `--repin`. Unit tests on a fixture feed: `python3 crates/foca-analysis/signatures/tools/test_update_nvd.py`.
 
-Snapshot 2026-11-27: 108019 CVEs, 9248 products, 537268 ranges, 1.28 MB gzip (9.3 MB as text).
+Snapshot 2026-11-27: 108019 CVEs, 9248 products, 547884 ranges, 1.28 MB gzip (9.3 MB as text).
 CVEs per group (one CVE can be in several): site technologies 71087, plugins 17245, document
 software 30418, OS 24315; 609 are in KEV.
 
@@ -91,7 +91,10 @@ KEV count, max EPSS, and the number of known CVEs of the product. Approximations
   the release, a trailing letter (`1.0.2k`) after it, build metadata after `+` ignored, a leading
   `v` or `m` (`m120`) dropped, the first token starting with a digit is the version
   (`Apache/2.4.58 (Unix)` gives `2.4.58`);
-- an NVD entry without version limits (`*`, `-`) matches every version;
+- an NVD entry without version limits (`*`, `-`) matches every version only when no queried key of
+  the CVE (`apple:macos` and `apple:mac_os_x` count as one product) has a range or an exact version;
+  such CVEs are listed as "range not specified in NVD" (`unbounded`) and never raise the severity,
+  the KEV count or the CVSS maximum; an exact-version CPE without range keys is always an exact match;
 - Microsoft Office versions from documents are editions: `12` = 2007, `14` = 2010, `15` = 2013,
   `16` = 2016 plus Microsoft 365 Apps (NVD cannot tell 2016, 2019, LTSC and 365 apart in `16.0`);
   the service pack is unknown, so every CVE of the edition matches;

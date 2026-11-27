@@ -93,16 +93,19 @@ fn matcher_ranges_exact_and_all() {
     let s = d
         .lookup(&q(&["cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*"], Some("1.18.0")))
         .unwrap();
-    // 0001 by range, 0003 by `*`; 0002 starts after 1.20.1.
+    // 0001 by range, 0003 by `*` (listed last, not counted into the bands); 0002 starts
+    // after 1.20.1.
     assert_eq!(ids(&s), vec!["CVE-2099-0001", "CVE-2099-0003"]);
-    assert_eq!((s.known, s.matched, s.critical, s.high), (3, 2, 1, 1));
+    assert_eq!((s.known, s.matched, s.critical, s.high), (3, 2, 1, 0));
+    assert_eq!(s.unbounded, 1);
+    assert!(s.cves[1].unbounded && !s.cves[0].unbounded);
     assert_eq!((s.kev, s.max_cvss, s.max_epss), (1, Some(9.8), Some(0.95)));
     assert!(s.version_known);
     let s = d.lookup(&q(&["f5:nginx"], Some("0.9.7"))).unwrap();
     assert_eq!(ids(&s), vec!["CVE-2099-0001", "CVE-2099-0003"]);
     let s = d.lookup(&q(&["f5:nginx"], Some("1.21.0"))).unwrap();
-    assert_eq!(ids(&s), vec!["CVE-2099-0003", "CVE-2099-0002"]);
-    assert_eq!((s.medium, s.high), (1, 1));
+    assert_eq!(ids(&s), vec!["CVE-2099-0002", "CVE-2099-0003"]);
+    assert_eq!((s.medium, s.high), (1, 0));
     let s = d.lookup(&q(&["f5:nginx"], Some("1.22.1"))).unwrap();
     assert_eq!(ids(&s), vec!["CVE-2099-0003"]);
 }
@@ -137,9 +140,10 @@ fn matcher_plugins_by_slug() {
 fn office_versions_map_to_marketing_editions() {
     let d = db();
     let keys = ["microsoft:office", "microsoft:word", "microsoft:365_apps"];
-    // `16.0` documents: Office 2016 and Microsoft 365 Apps.
+    // `16.0` documents: Office 2016 and Microsoft 365 Apps (no version in NVD: unbounded).
     let s = d.lookup(&q(&keys, Some("16"))).unwrap();
-    assert_eq!(ids(&s), vec!["CVE-2099-0006", "CVE-2099-0004"]);
+    assert_eq!(ids(&s), vec!["CVE-2099-0004", "CVE-2099-0006"]);
+    assert_eq!(s.unbounded, 1);
     let s = d.lookup(&q(&keys, Some("2010"))).unwrap();
     assert_eq!(ids(&s), vec!["CVE-2099-0005"]);
     let s = d.lookup(&q(&keys, Some("14"))).unwrap();
@@ -158,10 +162,11 @@ fn finding_severity_rules() {
         Severity::Medium
     );
     let s = d.lookup(&q(&["f5:nginx"], Some("1.21.0"))).unwrap();
-    assert_eq!(finding_severity(&s, None), Severity::High);
+    // only 0002 (5.3) is bounded: the unbounded 7.5 does not count
+    assert_eq!(finding_severity(&s, None), Severity::Medium);
     let mut kev = s.clone();
     kev.kev = 1;
-    assert_eq!(finding_severity(&kev, None), Severity::Critical);
+    assert_eq!(finding_severity(&kev, None), Severity::High);
     let low = CveSummary {
         max_cvss: Some(5.0),
         kev: 1,
@@ -243,4 +248,82 @@ fn document_software_counts_only_cves_up_to_the_document_year() {
     old.until_year = Some(2098);
     let s = db().lookup(&old).unwrap();
     assert_eq!((s.matched, s.later), (0, 2));
+}
+
+/// Small NVD-shaped records: exact, range, unbounded and mixed entries of one product.
+const MIXED: &str = "# foca-nvd v1 snapshot=2099-06-01 epss=2099-05-31
+C\t2099-0101\t2099\t9.8\t31\t79\t\t100
+C\t2099-0102\t2099\t8.1\t31\t\t\t
+C\t2099-0103\t2099\t7.5\t31\t\tK\t
+C\t2099-0104\t2099\t6.1\t31\t\t\t
+C\t2099-0105\t2099\t5.0\t31\t\t\t
+P\tapple:mac_os_x\to
+0\t=10.15.7 =11.0
+2\t*
+1\t*
+P\tapple:macos\to
+0\t=26.0
+1\t[,26.1)
+1\t[26.0,26.2)
+P\tgoogle:chrome\td
+4\t[,142.0.7444.59)
+";
+
+#[test]
+fn exact_entries_never_match_every_version() {
+    let d = CveDb::parse_text(MIXED).unwrap();
+    // 0101 lists exact builds only: 26.0 hits through the macOS exact entry, 12.1 hits nothing.
+    let s = d.lookup(&q(&["apple:mac_os_x"], Some("12.1"))).unwrap();
+    assert!(!ids(&s).contains(&"CVE-2099-0101"), "{:?}", ids(&s));
+    let s = d.lookup(&q(&["apple:mac_os_x"], Some("10.15.7"))).unwrap();
+    assert!(ids(&s).contains(&"CVE-2099-0101"));
+    assert!(!s.cves[0].unbounded);
+}
+
+#[test]
+fn unbounded_entry_counts_only_without_a_bounded_one_for_the_product() {
+    let d = CveDb::parse_text(MIXED).unwrap();
+    let keys = ["apple:macos", "apple:mac_os_x"];
+    // 0103: mac_os_x `*` but macos `[,26.1)` -> bounded wins and 26.0 is inside.
+    // 0104: mac_os_x `*`, nothing bounded -> unbounded hit, not counted into the bands or KEV.
+    let s = d.lookup(&q(&keys, Some("26.0"))).unwrap();
+    assert_eq!(
+        ids(&s),
+        vec![
+            "CVE-2099-0103",
+            "CVE-2099-0101",
+            "CVE-2099-0102",
+            "CVE-2099-0104"
+        ]
+    );
+    assert_eq!((s.matched, s.unbounded, s.kev, s.critical), (4, 1, 1, 1));
+    assert!(s.cves.last().unwrap().unbounded);
+    // 26.2 leaves every bounded range: 0103 must not come back through the `*` entry.
+    let s = d.lookup(&q(&keys, Some("26.2"))).unwrap();
+    assert_eq!(ids(&s), vec!["CVE-2099-0104"]);
+    assert_eq!(finding_severity(&s, None), Severity::Low);
+    assert_eq!(s.fixed_in, None);
+}
+
+#[test]
+fn fixed_in_is_the_lowest_version_outside_every_matched_range() {
+    let d = CveDb::parse_text(MIXED).unwrap();
+    let s = d.lookup(&q(&["apple:macos"], Some("26.0"))).unwrap();
+    // [,26.1) and [26.0,26.2) -> 26.2 (26.1 is still inside the second range)
+    assert_eq!(s.fixed_in.as_deref(), Some("26.2"));
+    let s = d.lookup(&q(&["google:chrome"], Some("m142"))).unwrap();
+    assert_eq!(
+        (s.matched, s.fixed_in.as_deref()),
+        (1, Some("142.0.7444.59"))
+    );
+    let l = d.list(&q(&["google:chrome"], Some("m142")));
+    assert_eq!(l[0].1.range.as_deref(), Some("[,142.0.7444.59)"));
+    assert_eq!(l[0].1.fixed().as_deref(), Some("142.0.7444.59"));
+}
+
+#[test]
+fn milestone_prefix_is_stripped() {
+    assert_eq!(norm_ver("m142").as_deref(), Some("142"));
+    assert_eq!(norm_ver("Skia/PDF m142").as_deref(), Some("142"));
+    assert_eq!(norm_ver("v3.3.5").as_deref(), Some("3.3.5"));
 }

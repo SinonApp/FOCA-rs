@@ -365,12 +365,14 @@ mod tests {
                         cvss: Some(max),
                         kev: kev > 0,
                         epss: Some(0.5),
+                        ..Default::default()
                     },
                     CveRef {
                         id: "CVE-2099-0002".into(),
                         cvss: Some(4.0),
                         kev: false,
                         epss: None,
+                        ..Default::default()
                     },
                 ]
             },

@@ -27,6 +27,7 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 - End-of-life notes on technology and port cards follow the UI language; EPSS shows as a percentage with an explanation.
 - Software found in documents counts only CVEs published up to the year of the newest document with that version (Chromium m142: 64 instead of 4236); later CVEs are mentioned, not counted.
 - OCR skips images smaller than 32 px instead of logging an ML Kit error.
+- CVE matcher: an NVD entry without any version limit counts only when no other configuration of the CVE bounds the product (macOS and Mac OS X keys together), is marked "range not specified in NVD" and no longer raises the severity; exact-version CPEs stay exact. The CVE summary gives the lowest version outside every matched range. CVE table rebuilt (547884 ranges); Word 2016: 446 to 436 matched CVEs, Outlook 2007: 192 to 181, macOS 26: 1060 to 1059 with 65 unbounded.
 
 ### Changed
 

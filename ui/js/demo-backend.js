@@ -12449,7 +12449,7 @@
     epss: "2026-11-26",
     cves: 108019,
     products: 9248,
-    ranges: 537268,
+    ranges: 547884,
     site: 71087,
     plugin: 17245,
     doc: 30418,

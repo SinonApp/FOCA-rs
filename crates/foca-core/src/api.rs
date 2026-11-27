@@ -440,6 +440,10 @@ pub struct CveRef {
     pub cvss: Option<f32>,
     pub kev: bool,
     pub epss: Option<f32>,
+    /// NVD lists the product without any version limit (range not specified in NVD): the CVE
+    /// is shown but does not raise the severity.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub unbounded: bool,
 }
 
 /// Offline NVD CVE summary of one product version (`docs/API.md`, "CVE summary").
@@ -471,6 +475,13 @@ pub struct CveSummary {
     /// document (the machine may have been updated since): not counted above.
     #[serde(skip_serializing_if = "is_zero_u32")]
     pub later: u32,
+    /// Matched CVEs whose NVD entry has no version limit for the product (included in
+    /// `matched`, not in the severity counts, `kev` or `max_cvss`).
+    #[serde(skip_serializing_if = "is_zero_u32")]
+    pub unbounded: u32,
+    /// Lowest version outside every matched range ("update to"), when computable.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fixed_in: Option<String>,
 }
 
 /// `Host`. Extra field: `scope`, one of `in_scope` | `excluded` | `out_of_scope`.

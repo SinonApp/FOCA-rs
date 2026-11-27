@@ -741,7 +741,10 @@ Software { id, name, ver, kind: "office"|"pdf"|"scanner"|"camera"|"image", relea
 CveSummary { product /* matched CPE keys, comma separated; plugins vendor:product@wordpress */, version, version_known,
              source: "header"|"html"|"js"|"plugin_path"|"readme"|"meta", known /* CVEs of the product, any version */,
              matched /* CVEs whose NVD ranges contain the version, 0 without a version */, critical, high, medium, low,
-             max_cvss|null, kev /* matched CVEs in CISA KEV */, max_epss|null, cves: [{ id, cvss|null, kev, epss|null }] /* KEV first, then CVSS, EPSS */ }
+             max_cvss|null, kev /* matched CVEs in CISA KEV */, max_epss|null, cves: [{ id, cvss|null, kev, epss|null, unbounded?: true }] /* KEV first, then CVSS, EPSS; unbounded last */,
+             later?: n /* matched but published after the newest document year */,
+             unbounded?: n /* matched only through an NVD entry without any version limit ("range not specified in NVD"): in matched, not in the severity counts, kev or max_cvss */,
+             fixed_in?: string /* lowest version outside every matched range ("update to"), when computable */ }
 Host     { name, ip, role, tech, cloud, services: [[port, proto, banner]], source, internal: bool, sev, first_scan,
            ports: HostPort[] /* local port scan + InternetDB cache, sorted ascending by port */, ports_scan: PortsScan|null,
            dns: [[type, value, note]] /* A, CNAME, MX, TXT (SPF/DMARC), NS, PTR, from DNS stage */, asn: string|null,
