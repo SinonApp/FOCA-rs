@@ -231,7 +231,7 @@ impl Rules {
                         valid_password(&value) && !meeting_context(text, m.start(), m.end())
                     }
                     Some("private_ip") => valid_private_ip(text, m.start(), m.end(), &value),
-                    Some("internal_host") => valid_internal_host(text, m.end()),
+                    Some("internal_host") => valid_internal_host(text, m.end(), &value),
                     Some("key") => valid_key(&value),
                     _ => true,
                 };
@@ -528,11 +528,22 @@ fn valid_private_ip(text: &str, start: usize, end: usize, v: &str) -> bool {
     .contains(&last_word.as_str())
 }
 
-fn valid_internal_host(text: &str, end: usize) -> bool {
+fn valid_internal_host(text: &str, end: usize, value: &str) -> bool {
     let after = &text[end..];
+    // `www.` names are public sites: `www.corp…` is a cut `www.corporation.com.ua`
+    if value.to_ascii_lowercase().starts_with("www.") {
+        return false;
+    }
     // In `srv.corp.contoso.ua` the suffix is part of a public name, not an internal one.
-    !(after.starts_with('.') && after[1..].starts_with(|c: char| c.is_ascii_alphanumeric()))
-        && !after.starts_with(|c: char| c == '-' || c.is_ascii_alphanumeric())
+    if after.starts_with('.') && after[1..].starts_with(|c: char| c.is_ascii_alphanumeric()) {
+        return false;
+    }
+    // the name must end at a real boundary: a soft hyphen, a letter of another script or a
+    // dash means the word goes on (`www.corp-xxxx.lg.ua`, `corp\u{ad}oration`)
+    after
+        .chars()
+        .next()
+        .is_none_or(|c| c.is_whitespace() || "/:,;.)]}>\"'!?»…".contains(c))
 }
 
 #[cfg(test)]
@@ -636,6 +647,16 @@ mod tests {
             rules("подключение к sql02.corp.contoso.local"),
             vec!["internal-host"]
         );
+        // cut public names are not internal hosts
+        for t in [
+            "6. www.corp-media.lg.ua",
+            "сайт www.corp\u{ad}oration.com.ua",
+            "див. www.corp",
+            "server.corp\u{2011}net",
+        ] {
+            assert!(!rules(t).contains(&"internal-host".to_string()), "{t}");
+        }
+        assert_eq!(rules("файл на fs01.corp: доступ"), vec!["internal-host"]);
         assert_eq!(
             rules("api_key = 9fK2mQ7xL4pR8sT1vW3yZ6bC"),
             vec!["generic-api-key"]

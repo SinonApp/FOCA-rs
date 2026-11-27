@@ -41,6 +41,7 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 - Report consistency: software findings use one category key (`sw`; older analyses wrote `software`), a finding without a host shows the first scope target (or "n/a") instead of "-", and "Discovered infrastructure" no longer counts storage providers as hosts.
 - Signed PDFs: a PAdES-LTV increment after the signature (DSS with VRI, certificate, OCSP and CRL streams, a document timestamp, a catalog or Info rewritten without other changes) is no longer reported as "modified after signing"; page, content stream, annotation and form value changes still are. On a real corpus of 41 signed PDFs the false finding went from 41 to 0.
 - PDF revisions: "Old PDF revisions kept" is reported only when an older revision really differs (page text, or a changed author, creator, producer, modification date, title, subject or keywords); empty Word increments, converter re-saves and LTV data stay a document fact.
+- Internal host names: a `www.` name or a name that goes on after a dash, soft hyphen or letter (`www.corp-media.lg.ua`, `www.corporation.com.ua` cut by text extraction) is no longer reported as an internal host.
 
 ### Changed
 
