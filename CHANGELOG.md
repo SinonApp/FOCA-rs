@@ -5,6 +5,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 ---
 
+## 2.0.0-beta.4.1: 2026-11-27
+
+Patch release after a phone test of 2.0.0-beta.4 on a real university site.
+
+### Fixed
+
+- Background guide: the MIUI/HyperOS step for a background pop-up permission is gone (the app never opens windows from the background); the lock screen step is detected automatically; Samsung paths match One UI 6 and later.
+- Scan progress shows on the lock screen again (new silent progress channel; the public version hides the project name).
+- Search engines: after a passed check the card reads Queued again instead of Check needed.
+- Crawl settings: the image traffic default (200 MB) sits inside its recommended range; a QA check now compares every settings default with its range.
+- Cards, lists, notes, button rows and full-width buttons keep one vertical gap (crawl settings, finding screen, scope targets); the layout sweep also fails on overlapping buttons.
+- What's new shows the 2.0.0-beta.4 notes and is keyed by the app version; a release check fails when they differ.
+- Download counters: overview, floating bar, notification and stage row share one queue pair that only grows; the external storage note no longer repeats its label.
+- Live lists keep their scroll position and the selection bar stays still during a scan; documents sort by document date or discovery time per project.
+- Bad redaction: only dark boxes over readable text count; white table cells, highlights, dark table grids and undecodable glyphs no longer produce the finding. It is High, Critical only when the covered text holds personal data or an e-mail.
+- Every finding's CVSS score now sits in the band of its severity label.
+- Google Drive, OneDrive, SharePoint and Dropbox are no longer listed as hosts of the target: their files belong to the site page that linked them, and the next analysis fixes older projects. Document filters group files by external storage.
+- Private storage files stop at the sign-in redirect and are logged as private (sign-in required); the login page is not requested.
+- Library versions come from file banners (Slick, Magnific Popup) and CDN URLs; jQuery from a CDN gets its Retire.js vulnerable library finding.
+- End-of-life notes on technology and port cards follow the UI language; EPSS shows as a percentage with an explanation.
+- Software found in documents counts only CVEs published up to the year of the newest document with that version (Chromium m142: 64 instead of 4236); later CVEs are mentioned, not counted.
+- OCR skips images smaller than 32 px instead of logging an ML Kit error.
+
+### Changed
+
+- Downloads go by priority: office files and PDF first, then other metadata-rich files, media, and site graphics last.
+
 ## 2.0.0-beta.4: 2026-11-27
 
 Fourth beta. Site technology detection goes deeper: more fingerprints, JavaScript files, stylesheets and page text, browser signals on Android and CMS plugins with versions. An offline CVE database from NVD shows the known CVEs of every detected product and raises a finding only when the version is known. Document analysis reads 65 file types (was 40), extracts more from Office, PDF and images, groups documents by author or computer and adds internal servers to the network map.
