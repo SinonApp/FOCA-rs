@@ -25,7 +25,7 @@ Columns: Access, whether an API key or embedded browser is needed; Contacts targ
 | `ddg` | DuckDuckGo (dorks) | Search engines | Keyless | Passive | All | `site:domain filetype:pdf…`: best-effort, may trigger CAPTCHA |
 | `bing` | Bing (dorks) | Search engines | Keyless | Passive | All | Best-effort, may trigger CAPTCHA |
 | `wayback` | Wayback Machine | Archives | Keyless | Passive | All | Historical document URLs and raw archived snapshots (`web.archive.org`, never touches target) |
-| `cc` | Common Crawl | Archives | Keyless | Passive | All | Latest 3 Common Crawl web indices |
+| `cc` | Common Crawl | Archives | Keyless | Passive | All | Latest 3 web crawl snapshots, or a deep sweep over the last N years or all snapshots (Settings → Sources → Search depth, or the wizard): paced, retried, resumable, see [Deep Common Crawl](#deep-common-crawl) |
 | `arquivo` | Arquivo.pt | Archives | Keyless | Passive | All | Portuguese web archive with file-type search |
 | `crt` | crt.sh | Subdomains | Keyless | Passive | All | Subdomains from Certificate Transparency (CT) logs |
 | `crtname` | crt.name | Subdomains | Keyless (higher limit with key) | Passive | All | CT mirror index for subdomains |
@@ -51,8 +51,8 @@ Columns: Access, whether an API key or embedded browser is needed; Contacts targ
 | `ports` | TCP port scan | Recon | Keyless | Target (Active) | Full | Open TCP ports, service banners, and versions on live in-scope hosts (with VPN canary protection) |
 | `tls` | TLS/X.509 inspector | Recon | Keyless | Target | Standard, Full | Certificate validity, chain, SANs, CAA, internal PKI; Full adds TLS 1.0/1.1, weak ciphers, STARTTLS, and direct-IP checks without SNI |
 | `crawler` | Site crawler | Crawler | Keyless | Target | Standard, Full | Follows internal links on target websites to discover documents |
-| `brave` | Brave Search API | With API key | Key required | Passive | All (if key set) | Official Brave Search API (free tier available) |
-| `searx` | Custom SearXNG | With API key | URL required | Passive | All (if URL set) | Your self-hosted SearXNG instance (configured in API Keys) |
+| `brave` | Brave Search API | With API key | Key required | Passive | All (if key set) | Official Brave Search API as one more dork engine. No free tier: Brave needs a card and every plan gets a $5 monthly credit (about 1000 queries); 429/quota stops it for the scan |
+| `searx` | Custom SearXNG | With API key | URL required | Passive | All (if URL set) | Your own SearXNG instances (HTTPS, public host, JSON enabled; configured in API Keys), asked before the public pool, see [Own SearXNG instance](searxng.md) |
 | `shodan` | Shodan (banner cache) | With API key | Key required | Passive | All (if key set) | Ports and service banners from Shodan's database without touching the target |
 | `vt` | VirusTotal v3 | With API key | Key required | Passive | All (if key set) | Passive subdomains and historical URLs via `/api/v3/domains/{domain}` (`x-apikey`, never logged) |
 | `st` | SecurityTrails | With API key | Key required | Passive | All (if key set) | Passive subdomain history via `/v1/domain/{domain}/subdomains` (`APIKEY`, never logged) |
@@ -73,16 +73,31 @@ Displayed on the Scan screen and in Settings → Sources:
 | `error` / No response | Network failure or timeout; the scan continues without this source |
 | `captcha` / Blocked | Search engine showed a challenge or blocked the IP, see [CAPTCHA & Manual Verification](settings-network.md#captcha--manual-verification) |
 | `verify` / Needs verification | CAPTCHA in built-in browser: tap Complete verification and the source retries automatically |
-| `rate_limited` / Rate limit | HTTP 429 (e.g., OTX); retries according to `Retry-After` |
+| `rate_limited` / Rate limit | HTTP 429 or 503 (e.g., OTX): the source honours `Retry-After`, slows down, and after repeated limits stops for this scan; what it collected is kept |
 | `skipped` / Skipped | Skipped manually (Skip source) or disabled in settings |
 | `no_key` / No API key | Keyed source without a configured key: skipped cleanly without failing the scan |
 | `unavailable` / Built-in browser required | WebView sources (`startpage`, `brave_web`, `yahoo`, `searx_pool`) outside Android (CLI, `foca serve`) |
 | `skipped_headless` | WebView source skipped during an autonomous headless background monitoring run (no UI window) |
 | `unreliable` / Unreliable | Port scan interfered with by a local VPN/proxy, see [VPN & Port Scans](settings-network.md#vpn-adguard--unreliable-port-scans) |
 
+## Deep Common Crawl
+
+The public Common Crawl index is unreliable: snapshots answer 400/404/502/504 at random between good answers, and a fast sweep over all of them fails on about half. FOCA-rs therefore:
+
+- asks the index at most once every 3 seconds (`settings.search.cc_pace_s`, never lower against the public index) and retries 5xx/400/timeouts with a growing pause;
+- treats 404 as "no captures" and uses `showNumPages` to skip empty snapshots before fetching pages;
+- filters by status and file type on the server, then keeps every URL once with its first and last capture;
+- runs a deep sweep (last N years or all snapshots) in the background of the Search stage, beside the other sources, within `settings.search.cc_minutes`;
+- caches results per domain on the device: a rescan within 24 hours sends no request for finished snapshots, and an unfinished deep sweep continues in the next scan;
+- falls back to the Wayback copy when a Common Crawl URL is dead now.
+
+## Postponed searches
+
+When every search engine shows a CAPTCHA, the dorks that no engine could run are kept for the project and retried by themselves: slowly, one by one, after `settings.search.dork_retry_min` minutes (default 15) while the scan is still running, and at the next scan, where they run first. The scan screen shows "N searches postponed, will retry" and a **Retry now** button. CAPTCHAs are never solved automatically.
+
 ## API Keys
 
-API keys are strictly optional ([ADR-0010](../adr/0010-api-keys-optional.md)): everything works out of the box except the dedicated keyed sources (Brave Search API, Custom SearXNG, Shodan, VirusTotal v3, SecurityTrails, GitHub Code Search), optional higher-tier quotas (such as OTX), and optional Cloud AI / Telegram & Webhook alerts.
+API keys are strictly optional ([ADR-0010](../adr/0010-api-keys-optional.md)): everything works out of the box except the dedicated keyed sources (Brave Search API, Custom SearXNG ([setup](searxng.md)), Shodan, VirusTotal v3, SecurityTrails, GitHub Code Search), optional higher-tier quotas (such as OTX), and optional Cloud AI / Telegram & Webhook alerts.
 
 Keys are entered only under Settings → API Keys (`/settings/keys`), stored encrypted in Android Keystore (`AES-256-GCM`, `KeyVault.kt`), scrubbed from `request_log` and exported diagnostic archives, and never written to project databases or reports.
 
@@ -91,4 +106,5 @@ Keys are entered only under Settings → API Keys (`/settings/keys`), stored enc
 - **1.1:** Yahoo and the public SearXNG pool (via embedded browser), shared dork queue with cross-engine failover, `OR`-grouping, 24-hour cache, and unified Complete verification (N).
 - **1.2:** Subdomain brute-force & permutations (`subdomains`), TLS/X.509 inspector (`tls`), SearXNG pool health checks, and DNS infrastructure intelligence (`infra`).
 - **1.4:** Access-level-aware Web Audit (`webaudit`).
+- **2.0 beta:** Deep resumable Common Crawl sweep with a per-domain cache and Wayback fallback, postponed dorks after CAPTCHAs ("Retry now"), own SearXNG instances before the public pool, Brave Search API as a dork engine, unified 429/503 slow-down in search sources.
 - **2.0:** Native passive API collectors for VirusTotal v3 (`vt`), SecurityTrails (`st`), and GitHub Code Search (`github`), opt-in WebView screenshots with `pHash` clustering, and extensible sandboxed plugins (`/settings/plugins`). See [ROADMAP](../ROADMAP.md).

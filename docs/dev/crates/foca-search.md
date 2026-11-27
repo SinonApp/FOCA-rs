@@ -28,17 +28,19 @@ Layout: `sources/` holds one module per source family; the scan-wide dork queue 
 
 | File | Lines | Contents |
 |---|---|---|
-| `src/dorkboard.rs` | 485 | Scan-wide dork board: one queue of `site:<domain> filetype:…` queries shared by all keyless dork engines |
+| `src/dorkboard.rs` | 625 | Scan-wide dork board: one queue of `site:<domain> filetype:…` queries shared by all keyless dork engines |
 | `src/download.rs` | 702 | Resumable, size-capped, SHA-256 content-addressed document downloader |
 | `src/filter.rs` | 287 | Extension filter (`DEFAULT_EXTS`), URL normalization, and deduplication |
 | `src/html.rs` | 361 | Lightweight tag/attribute HTML link tokenizer (no DOM), `robots.txt`, and `sitemap.xml` parsers |
 | `src/lib.rs` | 35 | Crate root and re-exports |
 | `src/render.rs` | 251 | `RenderFetch` trait and `RenderRequest` / `RenderStep` browser scripting model (executed by Android `RenderFetcher.kt`) |
 | `src/source.rs` | 597 | `DocumentSource` trait and concurrent runner (`run_sources`, `run_sources_ctl`) |
-| `src/sources/archive.rs` | 874 | Passive archives & CT: Wayback CDX, Common Crawl Index, crt.sh |
+| `src/rate.rs` | 209 | Shared adaptive throttle of paginated sources and dork engines: `Retry-After`, doubling pause on 429/503, stop after repeated limits |
+| `src/sources/archive.rs` | 616 | Passive archives & CT: Wayback CDX, crt.sh |
+| `src/sources/commoncrawl.rs` | 834 | Common Crawl Index: latest N, last N years or all snapshots; pacing, retries, `showNumPages`, server-side filters, cross-snapshot dedupe, per-domain resumable cache |
 | `src/sources/crawler.rs` | 523 | Target-site breadth-first crawler (`TouchesTarget`): `robots.txt`, `sitemap.xml`, link traversal |
 | `src/sources/dorkpool.rs` | 326 | Dork driver of the keyless engines (`run_dorks`): query planning, paging, cache, budget, pacing, failover |
-| `src/sources/engines.rs` | 539 | Search APIs without HTML scraping: Brave Search API (key) and custom SearXNG instance |
+| `src/sources/engines.rs` | 899 | Search APIs without HTML scraping: Brave Search API (optional key, quota handling) and own SearXNG instances, with `check_brave` / `check_searx` |
 | `src/sources/mod.rs` | 83 | Source catalog and `by_ids` lookup |
 | `src/sources/render_engines.rs` | 1,056 | Embedded-browser dork sources (`Startpage`, `Brave Web`, `Yahoo`, `Mojeek`, `DuckDuckGo`, `Bing`) |
 | `src/sources/searx_pool.rs` | 676 | Public SearXNG instance pool driven through the embedded browser |
