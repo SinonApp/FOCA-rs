@@ -24,6 +24,16 @@
     s.crawl = { ...(s.crawl || {}), ...patch };
     return F.api.settings_set({ crawl: patch });
   };
+  // settings.recon.render_hosts: site home pages rendered for browser-only technology signals
+  const renderHosts = () => {
+    const r = (F.db.settings || {}).recon || {};
+    return r.render_hosts != null ? +r.render_hosts : 10;
+  };
+  const saveRecon = patch => {
+    const s = F.db.settings || (F.db.settings = {});
+    s.recon = { ...(s.recon || {}), ...patch };
+    return F.api.settings_set({ recon: patch });
+  };
   /** Numeric input with ± buttons (F.numField from help.js); no hard caps, ui/js/limits.js warns. */
   const nf = (k, label, unit, note, step = 1) =>
     F.numField({
@@ -53,6 +63,17 @@
         ${nf("max_pages", F.t("crawl.nf_pages", "Страниц за скан, до"), "", F.t("crawl.nf_pages_note", "остаток продолжится в следующем скане"), 50)}
         ${nf("max_minutes", F.t("crawl.nf_minutes", "Время обхода, до"), F.t("crawl.nf_min", "мин"), F.t("crawl.nf_minutes_note", "потом обход останавливается сам"))}
         ${nf("max_rendered", F.t("crawl.nf_rendered", "Страниц-приложений через браузер"), "", F.t("crawl.nf_rendered_note", "сайты на React, Flutter и подобном"))}
+        ${F.numField({
+          id: "cr-render-hosts",
+          label: F.t("crawl.nf_render_hosts", "Главных страниц через браузер"),
+          unit: "",
+          lim: "recon.render_hosts",
+          step: 1,
+          note: F.t("crawl.nf_render_hosts_note", "технологии по JS и DOM, только Android; 0 выключает"),
+          help: "crawler",
+          get: renderHosts,
+          set: v => saveRecon({ render_hosts: v }),
+        })}
       </div>
       <div class="list">${toggleRow("resume", true, "history", F.t("crawl.resume", "Продолжать незавершённый обход"), F.t("crawl.resume_sub", "Следующий скан начнёт с непройденных страниц"))}${toggleRow("nofollow", false, "filter", F.t("crawl.nofollow", "Учитывать rel=nofollow"), F.t("crawl.nofollow_sub", "Не переходить по ссылкам, которые сайт просит не обходить"))}</div>
       <p class="fhint">${esc(F.t("crawl.traps_hint", "Ловушки (календари, бесконечные фильтры, параметры сессий) обходятся по шаблону с лимитом; ссылки выхода и удаления не открываются. Если сайт отвечает 429/503, темп снижается, а при повторах обход хоста останавливается."))}</p>

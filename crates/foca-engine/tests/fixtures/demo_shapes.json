@@ -2639,6 +2639,11 @@
         "object"
        ],
        "keys": {
+        "render_hosts": {
+         "t": [
+          "number"
+         ]
+        },
         "screenshots": {
          "t": [
           "bool"
@@ -3453,6 +3458,44 @@
          },
          "host": {
           "t": [
+           "string"
+          ]
+         },
+         "signals": {
+          "t": [
+           "array"
+          ],
+          "items": {
+           "t": [
+            "string"
+           ]
+          }
+         },
+         "evidence": {
+          "t": [
+           "array"
+          ],
+          "items": {
+           "t": [
+            "string"
+           ]
+          }
+         },
+         "plugin_of": {
+          "t": [
+           "null",
+           "string"
+          ]
+         },
+         "slug": {
+          "t": [
+           "null",
+           "string"
+          ]
+         },
+         "cpe": {
+          "t": [
+           "null",
            "string"
           ]
          }
@@ -6375,6 +6418,11 @@
         "object"
        ],
        "keys": {
+        "render_hosts": {
+         "t": [
+          "number"
+         ]
+        },
         "screenshots": {
          "t": [
           "bool"
@@ -7165,6 +7213,7 @@
          },
          "version": {
           "t": [
+           "null",
            "string"
           ]
          },
@@ -7186,6 +7235,44 @@
          },
          "host": {
           "t": [
+           "string"
+          ]
+         },
+         "signals": {
+          "t": [
+           "array"
+          ],
+          "items": {
+           "t": [
+            "string"
+           ]
+          }
+         },
+         "evidence": {
+          "t": [
+           "array"
+          ],
+          "items": {
+           "t": [
+            "string"
+           ]
+          }
+         },
+         "plugin_of": {
+          "t": [
+           "null",
+           "string"
+          ]
+         },
+         "slug": {
+          "t": [
+           "null",
+           "string"
+          ]
+         },
+         "cpe": {
+          "t": [
+           "null",
            "string"
           ]
          }
@@ -13152,6 +13239,11 @@
       "object"
      ],
      "keys": {
+      "render_hosts": {
+       "t": [
+        "number"
+       ]
+      },
       "screenshots": {
        "t": [
         "bool"
@@ -13912,6 +14004,11 @@
       "object"
      ],
      "keys": {
+      "render_hosts": {
+       "t": [
+        "number"
+       ]
+      },
       "screenshots": {
        "t": [
         "bool"

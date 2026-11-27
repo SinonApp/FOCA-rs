@@ -885,25 +885,78 @@
       ? `<p class="fhint">${ic("info")} ${F.t("data.reconnaissance_time_passive", { time: esc(String(r.at).slice(0, 16).replace("T", " ")), passive: r.level === "external" ? F.t("data.passive_no_requests_site", " · пассивно, к сайту запросов не было") : "" }, "Разведка: {time}{passive}.")}</p>`
       : "";
   };
+  // Signal kinds of a detected technology (core `Technology.signals`).
+  const SIG = {
+    header: ["data.sig_header", "заголовки"],
+    cookie: ["data.sig_cookie", "cookie"],
+    meta: ["data.sig_meta", "meta"],
+    html: ["data.sig_html", "HTML"],
+    script_src: ["data.sig_script_src", "адрес скрипта"],
+    url: ["data.sig_url", "URL"],
+    script: ["data.sig_script", "JS-файл"],
+    text: ["data.sig_text", "текст страницы"],
+    css: ["data.sig_css", "CSS"],
+    cert: ["data.sig_cert", "TLS-сертификат"],
+    robots: ["data.sig_robots", "robots.txt"],
+    js: ["data.sig_js", "JS в браузере"],
+    dom: ["data.sig_dom", "DOM в браузере"],
+    xhr: ["data.sig_xhr", "запросы в браузере"],
+    plugin_path: ["data.sig_plugin_path", "путь плагина"],
+    readme: ["data.sig_readme", "readme.txt"],
+    implied: ["data.sig_implied", "следует из другой"],
+  };
+  const sigLabel = s => (SIG[s] ? F.t(SIG[s][0], SIG[s][1]) : s);
+  const CMS = {
+    wordpress: "WordPress",
+    drupal: "Drupal",
+    joomla: "Joomla",
+    magento: "Magento",
+    prestashop: "PrestaShop",
+  };
+  const techCat = c => (F.ftext && F.ftext.techCategory ? F.ftext.techCategory(c) : c);
+  function techRow(t) {
+    const sigs = (t.signals || []).filter(s => s !== "implied" || (t.signals || []).length === 1);
+    const ev = (t.evidence || [])[0];
+    return ui.row({
+      lead: ui.leadIcon(t.plugin_of ? "path" : "app", t.outdated ? "var(--warn)" : ""),
+      title: esc(t.name) + (t.version ? ` <span class="mono">${esc(t.version)}</span>` : ""),
+      sub: `${esc(techCat(t.category))} · ${esc(t.host)}<div class="dt-tags">${t.outdated ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.outdated_2", "Устарело"))}</span><span class="muted">${esc(t.outdated)}</span>` : t.version ? `<span class="pill ok">${ic("check")}${esc(F.t("data.current_branch", "Актуальная ветка"))}</span>` : `<span class="pill mute">${esc(F.t("data.version_unknown", "Версия не определена"))}</span>`}${sigs.map(s => `<span class="pill mute" title="${esc(F.t("data.signal_source", "Источник признака"))}">${esc(sigLabel(s))}</span>`).join("")}</div>${ev ? `<small class="muted mono dt-path">${esc(ev)}</small>` : ""}`,
+    });
+  }
   function segTech() {
-    const list = (RC().tech || [])
+    const all = (RC().tech || [])
       .slice()
       .sort(
         (a, b) =>
           !!b.outdated - !!a.outdated || a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
       );
-    const old = list.filter(t => t.outdated).length;
+    const list = all.filter(t => !t.plugin_of);
+    const parts = all.filter(t => t.plugin_of);
+    const old = all.filter(t => t.outdated).length;
+    // plugins, themes and modules grouped under their CMS and host
+    const groups = {};
+    parts.forEach(t => {
+      const k = `${t.plugin_of}\u0000${t.host}`;
+      (groups[k] = groups[k] || []).push(t);
+    });
+    const grouped = Object.keys(groups)
+      .sort()
+      .map(k => {
+        const [cms, host] = k.split("\u0000");
+        const items = groups[k];
+        return (
+          ui.secH(
+            F.t("data.cms_parts", { cms: CMS[cms] || cms, host }, "{cms}: плагины, темы и модули · {host}"),
+            items.length,
+          ) + `<div class="list">${items.map(techRow).join("")}</div>`
+        );
+      })
+      .join("");
     return (
-      `<div class="dt-bar"><span class="dt-bar-n">${plural(list.length, F.t("data.technology", "технология"), F.t("data.technologies", "технологии"), F.t("data.technology_many", "технологий"))} ${F.t("data.old_outdated", { old }, "· {old} устарело")}</span></div>
-      <div class="list">${list
-        .map(t =>
-          ui.row({
-            lead: ui.leadIcon("app", t.outdated ? "var(--warn)" : ""),
-            title: esc(t.name) + (t.version ? ` <span class="mono">${esc(t.version)}</span>` : ""),
-            sub: `${esc(t.category)} · ${esc(t.host)}<div class="dt-tags">${t.outdated ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.outdated_2", "Устарело"))}</span><span class="muted">${esc(t.outdated)}</span>` : t.version ? `<span class="pill ok">${ic("check")}${esc(F.t("data.current_branch", "Актуальная ветка"))}</span>` : `<span class="pill mute">${esc(F.t("data.version_unknown", "Версия не определена"))}</span>`}</div>`,
-          }),
-        )
-        .join("")}</div>` + rcFoot()
+      `<div class="dt-bar"><span class="dt-bar-n">${plural(all.length, F.t("data.technology", "технология"), F.t("data.technologies", "технологии"), F.t("data.technology_many", "технологий"))} ${F.t("data.old_outdated", { old }, "· {old} устарело")}</span></div>
+      <div class="list">${list.map(techRow).join("")}</div>` +
+      grouped +
+      rcFoot()
     );
   }
   function segSite() {

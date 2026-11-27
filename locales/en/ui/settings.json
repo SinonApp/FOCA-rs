@@ -929,5 +929,8 @@
   "limits.warn_crawl_rendered": "More than {n} pages through the browser: slow and hard on the battery.",
   "limits.warn_crawl_images": "More than {n} images: a lot of traffic and storage.",
   "limits.warn_crawl_image_mb": "More than {n} MB for images: check the mobile traffic limit.",
-  "limits.warn_crawl_doc_depth": "Deeper than {n} steps: links from documents lead far from the target."
+  "limits.warn_crawl_doc_depth": "Deeper than {n} steps: links from documents lead far from the target.",
+  "crawl.nf_render_hosts": "Home pages via browser",
+  "crawl.nf_render_hosts_note": "technologies by JS and DOM, Android only; 0 turns off",
+  "limits.warn_render_hosts": "More than {n} home pages via browser: each opens in the hidden browser, which is slow and drains the battery."
 }

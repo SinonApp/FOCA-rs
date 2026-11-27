@@ -117,6 +117,7 @@
     },
     "crawl.max_minutes": { min: 1, rec: [10, 30], warn: 240, msg: "limits.warn_crawl_minutes" },
     "crawl.max_rendered": { min: 0, rec: [10, 50], warn: 500, msg: "limits.warn_crawl_rendered" },
+    "recon.render_hosts": { min: 0, rec: [5, 20], warn: 50, msg: "limits.warn_render_hosts" },
     "crawl.max_images": { min: 0, rec: [100, 500], warn: 5000, msg: "limits.warn_crawl_images" },
     "crawl.max_image_mb": { min: 1, rec: [100, 500], warn: 5000, msg: "limits.warn_crawl_image_mb" },
     "crawl.doc_link_depth": { min: 0, rec: [1, 2], warn: 5, msg: "limits.warn_crawl_doc_depth" },
@@ -163,6 +164,8 @@
     "limits.warn_crawl_pages_low": "Меньше {n} страниц: обход почти ничего не найдёт.",
     "limits.warn_crawl_minutes": "Больше {n} мин: обход надолго займёт телефон и сеть.",
     "limits.warn_crawl_rendered": "Больше {n} страниц через браузер: это медленно и расходует батарею.",
+    "limits.warn_render_hosts":
+      "Больше {n} главных страниц через браузер: каждая открывается в скрытом браузере, это медленно и расходует батарею.",
     "limits.warn_crawl_images": "Больше {n} изображений: много трафика и места.",
     "limits.warn_crawl_image_mb": "Больше {n} МБ на изображения: проверьте лимит мобильного трафика.",
     "limits.warn_crawl_doc_depth": "Глубже {n} шагов: ссылки из документов уводят далеко от цели.",

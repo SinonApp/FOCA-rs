@@ -3921,7 +3921,11 @@
     "Веб-камеры": "Webcams",
     "Виджеты": "Widgets",
     "Плагины WordPress": "WordPress plugins",
-    "Темы WordPress": "WordPress themes"
+    "Темы WordPress": "WordPress themes",
+    "Модули Drupal": "Drupal modules",
+    "Расширения Joomla": "Joomla extensions",
+    "Модули Magento": "Magento modules",
+    "Модули PrestaShop": "PrestaShop modules"
   },
   "roles": {
     "Служебная учётная запись": "Service account",

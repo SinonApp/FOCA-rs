@@ -16,7 +16,7 @@
   // 10: port scan (Host.ports/ports_scan, ports stage); 9: technologies in scan snapshots;
   // 8: site recon (snapshot.recon); 7: Startpage/Brave via the browser; 6: no Google CSE;
   // 5: no allow_active / "active" target marks / confirmation log.
-  const GEN_VERSION = 24;
+  const GEN_VERSION = 25;
   // User rule presets of the core (foca-analysis::rules::presets), same ids, titles and patterns.
   const DEMO_RULE_PRESETS = [
     {
@@ -4412,8 +4412,28 @@
         outdated: old,
         confidence: ver ? 100 : 75,
         host: dom,
+        signals: [ver ? "header" : "html"],
+        evidence: [ver ? `header server: ${d[0]}/${ver}` : `html: ${d[0]}`],
+        plugin_of: null,
+        slug: null,
+        cpe: null,
       });
     };
+    // CMS plugins and theme by asset path (as the core's cmsparts), with a JS-global version
+    const addPart = (slug, name, cat, ver) =>
+      tech.push({
+        name,
+        version: ver,
+        category: cat,
+        outdated: null,
+        confidence: ver ? 100 : 90,
+        host: dom,
+        signals: ["plugin_path"],
+        evidence: [`plugin path: /wp-content/${cat === "Темы WordPress" ? "themes" : "plugins"}/${slug}/`],
+        plugin_of: "wordpress",
+        slug,
+        cpe: `cpe:2.3:a:*:${slug.replace(/[^a-z0-9]/g, "_")}:*:*:*:*:*:wordpress:*:*`,
+      });
     (
       (spec.tech && spec.tech.length
         ? spec.tech
@@ -4427,7 +4447,17 @@
         if (m) addT(m[1], m[2]);
       });
     addT("jquery", R.pick(["1.12.4", "3.6.0", "3.7.1"]));
-    if (tech.some(t => t.name === "WordPress")) addT("php", "7.4.3");
+    if (tech.some(t => t.name === "WordPress")) {
+      addT("php", "7.4.3");
+      addPart("contact-form-7", "Contact Form 7", "Плагины WordPress", "5.8.4");
+      addPart("elementor", "Elementor", "Плагины WordPress", null);
+      addPart("astra", "astra", "Темы WordPress", "4.6.3");
+    }
+    const jq = tech.find(t => t.name === "jQuery");
+    if (jq && lvl !== "external") {
+      jq.signals = ["js"];
+      jq.evidence = [`JS: jQuery.fn.jquery = ${jq.version}`];
+    }
     // Fixed collation: the order decides which technology the earlier demo scans lack.
     tech.sort((a, b) => a.category.localeCompare(b.category, "en") || a.name.localeCompare(b.name, "en"));
     const mmh3 = hash(dom + "fav") | 0,
@@ -4740,6 +4770,7 @@
         max_mb: 15,
       },
       recon: {
+        render_hosts: 10,
         screenshots: false,
       },
       // Search depth and retries (core settings.search).
@@ -12277,7 +12308,7 @@
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
   const DEMO_SIG_TABLES = [
-    ["webappanalyzer", 5623, "7dba7bf3e8b4", "GPL-3.0-only"],
+    ["webappanalyzer", 7604, "7dba7bf3e8b4", "GPL-3.0-only"],
     ["endoflife", 2179, "32423d8113b6", "MIT"],
     ["saas_dns", 147, "7dba7bf3e8b4", "GPL-3.0-only"],
     ["gitleaks", 197, "v8.30.1", "MIT"],
