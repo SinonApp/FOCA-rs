@@ -601,7 +601,7 @@
       "modified": "2019-03-01T17:45:10",
       "name": "legacy.doc",
       "size": 20,
-      "software": "word",
+      "software": "word2010",
       "status": "analyzed",
       "title": "Статут підприємства",
       "url": "https://files.contoso.example/corpus/ole/legacy.doc"
@@ -815,12 +815,14 @@
       "author": "author",
       "created": "2007-02-09T16:23:23",
       "ext": "ppt",
-      "flags": [],
+      "flags": [
+        "eol"
+      ],
       "id": 53,
       "modified": "2007-02-09T16:27:49",
       "name": "exiftool-FlashPix.ppt",
       "size": 10,
-      "software": "ppt",
+      "software": "ppt2002",
       "status": "analyzed",
       "title": "title",
       "url": "https://files.contoso.example/corpus/real/exiftool-FlashPix.ppt"
@@ -946,7 +948,7 @@
       "modified": "2008-01-04T09:15:00",
       "name": "poi-SampleDoc.doc",
       "size": 27,
-      "software": "word",
+      "software": "word2007",
       "status": "analyzed",
       "title": "Test Document",
       "url": "https://files.contoso.example/corpus/real/poi-SampleDoc.doc"
@@ -962,7 +964,7 @@
       "modified": "2008-01-04T11:56:04",
       "name": "poi-SampleSS.xls",
       "size": 17,
-      "software": "excel",
+      "software": "excel2007",
       "status": "analyzed",
       "title": "Sample Spreadsheet",
       "url": "https://files.contoso.example/corpus/real/poi-SampleSS.xls"
@@ -978,7 +980,7 @@
       "modified": "2005-05-13T17:03:55",
       "name": "poi-basic_test_ppt_file.ppt",
       "size": 15,
-      "software": "ppt",
+      "software": "ppt2003",
       "status": "analyzed",
       "title": "This is a test title",
       "url": "https://files.contoso.example/corpus/real/poi-basic_test_ppt_file.ppt"
@@ -3909,6 +3911,45 @@
     },
     {
       "active": false,
+      "category": "sw",
+      "cve": [],
+      "cvss": null,
+      "description": "1 документ создан в Microsoft PowerPoint 2002 (XP) (10), поддержка завершена 2011-07-12. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
+      "documents": [
+        {
+          "id": 53,
+          "name": "exiftool-FlashPix.ppt"
+        }
+      ],
+      "evidence": "Сигнатура: Microsoft PowerPoint 2002 (XP) (10)\nДокументов: 1\nИсторические данные (2007): документы из веб-архива или старше 3 лет, важность понижена",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 897568277038379,
+      "mitre": "T1203 · Exploitation for Client Execution",
+      "module": "analysis",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "application",
+          "producer"
+        ],
+        "rule": "eol-software"
+      },
+      "recommendation": "Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.",
+      "severity": "low",
+      "severity_label": "Низкий",
+      "source": "ПО → EOL",
+      "status": "new",
+      "tags": [
+        "outdated"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Microsoft PowerPoint 2002 (XP) (EOL) у 1 документа",
+      "url": "https://files.contoso.example/corpus/real/exiftool-FlashPix.ppt"
+    },
+    {
+      "active": false,
       "category": "docs",
       "cve": [],
       "cvss": 3.1,
@@ -4100,6 +4141,84 @@
       "time": "2026-11-20T12:00:00",
       "title": "Старые ревизии PDF сохранены в report.pdf",
       "url": "https://files.contoso.example/corpus/pdf/report.pdf"
+    },
+    {
+      "active": false,
+      "category": "sw",
+      "cve": [],
+      "cvss": null,
+      "description": "1 документ создан в Microsoft Office PowerPoint 2003 (11), поддержка завершена 2014-04-08. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
+      "documents": [
+        {
+          "id": 63,
+          "name": "poi-basic_test_ppt_file.ppt"
+        }
+      ],
+      "evidence": "Сигнатура: Microsoft Office PowerPoint 2003 (11)\nДокументов: 1\nИсторические данные (2005): документы из веб-архива или старше 3 лет, важность понижена",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 1882730695726210,
+      "mitre": "T1203 · Exploitation for Client Execution",
+      "module": "analysis",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "application",
+          "producer"
+        ],
+        "rule": "eol-software"
+      },
+      "recommendation": "Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.",
+      "severity": "low",
+      "severity_label": "Низкий",
+      "source": "ПО → EOL",
+      "status": "new",
+      "tags": [
+        "outdated"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Microsoft Office PowerPoint 2003 (EOL) у 1 документа",
+      "url": "https://files.contoso.example/corpus/real/poi-basic_test_ppt_file.ppt"
+    },
+    {
+      "active": false,
+      "category": "sw",
+      "cve": [],
+      "cvss": null,
+      "description": "1 документ создан в Microsoft Word 2010 (14), поддержка завершена 2020-10-13. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
+      "documents": [
+        {
+          "id": 39,
+          "name": "legacy.doc"
+        }
+      ],
+      "evidence": "Сигнатура: Microsoft Word 2010 (14)\nДокументов: 1\nИсторические данные (2019): документы из веб-архива или старше 3 лет, важность понижена",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 2221599169847270,
+      "mitre": "T1203 · Exploitation for Client Execution",
+      "module": "analysis",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "application",
+          "producer"
+        ],
+        "rule": "eol-software"
+      },
+      "recommendation": "Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.",
+      "severity": "low",
+      "severity_label": "Низкий",
+      "source": "ПО → EOL",
+      "status": "new",
+      "tags": [
+        "outdated"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Microsoft Word 2010 (EOL) у 1 документа",
+      "url": "https://files.contoso.example/corpus/ole/legacy.doc"
     },
     {
       "active": false,
@@ -4539,6 +4658,45 @@
     },
     {
       "active": false,
+      "category": "sw",
+      "cve": [],
+      "cvss": null,
+      "description": "1 документ создан в Microsoft Office Word 2007 (12), поддержка завершена 2017-10-10. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
+      "documents": [
+        {
+          "id": 61,
+          "name": "poi-SampleDoc.doc"
+        }
+      ],
+      "evidence": "Сигнатура: Microsoft Office Word 2007 (12)\nДокументов: 1\nИсторические данные (2008): документы из веб-архива или старше 3 лет, важность понижена",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 4076475197372442,
+      "mitre": "T1203 · Exploitation for Client Execution",
+      "module": "analysis",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "application",
+          "producer"
+        ],
+        "rule": "eol-software"
+      },
+      "recommendation": "Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.",
+      "severity": "low",
+      "severity_label": "Низкий",
+      "source": "ПО → EOL",
+      "status": "new",
+      "tags": [
+        "outdated"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Microsoft Office Word 2007 (EOL) у 1 документа",
+      "url": "https://files.contoso.example/corpus/real/poi-SampleDoc.doc"
+    },
+    {
+      "active": false,
       "category": "docs",
       "cve": [],
       "cvss": null,
@@ -4826,6 +4984,45 @@
       "time": "2026-11-20T12:00:00",
       "title": "Имена 9 компьютеров и серверов внутренней сети",
       "url": "https://files.contoso.example/corpus/images/photo.jpg"
+    },
+    {
+      "active": false,
+      "category": "sw",
+      "cve": [],
+      "cvss": null,
+      "description": "1 документ создан в Microsoft Office Excel 2007 (12), поддержка завершена 2017-10-10. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
+      "documents": [
+        {
+          "id": 62,
+          "name": "poi-SampleSS.xls"
+        }
+      ],
+      "evidence": "Сигнатура: Microsoft Office Excel 2007 (12)\nДокументов: 1\nИсторические данные (2008): документы из веб-архива или старше 3 лет, важность понижена",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 7503392930315539,
+      "mitre": "T1203 · Exploitation for Client Execution",
+      "module": "analysis",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "application",
+          "producer"
+        ],
+        "rule": "eol-software"
+      },
+      "recommendation": "Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.",
+      "severity": "low",
+      "severity_label": "Низкий",
+      "source": "ПО → EOL",
+      "status": "new",
+      "tags": [
+        "outdated"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Microsoft Office Excel 2007 (EOL) у 1 документа",
+      "url": "https://files.contoso.example/corpus/real/poi-SampleSS.xls"
     },
     {
       "active": false,
@@ -5560,6 +5757,11 @@
       },
       {
         "cve": null,
+        "eol_date": "2017-10-10",
+        "name": "Microsoft Office Excel 2007 (12)"
+      },
+      {
+        "cve": null,
         "eol_date": "2020-10-13",
         "name": "Microsoft Excel 2010 (14)"
       },
@@ -5582,6 +5784,26 @@
         "cve": null,
         "eol_date": "2011-04-15",
         "name": "OpenOffice.org 3.2"
+      },
+      {
+        "cve": null,
+        "eol_date": "2011-07-12",
+        "name": "Microsoft PowerPoint 2002 (XP) (10)"
+      },
+      {
+        "cve": null,
+        "eol_date": "2014-04-08",
+        "name": "Microsoft Office PowerPoint 2003 (11)"
+      },
+      {
+        "cve": null,
+        "eol_date": "2017-10-10",
+        "name": "Microsoft Office Word 2007 (12)"
+      },
+      {
+        "cve": null,
+        "eol_date": "2020-10-13",
+        "name": "Microsoft Word 2010 (14)"
       }
     ],
     "hosts": 27,
@@ -5592,7 +5814,7 @@
     "printers": 2,
     "secrets": 18,
     "servers": 6,
-    "software": 30,
+    "software": 33,
     "top_people": [
       {
         "docs": 14,
@@ -5647,14 +5869,6 @@
     ],
     "top_software": [
       {
-        "count": 2,
-        "name": "Microsoft Office Word (версия неизвестна)"
-      },
-      {
-        "count": 2,
-        "name": "Microsoft Office Word 2013 (15)"
-      },
-      {
         "count": 3,
         "name": "Adobe Photoshop 7.0"
       },
@@ -5668,6 +5882,14 @@
       },
       {
         "count": 2,
+        "name": "Microsoft Office Word 2013 (15)"
+      },
+      {
+        "count": 1,
+        "name": "Microsoft Office Word 2007 (12)"
+      },
+      {
+        "count": 2,
         "name": "Adobe Photoshop CC 2019"
       },
       {
@@ -5675,16 +5897,16 @@
         "name": "Fujifilm (камера)"
       },
       {
-        "count": 2,
+        "count": 1,
         "name": "Microsoft Office Excel (версия неизвестна)"
+      },
+      {
+        "count": 1,
+        "name": "Microsoft Office Excel 2007 (12)"
       },
       {
         "count": 2,
         "name": "Microsoft Office Outlook 2016-2024 / 365"
-      },
-      {
-        "count": 2,
-        "name": "Microsoft Office PowerPoint (версия неизвестна)"
       }
     ]
   },
@@ -6469,15 +6691,6 @@
       "docs": 2,
       "eol": false,
       "eol_date": null,
-      "id": "excel",
-      "name": "Microsoft Office Excel",
-      "version": ""
-    },
-    {
-      "cve": 0,
-      "docs": 2,
-      "eol": false,
-      "eol_date": null,
       "id": "fujifilm",
       "name": "Fujifilm (камера)",
       "version": ""
@@ -6503,15 +6716,6 @@
     {
       "cve": 0,
       "docs": 2,
-      "eol": false,
-      "eol_date": null,
-      "id": "ppt",
-      "name": "Microsoft Office PowerPoint",
-      "version": ""
-    },
-    {
-      "cve": 0,
-      "docs": 2,
       "eol": true,
       "eol_date": null,
       "id": "ps2019",
@@ -6525,15 +6729,6 @@
       "eol_date": null,
       "id": "visio",
       "name": "Microsoft Office Visio",
-      "version": ""
-    },
-    {
-      "cve": 0,
-      "docs": 2,
-      "eol": false,
-      "eol_date": null,
-      "id": "word",
-      "name": "Microsoft Office Word",
       "version": ""
     },
     {
@@ -6589,6 +6784,24 @@
       "id": "canon-ir",
       "name": "Canon imageRUNNER 1.2",
       "version": "1.2"
+    },
+    {
+      "cve": 0,
+      "docs": 1,
+      "eol": false,
+      "eol_date": null,
+      "id": "excel",
+      "name": "Microsoft Office Excel",
+      "version": ""
+    },
+    {
+      "cve": 0,
+      "docs": 1,
+      "eol": true,
+      "eol_date": "2017-10-10",
+      "id": "excel2007",
+      "name": "Microsoft Office Excel 2007",
+      "version": "12"
     },
     {
       "cve": 0,
@@ -6710,6 +6923,24 @@
     {
       "cve": 0,
       "docs": 1,
+      "eol": true,
+      "eol_date": "2011-07-12",
+      "id": "ppt2002",
+      "name": "Microsoft PowerPoint 2002 (XP)",
+      "version": "10"
+    },
+    {
+      "cve": 0,
+      "docs": 1,
+      "eol": true,
+      "eol_date": "2014-04-08",
+      "id": "ppt2003",
+      "name": "Microsoft Office PowerPoint 2003",
+      "version": "11"
+    },
+    {
+      "cve": 0,
+      "docs": 1,
       "eol": false,
       "eol_date": null,
       "id": "ppt2016",
@@ -6724,6 +6955,24 @@
       "id": "publisher2016",
       "name": "Microsoft Office Publisher 2016-2024 / 365",
       "version": "16"
+    },
+    {
+      "cve": 0,
+      "docs": 1,
+      "eol": true,
+      "eol_date": "2017-10-10",
+      "id": "word2007",
+      "name": "Microsoft Office Word 2007",
+      "version": "12"
+    },
+    {
+      "cve": 0,
+      "docs": 1,
+      "eol": true,
+      "eol_date": "2020-10-13",
+      "id": "word2010",
+      "name": "Microsoft Word 2010",
+      "version": "14"
     }
   ],
   "summary": {
@@ -6731,7 +6980,7 @@
       "crit": 4,
       "high": 25,
       "info": 3,
-      "low": 28,
+      "low": 33,
       "warn": 42
     },
     "fixed": 1,
@@ -6739,6 +6988,6 @@
     "project_risk": 100,
     "risk": 100,
     "risk_level": "crit",
-    "total": 102
+    "total": 107
   }
 }

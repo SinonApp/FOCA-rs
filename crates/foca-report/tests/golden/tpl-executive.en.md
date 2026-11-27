@@ -6,7 +6,7 @@ date: 2026-11-20
 template: executive
 lang: en
 risk: 100
-findings: 102
+findings: 107
 ---
 
 # Executive one-pager
@@ -17,7 +17,7 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 
 **Overall risk level: 100/100 - Critical**
 
-Findings in total: 102; 4 critical and 25 high.
+Findings in total: 107; 4 critical and 25 high.
 
 ## Key findings
 

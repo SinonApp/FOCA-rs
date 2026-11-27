@@ -7,11 +7,11 @@ template: full
 lang: ru
 risk: 100
 risk_level: crit
-findings: 102
+findings: 107
 findings_crit: 4
 findings_high: 25
 findings_warn: 42
-findings_low: 28
+findings_low: 33
 findings_info: 3
 secrets: hide
 generator: "FOCA-rs 2.0.0-beta.4"
@@ -31,7 +31,7 @@ tags: [foca, pentest, report]
 | Критический | 4 |
 | Высокий | 25 |
 | Средний | 42 |
-| Низкий | 28 |
+| Низкий | 33 |
 | Инфо | 3 |
 
 Исправлено к моменту отчёта: **1**
@@ -93,16 +93,16 @@ tags: [foca, pentest, report]
 
 | Программное обеспечение | Документов |
 | --- | --- |
-| Microsoft Office Word (версия неизвестна) | 2 |
-| Microsoft Office Word 2013 (15) | 2 |
 | Adobe Photoshop 7.0 | 3 |
 | iOS 17.4 | 2 |
 | iOS 16.6 | 1 |
+| Microsoft Office Word 2013 (15) | 2 |
+| Microsoft Office Word 2007 (12) | 1 |
 | Adobe Photoshop CC 2019 | 2 |
 | Fujifilm (камера) | 2 |
-| Microsoft Office Excel (версия неизвестна) | 2 |
+| Microsoft Office Excel (версия неизвестна) | 1 |
+| Microsoft Office Excel 2007 (12) | 1 |
 | Microsoft Office Outlook 2016-2024 / 365 | 2 |
-| Microsoft Office PowerPoint (версия неизвестна) | 2 |
 
 ### Устаревшее ПО
 
@@ -113,11 +113,16 @@ tags: [foca, pentest, report]
 | Adobe Photoshop CC 2019 | дата неизвестна | - |
 | Microsoft Office Word 2013 (15) | 11.04.2023 | - |
 | Adobe Acrobat Pro XI (11.0.23) | 15.10.2017 | - |
+| Microsoft Office Excel 2007 (12) | 10.10.2017 | - |
 | Microsoft Excel 2010 (14) | 13.10.2020 | - |
 | iOS 16.6 | 16.09.2024 | - |
 | LibreOffice 7.2.5.2 | 12.06.2022 | - |
 | Microsoft Word 2008 для Mac (12) | 09.04.2013 | - |
 | OpenOffice.org 3.2 | 15.04.2011 | - |
+| Microsoft PowerPoint 2002 (XP) (10) | 12.07.2011 | - |
+| Microsoft Office PowerPoint 2003 (11) | 08.04.2014 | - |
+| Microsoft Office Word 2007 (12) | 10.10.2017 | - |
+| Microsoft Word 2010 (14) | 13.10.2020 | - |
 
 ### Найденная инфраструктура
 
@@ -1535,7 +1540,27 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: schedule.xlsx*
 
-### F-73 · Комментарии рецензентов сохранены в schedule.xlsx - Низкий
+### F-73 · Microsoft PowerPoint 2002 (XP) (EOL) у 1 документа - Низкий
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
+
+**Описание.** 1 документ создан в Microsoft PowerPoint 2002 (XP) (10), поддержка завершена 2011-07-12. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.
+
+**Доказательство:**
+
+```text
+Сигнатура: Microsoft PowerPoint 2002 (XP) (10)
+Документов: 1
+Исторические данные (2007): документы из веб-архива или старше 3 лет, важность понижена
+```
+
+**URL:** https://files.contoso.example/corpus/real/exiftool-FlashPix.ppt
+
+**Рекомендация.** Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.
+
+*Происхождение: Правило eol-software; Документы: exiftool-FlashPix.ppt*
+
+### F-74 · Комментарии рецензентов сохранены в schedule.xlsx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1554,7 +1579,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило revisions; Документы: schedule.xlsx*
 
-### F-74 · Adobe Photoshop 7.0 (EOL) у 3 документов - Низкий
+### F-75 · Adobe Photoshop 7.0 (EOL) у 3 документов - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1574,7 +1599,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: exiftool-ExifTool.jpg, exiftool-GPS.jpg, exiftool-PDF.pdf*
 
-### F-75 · Внутренние адреса и имена хостов в документе (2) · budget.msg - Низкий
+### F-76 · Внутренние адреса и имена хостов в документе (2) · budget.msg - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1593,7 +1618,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило internal-addresses; Документы: budget.msg*
 
-### F-76 · Комментарии рецензентов сохранены в report.pdf - Низкий
+### F-77 · Комментарии рецензентов сохранены в report.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1611,7 +1636,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило revisions; Документы: report.pdf*
 
-### F-77 · Старые ревизии PDF сохранены в report.pdf - Низкий
+### F-78 · Старые ревизии PDF сохранены в report.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1629,7 +1654,47 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило pdf-revisions; Документы: report.pdf*
 
-### F-78 · Старые ревизии PDF сохранены в signed\_modified.pdf - Низкий
+### F-79 · Microsoft Office PowerPoint 2003 (EOL) у 1 документа - Низкий
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
+
+**Описание.** 1 документ создан в Microsoft Office PowerPoint 2003 (11), поддержка завершена 2014-04-08. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.
+
+**Доказательство:**
+
+```text
+Сигнатура: Microsoft Office PowerPoint 2003 (11)
+Документов: 1
+Исторические данные (2005): документы из веб-архива или старше 3 лет, важность понижена
+```
+
+**URL:** https://files.contoso.example/corpus/real/poi-basic\_test\_ppt\_file.ppt
+
+**Рекомендация.** Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.
+
+*Происхождение: Правило eol-software; Документы: poi-basic\_test\_ppt\_file.ppt*
+
+### F-80 · Microsoft Word 2010 (EOL) у 1 документа - Низкий
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
+
+**Описание.** 1 документ создан в Microsoft Word 2010 (14), поддержка завершена 2020-10-13. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.
+
+**Доказательство:**
+
+```text
+Сигнатура: Microsoft Word 2010 (14)
+Документов: 1
+Исторические данные (2019): документы из веб-архива или старше 3 лет, важность понижена
+```
+
+**URL:** https://files.contoso.example/corpus/ole/legacy.doc
+
+**Рекомендация.** Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.
+
+*Происхождение: Правило eol-software; Документы: legacy.doc*
+
+### F-81 · Старые ревизии PDF сохранены в signed\_modified.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1647,7 +1712,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило pdf-revisions; Документы: signed\_modified.pdf*
 
-### F-79 · Комментарии рецензентов сохранены в strategy.pptx - Низкий
+### F-82 · Комментарии рецензентов сохранены в strategy.pptx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1665,7 +1730,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило revisions; Документы: strategy.pptx*
 
-### F-80 · Внутренние адреса и имена хостов в документе (1) · contract.docx - Низкий
+### F-83 · Внутренние адреса и имена хостов в документе (1) · contract.docx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1683,7 +1748,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило internal-addresses; Документы: contract.docx*
 
-### F-81 · Внутренние пути и логины в метаданных 17 документов - Низкий
+### F-84 · Внутренние пути и логины в метаданных 17 документов - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1592 · Gather Victim Host Information
 
@@ -1706,7 +1771,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-paths; Документы: backup.zip, hidden.xlsx, photo.jpg, scan.tiff, screenshot.png, annual.indd, network.lnk, report.lnk, letter.odt, legacy.doc, contract.docx, schedule.xlsx, meeting.ics, SRV-TS01.rdp, buh.ica, logo.svg, network.vsdx*
 
-### F-82 · Внутренние адреса и имена хостов в документе (1) · buh.ica - Низкий
+### F-85 · Внутренние адреса и имена хостов в документе (1) · buh.ica - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1724,7 +1789,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-addresses; Документы: buh.ica*
 
-### F-83 · Устаревшая ОС Windows 7 / Server 2008 R2 у 1 документа - Низкий
+### F-86 · Устаревшая ОС Windows 7 / Server 2008 R2 у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1592.002 · Gather Victim Host Information: Software
 
@@ -1744,7 +1809,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-os; Документы: legacy.doc*
 
-### F-84 · Устаревшая ОС Windows XP у 2 документов - Низкий
+### F-87 · Устаревшая ОС Windows XP у 2 документов - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1592.002 · Gather Victim Host Information: Software
 
@@ -1764,7 +1829,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-os; Документы: poi-SampleDoc.doc, poi-SampleSS.xls*
 
-### F-85 · Идентификатор арендатора Microsoft 365 в письме (budget.eml) - Низкий
+### F-88 · Идентификатор арендатора Microsoft 365 в письме (budget.eml) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1782,7 +1847,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило mail.m365\_tenant; Документы: budget.eml*
 
-### F-86 · Комментарии рецензентов сохранены в network.vsdx - Низкий
+### F-89 · Комментарии рецензентов сохранены в network.vsdx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1800,7 +1865,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило revisions; Документы: network.vsdx*
 
-### F-87 · Внутренние адреса и имена хостов в документе (4) - Низкий
+### F-90 · Внутренние адреса и имена хостов в документе (4) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1821,7 +1886,27 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-addresses; Документы: backup.zip*
 
-### F-88 · Идентификатор арендатора Microsoft 365 в письме (backup.zip) - Низкий
+### F-91 · Microsoft Office Word 2007 (EOL) у 1 документа - Низкий
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
+
+**Описание.** 1 документ создан в Microsoft Office Word 2007 (12), поддержка завершена 2017-10-10. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.
+
+**Доказательство:**
+
+```text
+Сигнатура: Microsoft Office Word 2007 (12)
+Документов: 1
+Исторические данные (2008): документы из веб-архива или старше 3 лет, важность понижена
+```
+
+**URL:** https://files.contoso.example/corpus/real/poi-SampleDoc.doc
+
+**Рекомендация.** Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.
+
+*Происхождение: Правило eol-software; Документы: poi-SampleDoc.doc*
+
+### F-92 · Идентификатор арендатора Microsoft 365 в письме (backup.zip) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1839,7 +1924,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило mail.m365\_tenant; Документы: backup.zip*
 
-### F-89 · Microsoft Word 2008 для Mac (EOL) у 1 документа - Низкий
+### F-93 · Microsoft Word 2008 для Mac (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1859,7 +1944,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-software; Документы: exiftool-OOXML.docx*
 
-### F-90 · Старые ревизии PDF сохранены в revisions.pdf - Низкий
+### F-94 · Старые ревизии PDF сохранены в revisions.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1877,7 +1962,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило pdf-revisions; Документы: revisions.pdf*
 
-### F-91 · Предыдущие версии метаданных сохранены в legacy.doc - Низкий
+### F-95 · Предыдущие версии метаданных сохранены в legacy.doc - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1896,7 +1981,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило pdf-revisions; Документы: legacy.doc*
 
-### F-92 · LibreOffice 7.2.5.2 (EOL) у 1 документа - Низкий
+### F-96 · LibreOffice 7.2.5.2 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1916,7 +2001,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-software; Документы: letter.odt*
 
-### F-93 · Внутренние адреса и имена хостов в документе (2) · budget.eml - Низкий
+### F-97 · Внутренние адреса и имена хостов в документе (2) · budget.eml - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1935,7 +2020,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-addresses; Документы: budget.eml*
 
-### F-94 · Имена 9 компьютеров и серверов внутренней сети - Низкий
+### F-98 · Имена 9 компьютеров и серверов внутренней сети - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590 · Gather Victim Network Information
 
@@ -1953,7 +2038,27 @@ ENG-WS11, SRV-FILE01, MFP-2F, BUH-PC-07, WS-042, NAS02, SRV-PRN01, SRV-SQL02, FS
 
 *Происхождение: Правило internal-pcs; Документы: photo.jpg, scan.tiff, network.lnk, report.lnk, letter.odt, legacy.doc, contract.docx, schedule.xlsx, meeting.ics*
 
-### F-95 · Время подписи и метка TSA расходятся более чем на сутки (signed\_hidden.docx) - Низкий
+### F-99 · Microsoft Office Excel 2007 (EOL) у 1 документа - Низкий
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
+
+**Описание.** 1 документ создан в Microsoft Office Excel 2007 (12), поддержка завершена 2017-10-10. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.
+
+**Доказательство:**
+
+```text
+Сигнатура: Microsoft Office Excel 2007 (12)
+Документов: 1
+Исторические данные (2008): документы из веб-архива или старше 3 лет, важность понижена
+```
+
+**URL:** https://files.contoso.example/corpus/real/poi-SampleSS.xls
+
+**Рекомендация.** Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.
+
+*Происхождение: Правило eol-software; Документы: poi-SampleSS.xls*
+
+### F-100 · Время подписи и метка TSA расходятся более чем на сутки (signed\_hidden.docx) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1978,7 +2083,7 @@ ENG-WS11, SRV-FILE01, MFP-2F, BUH-PC-07, WS-042, NAS02, SRV-PRN01, SRV-SQL02, FS
 
 *Происхождение: Правило doc.signature\_tsa\_gap; Документы: signed\_hidden.docx*
 
-### F-96 · Параметры удалённого доступа раскрыты в файле SRV-TS01.rdp - Низкий
+### F-101 · Параметры удалённого доступа раскрыты в файле SRV-TS01.rdp - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.002 · Gather Victim Network Information: DNS
 
@@ -1998,7 +2103,7 @@ gateway: rdgw.contoso.example
 
 *Происхождение: Правило remote-file; Документы: SRV-TS01.rdp*
 
-### F-97 · OpenOffice.org 3.2 (EOL) у 1 документа - Низкий
+### F-102 · OpenOffice.org 3.2 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -2018,7 +2123,7 @@ gateway: rdgw.contoso.example
 
 *Происхождение: Правило eol-software; Документы: exiftool-OpenDoc.ods*
 
-### F-98 · Параметры удалённого доступа раскрыты в файле buh.ica - Низкий
+### F-103 · Параметры удалённого доступа раскрыты в файле buh.ica - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.002 · Gather Victim Network Information: DNS
 
@@ -2038,7 +2143,7 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило remote-file; Документы: buh.ica*
 
-### F-99 · Внутренние адреса и имена хостов в документе (1) · network.vsdx - Низкий
+### F-104 · Внутренние адреса и имена хостов в документе (1) · network.vsdx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -2056,7 +2161,7 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило internal-addresses; Документы: network.vsdx*
 
-### F-100 · Определён шаблон корпоративных e-mail: {f}.{last}@contoso.example - Инфо
+### F-105 · Определён шаблон корпоративных e-mail: {f}.{last}@contoso.example - Инфо
 
 **Статус:** Новая · **Хост:** contoso.example · **Категория:** people · **MITRE ATT&CK v20:** T1589.002 · Gather Victim Identity Information: Email Addresses
 
@@ -2072,7 +2177,7 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило email-pattern*
 
-### F-101 · Ссылки на облачные пространства и URL с токенами в meeting.ics - Инфо
+### F-106 · Ссылки на облачные пространства и URL с токенами в meeting.ics - Инфо
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213.003 · Data from Information Repositories: Code Repositories
 
@@ -2093,7 +2198,7 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило doc.links; Документы: meeting.ics*
 
-### F-102 · Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name - Инфо
+### F-107 · Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name - Инфо
 
 **Статус:** Новая · **Хост:** \- · **Категория:** people · **MITRE ATT&CK v20:** T1087 · Account Discovery
 
@@ -2117,7 +2222,7 @@ user name · документов: 1
 
 | ID | Важность | Находка | Хост | Исправлено в скане |
 | --- | --- | --- | --- | --- |
-| F-103 | Высокий | Внутренние почтовые серверы и адреса в заголовках письма (budget.eml) | files.contoso.example | \- |
+| F-108 | Высокий | Внутренние почтовые серверы и адреса в заголовках письма (budget.eml) | files.contoso.example | \- |
 
 ## Люди
 
@@ -2232,20 +2337,19 @@ user name · документов: 1
 | Программное обеспечение | Версия | EOL | CVE | Документов |
 | --- | --- | --- | --- | --- |
 | Adobe Photoshop 7.0 | 7.0 | EOL дата неизвестна | - | 3 |
-| Microsoft Office Excel |  |  | - | 2 |
 | Fujifilm (камера) |  |  | - | 2 |
 | iOS 17.4 | 17.4 | EOL 15.09.2025 | - | 2 |
 | Microsoft Office Outlook 2016-2024 / 365 | 16 |  | - | 2 |
-| Microsoft Office PowerPoint |  |  | - | 2 |
 | Adobe Photoshop CC 2019 | CC 2019 | EOL дата неизвестна | - | 2 |
 | Microsoft Office Visio |  |  | - | 2 |
-| Microsoft Office Word |  |  | - | 2 |
 | Microsoft Office Word 2013 | 15 | EOL 11.04.2023 | - | 2 |
 | Adobe Acrobat Pro XI | 11.0.23 | EOL 15.10.2017 | - | 1 |
 | Samsung Galaxy (Android) |  |  | - | 1 |
 | Apache OpenOffice 4.1.14 | 4.1.14 |  | - | 1 |
 | Canon (камера) |  |  | - | 1 |
 | Canon imageRUNNER 1.2 | 1.2 |  | - | 1 |
+| Microsoft Office Excel |  |  | - | 1 |
+| Microsoft Office Excel 2007 | 12 | EOL 10.10.2017 | - | 1 |
 | Microsoft Excel 2010 | 14 | EOL 13.10.2020 | - | 1 |
 | GraphicConverter |  |  | - | 1 |
 | Greenshot 1.2.10 | 1.2.10 |  | - | 1 |
@@ -2259,8 +2363,12 @@ user name · документов: 1
 | Microsoft Word 2008 для Mac | 12 | EOL 09.04.2013 | - | 1 |
 | OpenOffice.org 3.2 | 3.2 | EOL 15.04.2011 | - | 1 |
 | PDFCreator 3.2.0 | 3.2.0 |  | - | 1 |
+| Microsoft PowerPoint 2002 (XP) | 10 | EOL 12.07.2011 | - | 1 |
+| Microsoft Office PowerPoint 2003 | 11 | EOL 08.04.2014 | - | 1 |
 | Microsoft Office PowerPoint 2016-2024 / 365 | 16 |  | - | 1 |
 | Microsoft Office Publisher 2016-2024 / 365 | 16 |  | - | 1 |
+| Microsoft Office Word 2007 | 12 | EOL 10.10.2017 | - | 1 |
+| Microsoft Word 2010 | 14 | EOL 13.10.2020 | - | 1 |
 
 ### Пути
 
@@ -2336,7 +2444,7 @@ user name · документов: 1
 | 36 | encrypted.ods | admin | Apache OpenOffice 4.1.14 | 01.02.2017 |  |
 | 37 | letter.odt | t.melnyk | LibreOffice 7.2.5.2 | 17.05.2022 | path, eol, revisions |
 | 38 | budget.xls | s.lysenko | Microsoft Office Excel (версия неизвестна) | 20.12.2018 |  |
-| 39 | legacy.doc | o.kovalenko | Microsoft Office Word (версия неизвестна) | 11.02.2019 | path, secret, eol |
+| 39 | legacy.doc | o.kovalenko | Microsoft Word 2010 (14) | 11.02.2019 | path, secret, eol |
 | 40 | slides.ppt | m.shevchuk | Microsoft PowerPoint для Mac (версия неизвестна) | 05.11.2019 |  |
 | 41 | vbaProject.bin |  |  |  |  |
 | 42 | contract.docx | a.bondar | Microsoft Office Word 2013 (15) | 01.03.2024 | path, secret, eol, revisions |
@@ -2350,7 +2458,7 @@ user name · документов: 1
 | 50 | meeting.ics |  |  | 14.03.2024 | path |
 | 51 | exiftool-ExifTool.jpg | p.harvey | Fujifilm (камера) | 19.05.2001 | eol |
 | 52 | exiftool-ExifTool.tif |  | Canon (камера) |  |  |
-| 53 | exiftool-FlashPix.ppt | author | Microsoft Office PowerPoint (версия неизвестна) | 09.02.2007 |  |
+| 53 | exiftool-FlashPix.ppt | author | Microsoft PowerPoint 2002 (XP) (10) | 09.02.2007 | eol |
 | 54 | exiftool-GPS.jpg | i.britton | Fujifilm (камера) | 13.07.2002 | eol, gps |
 | 55 | exiftool-OOXML.docx | jeff | Microsoft Word 2008 для Mac (12) | 24.10.2009 | eol |
 | 56 | exiftool-OpenDoc.ods | i.informatica | OpenOffice.org 3.2 | 19.04.2010 | eol |
@@ -2358,9 +2466,9 @@ user name · документов: 1
 | 58 | exiftool-PDF2.pdf |  |  |  | forensic |
 | 59 | exiftool-PNG.png | p.harvey |  |  |  |
 | 60 | exiftool-XMP.svg | i.bird |  |  |  |
-| 61 | poi-SampleDoc.doc | n.burch | Microsoft Office Word (версия неизвестна) | 04.01.2008 | eol |
-| 62 | poi-SampleSS.xls | n.burch | Microsoft Office Excel (версия неизвестна) | 04.01.2008 | eol |
-| 63 | poi-basic\_test\_ppt\_file.ppt | hogwarts | Microsoft Office PowerPoint (версия неизвестна) | 13.05.2005 | eol |
+| 61 | poi-SampleDoc.doc | n.burch | Microsoft Office Word 2007 (12) | 04.01.2008 | eol |
+| 62 | poi-SampleSS.xls | n.burch | Microsoft Office Excel 2007 (12) | 04.01.2008 | eol |
+| 63 | poi-basic\_test\_ppt\_file.ppt | hogwarts | Microsoft Office PowerPoint 2003 (11) | 13.05.2005 | eol |
 | 64 | SRV-TS01.rdp |  |  |  | path, secret |
 | 65 | buh.ica |  |  |  | path, secret |
 | 66 | logo.svg | m.shevchuk | Inkscape 1.1.2 |  | path |
