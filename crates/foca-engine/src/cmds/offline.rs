@@ -607,6 +607,24 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
             .collect::<Vec<_>>()),
     );
     fx.insert("scan_without_text".into(), json!(m.scan_without_text));
+    // document facts for the card: language, paper, file identifier, author time zone,
+    // Office release and OS language hint (null when the format has none)
+    let f = |k: &str| m.fields.get(k).cloned();
+    fx.insert(
+        "facts".into(),
+        json!({
+            "language": m.language.clone().or_else(|| f("pdf:Lang")),
+            "page_size": f("pdf:page_size"),
+            "paper": f("pdf:paper"),
+            "tagged": m.fields.get("pdf:tagged").map(|v| v == "true"),
+            "file_id": f("pdf:ID"),
+            "tz_offset": f("doc:tz_offset"),
+            "office_release": f("office:release"),
+            "app_version": f("ole:AppVersion").or_else(|| f("app:AppVersion")),
+            "locale_hint": f("os:locale_hint"),
+            "code_page": f("ole:CodePage"),
+        }),
+    );
     fx.insert("xmp_history".into(), serde_json::to_value(&m.xmp_history)?);
     fx.insert("xmp_ids".into(), serde_json::to_value(&m.xmp_ids)?);
     fx.insert("pii".into(), serde_json::to_value(&m.pii)?);

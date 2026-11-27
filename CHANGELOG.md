@@ -28,10 +28,19 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 - Software found in documents counts only CVEs published up to the year of the newest document with that version (Chromium m142: 64 instead of 4236); later CVEs are mentioned, not counted.
 - OCR skips images smaller than 32 px instead of logging an ML Kit error.
 - CVE matcher: an NVD entry without any version limit counts only when no other configuration of the CVE bounds the product (macOS and Mac OS X keys together), is marked "range not specified in NVD" and no longer raises the severity; exact-version CPEs stay exact. The CVE summary gives the lowest version outside every matched range. CVE table rebuilt (547884 ranges); Word 2016: 446 to 436 matched CVEs, Outlook 2007: 192 to 181, macOS 26: 1060 to 1059 with 65 unbounded.
+- PDF text from Word: page text is decoded through each font's ToUnicode map and encoding (two-byte Identity-H fonts, `/Differences` glyph names including Cyrillic, WinAnsi, MacRoman and Standard encodings), with word gaps and line breaks from text positions and text inside form XObjects. Cyrillic PDFs saved from Word used to give unreadable text, so e-mails, phone numbers, personal data, secrets and bad redactions in their text were missed.
+- Word 97-2003 text is read from the piece table, without the binary bytes that used to precede it.
+- `foca analyze` on local files no longer lists the file names as web servers.
 
 ### Changed
 
 - Downloads go by priority: office files and PDF first, then other metadata-rich files, media, and site graphics last.
+
+### Added
+
+- PDF facts: document language (`/Lang`), page size with its paper name (A4, Letter and others), tagged PDF flag and the file identifier (`/ID`, the same in every revision and copy of one file), shown in the document card under "Document facts".
+- Office release from AppVersion: Word, Excel and PowerPoint files whose application name has no year get it from `AppVersion` (12 = 2007, 16 = 2016 or newer), so end-of-life and CVE checks see the real release.
+- Word 97-2003 language and time zone: the language from the file header, the code page, and the author's UTC offset derived from local and UTC save times (only when they agree). A localized default account name (such as "Пользователь") adds an OS language hint without a finding.
 
 ## 2.0.0-beta.4: 2026-11-27
 

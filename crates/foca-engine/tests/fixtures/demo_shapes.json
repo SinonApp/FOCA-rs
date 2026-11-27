@@ -14869,6 +14869,63 @@
         "bool"
        ]
       },
+      "facts": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "language": {
+         "t": [
+          "string"
+         ]
+        },
+        "page_size": {
+         "t": [
+          "null"
+         ]
+        },
+        "paper": {
+         "t": [
+          "null"
+         ]
+        },
+        "tagged": {
+         "t": [
+          "null"
+         ]
+        },
+        "file_id": {
+         "t": [
+          "null"
+         ]
+        },
+        "tz_offset": {
+         "t": [
+          "null"
+         ]
+        },
+        "office_release": {
+         "t": [
+          "string"
+         ]
+        },
+        "app_version": {
+         "t": [
+          "string"
+         ]
+        },
+        "locale_hint": {
+         "t": [
+          "null"
+         ]
+        },
+        "code_page": {
+         "t": [
+          "null"
+         ]
+        }
+       }
+      },
       "xmp_history": {
        "t": [
         "array"

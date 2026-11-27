@@ -1102,6 +1102,19 @@
       size: 1830,
     },
   ];
+  /** Document facts of doc_get.forensics with every key empty. */
+  const FACTS0 = {
+    language: null,
+    page_size: null,
+    paper: null,
+    tagged: null,
+    file_id: null,
+    tz_offset: null,
+    office_release: null,
+    app_version: null,
+    locale_hint: null,
+    code_page: null,
+  };
   /** Full forensics record of doc_get with empty defaults (same keys as the core). */
   const fxRec = (o = {}) => ({
     signatures: [],
@@ -1109,6 +1122,7 @@
     hidden_content: [],
     pdf_revisions: [],
     scan_without_text: false,
+    facts: { ...FACTS0 },
     xmp_history: [],
     xmp_ids: null,
     pii: [],
@@ -1126,6 +1140,7 @@
   const KEP_ISSUER = "O=Інформаційно-довідковий департамент ДПС, CN=КНЕДП - ІДД ДПС, C=UA";
   const CONTOSO_FX = {
     "Договір_постачання_ТЕС-2_v3.docx": fxRec({
+      facts: { ...FACTS0, language: "uk-UA", office_release: "2016 or newer", app_version: "16.0000" },
       hidden_content: [
         {
           kind: "vanish",
@@ -1227,6 +1242,14 @@
       },
     }),
     "Технічні_умови_підключення.pdf": fxRec({
+      facts: {
+        ...FACTS0,
+        language: "uk-UA",
+        page_size: "595x842 pt",
+        paper: "A4",
+        tagged: true,
+        file_id: "6E0F3C2A9B1D4E5F8A7C6B5D4E3F2A1B",
+      },
       signatures: [
         {
           kind: "pdf",

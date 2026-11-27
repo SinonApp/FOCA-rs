@@ -431,6 +431,28 @@
       )
       .join("")}</div>`;
   }
+  /** Document facts: language, paper size, file identifier, author time zone, Office release. */
+  function factsBlock(fx) {
+    const f = fx.facts || {};
+    const paper = [f.paper, f.page_size].filter(Boolean).join(" · ");
+    const office = f.office_release
+      ? `${esc(f.office_release)}${f.app_version ? ` <span class="muted">(AppVersion ${esc(f.app_version)})</span>` : ""}`
+      : "";
+    const rows =
+      kvr(F.t("forensics.f_lang", "Язык документа"), f.language ? mono(f.language) : "") +
+      kvr(F.t("forensics.f_paper", "Размер страницы"), esc(paper)) +
+      kvr(F.t("forensics.f_tagged", "Теговый PDF"), f.tagged ? esc(F.t("forensics.yes", "да")) : "") +
+      kvr(F.t("forensics.f_tz", "Часовой пояс автора"), f.tz_offset ? mono(f.tz_offset) : "") +
+      kvr(F.t("forensics.f_office", "Версия Office"), office) +
+      kvr(
+        F.t("forensics.f_os_lang", "Язык ОС (по имени учётной записи)"),
+        f.locale_hint ? mono(f.locale_hint) : "",
+      ) +
+      kvr(F.t("forensics.f_codepage", "Кодировка"), esc(f.code_page || "")) +
+      kvr(F.t("forensics.f_file_id", "Идентификатор файла (/ID)"), f.file_id ? mono(f.file_id) : "");
+    return rows ? `<div class="kv fx-kv">${rows}</div>` : "";
+  }
+
   /** Fonts and form fields: plain lists. */
   function listBlock(items) {
     return items.length
@@ -715,7 +737,9 @@
                 : ["", "", ""];
     const conn = connectionsBlock(fields);
     const other = otherFields(fields);
+    const facts = factsBlock(fx);
     const blocks = [
+      facts && sec("facts", "doc", F.t("forensics.s_facts", "Сведения о документе"), "", facts),
       fx.signatures.length &&
         sec(
           "sig",
