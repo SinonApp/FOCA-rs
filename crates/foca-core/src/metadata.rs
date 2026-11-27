@@ -73,6 +73,56 @@ pub enum DocFormat {
     Psd,
     /// 7-Zip archive container.
     SevenZ,
+    /// Windows PE executable or library (exe, dll, sys, scr).
+    Exe,
+    /// Windows Installer package (OLE2 summary information).
+    Msi,
+    /// Java archive (jar, war, ear) with `META-INF/MANIFEST.MF`.
+    Jar,
+    /// Android package (apk, aab).
+    Apk,
+    /// AutoCAD binary drawing.
+    Dwg,
+    /// AutoCAD drawing exchange format (text).
+    Dxf,
+    /// PostScript, EPS or Illustrator file with DSC comments.
+    Eps,
+    /// Windows enhanced metafile.
+    Emf,
+    /// Windows metafile (placeable or plain).
+    Wmf,
+    /// Tape archive (ustar/GNU).
+    Tar,
+    /// Gzip stream (RFC 1952).
+    Gzip,
+    /// Bzip2 stream.
+    Bzip2,
+    /// XZ stream.
+    Xz,
+    /// RAR archive (v4 or v5).
+    Rar,
+    /// RIFF WAVE audio.
+    Wav,
+    /// RIFF AVI video.
+    Avi,
+    /// Matroska or WebM (EBML).
+    Mkv,
+    /// Advanced Systems Format (wmv, wma, asf).
+    Asf,
+    /// FLAC audio with Vorbis comments.
+    Flac,
+    /// Ogg container (Vorbis, Opus) with Vorbis comments.
+    Ogg,
+    /// Keyhole Markup Language (Google Earth).
+    Kml,
+    /// Zipped KML.
+    Kmz,
+    /// GPS exchange format.
+    Gpx,
+    /// JavaScript source map (JSON).
+    SourceMap,
+    /// Jupyter notebook (JSON).
+    Ipynb,
     #[default]
     Unknown,
 }
@@ -120,6 +170,31 @@ impl DocFormat {
             DocFormat::Mp3 => "mp3",
             DocFormat::Psd => "psd",
             DocFormat::SevenZ => "7z",
+            DocFormat::Exe => "exe",
+            DocFormat::Msi => "msi",
+            DocFormat::Jar => "jar",
+            DocFormat::Apk => "apk",
+            DocFormat::Dwg => "dwg",
+            DocFormat::Dxf => "dxf",
+            DocFormat::Eps => "eps",
+            DocFormat::Emf => "emf",
+            DocFormat::Wmf => "wmf",
+            DocFormat::Tar => "tar",
+            DocFormat::Gzip => "gz",
+            DocFormat::Bzip2 => "bz2",
+            DocFormat::Xz => "xz",
+            DocFormat::Rar => "rar",
+            DocFormat::Wav => "wav",
+            DocFormat::Avi => "avi",
+            DocFormat::Mkv => "mkv",
+            DocFormat::Asf => "wmv",
+            DocFormat::Flac => "flac",
+            DocFormat::Ogg => "ogg",
+            DocFormat::Kml => "kml",
+            DocFormat::Kmz => "kmz",
+            DocFormat::Gpx => "gpx",
+            DocFormat::SourceMap => "map",
+            DocFormat::Ipynb => "ipynb",
             DocFormat::Unknown => "bin",
         }
     }
@@ -297,6 +372,88 @@ pub struct Thumbnail {
     pub differs: Option<bool>,
 }
 
+/// A geographic point from geodata (KML, GPX, ...).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GeoPoint {
+    pub lat: f64,
+    pub lon: f64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub alt: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub time: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Where it was found (`kml:Placemark`, `gpx:trkpt`, ...).
+    pub source: String,
+}
+
+/// Signs that an image was made by a generative AI tool.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AiGenerated {
+    /// Generator (`ComfyUI`, `Automatic1111`, C2PA claim generator, ...).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub generator: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// Prompt text, truncated. Shown on the document card only, never in reports.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt: Option<String>,
+    /// Where the evidence was found (`png:parameters`, `c2pa`, `xmp:DigitalSourceType`).
+    pub source: String,
+}
+
+/// A data connection (spreadsheet connection, Power Query source, mail merge data source).
+/// Passwords are never stored: `has_password` only records that one was present.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct DataConnection {
+    /// `odbc`, `oledb`, `web`, `text`, `powerquery`, `mailmerge`, ...
+    pub kind: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub database: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    /// URL, file path or query target.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub target: Option<String>,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub has_password: bool,
+    pub source: String,
+}
+
+/// One hop of a mail transport path (`Received:` header), newest first.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct MailHop {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub from: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub by: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ip: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub date: Option<String>,
+    /// The sending side is a private or internal address.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub internal: bool,
+}
+
+/// A form field (PDF AcroForm) with its current or default value.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FormField {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub value: Option<String>,
+}
+
 fn is_false(b: &bool) -> bool {
     !*b
 }
@@ -440,6 +597,24 @@ pub struct Metadata {
     /// metadata strings are masked at the same time, see `foca-analysis::pii::sanitize`).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub pii: Vec<crate::PiiFound>,
+    /// Points from geodata (KML/GPX), capped.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub geo_points: Vec<GeoPoint>,
+    /// Generative AI markers (PNG generator parameters, C2PA digital source type).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ai_generated: Option<AiGenerated>,
+    /// Data connections (spreadsheets, Power Query, mail merge). Passwords are never stored.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub connections: Vec<DataConnection>,
+    /// Mail transport hops from `Received:` headers, newest first.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub mail_hops: Vec<MailHop>,
+    /// Fonts used by the document (subset prefixes stripped).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub fonts: Vec<String>,
+    /// Form fields with values (PDF AcroForm).
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub form_fields: Vec<FormField>,
 }
 
 impl Metadata {

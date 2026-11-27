@@ -59,6 +59,10 @@ pub enum SignatureKind {
     Ooxml,
     /// `vbaProjectSignature.bin` (Authenticode-style PKCS#7 over the VBA project).
     Vba,
+    /// Authenticode signature in the PE certificate table.
+    Authenticode,
+    /// JAR/APK signature block (`META-INF/*.RSA`, `*.DSA`, `*.EC`).
+    Jar,
 }
 
 /// Identity fields of an X.509 certificate. Personal tax numbers are never stored in full.

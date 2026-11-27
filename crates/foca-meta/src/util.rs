@@ -179,6 +179,22 @@ pub fn filetime_to_iso(ft: u64) -> Option<String> {
         .ok()
 }
 
+/// Converts Unix seconds to RFC 3339 within sane bounds (1980..2100).
+pub fn unix_to_iso(secs: i64) -> Option<String> {
+    if !(315_532_800..=4_102_444_800).contains(&secs) {
+        return None;
+    }
+    OffsetDateTime::from_unix_timestamp(secs)
+        .ok()?
+        .format(&Rfc3339)
+        .ok()
+}
+
+/// Reads a big-endian u32.
+pub fn rd_u32be(b: &[u8], off: usize) -> Option<u32> {
+    Some(u32::from_be_bytes(b.get(off..off + 4)?.try_into().ok()?))
+}
+
 fn digits(s: &str, from: usize, n: usize) -> Option<u32> {
     let part = s.get(from..from + n)?;
     if part.bytes().all(|b| b.is_ascii_digit()) {

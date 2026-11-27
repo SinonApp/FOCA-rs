@@ -34,6 +34,12 @@ pub(crate) fn detect_with_hint(bytes: &[u8], name_hint: Option<&str>) -> DocForm
     if b.starts_with(&[0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) {
         return detect_ole(b);
     }
+    if crate::formats::binary::pe::is_pe(b) {
+        return DocFormat::Exe;
+    }
+    if let Some(f) = detect_new_binary(b, name_hint) {
+        return f;
+    }
     if b.starts_with(&crate::formats::lnk::MAGIC) {
         return DocFormat::Lnk;
     }
@@ -73,6 +79,58 @@ pub(crate) fn detect_with_hint(bytes: &[u8], name_hint: Option<&str>) -> DocForm
         return DocFormat::Pdf;
     }
     detect_text(b, name_hint)
+}
+
+/// Signatures of the executable, archive, CAD, PostScript and audio/video formats.
+fn detect_new_binary(b: &[u8], name_hint: Option<&str>) -> Option<DocFormat> {
+    use crate::formats::archive::{compressed, rar};
+    use crate::formats::media::{av, postscript};
+    if b.starts_with(rar::RAR4) || b.starts_with(rar::RAR5) {
+        return Some(DocFormat::Rar);
+    }
+    if b.starts_with(&compressed::GZIP_MAGIC) {
+        return Some(DocFormat::Gzip);
+    }
+    if compressed::is_bzip2(b) {
+        return Some(DocFormat::Bzip2);
+    }
+    if b.starts_with(&compressed::XZ_MAGIC) {
+        return Some(DocFormat::Xz);
+    }
+    if b.starts_with(&av::ASF_HEADER) {
+        return Some(DocFormat::Asf);
+    }
+    if b.starts_with(&av::EBML_MAGIC) {
+        return Some(DocFormat::Mkv);
+    }
+    if b.starts_with(b"fLaC") {
+        return Some(DocFormat::Flac);
+    }
+    if b.starts_with(b"OggS") {
+        return Some(DocFormat::Ogg);
+    }
+    if let Some(f) = av::riff_kind(b) {
+        return Some(f);
+    }
+    if crate::formats::cad::is_dwg(b) {
+        return Some(DocFormat::Dwg);
+    }
+    if postscript::is_postscript(b) {
+        return Some(DocFormat::Eps);
+    }
+    if postscript::is_emf(b) {
+        return Some(DocFormat::Emf);
+    }
+    let ext = ext_of(name_hint);
+    if b.starts_with(&[0xD7, 0xCD, 0xC6, 0x9A]) || (postscript::is_wmf(b) && ext == "wmf") {
+        return Some(DocFormat::Wmf);
+    }
+    if crate::formats::archive::tar::is_tar(b)
+        && (b.get(257..262) == Some(b"ustar") || matches!(ext.as_str(), "tar" | "tgz"))
+    {
+        return Some(DocFormat::Tar);
+    }
+    None
 }
 
 fn detect_zip(b: &[u8]) -> DocFormat {
@@ -134,6 +192,12 @@ fn detect_zip(b: &[u8]) -> DocFormat {
     if has("visio/document.xml") {
         return DocFormat::Vsdx;
     }
+    if let Some(f) = crate::formats::binary::jar::zip_kind(&names) {
+        return f;
+    }
+    if crate::formats::geo::is_kmz(&names) {
+        return DocFormat::Kmz;
+    }
     // any other readable archive is parsed as a plain ZIP with recursive members
     DocFormat::Zip
 }
@@ -146,11 +210,20 @@ fn detect_ole(b: &[u8]) -> DocFormat {
         for e in cf.read_root_storage() {
             names.push(e.name().to_string());
         }
-        Ok(names)
+        Ok((names, cf.root_entry().clsid().to_string()))
     });
-    let Ok(names) = r else {
+    let Ok((names, clsid)) = r else {
         return DocFormat::Ole;
     };
+    // Windows Installer package, patch and transform
+    if matches!(
+        clsid.as_str(),
+        "000c1084-0000-0000-c000-000000000046"
+            | "000c1086-0000-0000-c000-000000000046"
+            | "000c1082-0000-0000-c000-000000000046"
+    ) {
+        return DocFormat::Msi;
+    }
     let has = |n: &str| names.iter().any(|x| x.eq_ignore_ascii_case(n));
     if crate::formats::mail::msg::is_msg(&names) {
         return DocFormat::Msg;
@@ -196,6 +269,21 @@ fn detect_text(b: &[u8], name_hint: Option<&str>) -> DocFormat {
     }
     if start.starts_with("begin:vcard") {
         return DocFormat::Vcf;
+    }
+    if crate::formats::dev::looks_like_sourcemap(&head) {
+        return DocFormat::SourceMap;
+    }
+    if crate::formats::dev::looks_like_notebook(&head) {
+        return DocFormat::Ipynb;
+    }
+    if crate::formats::cad::looks_like_dxf(&head) {
+        return DocFormat::Dxf;
+    }
+    if lower.contains("<kml") {
+        return DocFormat::Kml;
+    }
+    if lower.contains("<gpx") {
+        return DocFormat::Gpx;
     }
     if crate::formats::mail::eml::looks_like_mail(&head, &ext) {
         return DocFormat::Eml;

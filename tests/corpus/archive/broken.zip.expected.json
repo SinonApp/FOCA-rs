@@ -10,8 +10,12 @@
     }
   ],
   "created": "2024-03-14T18:42:00",
+  "fields": {
+    "zip:host_os": "Unix"
+  },
   "format": "zip",
   "modified": "2024-03-14T18:42:00",
+  "os": "Unix",
   "stats": {
     "files": 2,
     "uncompressed_bytes": 2147483652

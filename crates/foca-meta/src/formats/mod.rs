@@ -1,7 +1,11 @@
 //! Format parsers, one module per format family, and signature-based format detection.
 
 pub(crate) mod archive;
+pub(crate) mod binary;
+pub(crate) mod cad;
 pub(crate) mod detect;
+pub(crate) mod dev;
+pub(crate) mod geo;
 pub(crate) mod lnk;
 pub(crate) mod mail;
 pub(crate) mod media;

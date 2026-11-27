@@ -396,8 +396,12 @@
             "name": "contacts/i.petrenko.vcf"
           }
         ],
+        "fields": {
+          "zip:host_os": "Unix"
+        },
         "format": "zip",
         "modified": "2024-03-14T18:42:00",
+        "os": "Unix",
         "stats": {
           "files": 1,
           "uncompressed_bytes": 2000
@@ -407,10 +411,12 @@
     }
   ],
   "fields": {
+    "zip:host_os": "Unix",
     "zip:unsafe_names": "../../evil.txt"
   },
   "format": "zip",
   "modified": "2024-03-14T18:42:00",
+  "os": "Unix",
   "paths": [
     {
       "host": "FS01.corp.example.test",

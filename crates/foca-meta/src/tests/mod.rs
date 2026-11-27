@@ -2,3 +2,4 @@
 
 mod new_formats;
 mod robust;
+mod wave2;

@@ -72,6 +72,17 @@ pub struct Fx {
     pub scan_without_text: bool,
     pub scan_suspicious_name: bool,
     pub connections: Vec<String>,
+    /// A data connection kept a password (the value itself is never stored).
+    pub connection_password: bool,
+    /// PDB build paths that name a user (`C:\Users\<dev>\source\...`).
+    pub pdb_paths: Vec<String>,
+    /// Generative AI marker: generator and model.
+    pub ai_image: Option<String>,
+    /// Geodata points (KML/GPX), shown as `name: lat, lon`.
+    pub geo: Vec<String>,
+    pub geo_total: u64,
+    /// Source map facts: embedded sources and build paths.
+    pub sourcemap: Vec<String>,
     pub pii: Vec<PiiFound>,
     pub links: Vec<LinkHit>,
     pub rules: Vec<RuleFacts>,
@@ -365,6 +376,76 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
             push_uniq(&mut fx.connections, at(format!("{k}: {}", clip(v, 160))));
         }
     }
+    for c in &m.connections {
+        let mut parts: Vec<String> = Vec::new();
+        for (k, v) in [
+            ("server", &c.server),
+            ("database", &c.database),
+            ("user", &c.user),
+            ("provider", &c.provider),
+            ("target", &c.target),
+        ] {
+            if let Some(v) = v {
+                parts.push(format!("{k}={}", clip(v, 120)));
+            }
+        }
+        if c.has_password {
+            fx.connection_password = true;
+            parts.push("password=***".into());
+        }
+        let name = c.name.as_deref().unwrap_or(&c.kind);
+        push_uniq(
+            &mut fx.connections,
+            at(format!(
+                "{} ({}): {}",
+                clip(name, 60),
+                c.kind,
+                parts.join("; ")
+            )),
+        );
+    }
+    // Build paths of executables.
+    for p in m.paths.iter().filter(|p| p.source == "pe:pdb") {
+        if p.user.is_some() {
+            push_uniq(&mut fx.pdb_paths, at(clip(&p.path, 200)));
+        }
+    }
+    if let Some(a) = &m.ai_generated {
+        let what = [a.generator.as_deref(), a.model.as_deref()]
+            .into_iter()
+            .flatten()
+            .collect::<Vec<_>>()
+            .join(" / ");
+        fx.ai_image.get_or_insert_with(|| {
+            at(if what.is_empty() {
+                a.source.clone()
+            } else {
+                format!("{what} ({})", a.source)
+            })
+        });
+    }
+    if !m.geo_points.is_empty() {
+        fx.geo_total += m
+            .stats
+            .get("geo_points")
+            .copied()
+            .unwrap_or(m.geo_points.len() as u64);
+        for g in m.geo_points.iter().take(5) {
+            let name = g.name.as_deref().unwrap_or("-");
+            push_uniq(
+                &mut fx.geo,
+                at(format!("{}: {:.5}, {:.5}", clip(name, 60), g.lat, g.lon)),
+            );
+        }
+    }
+    if m.format == DocFormat::SourceMap {
+        if let Some(n) = m.stats.get("sources_content") {
+            push_uniq(&mut fx.sourcemap, format!("sourcesContent: {n}"));
+        }
+        for p in m.paths.iter().filter(|p| p.source == "sourcemap:sources") {
+            push_uniq(&mut fx.sourcemap, clip(&p.path, 200));
+        }
+    }
     // Signatures and qualified certificates.
     let last = m.signatures.len().saturating_sub(1);
     for (i, s) in m.signatures.iter().enumerate() {
@@ -390,6 +471,8 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
                 foca_core::SignatureKind::Pdf => "pdf".into(),
                 foca_core::SignatureKind::Ooxml => "ooxml".into(),
                 foca_core::SignatureKind::Vba => "vba".into(),
+                foca_core::SignatureKind::Authenticode => "authenticode".into(),
+                foca_core::SignatureKind::Jar => "jar".into(),
             },
             name,
             org: c.organization.clone(),
@@ -736,6 +819,9 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 format!("Внешние источники данных в {}", d.name),
                 Severity::Medium,
             );
+            if x.connection_password {
+                f.sev = Severity::High;
+            }
             f.mitre = "T1590 · Gather Victim Network Information";
             f.description = "Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.".into();
             f.recommendation = "Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).";
@@ -747,6 +833,70 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 .collect::<Vec<_>>()
                 .join("\n");
             f.fields = vec!["connections".into()];
+            out.push(f);
+        }
+        if !x.pdb_paths.is_empty() {
+            let mut f = base(
+                "doc.pdb_user",
+                d,
+                format!("Имя разработчика в пути сборки (PDB) ({})", d.name),
+                Severity::Medium,
+            );
+            f.mitre = "T1589.003 · Gather Victim Identity Information: Employee Names";
+            f.description = "Исполняемый файл хранит путь к отладочным символам PDB с папкой пользователя: раскрываются логин разработчика, структура проектов и сборочная машина.".into();
+            f.recommendation = "Собирать релизы на сборочном сервере с нейтральными путями (/pathmap, -fdebug-prefix-map) или без пути PDB.";
+            f.evidence = x.pdb_paths.join("\n");
+            f.fields = vec!["paths".into()];
+            out.push(f);
+        }
+        if let Some(a) = &x.ai_image {
+            let mut f = base(
+                "doc.ai_generated",
+                d,
+                format!("Изображение создано генеративной нейросетью ({})", d.name),
+                Severity::Low,
+            );
+            f.description = "В метаданных изображения остались параметры генерации или отметка C2PA о синтетическом содержимом: видно, что картинка не фотография, и какой сервис или модель её создали.".into();
+            f.recommendation = "Отмечать сгенерированные изображения явно; удалять параметры генерации (промпт, модель) перед публикацией.";
+            f.evidence = a.clone();
+            f.fields = vec!["ai_generated".into()];
+            out.push(f);
+        }
+        if !x.geo.is_empty() {
+            let mut f = base(
+                "doc.geodata",
+                d,
+                format!("Координаты в файле геоданных ({})", d.name),
+                Severity::Medium,
+            );
+            f.mitre = "T1591.001 · Gather Victim Org Information: Determine Physical Locations";
+            f.description = "Файл геоданных (KML/GPX) содержит координаты точек и треков, часто с именами и временем: раскрываются объекты, маршруты и места работы.".into();
+            f.recommendation = "Проверить, какие точки и треки допустимо публиковать; удалить служебные объекты и время.";
+            f.evidence = x.geo.join("\n");
+            f.fields = vec!["geo_points".into()];
+            out.push(f);
+        }
+        if !x.sourcemap.is_empty() {
+            let mut f = base(
+                "doc.sourcemap",
+                d,
+                format!(
+                    "Карта исходников раскрывает исходный код и пути сборки ({})",
+                    d.name
+                ),
+                Severity::Medium,
+            );
+            f.mitre = "T1592.002 · Gather Victim Host Information: Software";
+            f.description = "Опубликованная карта исходников (.map) перечисляет исходные файлы проекта, иногда вместе с их полным текстом и путями на машине разработчика.".into();
+            f.recommendation = "Не выкладывать .map в продуктив или закрыть к ним доступ; собирать без sourcesContent и абсолютных путей.";
+            f.evidence = x
+                .sourcemap
+                .iter()
+                .take(8)
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("\n");
+            f.fields = vec!["paths".into()];
             out.push(f);
         }
         if x.lnk_machine.is_some() || !x.lnk_mac.is_empty() {

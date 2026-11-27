@@ -34,12 +34,13 @@ mod xml;
 mod xmp;
 mod zipx;
 
-use formats::archive::{epub, sevenz, zipfile};
+use formats::archive::{compressed, epub, rar, sevenz, tar, zipfile};
+use formats::binary::{jar, pe};
 use formats::detect::detect_with_hint;
 use formats::mail::{eml, ics, msg, vcf};
-use formats::media::{image, indesign, isobmff, mp3, psd, svg};
+use formats::media::{av, image, indesign, isobmff, mp3, postscript, psd, svg};
 use formats::office::{legacy_office, odf, ole, ooxml, publisher, visio};
-use formats::{lnk, pdf, remote};
+use formats::{cad, dev, geo, lnk, pdf, remote};
 
 pub use clean::{
     can_clean, clean, clean_with_limits, clean_with_options, CleanOptions, CleanOutput,
@@ -290,9 +291,11 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
         }
         DocFormat::Pdf => pdf::extract(bytes, ctx)?,
         DocFormat::Jpeg | DocFormat::Png | DocFormat::Tiff => image::extract(bytes, format, ctx)?,
-        DocFormat::Doc | DocFormat::Xls | DocFormat::Ppt | DocFormat::Ole => {
+        DocFormat::Doc | DocFormat::Xls | DocFormat::Ppt | DocFormat::Ole | DocFormat::Msi => {
             ole::extract(bytes, format, ctx)?
         }
+        DocFormat::Exe => pe::extract(bytes, ctx)?,
+        DocFormat::Jar | DocFormat::Apk => jar::extract(bytes, format, ctx)?,
         DocFormat::Svg => svg::extract(bytes, ctx)?,
         DocFormat::Rdp => remote::extract_rdp(bytes),
         DocFormat::Ica => remote::extract_ica(bytes),
@@ -313,9 +316,32 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
         DocFormat::Mp3 => mp3::extract(bytes, ctx)?,
         DocFormat::Psd => psd::extract(bytes, ctx)?,
         DocFormat::SevenZ => sevenz::extract(bytes, ctx)?,
+        DocFormat::Tar => tar::extract(bytes, ctx)?,
+        DocFormat::Gzip => compressed::extract_gzip(bytes, name_hint, ctx)?,
+        DocFormat::Bzip2 => compressed::extract_bzip2(bytes),
+        DocFormat::Xz => compressed::extract_xz(bytes),
+        DocFormat::Rar => rar::extract(bytes, ctx)?,
+        DocFormat::Dwg => cad::extract_dwg(bytes, ctx)?,
+        DocFormat::Dxf => cad::extract_dxf(bytes, ctx)?,
+        DocFormat::Eps => postscript::extract_eps(bytes, ctx)?,
+        DocFormat::Emf => postscript::extract_emf(bytes),
+        DocFormat::Wmf => postscript::extract_wmf(bytes),
+        DocFormat::Wav | DocFormat::Avi => av::extract_riff(bytes, format, ctx)?,
+        DocFormat::Mkv => av::extract_mkv(bytes)?,
+        DocFormat::Asf => av::extract_asf(bytes)?,
+        DocFormat::Flac => av::extract_flac(bytes)?,
+        DocFormat::Ogg => av::extract_ogg(bytes)?,
+        DocFormat::Kml => geo::extract_kml(bytes, ctx)?,
+        DocFormat::Kmz => geo::extract_kmz(bytes, ctx)?,
+        DocFormat::Gpx => geo::extract_gpx(bytes, ctx)?,
+        DocFormat::SourceMap => dev::extract_sourcemap(bytes)?,
+        DocFormat::Ipynb => dev::extract_notebook(bytes)?,
         DocFormat::Unknown => return Err(MetaError::Unsupported("неизвестная сигнатура".into())),
     };
     meta.format = format;
+    if format == DocFormat::Exe {
+        pe::finish(&mut meta);
+    }
     paths::finalize(&mut meta);
     if matches!(format, DocFormat::Eml | DocFormat::Msg) {
         eml::drop_message_ids(&mut meta);
@@ -365,9 +391,13 @@ fn text_ctx(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
         }
         DocFormat::Eml => eml::text(bytes, ctx),
         DocFormat::Msg => msg::text(bytes, ctx),
-        DocFormat::Ics | DocFormat::Vcf => Ok(util::decode_text(bytes)),
+        DocFormat::Ics | DocFormat::Vcf | DocFormat::Dxf | DocFormat::Kml | DocFormat::Gpx => {
+            Ok(util::decode_text(bytes))
+        }
+        DocFormat::SourceMap => dev::sourcemap_text(bytes),
+        DocFormat::Ipynb => dev::notebook_text(bytes),
         DocFormat::Vsdx => visio::text_vsdx(bytes, ctx),
-        DocFormat::Vsd | DocFormat::Pub | DocFormat::Wps => ole::text(bytes, ctx),
+        DocFormat::Vsd | DocFormat::Pub | DocFormat::Wps | DocFormat::Msi => ole::text(bytes, ctx),
         DocFormat::Lnk
         | DocFormat::Indd
         | DocFormat::Wpd
@@ -379,7 +409,26 @@ fn text_ctx(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {
         | DocFormat::Epub
         | DocFormat::Mp3
         | DocFormat::Psd
-        | DocFormat::SevenZ => extract_ctx(bytes, None, ctx).map(|m| metadata_text(&m)),
+        | DocFormat::SevenZ
+        | DocFormat::Exe
+        | DocFormat::Jar
+        | DocFormat::Apk
+        | DocFormat::Tar
+        | DocFormat::Gzip
+        | DocFormat::Bzip2
+        | DocFormat::Xz
+        | DocFormat::Rar
+        | DocFormat::Dwg
+        | DocFormat::Eps
+        | DocFormat::Emf
+        | DocFormat::Wmf
+        | DocFormat::Wav
+        | DocFormat::Avi
+        | DocFormat::Mkv
+        | DocFormat::Asf
+        | DocFormat::Flac
+        | DocFormat::Ogg
+        | DocFormat::Kmz => extract_ctx(bytes, None, ctx).map(|m| metadata_text(&m)),
         DocFormat::Unknown => Err(MetaError::Unsupported("неизвестная сигнатура".into())),
     }
 }

@@ -88,6 +88,7 @@ pub fn extract(bytes: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     times.sort();
     meta.created = times.first().cloned();
     meta.modified = times.last().cloned();
+    crate::formats::archive::zipcd::apply(&mut meta, bytes, ctx.max_entries());
     if !unsafe_names.is_empty() {
         meta.warnings.push(format!(
             "ZIP: {} entries with path traversal names",

@@ -320,6 +320,24 @@ pub fn find_emails(text: &str) -> Vec<String> {
     out
 }
 
+/// Adds one raw path (a PDB path, a source file, a share) with an explicit source label.
+/// Returns `false` when the text is not a recognisable absolute path.
+pub(crate) fn add_path(meta: &mut Metadata, raw: &str, source: &str) -> bool {
+    let Some(info) = analyze_path(raw.trim()) else {
+        return false;
+    };
+    if meta.paths.len() < 2000 && !meta.paths.iter().any(|x| x.path == info.path) {
+        meta.paths.push(PathRef {
+            path: info.path,
+            kind: info.kind,
+            user: info.user,
+            host: info.host,
+            source: source.to_string(),
+        });
+    }
+    true
+}
+
 /// Post-processes metadata: paths and e-mail addresses from all text fields go to `paths` and
 /// `emails`, users from paths to `people`, and UNC hosts to `servers`.
 pub fn finalize(meta: &mut Metadata) {

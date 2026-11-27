@@ -19,6 +19,4 @@ cfb.workspace = true
 jpeg-decoder.workspace = true
 x509-parser.workspace = true
 sha2.workspace = true
-
-[dev-dependencies]
 serde_json.workspace = true

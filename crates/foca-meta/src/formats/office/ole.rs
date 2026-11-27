@@ -705,6 +705,7 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         DocFormat::Doc => word_binary(&mut meta, &mut cf, ctx)?,
         DocFormat::Xls => excel_binary(&mut meta, &mut cf, ctx)?,
         DocFormat::Ppt => ppt_current_user(&mut meta, &mut cf, ctx)?,
+        DocFormat::Msi => msi_summary(&mut meta),
         _ => {}
     }
     // macros and embedded objects
@@ -746,6 +747,21 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         }
     }
     Ok(meta)
+}
+
+/// Windows Installer reuses the summary information properties: Template holds the platform
+/// and languages (`x64;1033`), Revision Number holds the package code GUID, Subject the
+/// product name and Comments the description.
+fn msi_summary(meta: &mut Metadata) {
+    if let Some(t) = meta.template.take() {
+        meta.fields.insert("msi:platform".into(), t);
+    }
+    if let Some(r) = meta.revision.take() {
+        meta.fields.insert("msi:package_code".into(), r);
+    }
+    if let Some(s) = meta.subject.clone() {
+        meta.fields.insert("msi:product".into(), s);
+    }
 }
 
 /// Parses an MS-OLEDS `\x01Ole10Native` embedded package stream: extracts original filename,
