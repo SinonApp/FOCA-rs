@@ -240,9 +240,16 @@ fn provenance_map(c: &Ctx) -> BTreeMap<String, DocProvenance> {
 /// External storage downloads allowed for this project: exactly the linked items recorded in
 /// the provenance, with the provider's hosts for redirects.
 pub(crate) fn storage_allow(c: &Ctx) -> std::collections::HashMap<String, StorageItem> {
-    let ep = &c.e.cfg.endpoints.storage;
+    storage_allow_for(provenance_map(c), &c.e.cfg.endpoints.storage)
+}
+
+/// [`storage_allow`] from a provenance map (re-downloads outside a scan use it too).
+pub(crate) fn storage_allow_for(
+    prov: BTreeMap<String, DocProvenance>,
+    ep: &StorageEndpoints,
+) -> std::collections::HashMap<String, StorageItem> {
     let mut out = std::collections::HashMap::new();
-    for (fetch, p) in provenance_map(c) {
+    for (fetch, p) in prov {
         let (Some(id), Some(link)) = (p.storage.as_deref(), p.link.as_deref()) else {
             continue;
         };

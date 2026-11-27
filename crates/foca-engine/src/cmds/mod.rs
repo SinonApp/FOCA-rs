@@ -11,6 +11,7 @@ mod findings;
 pub(crate) mod hygiene;
 pub(crate) mod offline;
 pub(crate) mod projects;
+pub(crate) mod reextract;
 mod reports;
 mod scans;
 mod security;

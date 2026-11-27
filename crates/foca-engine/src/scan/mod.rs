@@ -648,7 +648,7 @@ fn sev_of(s: &str) -> Severity {
 }
 
 pub(crate) mod control;
-mod documents;
+pub(crate) mod documents;
 pub(crate) mod fuzz;
 pub(crate) mod hosts;
 pub(crate) mod infra;

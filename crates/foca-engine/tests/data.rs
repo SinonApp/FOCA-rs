@@ -8,8 +8,10 @@ mod data {
     mod files;
     mod hygiene;
     mod offline;
+    mod reextract;
     mod scan_delete;
     mod scope_bulk;
     mod toolbox;
     mod upgrade;
+    mod upgrade_b4;
 }

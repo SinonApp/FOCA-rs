@@ -26,10 +26,13 @@ impl Engine {
             .into_iter()
             .find(|d| d.doc.id == n)
             .ok_or_else(|| CmdError::not_found(format!("Документ {n} не найден")))?;
-        let path = d
-            .local_path
-            .filter(|p| std::path::Path::new(p).is_file())
-            .ok_or_else(|| CmdError::not_found("Файл документа ещё не скачан"))?;
+        let path = crate::cmds::reextract::resolve_local(
+            &self.inner.cfg.data_dir,
+            &id,
+            d.local_path.as_deref(),
+        )
+        .map(|p| p.to_string_lossy().into_owned())
+        .ok_or_else(|| CmdError::not_found("Файл документа ещё не скачан"))?;
         let size = std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0);
         Ok(json!({ "path": path, "name": d.doc.name, "size": size }))
     }

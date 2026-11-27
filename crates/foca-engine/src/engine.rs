@@ -69,6 +69,8 @@ pub struct Core {
     /// In-memory session cache of cloud AI models fetched via `ai_models_list`, keyed by
     /// `"{provider}|{base_url}"`.
     pub(crate) ai_models_cache: Mutex<HashMap<String, Vec<Value>>>,
+    /// Running document re-analysis jobs by project id (`project_reextract`).
+    pub(crate) reextract_jobs: Mutex<HashMap<String, crate::cmds::reextract::ReJob>>,
     /// Running `ai_summarize` requests by project id (one per project; `ai_cancel` fires the token).
     pub(crate) ai_jobs: Mutex<HashMap<String, CancellationToken>>,
     /// Waiting in-scan retries of postponed dorks by project (`dorks_retry` wakes them).
@@ -315,6 +317,14 @@ impl Engine {
         self.inner
             .queue_halt
             .store(true, std::sync::atomic::Ordering::SeqCst);
+        let jobs: Vec<_> = lock(&self.inner.reextract_jobs).drain().collect();
+        for (_, mut j) in jobs {
+            j.cancel.cancel();
+            if let Some(h) = j.handle.take() {
+                h.abort();
+                let _ = h.await;
+            }
+        }
         let run = lock(&self.inner.run).take();
         if let Some(mut r) = run {
             r.cancel.cancel();

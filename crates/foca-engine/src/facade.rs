@@ -86,6 +86,7 @@ impl Engine {
                 queue_progress: Mutex::new(None),
                 ai_models_cache: Mutex::new(HashMap::new()),
                 ai_jobs: Mutex::new(HashMap::new()),
+                reextract_jobs: Mutex::new(HashMap::new()),
                 dork_jobs: Mutex::new(HashMap::new()),
             }),
         };
@@ -252,6 +253,9 @@ impl Engine {
             "pin_check" => self.pin_check(&a).await,
             "wipe_all" => self.wipe_all(&a).await,
             "doc_import" => self.doc_import(&a).await,
+            "project_reextract" => self.project_reextract(&a).await,
+            "reextract_status" => self.reextract_status(&a),
+            "reextract_cancel" => self.reextract_cancel(&a),
             "import_offline" => offline::import_offline(self, &a).await,
             "demo_case_import" => demo_case::demo_case_import(self, &a).await,
             "import_cancel" => offline::import_cancel(self),
