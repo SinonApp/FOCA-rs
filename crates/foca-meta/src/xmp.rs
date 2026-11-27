@@ -231,6 +231,14 @@ pub fn parse(bytes: &[u8], ctx: &Ctx) -> BTreeMap<String, String> {
 /// Collects XMP from an already parsed element (for example `<metadata>` in SVG).
 pub fn parse_element(root: &Element, map: &mut BTreeMap<String, String>) {
     for d in root.walk() {
+        // the XMP toolkit that wrote the packet (`x:xmptk`, older `x:xaptk`)
+        if matches!(d.local(), "xmpmeta" | "xapmeta") {
+            for k in ["x:xmptk", "x:xaptk"] {
+                if let Some(v) = d.attr(k) {
+                    add(map, "x:xmptk", v);
+                }
+            }
+        }
         if d.name == "rdf:Description" || (d.local() == "Work" && d.name.starts_with("cc:")) {
             walk_desc(map, None, d, 0);
         }
@@ -303,6 +311,9 @@ pub fn apply(meta: &mut Metadata, map: &BTreeMap<String, String>, source: &str) 
         Metadata::add_unique(&mut meta.software, v);
     }
     if let Some(v) = map.get("pdf:Producer") {
+        Metadata::add_unique(&mut meta.software, v);
+    }
+    if let Some(v) = map.get("x:xmptk") {
         Metadata::add_unique(&mut meta.software, v);
     }
     for (k, v) in map {

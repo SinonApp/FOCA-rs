@@ -5,6 +5,7 @@ pub(crate) mod av;
 pub(crate) mod image;
 pub(crate) mod image_extra;
 pub(crate) mod indesign;
+pub(crate) mod irb;
 pub(crate) mod isobmff;
 pub(crate) mod mp3;
 pub(crate) mod postscript;

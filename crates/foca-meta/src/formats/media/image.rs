@@ -109,6 +109,7 @@ pub(crate) fn apply_exif_tiff(meta: &mut Metadata, tiff: Vec<u8>, ctx: &Ctx) -> 
         return false;
     };
     exif_meta(meta, &ex);
+    maker_note(meta, &ex);
     if let Some(f) = ex.get_field(Tag(Context::Tiff, 700), In::PRIMARY) {
         if let Value::Byte(x) | Value::Undefined(x, _) = &f.value {
             let map = xmp::parse(x, ctx);
@@ -154,18 +155,29 @@ fn exif_meta(meta: &mut Metadata, ex: &exif::Exif) {
     if let Some(h) = s(Tag(Context::Tiff, 0x013C)) {
         meta.add_server(&h, "exif:HostComputer");
     }
-    meta.description = s(Tag::ImageDescription).or_else(|| s(Tag(Context::Tiff, 0x9C9C)));
-    meta.title = s(Tag(Context::Tiff, 0x9C9B));
-    meta.keywords = s(Tag(Context::Tiff, 0x9C9E));
-    meta.subject = s(Tag(Context::Tiff, 0x9C9F));
-    meta.created = ex
-        .get_field(Tag::DateTimeOriginal, In::PRIMARY)
-        .and_then(ascii)
-        .and_then(|d| normalize_date(&d));
-    meta.modified = s(Tag::DateTime).and_then(|d| normalize_date(&d));
-    if meta.created.is_none() {
-        meta.created = s(Tag::DateTimeDigitized).and_then(|d| normalize_date(&d));
-    }
+    // a later EXIF block (PSD resources, HEIF items) never erases values found earlier
+    let set = |slot: &mut Option<String>, v: Option<String>| {
+        if v.is_some() {
+            *slot = v;
+        }
+    };
+    set(
+        &mut meta.description,
+        s(Tag::ImageDescription).or_else(|| s(Tag(Context::Tiff, 0x9C9C))),
+    );
+    set(&mut meta.title, s(Tag(Context::Tiff, 0x9C9B)));
+    set(&mut meta.keywords, s(Tag(Context::Tiff, 0x9C9E)));
+    set(&mut meta.subject, s(Tag(Context::Tiff, 0x9C9F)));
+    set(
+        &mut meta.created,
+        s(Tag::DateTimeOriginal)
+            .or_else(|| s(Tag::DateTimeDigitized))
+            .and_then(|d| normalize_date(&d)),
+    );
+    set(
+        &mut meta.modified,
+        s(Tag::DateTime).and_then(|d| normalize_date(&d)),
+    );
     // GPS
     let lat = get(Tag::GPSLatitude).and_then(rational3);
     let lon = get(Tag::GPSLongitude).and_then(rational3);
@@ -242,102 +254,6 @@ fn exif_meta(meta: &mut Metadata, ex: &exif::Exif) {
             .insert(format!("exif:{}", f.tag), truncate(&v, 256));
     }
     // XMP in TIFF (tag 700)
-}
-
-fn iptc(meta: &mut Metadata, data: &[u8]) {
-    // "Photoshop 3.0\0" followed by 8BIM blocks; resource 0x0404 is IPTC-NAA
-    let mut p = 14;
-    while p + 12 <= data.len() {
-        if &data[p..p + 4] != b"8BIM" {
-            break;
-        }
-        let id = u16::from_be_bytes([data[p + 4], data[p + 5]]);
-        let nlen = usize::from(data[p + 6]);
-        let mut q = p + 7 + nlen;
-        if (1 + nlen) % 2 == 1 {
-            q += 1;
-        }
-        let Some(sz) = data
-            .get(q..q + 4)
-            .map(|s| u32::from_be_bytes([s[0], s[1], s[2], s[3]]) as usize)
-        else {
-            break;
-        };
-        let start = q + 4;
-        let Some(end) = start.checked_add(sz).filter(|e| *e <= data.len()) else {
-            break;
-        };
-        if id == 0x0404 {
-            iptc_records(meta, &data[start..end]);
-        }
-        p = end + (sz % 2);
-    }
-}
-
-fn iptc_records(meta: &mut Metadata, d: &[u8]) {
-    let mut p = 0;
-    let mut kw = Vec::new();
-    while p + 5 <= d.len() && d[p] == 0x1C {
-        let rec = d[p + 1];
-        let ds = d[p + 2];
-        let len = usize::from(u16::from_be_bytes([d[p + 3], d[p + 4]]));
-        if len & 0x8000 != 0 {
-            break;
-        }
-        let Some(v) = d.get(p + 5..p + 5 + len) else {
-            break;
-        };
-        p += 5 + len;
-        if rec != 2 {
-            continue;
-        }
-        let Some(s) = clean_str(&crate::util::decode_text(v)) else {
-            continue;
-        };
-        let key = match ds {
-            5 => "ObjectName",
-            25 => {
-                kw.push(s.clone());
-                "Keywords"
-            }
-            65 => "OriginatingProgram",
-            80 => "By-line",
-            85 => "By-lineTitle",
-            90 => "City",
-            95 => "Province-State",
-            101 => "Country",
-            105 => "Headline",
-            110 => "Credit",
-            115 => "Source",
-            116 => "CopyrightNotice",
-            118 => "Contact",
-            120 => "Caption-Abstract",
-            122 => "Writer-Editor",
-            _ => continue,
-        };
-        match ds {
-            80 => {
-                meta.add_person(&s, PersonRole::Author, "iptc:By-line");
-                meta.author.get_or_insert(s.clone());
-            }
-            122 => meta.add_person(&s, PersonRole::Other, "iptc:Writer-Editor"),
-            65 => Metadata::add_unique(&mut meta.software, &s),
-            105 => {
-                meta.title.get_or_insert(s.clone());
-            }
-            120 => {
-                meta.description.get_or_insert(s.clone());
-            }
-            _ => {}
-        }
-        if ds != 25 {
-            meta.fields.insert(format!("iptc:{key}"), truncate(&s, 512));
-        }
-    }
-    if !kw.is_empty() {
-        meta.fields.insert("iptc:Keywords".into(), kw.join(", "));
-        meta.keywords.get_or_insert(kw.join(", "));
-    }
 }
 
 fn png_chunks(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError> {
@@ -504,7 +420,9 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
                         let map = xmp::parse(&data[29..], ctx);
                         xmp::apply(&mut meta, &map, "xmp");
                     }
-                    0xED if data.starts_with(b"Photoshop 3.0\0") => iptc(&mut meta, data),
+                    0xED if data.starts_with(b"Photoshop 3.0\0") => {
+                        super::irb::apply(&mut meta, &data[14..], ctx, "8BIM:Thumbnail")?;
+                    }
                     0xFE => {
                         if let Some(c) = clean_str(&crate::util::decode_text(data)) {
                             meta.fields
