@@ -147,7 +147,7 @@ export default async (page, { out, W, fsc, theme }) => {
     await go("/new");
     await ev(() => { const b = [...document.querySelectorAll("summary, button")].find(x => /Дополнительно/.test(x.textContent)); if (b) b.click(); }); await wait(300);
     const types = await ev(() => [...document.querySelectorAll(".la-docs .chip")].map(c => c.textContent.slice(1)));
-    ok("wizard: 1.3 formats in the document types (grouped)", ["eml", "msg", "ics", "vcf", "vsdx", "vsd", "pub", "mp4", "mov", "zip", "heic", "rtf"].every(x => types.includes(x)) && (await ev(() => document.querySelectorAll(".la-dg").length)) === 5, types.join(" "));
+    ok("wizard: 1.3 and beta.4 formats in the document types (grouped)", ["eml", "msg", "ics", "vcf", "vsdx", "vsd", "pub", "mp4", "mov", "zip", "heic", "rtf", "exe", "msi", "jar", "apk", "dwg", "dxf", "eps", "tar", "wav", "mkv", "kml", "gpx", "map", "ipynb"].every(x => types.includes(x)) && (await ev(() => document.querySelectorAll(".la-dg").length)) === 9, types.join(" "));
     if (await scrollTo(".la-dg")) { await shot("wizard_types"); }
     await noOvf("wizard document types");
 

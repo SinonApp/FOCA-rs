@@ -6,19 +6,9 @@ use std::io::Read;
 
 use foca_core::{DocFormat, Metadata};
 
+use crate::formats::magic::GZIP_MAGIC;
 use crate::util::{clean_str, rd_u32le, truncate, unix_to_iso};
 use crate::{Ctx, MetaError};
-
-pub(crate) const GZIP_MAGIC: [u8; 3] = [0x1F, 0x8B, 0x08];
-pub(crate) const XZ_MAGIC: [u8; 6] = [0xFD, b'7', b'z', b'X', b'Z', 0x00];
-
-pub(crate) fn is_bzip2(b: &[u8]) -> bool {
-    b.len() >= 10
-        && b.starts_with(b"BZh")
-        && (b'1'..=b'9').contains(&b[3])
-        && (b[4..10] == [0x31, 0x41, 0x59, 0x26, 0x53, 0x59]
-            || b[4..10] == [0x17, 0x72, 0x45, 0x38, 0x50, 0x90])
-}
 
 fn os_name(os: u8) -> Option<&'static str> {
     Some(match os {

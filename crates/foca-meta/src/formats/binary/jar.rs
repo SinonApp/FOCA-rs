@@ -8,7 +8,6 @@
 
 use foca_core::{DocFormat, Metadata, PersonRole, SignatureKind};
 
-use crate::formats::archive::zipcd;
 use crate::formats::signature;
 use crate::util::{clean_str, find, rd_u32le, rd_u64le, truncate};
 use crate::zipx::SafeZip;
@@ -91,7 +90,6 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         }
     }
     signature::apply_signers(&mut meta, "jar:signer");
-    zipcd::apply(&mut meta, b, ctx.max_entries());
     Ok(meta)
 }
 

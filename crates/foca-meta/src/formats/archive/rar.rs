@@ -4,11 +4,9 @@
 use foca_core::{Attachment, DocFormat, Metadata};
 
 use crate::formats::archive::zipfile::is_unsafe_name;
+use crate::formats::magic::{RAR4, RAR5};
 use crate::util::{rd_u16le, rd_u32le, truncate, unix_to_iso};
 use crate::{Ctx, MetaError};
-
-pub(crate) const RAR4: &[u8] = b"Rar!\x1a\x07\x00";
-pub(crate) const RAR5: &[u8] = b"Rar!\x1a\x07\x01\x00";
 
 const MAX_LISTED: usize = 1000;
 

@@ -83,18 +83,18 @@ pub(crate) fn detect_with_hint(bytes: &[u8], name_hint: Option<&str>) -> DocForm
 
 /// Signatures of the executable, archive, CAD, PostScript and audio/video formats.
 fn detect_new_binary(b: &[u8], name_hint: Option<&str>) -> Option<DocFormat> {
-    use crate::formats::archive::{compressed, rar};
+    use crate::formats::magic;
     use crate::formats::media::{av, postscript};
-    if b.starts_with(rar::RAR4) || b.starts_with(rar::RAR5) {
+    if b.starts_with(magic::RAR4) || b.starts_with(magic::RAR5) {
         return Some(DocFormat::Rar);
     }
-    if b.starts_with(&compressed::GZIP_MAGIC) {
+    if b.starts_with(&magic::GZIP_MAGIC) {
         return Some(DocFormat::Gzip);
     }
-    if compressed::is_bzip2(b) {
+    if magic::is_bzip2(b) {
         return Some(DocFormat::Bzip2);
     }
-    if b.starts_with(&compressed::XZ_MAGIC) {
+    if b.starts_with(&magic::XZ_MAGIC) {
         return Some(DocFormat::Xz);
     }
     if b.starts_with(&av::ASF_HEADER) {
@@ -125,7 +125,7 @@ fn detect_new_binary(b: &[u8], name_hint: Option<&str>) -> Option<DocFormat> {
     if b.starts_with(&[0xD7, 0xCD, 0xC6, 0x9A]) || (postscript::is_wmf(b) && ext == "wmf") {
         return Some(DocFormat::Wmf);
     }
-    if crate::formats::archive::tar::is_tar(b)
+    if magic::is_tar(b)
         && (b.get(257..262) == Some(b"ustar") || matches!(ext.as_str(), "tar" | "tgz"))
     {
         return Some(DocFormat::Tar);

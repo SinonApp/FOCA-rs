@@ -237,6 +237,10 @@ fn structural_field(k: &str) -> bool {
             | "media:handler"
     ) || k.starts_with("image:")
         || k.starts_with("png:")
+        // the colour profile stays so colours render the same; only the device model can name
+        // a scanner or camera
+        || (k.starts_with("icc:") && !k.starts_with("icc:device_model"))
+        || matches!(k, "pdf:xfa" | "pdf:portfolio" | "pdf:OutputIntent")
         // hidden sheets are content (graded as hidden content), query text is content
         || k.starts_with("xl:veryHidden:")
         || k.starts_with("xl:hidden:")

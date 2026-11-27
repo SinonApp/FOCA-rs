@@ -4,54 +4,11 @@
 use foca_core::{Attachment, DocFormat, Metadata, PersonRole};
 
 use crate::formats::archive::zipfile::is_unsafe_name;
+use crate::formats::magic::{is_tar, octal};
 use crate::util::{clean_str, truncate, unix_to_iso};
 use crate::{Ctx, MetaError, MAX_CHILDREN};
 
 const MAX_LISTED: usize = 1000;
-
-/// Returns `true` for a block whose header checksum is valid (any tar dialect).
-pub(crate) fn is_tar(b: &[u8]) -> bool {
-    let Some(h) = b.get(..512) else { return false };
-    if h.iter().all(|&c| c == 0) {
-        return false;
-    }
-    let Some(sum) = octal(&h[148..156]) else {
-        return false;
-    };
-    let calc: u64 = h
-        .iter()
-        .enumerate()
-        .map(|(i, &c)| {
-            if (148..156).contains(&i) {
-                32
-            } else {
-                u64::from(c)
-            }
-        })
-        .sum();
-    sum == calc
-}
-
-fn octal(f: &[u8]) -> Option<u64> {
-    // base-256 for large values (GNU)
-    if f.first().is_some_and(|c| c & 0x80 != 0) {
-        let mut v: u64 = u64::from(f[0] & 0x7F);
-        for &c in &f[1..] {
-            v = v.checked_mul(256)?.checked_add(u64::from(c))?;
-        }
-        return Some(v);
-    }
-    let s: String = f
-        .iter()
-        .take_while(|&&c| c != 0)
-        .map(|&c| c as char)
-        .collect();
-    let s = s.trim();
-    if s.is_empty() {
-        return Some(0);
-    }
-    u64::from_str_radix(s, 8).ok()
-}
 
 fn cstr(f: &[u8]) -> String {
     let end = f.iter().position(|&c| c == 0).unwrap_or(f.len());

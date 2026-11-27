@@ -295,7 +295,11 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
             ole::extract(bytes, format, ctx)?
         }
         DocFormat::Exe => pe::extract(bytes, ctx)?,
-        DocFormat::Jar | DocFormat::Apk => jar::extract(bytes, format, ctx)?,
+        DocFormat::Jar | DocFormat::Apk => {
+            let mut m = jar::extract(bytes, format, ctx)?;
+            formats::archive::zipcd::apply(&mut m, bytes, ctx.max_entries());
+            m
+        }
         DocFormat::Svg => svg::extract(bytes, ctx)?,
         DocFormat::Rdp => remote::extract_rdp(bytes),
         DocFormat::Ica => remote::extract_ica(bytes),

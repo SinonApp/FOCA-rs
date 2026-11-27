@@ -7,6 +7,7 @@ pub(crate) mod detect;
 pub(crate) mod dev;
 pub(crate) mod geo;
 pub(crate) mod lnk;
+pub(crate) mod magic;
 pub(crate) mod mail;
 pub(crate) mod media;
 pub(crate) mod office;

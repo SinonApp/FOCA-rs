@@ -154,7 +154,7 @@ mod tests {
                 source: "pe:pdb".into(),
             })
         };
-        let docs = vec![
+        let docs = [
             doc(1, |m| pdb(m, r"C:\src\Tool\bin\Debug\Tool.pdb")),
             doc(2, |m| pdb(m, r"c:\src\tool\obj\x64\Release\Tool.Core.pdb")),
             doc(3, |m| {

@@ -263,7 +263,7 @@ fn clusters_and_infrastructure_from_new_sources() {
     });
     let mut e = Metadata::new(DocFormat::Eml);
     e.add_server("mx-int.corp.example.test", "mail header");
-    let docs = vec![
+    let docs = [
         exe(1, r"C:\Users\jdev\src\Billing\obj\Release\Billing.pdb"),
         exe(
             2,
