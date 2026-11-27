@@ -170,6 +170,12 @@ fn lines(m: &CveMatch, s: &CveSummary) -> Vec<String> {
     if let Some(date) = &m.last_doc {
         d.push(format!("Последний документ с этой версией: {date}."));
     }
+    if s.later > 0 {
+        d.push(format!(
+            "Ещё CVE, опубликованных после этого документа: {} (не учтены: ПО могли обновить).",
+            s.later
+        ));
+    }
     d
 }
 

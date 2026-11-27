@@ -261,6 +261,9 @@ pub struct CveQuery {
     pub version: Option<String>,
     /// Where the version was found (`header`, `html`, `js`, `plugin_path`, `readme`, `meta`).
     pub source: String,
+    /// Software seen in documents: only CVEs published up to this year count (a document shows
+    /// the version at the time it was made; later CVEs go to `CveSummary::later`).
+    pub until_year: Option<u16>,
 }
 
 /// Normalized slug spelling (`Contact-Form 7` -> `contact_form_7`).
@@ -499,6 +502,11 @@ impl CveDb {
         known.dedup();
         hit.sort_unstable();
         hit.dedup();
+        let before = hit.len();
+        if let Some(y) = q.until_year {
+            hit.retain(|i| self.cves[*i as usize].year <= y);
+        }
+        let later = (before - hit.len()) as u32;
         let version_known = ver.is_some_and(|v| norm_ver(v).is_some());
         let mut s = CveSummary {
             product: keys.join(","),
@@ -507,6 +515,7 @@ impl CveDb {
             source: q.source.clone(),
             known: known.len() as u32,
             matched: hit.len() as u32,
+            later,
             ..Default::default()
         };
         let mut refs: Vec<&CveRec> = hit.iter().map(|i| &self.cves[*i as usize]).collect();

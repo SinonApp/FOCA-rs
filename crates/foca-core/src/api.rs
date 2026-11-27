@@ -340,6 +340,10 @@ fn is_zero(v: &u8) -> bool {
     *v == 0
 }
 
+fn is_zero_u32(v: &u32) -> bool {
+    *v == 0
+}
+
 /// `Person`. Extra fields outside the contract: `aliases`, `service`, `emails`, `dept`,
 /// `dept_conf`, `title`.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -463,6 +467,10 @@ pub struct CveSummary {
     pub max_epss: Option<f32>,
     /// Matched CVEs: KEV first, then by CVSS and EPSS.
     pub cves: Vec<CveRef>,
+    /// CVEs that contain the version but were published after the year it was last seen in a
+    /// document (the machine may have been updated since): not counted above.
+    #[serde(skip_serializing_if = "is_zero_u32")]
+    pub later: u32,
 }
 
 /// `Host`. Extra field: `scope`, one of `in_scope` | `excluded` | `out_of_scope`.

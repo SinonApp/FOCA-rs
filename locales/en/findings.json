@@ -3995,6 +3995,12 @@
       "rules": "doc.author_cluster",
       "pattern": "серийный номер камеры: {}",
       "text": "camera serial number: {0}"
+    },
+    {
+      "id": "f667",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Ещё CVE, опубликованных после этого документа: {} (не учтены: ПО могли обновить).",
+      "text": "More CVEs published after this document: {0} (not counted: the software may have been updated)."
     }
   ],
   "tech_cats": {

@@ -212,3 +212,35 @@ fn builtin_table_loads_fast_and_finds_real_products() {
     assert!(per.as_millis() < 200, "lookup {per:?}");
     eprintln!("nvd table: load {load:?}, lookup {per:?}, {:?}", d.meta);
 }
+
+#[test]
+fn document_software_counts_only_cves_up_to_the_document_year() {
+    // Chrome m142 seen in a 2025 document: CVEs fixed later are real for that build but say
+    // nothing about the machine today, so only those published up to 2025 count.
+    let d = CveDb::parse(NVD_GZ).unwrap();
+    let all = d.lookup(&q(&["google:chrome"], Some("m142"))).unwrap();
+    let mut dated = q(&["google:chrome"], Some("m142"));
+    dated.until_year = Some(2025);
+    let s = d.lookup(&dated).unwrap();
+    assert!(
+        s.matched < all.matched / 4,
+        "{} of {}",
+        s.matched,
+        all.matched
+    );
+    assert_eq!(s.matched + s.later, all.matched);
+    assert!(
+        s.cves.iter().all(|c| c.id.as_str() < "CVE-2026"),
+        "{:?}",
+        ids(&s)
+    );
+    eprintln!(
+        "chrome m142: {} -> {} (later {})",
+        all.matched, s.matched, s.later
+    );
+    // the small fixture: 2099 CVEs vanish for a 2098 document
+    let mut old = q(&["f5:nginx"], Some("1.18.0"));
+    old.until_year = Some(2098);
+    let s = db().lookup(&old).unwrap();
+    assert_eq!((s.matched, s.later), (0, 2));
+}

@@ -77,6 +77,11 @@ fn label(name: &str, ver: &str) -> String {
 }
 
 /// Fills `last_doc`, `cve_sum`, `cve` and `cves` of every software and OS entry.
+/// Year of a `YYYY-MM-DD` date.
+fn year_of(day: Option<&str>) -> Option<u16> {
+    day.and_then(|d| d.get(..4)).and_then(|y| y.parse().ok())
+}
+
 pub fn annotate(a: &mut Analysis, db: &CveDb) {
     let dates = doc_dates(a);
     for s in &mut a.software {
@@ -85,6 +90,7 @@ pub fn annotate(a: &mut Analysis, db: &CveDb) {
             keys: s.cpe.clone(),
             version: Some(s.ver.clone()),
             source: "meta".into(),
+            until_year: year_of(s.last_doc.as_deref()),
             ..Default::default()
         });
         let (n, top) = s
@@ -108,6 +114,7 @@ pub fn annotate(a: &mut Analysis, db: &CveDb) {
             keys: o.cpe.clone(),
             version: Some(o.ver.clone()),
             source: "meta".into(),
+            until_year: year_of(o.last_doc.as_deref()),
             ..Default::default()
         });
     }
@@ -145,15 +152,17 @@ pub fn doc_matches(a: &Analysis, db: &CveDb) -> Vec<CveMatch> {
         if cpe.is_empty() {
             continue;
         }
+        let (last_doc, docs) = dates.get(id).cloned().unwrap_or_default();
+        let until_year = year_of(last_doc.as_deref());
         let Some(summary) = db.lookup(&CveQuery {
             keys: cpe.clone(),
             version: Some(ver.clone()),
             source: "meta".into(),
+            until_year,
             ..Default::default()
         }) else {
             continue;
         };
-        let (last_doc, docs) = dates.get(id).cloned().unwrap_or_default();
         groups
             .entry(format!("{kind:?}|{}", summary.product))
             .or_default()
@@ -211,6 +220,7 @@ impl TechInput {
             slug: self.slug.clone().zip(self.plugin_of.clone()),
             version: self.version.clone(),
             source: version_source(&self.evidence, plugin),
+            until_year: None,
         }
     }
 }
@@ -314,22 +324,22 @@ P\texample_vendor:form_x@wordpress\tp
                 sw("lo242", "24.2.0"),
             ],
             facts: vec![
-                doc(1, "lo64", "2021-03-01T10:00:00Z"),
-                doc(2, "lo75", "2026-05-01T10:00:00Z"),
-                doc(3, "lo242", "2025-01-10T10:00:00Z"),
-                doc(4, "lo64", "2020-01-01T10:00:00Z"),
+                doc(1, "lo64", "2099-03-01T10:00:00Z"),
+                doc(2, "lo75", "2099-06-01T10:00:00Z"),
+                doc(3, "lo242", "2099-01-10T10:00:00Z"),
+                doc(4, "lo64", "2099-01-01T10:00:00Z"),
             ],
             ..Default::default()
         };
         let m = doc_matches(&a, &db);
         assert_eq!(m.len(), 1);
         assert_eq!(m[0].ver, "7.5.1");
-        assert_eq!(m[0].last_doc.as_deref(), Some("2026-05-01"));
+        assert_eq!(m[0].last_doc.as_deref(), Some("2099-06-01"));
         assert_eq!(m[0].side, "workstation");
         assert!(m[0].is_workstation());
         assert_eq!(m[0].summary.matched, 1);
         annotate(&mut a, &db);
-        assert_eq!(a.software[0].last_doc.as_deref(), Some("2021-03-01"));
+        assert_eq!(a.software[0].last_doc.as_deref(), Some("2099-03-01"));
         assert_eq!(a.software[0].cve, 1);
         assert_eq!(a.software[0].cves[0].0, "CVE-2099-0001");
         assert_eq!(a.software[2].cve_sum.as_ref().unwrap().high, 1);

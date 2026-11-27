@@ -3997,6 +3997,12 @@
  },
  {
   "lang": "en",
+  "rule": "sw.cve",
+  "text": "Ещё CVE, опубликованных после этого документа: X1 (не учтены: ПО могли обновить).",
+  "out": "More CVEs published after this document: X1 (not counted: the software may have been updated)."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -8002,6 +8008,12 @@
   "rule": "doc.author_cluster",
   "text": "серийный номер камеры: X1",
   "out": "серійний номер камери: X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Ещё CVE, опубликованных после этого документа: X1 (не учтены: ПО могли обновить).",
+  "out": "Ще CVE, опублікованих після цього документа: X1 (не враховано: ПЗ могли оновити)."
  },
  {
   "lang": "uk",

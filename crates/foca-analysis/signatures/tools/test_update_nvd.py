@@ -48,6 +48,19 @@ class FeedTests(unittest.TestCase):
         self.assertEqual(u.range_of({}, "-"), "*")
         self.assertEqual(u.range_of({}, "0.9.7"), "=0.9.7")
 
+    def test_bounded_entries_win_over_an_unbounded_one(self):
+        def m(crit, **k):
+            return {"vulnerable": True, "criteria": crit, **k}
+        cve = {"configurations": [
+            {"nodes": [{"cpeMatch": [m("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*", versionEndExcluding="143.0.1")]}]},
+            {"nodes": [{"cpeMatch": [m("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*")]}]},
+            {"nodes": [{"cpeMatch": [m("cpe:2.3:a:google:chrome:49.0.2623.87:*:*:*:*:*:*:*")]}]},
+        ]}
+        got = u.product_ranges(cve, {"google:chrome": {"s"}})
+        self.assertEqual(got["google:chrome"], ["=49.0.2623.87", "[,143.0.1)"])
+        only = {"configurations": [{"nodes": [{"cpeMatch": [m("cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*")]}]}]}
+        self.assertEqual(u.product_ranges(only, {"google:chrome": {"s"}})["google:chrome"], ["*"])
+
     def test_software_cpes_expand_office_apps(self):
         got = u.software_cpes(TOML)
         self.assertEqual(got["microsoft:word"], {"d"})

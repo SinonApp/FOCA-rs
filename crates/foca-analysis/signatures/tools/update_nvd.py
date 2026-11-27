@@ -232,7 +232,10 @@ def product_ranges(cve: dict, wanted: dict) -> dict:
                     continue
                 out.setdefault(key, set()).add(range_of(m, unescape(f[5])))
     for k, rs in out.items():
-        out[k] = ["*"] if "*" in rs else sorted(rs)
+        # A version-bounded or exact entry for the product wins over an unbounded one in another
+        # configuration (often a platform pairing): "all versions" only when nothing narrower exists.
+        narrow = rs - {"*"}
+        out[k] = sorted(narrow) if narrow else ["*"]
     return out
 
 
