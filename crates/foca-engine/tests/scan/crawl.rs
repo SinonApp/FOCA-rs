@@ -114,6 +114,16 @@ fn site(port_cell: Arc<std::sync::OnceLock<u16>>, r: &TestRequest) -> TestRespon
 async fn env_with_site(
     route: impl Fn(Arc<std::sync::OnceLock<u16>>, &TestRequest) -> TestResponse + Send + Sync + 'static,
 ) -> (Env, TestServer) {
+    env_with_site_hosts(route, &[]).await
+}
+
+/// Like [`env_with_site`], with extra host names resolving to the local server: a request to any
+/// of them would reach the test server and show up in its log with that Host header.
+async fn env_with_site_hosts(
+    route: impl Fn(Arc<std::sync::OnceLock<u16>>, &TestRequest) -> TestResponse + Send + Sync + 'static,
+    hosts: &[String],
+) -> (Env, TestServer) {
+    let hosts = hosts.to_vec();
     let cell: Arc<std::sync::OnceLock<u16>> = Arc::new(std::sync::OnceLock::new());
     let c2 = cell.clone();
     let site = TestServer::start(move |r| route(c2.clone(), r)).await;
@@ -127,10 +137,11 @@ async fn env_with_site(
             c.site_port = Some(port);
             c.endpoints.storage.drive = format!("http://drive.storage.test:{port}");
             c.endpoints.storage.docs = format!("http://drive.storage.test:{port}");
-            c.net.host_overrides.insert(
-                "drive.storage.test".into(),
-                vec!["127.0.0.1".parse().unwrap()],
-            );
+            for h in std::iter::once("drive.storage.test".to_string()).chain(hosts) {
+                c.net
+                    .host_overrides
+                    .insert(h, vec!["127.0.0.1".parse().unwrap()]);
+            }
         });
     (
         Env {
@@ -314,6 +325,244 @@ async fn storage_files_and_doc_links_stay_within_the_download_limit() {
     assert_eq!(site.hits("/files/l1.pdf"), 0);
     // direct files already fill the limit: the folder is not even listed
     assert_eq!(site.hits("/embeddedfolderview"), 0);
+}
+
+/// A one-page PDF whose link annotations point at every given URL (a reference list).
+fn pdf_refs(author: &str, links: &[String]) -> Vec<u8> {
+    let annots: String = links
+        .iter()
+        .map(|l| format!("<< /Type /Annot /Subtype /Link /A << /S /URI /URI ({l}) >> >>"))
+        .collect();
+    format!(
+        "%PDF-1.4\n1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n3 0 obj << /Type /Page /Parent 2 0 R /Annots [{annots}] >> endobj\n4 0 obj << /Author ({author}) /Producer (Writer) >> endobj\ntrailer << /Root 1 0 R /Info 4 0 R >>\n%%EOF\n"
+    )
+    .into_bytes()
+}
+
+/// Reference hosts outside the scope that a bibliography links to: they resolve to the local
+/// server, so a single request to any of them would show up in its log.
+fn reference_hosts() -> Vec<String> {
+    let mut v: Vec<String> = (0..24).map(|i| format!("journal{i}.example")).collect();
+    v.extend(["doi.example", "publisher.example"].map(String::from));
+    v
+}
+
+/// A paper with a bibliography: 50 references to journal, DOI-like and publisher hosts outside
+/// the scope, a subdomain document (`docs.`), a document on an excluded subdomain (`mail.`), a
+/// file and a folder on external storage, a link back to itself and a chain of in-scope documents.
+fn bibliography_site(port_cell: Arc<std::sync::OnceLock<u16>>, r: &TestRequest) -> TestResponse {
+    let port = port_cell.get().copied().unwrap_or(0);
+    let site = format!("http://example.test:{port}");
+    let drive = format!("http://drive.storage.test:{port}");
+    let doc = |p: &str| format!("{site}/files/{p}");
+    let host = host_of(r);
+    if host == "drive.storage.test" {
+        let id = r.query("id").unwrap_or_default();
+        return match (r.path(), id.as_str()) {
+            ("/uc", PUB) => pdf_resp(pdf("Olena Koval", None), Some("Plan 2026.pdf")),
+            ("/uc", F1) => pdf_resp(pdf("Taras Melnyk", None), Some("Minutes.pdf")),
+            ("/embeddedfolderview", FOLD) => html(format!(
+                r#"<div class="flip-entry" id="entry-{F1}"><a href="https://drive.storage.test/file/d/{F1}/view"><div class="flip-entry-title">Minutes.pdf</div></a></div>"#
+            )),
+            _ => TestResponse::status(404),
+        };
+    }
+    if host != "example.test" {
+        // any other host: a document that must never be fetched
+        return pdf_resp(pdf("X", None), None);
+    }
+    match r.path() {
+        "/" => html(r#"<a href="/files/paper.pdf">paper</a>"#),
+        "/files/paper.pdf" => {
+            let hosts = reference_hosts();
+            let mut refs: Vec<String> = (0..50)
+                .map(|i| {
+                    let h = &hosts[i % hosts.len()];
+                    if h.starts_with("doi") {
+                        format!("http://{h}:{port}/10.5555/ref.{i}.pdf")
+                    } else {
+                        format!("http://{h}:{port}/articles/{i}.pdf")
+                    }
+                })
+                .collect();
+            refs.push(doc("a.pdf"));
+            refs.push(doc("paper.pdf"));
+            refs.push(format!("{site}/about"));
+            refs.push(format!("http://docs.example.test:{port}/files/sub.pdf"));
+            refs.push(format!(
+                "http://mail.example.test:{port}/files/excluded.pdf"
+            ));
+            refs.push(format!("{drive}/file/d/{PUB}/view?usp=sharing"));
+            refs.push(format!("{drive}/drive/folders/{FOLD}?usp=sharing"));
+            pdf_resp(pdf_refs("P", &refs), None)
+        }
+        // a -> paper closes the loop paper -> a -> paper; a -> a links to itself
+        "/files/a.pdf" => pdf_resp(
+            pdf_refs("A", &[doc("b.pdf"), doc("paper.pdf"), doc("a.pdf")]),
+            None,
+        ),
+        "/files/b.pdf" => pdf_resp(pdf_refs("B", &[doc("a.pdf"), doc("c.pdf")]), None),
+        "/files/c.pdf" => pdf_resp(pdf_refs("C", &[doc("d.pdf")]), None),
+        "/files/d.pdf" => pdf_resp(pdf("D", None), None),
+        _ => TestResponse::status(404),
+    }
+}
+
+/// Only in-scope things are followed from links inside documents: none of the 50 off-scope
+/// bibliography hosts, no subdomain outside an exact-host scope, no excluded subdomain; in-scope
+/// documents once each up to two steps (a loop fetches nothing twice); nothing from the site at
+/// the passive level; external storage only when its switch is on, and then only the exact
+/// linked file, never the folder. Followed documents also count against the download limit.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn doc_links_only_follow_scope() {
+    let mut extra = reference_hosts();
+    extra.extend(["docs.example.test", "mail.example.test"].map(String::from));
+    let (e, site) = env_with_site_hosts(bibliography_site, &extra).await;
+    let gets = |from: usize, host: &str, path: &str| {
+        site.requests()[from..]
+            .iter()
+            .filter(|r| r.method == "GET" && host_of(r) == host && r.path() == path)
+            .count()
+    };
+    let hosts_since =
+        |from: usize| -> Vec<String> { site.requests()[from..].iter().map(host_of).collect() };
+    let names = |s: &Value| -> Vec<String> {
+        let mut v: Vec<String> = s["docs"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|d| d["name"].as_str().unwrap().to_string())
+            .collect();
+        v.sort_unstable();
+        v
+    };
+    let refs = reference_hosts();
+    let no_reference_requests = |from: usize, label: &str| {
+        let hit: Vec<String> = hosts_since(from)
+            .into_iter()
+            .filter(|h| refs.contains(h))
+            .collect();
+        assert!(
+            hit.is_empty(),
+            "{label}: requests to reference hosts {hit:?}"
+        );
+    };
+
+    // domain scope example.test with mail.example.test excluded, storage on
+    let id = e.project("bib").await;
+    let from = site.requests().len();
+    crawl_scan(&e, &id, json!({})).await;
+    let s = e.snap(&id).await;
+    assert_eq!(
+        names(&s),
+        ["Plan 2026.pdf", "a.pdf", "b.pdf", "paper.pdf", "sub.pdf"],
+        "depth 2 from the page, in-scope subdomain, the linked storage file"
+    );
+    // (a) none of the 50 references
+    no_reference_requests(from, "domain scope");
+    // (c) the excluded subdomain is never contacted, although it is under the target domain
+    assert!(
+        !hosts_since(from).iter().any(|h| h == "mail.example.test"),
+        "excluded host requested"
+    );
+    // (d) in-scope documents once each, up to two steps; the loop adds nothing
+    for (path, n) in [
+        ("/files/paper.pdf", 1),
+        ("/files/a.pdf", 1),
+        ("/files/b.pdf", 1),
+        ("/files/c.pdf", 0),
+        ("/files/d.pdf", 0),
+        ("/about", 0),
+    ] {
+        assert_eq!(gets(from, "example.test", path), n, "{path}");
+    }
+    assert_eq!(gets(from, "docs.example.test", "/files/sub.pdf"), 1);
+    let b = s["docs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|d| d["name"] == "b.pdf")
+        .unwrap();
+    assert_eq!(b["provenance"]["depth"], 2);
+    // (f, on) only the exact linked file id on the storage, the folder is never listed
+    let drive: Vec<String> = site.requests()[from..]
+        .iter()
+        .filter(|r| host_of(r) == "drive.storage.test")
+        .map(|r| r.target.clone())
+        .collect();
+    assert!(!drive.is_empty(), "the linked storage file is fetched");
+    assert!(drive.iter().all(|t| t.contains(PUB)), "{drive:?}");
+    assert!(
+        !drive.iter().any(|t| t.contains(FOLD) || t.contains(F1)),
+        "{drive:?}"
+    );
+    // the request journal agrees: no reference host, no excluded host
+    let log = e
+        .call("request_log_get", json!({ "project": id, "limit": 2000 }))
+        .await;
+    for r in log.as_array().unwrap() {
+        let h = r["host"].as_str().unwrap_or("");
+        assert!(
+            !refs.iter().any(|x| x == h) && h != "mail.example.test",
+            "journal row to an off-scope host {r}"
+        );
+    }
+
+    // (b) exact-host scope: the docs. subdomain is not covered and not requested
+    let p = e
+        .call(
+            "project_create",
+            json!({ "name": "bib-exact", "targets": [{ "v": "http://example.test/", "type": "url" }],
+                "excludes": [] }),
+        )
+        .await;
+    let id = p["id"].as_str().unwrap().to_string();
+    let from = site.requests().len();
+    crawl_scan(&e, &id, json!({})).await;
+    let got = names(&e.snap(&id).await);
+    assert!(
+        got.iter().any(|n| n == "a.pdf"),
+        "in-scope links still followed: {got:?}"
+    );
+    assert!(
+        !hosts_since(from).iter().any(|h| h == "docs.example.test"),
+        "subdomain outside an exact-host scope requested"
+    );
+    assert!(!got.iter().any(|n| n == "sub.pdf"), "{got:?}");
+    no_reference_requests(from, "exact-host scope");
+
+    // (f, off) storage switch off: the storage link inside the document is not requested
+    let id = e.project("bib-nostorage").await;
+    let from = site.requests().len();
+    crawl_scan(&e, &id, json!({ "crawl": { "storage": false } })).await;
+    assert!(
+        !hosts_since(from).iter().any(|h| h == "drive.storage.test"),
+        "storage requested with the switch off"
+    );
+    assert!(!names(&e.snap(&id).await)
+        .iter()
+        .any(|n| n == "Plan 2026.pdf"));
+    no_reference_requests(from, "storage off");
+
+    // (e) passive level: the site is never contacted, so no document link is followed either
+    let id = e.project("bib-passive").await;
+    let from = site.requests().len();
+    e.call(
+        "scan_start",
+        json!({ "project": id, "profile": "passive", "sources": ["crawler"] }),
+    )
+    .await;
+    e.wait().await;
+    let hit = hosts_since(from);
+    assert!(hit.is_empty(), "passive scan contacted {hit:?}");
+
+    // the followed documents use up the download limit like any other document
+    let id = e.project("bib-limit").await;
+    let from = site.requests().len();
+    crawl_scan(&e, &id, json!({ "limit": 2 })).await;
+    assert_eq!(names(&e.snap(&id).await), ["a.pdf", "paper.pdf"]);
+    assert_eq!(gets(from, "example.test", "/files/b.pdf"), 0);
+    no_reference_requests(from, "limit");
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
