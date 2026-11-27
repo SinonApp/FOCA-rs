@@ -1,7 +1,10 @@
 //! ODF (odt/ods/odp/odg) and StarOffice 1.x (sxw, ...): meta.xml, tracked changes and
 //! annotations from content.xml, external links, encryption and embedded images.
 
-use foca_core::{CommentRef, DocFormat, Embedded, Metadata, PersonRole, RevisionKind, RevisionRef};
+use foca_core::{
+    Attachment, CommentRef, DocFormat, Embedded, HiddenContent, Metadata, PersonRole, RevisionKind,
+    RevisionRef,
+};
 
 use crate::formats::office::ooxml::read_xml;
 use crate::util::{normalize_date, parse_iso_duration, truncate};
@@ -191,9 +194,16 @@ pub fn extract(bytes: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, M
         for part in ["content.xml", "styles.xml"] {
             if let Some(e) = read_xml(&mut z, part, ctx, &mut meta)? {
                 content_xml(&mut meta, &e, part);
+                if part == "content.xml" {
+                    hidden(&mut meta, &e);
+                }
             }
         }
+        if let Some(e) = read_xml(&mut z, "settings.xml", ctx, &mut meta)? {
+            printer(&mut meta, &e);
+        }
     }
+    objects(&mut z, &names, ctx, &mut meta)?;
     for n in names
         .iter()
         .filter(|n| n.starts_with("Pictures/") && !n.ends_with('/'))
@@ -214,6 +224,190 @@ pub fn extract(bytes: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, M
         }
     }
     Ok(meta)
+}
+
+/// Printer from settings.xml: `PrinterName` and the base64 `PrinterSetup` (a LibreOffice
+/// JobSetup: 4-byte header, then printer, device, port and driver names of 64/32/32/32
+/// bytes; layout ported from the ODF settings written by vcl, not copied).
+fn printer(meta: &mut Metadata, root: &Element) {
+    for item in root.descendants("config-item") {
+        match item.attr_local("name") {
+            Some("PrinterName") => {
+                if let Some(p) = item.text_opt() {
+                    Metadata::add_unique(&mut meta.printers, &truncate(&p, 256));
+                }
+            }
+            Some("PrinterSetup") => {
+                let raw: String = item.text().split_whitespace().collect();
+                let Some(b) = foca_core::b64::decode(&raw) else {
+                    continue;
+                };
+                let field = |off: usize, len: usize| {
+                    b.get(off..off + len)
+                        .map(|r| r.split(|c| *c == 0).next().unwrap_or(r))
+                        .map(|r| String::from_utf8_lossy(r).trim().to_string())
+                        .filter(|s| !s.is_empty())
+                };
+                if let Some(p) = field(4, 64) {
+                    Metadata::add_unique(&mut meta.printers, &p);
+                }
+                for (k, off, len) in [("device", 68, 32), ("port", 100, 32), ("driver", 132, 32)] {
+                    if let Some(v) = field(off, len) {
+                        meta.fields.insert(format!("odf:printer_{k}"), v);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Hidden sheets, rows, columns, slides, sections and paragraphs of content.xml.
+fn hidden(meta: &mut Metadata, root: &Element) {
+    // automatic styles that hide a table or a drawing page
+    let mut hidden_styles: Vec<&str> = Vec::new();
+    for st in root.descendants("style") {
+        let hides = st.elements().any(|p| {
+            p.attr("table:display") == Some("false")
+                || p.attr("presentation:visibility") == Some("hidden")
+        });
+        if let (true, Some(n)) = (hides, st.attr("style:name")) {
+            hidden_styles.push(n);
+        }
+    }
+    let push = |meta: &mut Metadata, kind: &str, loc: String, text: String| {
+        if meta.hidden_content.len() < 500 {
+            meta.hidden_content.push(HiddenContent {
+                kind: kind.into(),
+                location: truncate(&loc, 256),
+                text: truncate(
+                    text.split_whitespace().collect::<Vec<_>>().join(" ").trim(),
+                    512,
+                ),
+            });
+        }
+    };
+    for t in root.descendants("table") {
+        let name = t.attr("table:name").unwrap_or("").to_string();
+        if t.attr("table:style-name")
+            .is_some_and(|s| hidden_styles.contains(&s))
+        {
+            Metadata::add_unique(&mut meta.hidden_sheets, &name);
+        }
+        let mut row = 0usize;
+        for r in t.descendants("table-row") {
+            row += r
+                .attr("table:number-rows-repeated")
+                .and_then(|n| n.parse::<usize>().ok())
+                .unwrap_or(1)
+                .min(1_048_576);
+            if matches!(r.attr("table:visibility"), Some("collapse" | "filter")) {
+                let mut text = String::new();
+                collect_all(r, &mut text, 0);
+                if !text.trim().is_empty() {
+                    push(meta, "row", format!("{name}!{row}"), text);
+                }
+            }
+        }
+        let cols = t
+            .descendants("table-column")
+            .into_iter()
+            .filter(|c| c.attr("table:visibility") == Some("collapse"))
+            .count();
+        if cols > 0 {
+            push(
+                meta,
+                "column",
+                format!("{name}!{cols} hidden"),
+                String::new(),
+            );
+        }
+    }
+    for p in root.descendants("page") {
+        if p.attr("draw:style-name")
+            .is_some_and(|s| hidden_styles.contains(&s))
+        {
+            let mut text = String::new();
+            collect_all(p, &mut text, 0);
+            let name = p.attr("draw:name").unwrap_or("").to_string();
+            push(meta, "slide", name, text);
+        }
+    }
+    for e in root.walk() {
+        let hide = match e.name.as_str() {
+            "text:section" => e.attr("text:display") == Some("none"),
+            "text:hidden-paragraph" | "text:hidden-text" => true,
+            _ => false,
+        };
+        if hide {
+            let mut text = e.attr("text:string-value").unwrap_or("").to_string();
+            collect_all(e, &mut text, 0);
+            push(meta, "hidden_text", e.name.clone(), text);
+        }
+    }
+}
+
+/// Thumbnail and embedded objects: `Thumbnails/thumbnail.png`, `Object N/` sub-documents
+/// (charts, formulas) and binary `Object N` OLE objects parsed recursively.
+fn objects(
+    z: &mut SafeZip,
+    names: &[String],
+    ctx: &Ctx,
+    meta: &mut Metadata,
+) -> Result<(), MetaError> {
+    let mut dirs: Vec<String> = Vec::new();
+    for n in names {
+        if n == "Thumbnails/thumbnail.png" {
+            meta.fields.insert("office:thumbnail".into(), n.clone());
+            let before = meta.embedded.len();
+            if let Some(b) = z.read(n, ctx)? {
+                ctx.attach_child(meta, &b, "thumbnail.png", n)?;
+            }
+            if meta.embedded.len() == before && meta.attachments.len() < 500 {
+                meta.attachments.push(Attachment {
+                    name: n.clone(),
+                    size: z.size(n),
+                    mime: Some("image/png".into()),
+                });
+            }
+            continue;
+        }
+        let Some(rest) = n.strip_prefix("Object ") else {
+            continue;
+        };
+        match rest.split_once('/') {
+            Some((num, _)) => {
+                let d = format!("Object {num}");
+                if !dirs.contains(&d) && dirs.len() < 500 {
+                    dirs.push(d);
+                }
+            }
+            None => {
+                // binary OLE object
+                let before = meta.embedded.len();
+                if let Some(b) = z.read(n, ctx)? {
+                    ctx.attach_child(meta, &b, n, n)?;
+                }
+                if meta.embedded.len() == before && meta.attachments.len() < 500 {
+                    meta.attachments.push(Attachment {
+                        name: n.clone(),
+                        size: z.size(n),
+                        mime: None,
+                    });
+                }
+            }
+        }
+    }
+    for d in dirs {
+        if meta.attachments.len() < 500 {
+            meta.attachments.push(Attachment {
+                name: d,
+                size: None,
+                mime: Some("application/vnd.oasis.opendocument".into()),
+            });
+        }
+    }
+    Ok(())
 }
 
 pub fn text(bytes: &[u8], ctx: &Ctx) -> Result<String, MetaError> {

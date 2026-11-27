@@ -382,10 +382,18 @@ pub fn extract(bytes: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, M
     signatures(&mut z, &names, ctx, &mut meta)?;
     charts(&mut z, &names, ctx, &mut meta)?;
 
+    // document thumbnail (may show an older state of the document)
+    if let Some(t) = names.iter().find(|n| n.starts_with("docProps/thumbnail")) {
+        meta.fields.insert("office:thumbnail".into(), t.clone());
+    }
     // embedded media and objects
     let media: Vec<&String> = names
         .iter()
-        .filter(|n| n.contains("/media/") || n.contains("/embeddings/"))
+        .filter(|n| {
+            n.contains("/media/")
+                || n.contains("/embeddings/")
+                || n.starts_with("docProps/thumbnail")
+        })
         .collect();
     for n in media {
         if n.ends_with('/') {
@@ -616,6 +624,27 @@ fn pptx(
                     source: n.clone(),
                 },
             );
+        }
+    }
+    // hidden slides (`<p:sld show="0">`) with their text
+    for n in sorted_matching(names, |n| {
+        n.starts_with("ppt/slides/slide") && n.ends_with(".xml")
+    })
+    .into_iter()
+    .take(2000)
+    {
+        let Some(e) = read_xml(z, &n, ctx, meta)? else {
+            continue;
+        };
+        if matches!(e.attr("show"), Some("0" | "false")) && meta.hidden_content.len() < MAX_HIDDEN {
+            let mut text = String::new();
+            collect_text(&e, &["t"], &["p"], &mut text, 0);
+            let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
+            meta.hidden_content.push(HiddenContent {
+                kind: "slide".into(),
+                location: n.clone(),
+                text: truncate(&text, 512),
+            });
         }
     }
     let notes = names

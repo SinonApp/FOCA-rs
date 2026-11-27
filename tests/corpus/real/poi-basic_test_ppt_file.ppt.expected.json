@@ -1,11 +1,19 @@
 {
   "application": "Microsoft Office PowerPoint 2003",
+  "attachments": [
+    {
+      "mime": "image/wmf",
+      "name": "thumbnail.wmf",
+      "size": 808
+    }
+  ],
   "author": "Hogwarts",
   "company": "Torchbox",
   "created": "2005-05-13T16:59:39Z",
   "edit_time_secs": 48,
   "fields": {
     "office:release": "2003",
+    "office:thumbnail": "SummaryInformation (wmf)",
     "ole:AppVersion": "11.6360",
     "ole:CodePage": "1252 (Windows Latin 1)",
     "ole:TitlesOfParts": "Arial",

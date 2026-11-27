@@ -36,6 +36,14 @@
   },
   "description": "here are my comments",
   "edit_time_secs": 420,
+  "embedded": [
+    {
+      "metadata": {
+        "format": "jpeg"
+      },
+      "name": "docProps/thumbnail.jpeg"
+    }
+  ],
   "fields": {
     "app:AppVersion": "12.0000",
     "app:DocSecurity": "0",
@@ -44,7 +52,8 @@
     "app:LinksUpToDate": "false",
     "app:ScaleCrop": "false",
     "app:SharedDoc": "false",
-    "app:TitlesOfParts": "The document title"
+    "app:TitlesOfParts": "The document title",
+    "office:thumbnail": "docProps/thumbnail.jpeg"
   },
   "fonts": [
     "Cambria",

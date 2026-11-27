@@ -21,6 +21,8 @@ pub(crate) enum PropValue {
     Bool(bool),
     Time(u64),
     List(Vec<PropValue>),
+    /// VT_CF clipboard data (the document thumbnail): format tag and bytes.
+    Clip(i32, Vec<u8>),
     Other,
 }
 
@@ -37,12 +39,16 @@ pub(crate) struct PropertySet {
     pub sections: Vec<Section>,
 }
 
+/// OS of the property set header (OSVersion: kind in the high word, major/minor in the low
+/// bytes). Writers other than Windows Office (LibreOffice, Apache POI) leave zero or
+/// placeholder values, which are not reported: no Windows below 3.0 ever wrote these files.
 fn os_name(os_ver: u32) -> Option<String> {
     let kind = os_ver >> 16;
     let major = os_ver & 0xFF;
     let minor = (os_ver >> 8) & 0xFF;
     match kind {
-        0 => Some("Windows 3.x (Win16)".into()),
+        0 if major >= 3 => Some("Windows 3.x (Win16)".into()),
+        2 if major < 3 => None,
         1 => Some("Macintosh".into()),
         2 => Some(
             match (major, minor) {
@@ -120,6 +126,15 @@ fn read_value(b: &[u8], off: usize, codepage: u16, depth: u8) -> PropValue {
             .map(PropValue::Time)
             .unwrap_or(PropValue::Other),
         0x1E | 0x1F => read_string(b, p, ty, codepage).0,
+        0x47 => {
+            // ClipboardData: u32 size (format + data), i32 format, data
+            let size = rd_u32le(b, p).unwrap_or(0) as usize;
+            let fmt = rd_u32le(b, p + 4).unwrap_or(0) as i32;
+            match b.get(p + 8..(p + 4).saturating_add(size).min(p + 8 + (8 << 20))) {
+                Some(d) if size > 4 => PropValue::Clip(fmt, d.to_vec()),
+                _ => PropValue::Other,
+            }
+        }
         _ => PropValue::Other,
     }
 }
@@ -281,7 +296,7 @@ fn value_to_string(v: &PropValue) -> Option<String> {
             let parts: Vec<String> = l.iter().filter_map(value_to_string).collect();
             (!parts.is_empty()).then(|| parts.join("; "))
         }
-        PropValue::Other => None,
+        PropValue::Clip(..) | PropValue::Other => None,
     }
 }
 
@@ -364,6 +379,27 @@ fn summary(meta: &mut Metadata, ps: &PropertySet) {
                 if let Some(a) = as_str(v) {
                     Metadata::add_unique(&mut meta.software, &a);
                     meta.application = Some(a);
+                }
+            }
+            17 => {
+                if let PropValue::Clip(fmt, d) = v {
+                    // -1: Windows clipboard format id (3 metafile, 8 DIB, 14 EMF) + data
+                    let kind = match (fmt, rd_u32le(d, 0)) {
+                        (-1, Some(3)) => "wmf",
+                        (-1, Some(8)) => "bmp",
+                        (-1, Some(14)) => "emf",
+                        (-2, _) => "pict",
+                        _ => "bin",
+                    };
+                    meta.fields.insert(
+                        "office:thumbnail".into(),
+                        format!("SummaryInformation ({kind})"),
+                    );
+                    meta.attachments.push(foca_core::Attachment {
+                        name: format!("thumbnail.{kind}"),
+                        size: Some(d.len() as u64),
+                        mime: Some(format!("image/{kind}")),
+                    });
                 }
             }
             19 => {
@@ -828,6 +864,29 @@ fn extract_inner(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, Met
         }
         DocFormat::Msi => msi_summary(&mut meta),
         _ => {}
+    }
+    // an encrypted OOXML package (MS-OFFCRYPTO) is stored in a compound file
+    if entries
+        .iter()
+        .any(|(p, s, _)| *s && p == "/EncryptedPackage")
+    {
+        meta.encrypted = true;
+        if let Some(info) = read_stream(&mut cf, "/EncryptionInfo", ctx)? {
+            let (major, minor) = (
+                rd_u16le(&info, 0).unwrap_or(0),
+                rd_u16le(&info, 2).unwrap_or(0),
+            );
+            let kind = match (major, minor) {
+                (4, 4) => "agile",
+                (2..=4, 2) => "standard",
+                (3 | 4, 3) => "extensible",
+                _ => "unknown",
+            };
+            meta.fields.insert(
+                "ole:encryption".into(),
+                format!("OOXML {kind} encryption {major}.{minor}"),
+            );
+        }
     }
     if entries
         .iter()

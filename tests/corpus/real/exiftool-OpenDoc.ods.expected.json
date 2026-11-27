@@ -7,6 +7,17 @@
   },
   "description": "test",
   "edit_time_secs": 77,
+  "embedded": [
+    {
+      "metadata": {
+        "format": "png"
+      },
+      "name": "Thumbnails/thumbnail.png"
+    }
+  ],
+  "fields": {
+    "office:thumbnail": "Thumbnails/thumbnail.png"
+  },
   "format": "ods",
   "keywords": "test",
   "last_modified_by": "IDHW IDHW Informatica",

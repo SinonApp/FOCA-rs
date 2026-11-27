@@ -88,6 +88,7 @@ impl Walker<'_, '_> {
                 // master slides hold layout prompts ("Click to edit Master title style")
                 (true, 0x03F8) => {}
                 (true, 0x0FF0) if inst == 1 => {}
+                (true, 0x2F14) => self.meta.encrypted = true,
                 (true, 0x2EE0) => self.comment(d, s, e),
                 (true, 0x0FD7) => self.hyperlink(d, s, e),
                 (true, _) if depth < MAX_DEPTH => self.walk(d, s, e, depth + 1)?,

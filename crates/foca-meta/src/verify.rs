@@ -252,6 +252,8 @@ fn structural_field(k: &str) -> bool {
         || matches!(k, "xls:Sheets" | "xls:DefinedNames" | "xls:CodePage" | "rtf:CodePage")
         || k == "ooxml:binary_workbook"
         || k == "ole:CompObjUserType"
+        || k == "office:thumbnail"
+        || k == "ole:encryption"
         || (k.starts_with("ole:object:") && k.ends_with(":type"))
         || k.starts_with("xl:hidden:")
         || (k.starts_with("xl:connection:") && k.ends_with(":command"))
