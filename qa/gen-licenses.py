@@ -325,6 +325,57 @@ def collect_data_and_assets() -> list[dict]:
     ]
 
 
+SOURCES_LOCK = ROOT / "crates/foca-analysis/signatures/sources.lock.json"
+NOTICE_PATH = ROOT / "NOTICE"
+THIRD_PARTY_PATH = ROOT / "THIRD_PARTY.md"
+# Licenses of ingested signature data that may ship in the GPL-3.0 app (see the ingest scripts).
+SIGNATURE_LICENSES = {
+    "GPL-3.0-only": "GPL-3.0",
+    "MIT": "MIT",
+    "Apache-2.0": "Apache-2.0",
+    "BSD-2-Clause": "BSD-2-Clause",
+    "MPL-2.0": "MPL-2.0",
+    "CC0-1.0": "CC0-1.0",
+    "CC-BY-4.0": "CC-BY-4.0",
+    "FIRST-EPSS-terms": "EPSS (attribution requested)",
+}
+
+
+def collect_signature_sources() -> tuple[list[dict], list[str]]:
+    """Data assets for the pinned upstream sources in `sources.lock.json`.
+
+    Every source must carry an allowed license and attribution text, its attribution must appear in
+    NOTICE and its repository or URL in THIRD_PARTY.md.
+    """
+    lock = json.loads(SOURCES_LOCK.read_text(encoding="utf-8"))["sources"]
+    notice = NOTICE_PATH.read_text(encoding="utf-8") if NOTICE_PATH.exists() else ""
+    third = THIRD_PARTY_PATH.read_text(encoding="utf-8")
+    items, errors = [], []
+    for key, src in sorted(lock.items()):
+        lic = src.get("license", "")
+        if lic not in SIGNATURE_LICENSES:
+            errors.append(f"signature source {key}: license {lic!r} is not allowed")
+            continue
+        url = src.get("repo") or src.get("url", "")
+        pin = src.get("tag") or src.get("version") or src.get("commit", "")[:12]
+        attribution = src.get("attribution", "")
+        if not attribution:
+            errors.append(f"signature source {key}: no attribution text")
+        elif attribution not in notice:
+            errors.append(f"signature source {key}: attribution missing from NOTICE")
+        if url.split("://")[-1] not in third:
+            errors.append(f"signature source {key}: {url} missing from THIRD_PARTY.md")
+        outputs = ", ".join(f"`{o['path']}`" for o in src.get("outputs", []))
+        items.append({
+            "name": f"{key} (pinned {pin})",
+            "category": "Dataset",
+            "license": SIGNATURE_LICENSES[lic],
+            "url": url,
+            "notes": f"{attribution}. Signature data in {outputs}.",
+        })
+    return items, errors
+
+
 def load_license_texts() -> list[dict]:
     gpl3 = (ROOT / "LICENSE").read_text(encoding="utf-8").strip()
     mit = """MIT License
@@ -506,6 +557,32 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 
 THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS."""
 
+    ccby4 = """Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+Legal code: https://creativecommons.org/licenses/by/4.0/legalcode
+
+You are free to share (copy and redistribute the material in any medium or format) and adapt
+(remix, transform, and build upon the material) for any purpose, even commercially, under the
+following terms: Attribution: you must give appropriate credit, provide a link to the license, and
+indicate if changes were made. No additional restrictions: you may not apply legal terms or
+technological measures that legally restrict others from doing anything the license permits.
+
+FOCA-rs uses the can-i-take-over-xyz fingerprints (EdOverflow and contributors) under this license;
+the fields were reduced and renamed (see NOTICE)."""
+    cc0 = """Creative Commons Zero v1.0 Universal (CC0 1.0), public domain dedication
+
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+The person who associated a work with this deed has dedicated the work to the public domain by
+waiving all of their rights to the work worldwide under copyright law, including all related and
+neighboring rights, to the extent allowed by law. You can copy, modify, distribute and perform the
+work, even for commercial purposes, all without asking permission."""
+    epss = """FIRST Exploit Prediction Scoring System (EPSS)
+
+EPSS scores are published daily by FIRST (https://www.first.org/epss) and are free to use. FIRST asks
+users to credit the data: "EPSS scores from FIRST.org", with the model version or score date.
+FOCA-rs shows this attribution in the licenses screen, in NOTICE and in the footer of reports that
+display EPSS values. FIRST does not endorse FOCA-rs."""
     return [
         {"id": "GPL-3.0", "name": "GNU General Public License v3.0", "text": gpl3},
         {"id": "MIT", "name": "MIT License", "text": mit},
@@ -517,15 +594,19 @@ THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
         {"id": "SIL OFL 1.1", "name": "SIL Open Font License 1.1", "text": ofl11},
         {"id": "CDLA-Permissive-2.0", "name": "Community Data License Agreement – Permissive 2.0", "text": cdla2},
         {"id": "Unicode-3.0", "name": "Unicode License v3", "text": unicode3},
+        {"id": "CC-BY-4.0", "name": "Creative Commons Attribution 4.0 International", "text": ccby4},
+        {"id": "CC0-1.0", "name": "Creative Commons Zero v1.0 Universal", "text": cc0},
+        {"id": "EPSS (attribution requested)", "name": "FIRST EPSS usage terms", "text": epss},
     ]
 
 
 def build_payload() -> tuple[dict, list[str]]:
     rust_crates, rust_errors = collect_rust_crates()
     android_libs, android_errors = collect_android_libs()
-    data_assets = collect_data_and_assets()
+    sig_assets, sig_errors = collect_signature_sources()
+    data_assets = collect_data_and_assets() + sig_assets
     texts = load_license_texts()
-    errors = rust_errors + android_errors
+    errors = rust_errors + android_errors + sig_errors
     payload = {
         "schema": "foca-licenses/v1",
         "app_license": "GPL-3.0",

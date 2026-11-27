@@ -7,8 +7,9 @@ FOCA-rs is distributed under the **GNU General Public License v3.0 ([GPL-3.0](LI
 - **Generator & CI verifier**: [`qa/gen-licenses.py`](qa/gen-licenses.py) automatically generates [`crates/foca-engine/data/licenses.json`](crates/foca-engine/data/licenses.json) from:
   - `cargo metadata --locked` (all transitive and direct Rust crates in `Cargo.lock`: 536 crates / 43 direct as of 2.0.0),
   - `src-tauri/gen/android/app/build.gradle.kts` (all Android runtime libraries, tagged by flavor `both` / `foss` / `play`),
-  - bundled assets and datasets (`Inter` font, `Fluent Emoji`, `Natural Earth`, `SecLists`, `CISA KEV`, Cloud/CDN IP lists, standards identifiers, and clean-room algorithm attributions), and
-  - full license texts for 10 licenses (`GPL-3.0`, `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `MPL-2.0`, `SIL OFL 1.1`, `CDLA-Permissive-2.0`, `Unicode-3.0`).
+  - bundled assets and datasets (`Inter` font, `Fluent Emoji`, `Natural Earth`, `SecLists`, `CISA KEV`, Cloud/CDN IP lists, standards identifiers, and clean-room algorithm attributions),
+  - the pinned signature data sources of `crates/foca-analysis/signatures/sources.lock.json` (license allow-list; each attribution must appear in [NOTICE](NOTICE) and each source in this file), and
+  - full license texts for 13 licenses (`GPL-3.0`, `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `MPL-2.0`, `SIL OFL 1.1`, `CDLA-Permissive-2.0`, `Unicode-3.0`, `CC-BY-4.0`, `CC0-1.0`, EPSS usage terms).
 - **CI enforcement**: `python qa/gen-licenses.py --check` fails the build if `licenses.json` is stale, if any Rust crate carries a GPL-3.0-incompatible SPDX license expression, or if any proprietary Google ML Kit dependency/import leaks into the `main` or `foss` Android source sets.
 - **In-app viewer**: The full inventory and license texts are available offline inside the app at **Settings → About → Licenses & Third-Party Components** (`/settings/licenses`, served over IPC via `licenses_get`).
 
@@ -65,9 +66,34 @@ FOCA-rs is distributed under the **GNU General Public License v3.0 ([GPL-3.0](LI
 - Repository: https://github.com/dmgbuild/ds_store, used only to generate test fixtures `tests/fixtures/fuzz-site/www/.DS_Store` and `tests/fixtures/fuzz-site/dsstore/big.DS_Store`.
 - The parser in `crates/foca-fuzz/src/dsstore.rs` was written from scratch from the format specification (Mark Mentovai, "DS_Store File Format").
 
+## Signature Data Sources (pinned, `crates/foca-analysis/signatures/sources.lock.json`)
+
+Converted at build time by `crates/foca-analysis/signatures/tools/update_<source>.py` from a pinned
+upstream version (commit, tag or snapshot date, with SHA-256 of every input). Only the fields FOCA-rs
+uses are kept; regexes the Rust `regex` crate rejects are skipped and counted in the lock file.
+Attribution lines are repeated in [NOTICE](NOTICE). A signed signature bundle (`foca-sig-bundle/v2`)
+can replace these tables at runtime.
+
+| Source | License | Pinned | Shipped as | Used for |
+|---|---|---|---|---|
+| [enthec/webappanalyzer](https://github.com/enthec/webappanalyzer) | GPL-3.0 | `7dba7bf3e8b4` | `crates/foca-recon/data/webappanalyzer.json.gz`, `crates/foca-net/data/saas_dns.json` | Web technology detection (5623 technologies, 466 with CPE), SaaS by DNS (147 rules) |
+| [gitleaks](https://github.com/gitleaks/gitleaks) (© 2019 Zachary Rice) | MIT | `v8.30.1` | `crates/foca-analysis/signatures/secrets_gitleaks.toml` | Secret rules (197 of 222; 20 covered by our tuned rules, 5 path-only) |
+| [endoflife.date](https://github.com/endoflife-date/endoflife.date) (© 2020 endoflife.date contributors) | MIT | `32423d8113b6` | `crates/foca-recon/data/endoflife.tsv.gz` | End-of-life dates (117 products, 2179 cycles past EOL at 2026-11-27) |
+| [FIRST EPSS](https://www.first.org/epss) (`epss.empiricalsecurity.com/epss_scores-2026-11-26.csv.gz`) | Free use, attribution requested | `2026-11-26` | `crates/foca-analysis/signatures/kev_enrich.tsv.gz` | EPSS score and percentile of KEV CVEs; reports credit FIRST in the footer |
+| [cisagov/vulnrichment](https://github.com/cisagov/vulnrichment) | CC0-1.0 | `2872f0a7d9f8` | `crates/foca-analysis/signatures/kev_enrich.tsv.gz` | CVSS, CWE and SSVC of KEV CVEs |
+| [RetireJS/retire.js](https://github.com/RetireJS/retire.js) (© 2018 Erlend Oftedal) | Apache-2.0 | `da66c52a5a5a` | `crates/foca-recon/data/retire.json.gz` | JS library versions and vulnerable ranges (76 libraries, 819 ranges) |
+| [rapid7/recog](https://github.com/rapid7/recog) (© 2014-2015 Rapid7) | BSD-2-Clause | `f1191e24332c` | `crates/foca-net/data/recog.tsv.gz`, `crates/foca-recon/data/favicons_md5.tsv` | Service banners (1062 fingerprints), favicon MD5 (645 hashes) |
+| [publicsuffix/list](https://github.com/publicsuffix/list) | MPL-2.0 | `88b076a1fb2a` | `crates/foca-net/data/public_suffix_list.dat.gz` (unmodified) | Registrable domains |
+| [EdOverflow/can-i-take-over-xyz](https://github.com/EdOverflow/can-i-take-over-xyz) | CC-BY-4.0 | `5bd4e1283791` | `crates/foca-net/data/takeover.json` (fields reduced and renamed) | Dangling CNAME providers (26 services) |
+
+Evaluated and not used: original Wappalyzer (proprietary since 2023), nmap-service-probes (NPSL,
+GPL-incompatible), trufflehog (AGPL-3.0), secrets-patterns-db (mixed license with an AGPL part),
+can-i-take-over-dns (no license), nuclei-templates `http/takeovers` (MIT, but no CNAME suffixes to
+drive a DNS check).
+
 ## Wappalyzer / webappanalyzer: GPL-3.0 (Schema Concept), MurmurHash3: Public Domain
 
-- `crates/foca-recon/data/tech.json`: ~130 hand-authored technology fingerprinting rules; the rule schema (`headers`/`meta`/`cookies`/`html`/`scripts`/`implies`, version capture group) follows Wappalyzer/webappanalyzer (https://github.com/enthec/webappanalyzer, GPL-3.0); original patterns were not copied.
+- `crates/foca-recon/data/tech.json`: ~130 hand-authored technology fingerprinting rules; the rule schema (`headers`/`meta`/`cookies`/`html`/`scripts`/`implies`, version capture group) follows Wappalyzer/webappanalyzer (https://github.com/enthec/webappanalyzer, GPL-3.0); original patterns were not copied. The webappanalyzer fingerprints themselves now ship as data (GPL-3.0, see [Signature Data Sources](#signature-data-sources-pinned-cratesfoca-analysissignaturessourceslockjson)) and are merged with these hand rules by name.
 - MurmurHash3 x86_32 (Austin Appleby, public domain) and MD5 (RFC 1321) are implemented from scratch in `crates/foca-recon/src/hash.rs`; JS endpoint/secret extraction ideas were inspired by jsluice (MIT) and LinkFinder (MIT) with clean-room Rust code.
 
 ## Document, URL & Subdomain Sources (`crates/foca-search`)

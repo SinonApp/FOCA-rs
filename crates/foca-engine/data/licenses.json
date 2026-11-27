@@ -3,12 +3,12 @@
   "app_license": "GPL-3.0",
   "repository": "https://github.com/SinonApp/FOCA-rs",
   "counts": {
-    "data_assets": 11,
+    "data_assets": 20,
     "rust_total": 535,
-    "rust_direct": 43,
+    "rust_direct": 44,
     "android_total": 9,
     "android_play_only": 1,
-    "license_texts": 10
+    "license_texts": 13
   },
   "data_assets": [
     {
@@ -87,9 +87,79 @@
       "license": "Public Domain",
       "url": "https://github.com/aappleby/smhasher",
       "notes": "Clean-room Rust implementation of MurmurHash3 x86_32 for Shodan/FOFA favicon hashing."
+    },
+    {
+      "name": "can-i-take-over-xyz (pinned 5bd4e1283791)",
+      "category": "Dataset",
+      "license": "CC-BY-4.0",
+      "url": "https://github.com/EdOverflow/can-i-take-over-xyz",
+      "notes": "Subdomain takeover fingerprints from can-i-take-over-xyz by EdOverflow and contributors (CC BY 4.0); fields reduced and renamed by FOCA-rs, https://github.com/EdOverflow/can-i-take-over-xyz. Signature data in `crates/foca-net/data/takeover.json`."
+    },
+    {
+      "name": "endoflife (pinned 32423d8113b6)",
+      "category": "Dataset",
+      "license": "MIT",
+      "url": "https://github.com/endoflife-date/endoflife.date",
+      "notes": "End-of-life dates from endoflife.date, Copyright 2020 endoflife.date contributors, MIT License, https://endoflife.date. Signature data in `crates/foca-recon/data/endoflife.tsv.gz`."
+    },
+    {
+      "name": "epss (pinned 2026-11-26)",
+      "category": "Dataset",
+      "license": "EPSS (attribution requested)",
+      "url": "https://epss.empiricalsecurity.com/epss_scores-2026-11-26.csv.gz",
+      "notes": "EPSS scores from FIRST.org (https://www.first.org/epss), 2026-11-26. Signature data in `crates/foca-analysis/signatures/kev_enrich.tsv.gz`."
+    },
+    {
+      "name": "gitleaks (pinned v8.30.1)",
+      "category": "Dataset",
+      "license": "MIT",
+      "url": "https://github.com/gitleaks/gitleaks",
+      "notes": "Secret detection rules from gitleaks, Copyright (c) 2019 Zachary Rice, MIT License, https://github.com/gitleaks/gitleaks. Signature data in `crates/foca-analysis/signatures/secrets_gitleaks.toml`."
+    },
+    {
+      "name": "psl (pinned 88b076a1fb2a)",
+      "category": "Dataset",
+      "license": "MPL-2.0",
+      "url": "https://github.com/publicsuffix/list",
+      "notes": "Public Suffix List, Mozilla Foundation and contributors, MPL-2.0, https://publicsuffix.org (shipped unmodified). Signature data in `crates/foca-net/data/public_suffix_list.dat.gz`."
+    },
+    {
+      "name": "recog (pinned f1191e24332c)",
+      "category": "Dataset",
+      "license": "BSD-2-Clause",
+      "url": "https://github.com/rapid7/recog",
+      "notes": "Service and favicon fingerprints from Recog, Copyright (c) 2014-2015, Rapid7, BSD 2-Clause License, https://github.com/rapid7/recog. Signature data in `crates/foca-net/data/recog.tsv.gz`, `crates/foca-recon/data/favicons_md5.tsv`."
+    },
+    {
+      "name": "retire (pinned da66c52a5a5a)",
+      "category": "Dataset",
+      "license": "Apache-2.0",
+      "url": "https://github.com/RetireJS/retire.js",
+      "notes": "JavaScript library vulnerability data from Retire.js, Copyright 2018 Erlend Oftedal, Apache License 2.0, https://github.com/RetireJS/retire.js. Signature data in `crates/foca-recon/data/retire.json.gz`."
+    },
+    {
+      "name": "vulnrichment (pinned 2872f0a7d9f8)",
+      "category": "Dataset",
+      "license": "CC0-1.0",
+      "url": "https://github.com/cisagov/vulnrichment",
+      "notes": "CVSS, CWE and SSVC data from CISA Vulnrichment (CC0-1.0), https://github.com/cisagov/vulnrichment. Signature data in `crates/foca-analysis/signatures/kev_enrich.tsv.gz`."
+    },
+    {
+      "name": "webappanalyzer (pinned 7dba7bf3e8b4)",
+      "category": "Dataset",
+      "license": "GPL-3.0",
+      "url": "https://github.com/enthec/webappanalyzer",
+      "notes": "Technology fingerprints from webappanalyzer (enthec), GPL-3.0, https://github.com/enthec/webappanalyzer. Signature data in `crates/foca-recon/data/webappanalyzer.json.gz`, `crates/foca-net/data/saas_dns.json`."
     }
   ],
   "rust_crates": [
+    {
+      "name": "aho-corasick",
+      "version": "1.1.5",
+      "license": "Unlicense OR MIT",
+      "direct": true,
+      "repository": "https://github.com/BurntSushi/aho-corasick"
+    },
     {
       "name": "anyhow",
       "version": "1.0.105",
@@ -397,13 +467,6 @@
       "license": "0BSD OR MIT OR Apache-2.0",
       "direct": false,
       "repository": "https://github.com/oyvindln/adler2"
-    },
-    {
-      "name": "aho-corasick",
-      "version": "1.1.5",
-      "license": "Unlicense OR MIT",
-      "direct": false,
-      "repository": "https://github.com/BurntSushi/aho-corasick"
     },
     {
       "name": "alloc-no-stdlib",
@@ -3960,6 +4023,21 @@
       "id": "Unicode-3.0",
       "name": "Unicode License v3",
       "text": "UNICODE LICENSE V3\n\nCOPYRIGHT AND PERMISSION NOTICE\nCopyright © 1991-2024 Unicode, Inc.\n\nNOTICE TO USER: Carefully read the following legal agreement. BY DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING DATA FILES, AND/OR SOFTWARE, YOU UNEQUIVOCALLY ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE TERMS AND CONDITIONS OF THIS AGREEMENT.\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of data files and any associated documentation (the \"Data Files\") or software and any associated documentation (the \"Software\") to deal in the Data Files or Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, and/or sell copies of the Data Files or Software, and to permit persons to whom the Data Files or Software are furnished to do so, provided that either (a) this copyright and permission notice appear with all copies of the Data Files or Software, or (b) this copyright and permission notice appear in associated Documentation.\n\nTHE DATA FILES AND SOFTWARE ARE PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS."
+    },
+    {
+      "id": "CC-BY-4.0",
+      "name": "Creative Commons Attribution 4.0 International",
+      "text": "Creative Commons Attribution 4.0 International (CC BY 4.0)\n\nLegal code: https://creativecommons.org/licenses/by/4.0/legalcode\n\nYou are free to share (copy and redistribute the material in any medium or format) and adapt\n(remix, transform, and build upon the material) for any purpose, even commercially, under the\nfollowing terms: Attribution: you must give appropriate credit, provide a link to the license, and\nindicate if changes were made. No additional restrictions: you may not apply legal terms or\ntechnological measures that legally restrict others from doing anything the license permits.\n\nFOCA-rs uses the can-i-take-over-xyz fingerprints (EdOverflow and contributors) under this license;\nthe fields were reduced and renamed (see NOTICE)."
+    },
+    {
+      "id": "CC0-1.0",
+      "name": "Creative Commons Zero v1.0 Universal",
+      "text": "Creative Commons Zero v1.0 Universal (CC0 1.0), public domain dedication\n\nLegal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode\n\nThe person who associated a work with this deed has dedicated the work to the public domain by\nwaiving all of their rights to the work worldwide under copyright law, including all related and\nneighboring rights, to the extent allowed by law. You can copy, modify, distribute and perform the\nwork, even for commercial purposes, all without asking permission."
+    },
+    {
+      "id": "EPSS (attribution requested)",
+      "name": "FIRST EPSS usage terms",
+      "text": "FIRST Exploit Prediction Scoring System (EPSS)\n\nEPSS scores are published daily by FIRST (https://www.first.org/epss) and are free to use. FIRST asks\nusers to credit the data: \"EPSS scores from FIRST.org\", with the model version or score date.\nFOCA-rs shows this attribution in the licenses screen, in NOTICE and in the footer of reports that\ndisplay EPSS values. FIRST does not endorse FOCA-rs."
     }
   ]
 }

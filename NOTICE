@@ -1,0 +1,31 @@
+FOCA-rs
+Copyright (c) FOCA-rs contributors. Licensed under the GNU General Public License v3.0 (see LICENSE).
+
+This product includes third-party data. Full license texts are in the app (Settings > About >
+Licenses) and in crates/foca-engine/data/licenses.json; details are in THIRD_PARTY.md. Pinned
+versions and hashes of the signature data are in crates/foca-analysis/signatures/sources.lock.json.
+
+Signature data sources:
+
+* Subdomain takeover fingerprints from can-i-take-over-xyz by EdOverflow and contributors (CC BY 4.0); fields reduced and renamed by FOCA-rs, https://github.com/EdOverflow/can-i-take-over-xyz
+* End-of-life dates from endoflife.date, Copyright 2020 endoflife.date contributors, MIT License, https://endoflife.date
+* EPSS scores from FIRST.org (https://www.first.org/epss), 2026-11-26
+* Secret detection rules from gitleaks, Copyright (c) 2019 Zachary Rice, MIT License, https://github.com/gitleaks/gitleaks
+* Public Suffix List, Mozilla Foundation and contributors, MPL-2.0, https://publicsuffix.org (shipped unmodified)
+* Service and favicon fingerprints from Recog, Copyright (c) 2014-2015, Rapid7, BSD 2-Clause License, https://github.com/rapid7/recog
+* JavaScript library vulnerability data from Retire.js, Copyright 2018 Erlend Oftedal, Apache License 2.0, https://github.com/RetireJS/retire.js
+* CVSS, CWE and SSVC data from CISA Vulnrichment (CC0-1.0), https://github.com/cisagov/vulnrichment
+* Technology fingerprints from webappanalyzer (enthec), GPL-3.0, https://github.com/enthec/webappanalyzer
+
+Retire.js NOTICE: Copyright 2018 Erlend Oftedal. Licensed under the Apache License, Version 2.0.
+
+Public Suffix List: this Source Code Form is subject to the terms of the Mozilla Public License,
+v. 2.0. If a copy of the MPL was not distributed with this file, You can obtain one at
+https://mozilla.org/MPL/2.0/. The list is shipped unmodified (gzip-compressed) as
+crates/foca-net/data/public_suffix_list.dat.gz; its source is https://publicsuffix.org.
+
+can-i-take-over-xyz fingerprints are licensed under CC BY 4.0
+(https://creativecommons.org/licenses/by/4.0/). Changes: fields reduced and renamed, IP/URL
+values and status-code-only fingerprints dropped (crates/foca-net/data/takeover.json).
+
+EPSS scores from FIRST.org: FIRST does not endorse FOCA-rs. CISA does not endorse FOCA-rs.
