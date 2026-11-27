@@ -35,6 +35,6 @@ No score ("no data") until a scan has finished the Analysis stage or documents w
 
 ## Example
 
-A university site with 39 high, 56 medium, 59 low and 191 info findings, all from documents
+A site with 39 high, 56 medium, 59 low and 191 info findings, all from documents
 and their metadata, scored 100 with the old product formula. With the dampening per category it
 scores 72 (High), and more findings of the same kinds stop at the exposure cap of 75.
