@@ -27,6 +27,7 @@ Third beta. It fixes the projects that disappeared after an upgrade, makes Pause
 - **Pause stops traffic at once**: requests waiting for their turn, the site crawl and the port scan now hold until you resume. Before, requests already queued still went out during a pause. Requests in flight finish, and Stop cancels the held ones.
 - **Unreachable is not rate-limited**: in forgotten file discovery, a host that does not answer at all (refused connection, timeout, DNS or TLS failure) stops as unreachable with its own warning, instead of "the site limited requests".
 - **File names from Google Drive**: files with non-Latin names keep their names instead of `gdrive-<id>.bin`, and a file without a usable name gets its extension from its content.
+- **Network map at large fonts**: long AD domain names wrap instead of pushing the screen wider than the phone.
 - **Form spacing**: a full-width button under a field keeps a gap, so Check key in the API key sheet is no longer glued to the field.
 
 ### Changed
