@@ -56,6 +56,9 @@ import java.util.concurrent.atomic.AtomicReference
  * - A proxy from settings is applied through `ProxyController` (androidx.webkit); if unsupported,
  *   the request is refused rather than sent directly.
  * - After 10 idle minutes the WebViews are destroyed (cookies are kept).
+ * - Technology signals (site recon): an `eval` step runs one read-only probe script from the core
+ *   and returns its string answer (size-capped); with `collect_hosts` the hosts of the requests
+ *   the page makes are recorded in `shouldInterceptRequest` (observed only, never altered).
  */
 @Keep
 object RenderFetcher {
@@ -78,6 +81,8 @@ object RenderFetcher {
     @Volatile var finished = 0
     @Volatile var status: Int = 0
     @Volatile var error: String? = null
+    /** Request hosts of the running request when it asked for `collect_hosts`, else `null`. */
+    @Volatile var hosts: MutableSet<String>? = null
   }
 
   private fun err(msg: String): String = JSONObject().put("error", msg).toString()
@@ -108,6 +113,7 @@ object RenderFetcher {
     applyProxy(req.optString("proxy", ""), deadline)?.let { return err(it) }
     val s = onMain(10_000) { session(app, name, ua) } ?: return err("WebView не создан (нет WebView в системе?)")
     val out = JSONObject()
+    s.hosts = if (req.optBoolean("collect_hosts", false)) java.util.Collections.synchronizedSet(LinkedHashSet()) else null
     val url = req.optString("url", "")
     val inline = req.optString("html", "")
     if (inline.isNotEmpty()) {
@@ -155,6 +161,10 @@ object RenderFetcher {
           waitNewDoc(s, deadline)
         }
         "sleep" -> Thread.sleep(st.optLong("ms", 1000L).coerceIn(0L, maxOf(0L, deadline - System.currentTimeMillis())))
+        "eval" -> {
+          val lim = RenderLogic.evalTimeout(st.optLong("timeout_ms", 3_000L), deadline - System.currentTimeMillis())
+          RenderLogic.capEval(js(s, st.optString("code"), lim))?.let { out.put("eval", it) }
+        }
         else -> { out.put("missing", "неизвестный шаг $op"); break }
       }
       i++
@@ -164,6 +174,8 @@ object RenderFetcher {
     val ms = System.currentTimeMillis() - t0
     out.put("html", html).put("url", href).put("ms", ms)
     if (s.status > 0) out.put("status", s.status)
+    s.hosts?.let { h -> out.put("hosts", JSONArray(synchronized(h) { h.toList() })) }
+    s.hosts = null
     CookieManager.getInstance().flush()
     FLog.i("render[$name]: $href → ${html.length} симв. за $ms мс" +
       (if (out.optBoolean("wait_timeout")) ", проверка/загрузка не завершилась" else "") +
@@ -265,6 +277,11 @@ object RenderFetcher {
         if (s.status == 0) s.status = 200
       }
       override fun onPageFinished(view: WebView?, url: String?) { s.finished++ }
+      override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+        // Observe only: the request goes on unchanged (null = default loading).
+        s.hosts?.let { RenderLogic.addHost(it, request?.url?.host) }
+        return null
+      }
       override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, resp: WebResourceResponse?) {
         if (request?.isForMainFrame == true) s.status = resp?.statusCode ?: 0
       }

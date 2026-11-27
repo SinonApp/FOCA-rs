@@ -22,6 +22,7 @@ pub use archive::{
 pub use commoncrawl::{parse_cc_ndjson, CcDepth, CcHit, CcState, CommonCrawl};
 pub use crawler::{
     CrawlOutput, CrawlStats, CrawlStop, Crawler, Frontier, LinkedStorage, ProgressHook,
+    RenderedProbe,
 };
 pub use engines::{
     check_brave, check_searx, parse_brave, parse_github_code, parse_searx, parse_securitytrails,

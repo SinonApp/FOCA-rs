@@ -1,18 +1,24 @@
 #!/usr/bin/env python3
 """Ingest enthec/webappanalyzer (GPL-3.0) into `crates/foca-recon/data/webappanalyzer.json.gz`.
 
-Keeps only what FOCA-rs can evaluate without a JS engine: response headers, cookies, `<meta>`,
-HTML regexes, `<script src>` and page URL regexes, plus `implies`/`requires`/`excludes`, `cpe`,
-`website` and the first category (translated to the category names of `data/tech.json`). DNS
-rules (MX/TXT/NS/CNAME/SOA) go to `crates/foca-net/data/saas_dns.json` for `intel::saas`.
-Dropped fields: js, dom, xhr, css, text, icon, description, saas, pricing, oss, certIssuer,
-probe, robots.
+Static signals (evaluated by the core over data the scan already fetched): response headers,
+cookies, `<meta>`, HTML regexes, `<script src>`, page URL, JavaScript file contents (`scripts`),
+visible page text (`text`), stylesheets (`css`), the TLS certificate issuer (`certIssuer`) and
+robots.txt (`robots`). Browser signals (evaluated only in the hidden Android WebView after a
+page render): global JavaScript variables (`js`), DOM selectors (`dom`) and request hosts seen
+during the render (`xhr`). Plus `implies`/`requires`/`excludes`, `cpe`, `website`, the first
+category (translated to the category names of `data/tech.json`) and, for WordPress plugins and
+themes, the directory slug taken from their path patterns (`ps`). DNS rules (MX/TXT/NS/CNAME/SOA)
+go to `crates/foca-net/data/saas_dns.json` for `intel::saas`.
+Dropped fields: icon, description, saas, pricing, oss, probe (an extra request per technology).
 
 Every regex is compiled with the Rust `regex` crate (`examples/regex_check.rs`); patterns it
 rejects (lookarounds, backreferences) are skipped and counted in `sources.lock.json`.
 
 Each pattern is stored as `[regex, version_template, confidence, literal]` (trailing empty items
-dropped). `literal` is a lowercase substring every match must contain: the engine looks it up
+dropped). Short keys: h headers, k cookies, m meta, x html, s scriptSrc, u url, sc scripts,
+t text, y css, ci certIssuer, ro robots, g js (path -> patterns), d dom (list of
+`{s: selector, a: {attribute: pattern}, p: {property: pattern}, t: pattern}`), q xhr. `literal` is a lowercase substring every match must contain: the engine looks it up
 with one Aho-Corasick pass and compiles/runs the regex only when it is present.
 
 Usage: python3 update_webappanalyzer.py [--repin]
@@ -206,6 +212,49 @@ def as_list(v):
     return v if isinstance(v, list) else [v]
 
 
+# Upstream list fields -> short key; `LITERAL_FIELDS` get the Aho-Corasick prefilter literal.
+LISTS = ("html", "scriptSrc", "url", "scripts", "text", "css", "certIssuer", "robots", "xhr")
+SHORT = {"headers": "h", "cookies": "k", "meta": "m", "js": "g", "html": "x", "scriptSrc": "s",
+         "url": "u", "scripts": "sc", "text": "t", "css": "y", "certIssuer": "ci",
+         "robots": "ro", "xhr": "q"}
+LITERAL_FIELDS = ("html", "scriptSrc", "url", "scripts", "text", "css", "robots")
+STATIC_KEYS = ("h", "k", "m", "x", "s", "u", "sc", "t", "y", "ci", "ro")
+BROWSER_KEYS = ("g", "d", "q")
+# Fields evaluated before this ingest learned the new signals (for the before/after stats).
+LEGACY_KEYS = ("h", "k", "m", "x", "s", "u")
+WP_SLUG = re.compile(r"wp-content(?:\\?/)+(plugins|themes)(?:\\?/)+([a-z0-9][a-z0-9_.-]*[a-z0-9])", re.I)
+
+
+def dom_rules(d):
+    """Upstream `dom` (a selector, a list of selectors or `{selector: conditions}`) as
+    `[(selector, conditions)]`."""
+    if d is None:
+        return []
+    if isinstance(d, str):
+        return [(d, {})]
+    if isinstance(d, list):
+        return [(x, {}) for x in d if isinstance(x, str)]
+    return [(k, v if isinstance(v, dict) else {}) for k, v in d.items()]
+
+
+def wp_slugs(t):
+    """`[(kind, slug)]` of a WordPress plugin/theme from its path patterns
+    (`/wp-content/plugins/<slug>/`), kind `plugin` or `theme`."""
+    found = []
+    texts = [*as_list(t.get("html")), *as_list(t.get("scriptSrc"))]
+    for d in dom_rules(t.get("dom")):
+        texts.append(d[0])
+        texts.extend(str(v) for v in (d[1].get("attributes") or {}).values())
+    for x in texts:
+        for m in WP_SLUG.finditer(split_pat(x)[0] if isinstance(x, str) else ""):
+            slug = m.group(2).replace("\\", "").lower()
+            if re.fullmatch(r"[a-z0-9][a-z0-9_.-]*", slug) and "." not in slug:
+                kind = "plugin" if m.group(1).lower() == "plugins" else "theme"
+                if (kind, slug) not in found:
+                    found.append((kind, slug))
+    return found
+
+
 def main() -> None:
     opts = sigsrc.args()
     files = {p: sigsrc.raw(REPO, COMMIT, p) for p in FILES}
@@ -221,37 +270,70 @@ def main() -> None:
     # Collect every regex first so one cargo run checks them all.
     pending = []  # (tech, field, key, raw)
     for name, t in techs.items():
-        for field in ("headers", "cookies", "meta"):
+        for field in ("headers", "cookies", "meta", "js"):
             for k, v in (t.get(field) or {}).items():
                 for s in as_list(v):
                     pending.append((name, field, k, s))
-        for field in ("html", "scriptSrc", "url"):
+        for field in LISTS:
             for s in as_list(t.get(field)):
                 pending.append((name, field, None, s))
+        for i, (sel, cond) in enumerate(dom_rules(t.get("dom"))):
+            for kind in ("attributes", "properties"):
+                for k, v in (cond.get(kind) or {}).items():
+                    pending.append((name, "dom", (i, sel, kind, k), v if isinstance(v, str) else ""))
+            if "text" in cond:
+                tx = cond["text"]
+                pending.append((name, "dom", (i, sel, "text", None), tx if isinstance(tx, str) else ""))
+            if not cond.get("attributes") and not cond.get("properties") and "text" not in cond:
+                pending.append((name, "dom", (i, sel, "exists", None), ""))
     regexes = [split_pat(s)[0] for _, _, _, s in pending]
     errs = sigsrc.rust_regex_check(regexes)
     skipped = {}
     out = {}
+    dom_bad = set()  # (tech, rule index) with a pattern the engine rejects
     for (name, field, key, s), err in zip(pending, errs):
         if err:
             skipped[err] = skipped.get(err, 0) + 1
+            if field == "dom":
+                dom_bad.add((name, key[0]))
+            continue
+    for (name, field, key, s), err in zip(pending, errs):
+        if err:
             continue
         rx, ver, conf = split_pat(s)
-        pat = [rx, ver, conf, literal(rx) if field in ("html", "scriptSrc", "url") else ""]
+        pat = [rx, ver, conf, literal(rx) if field in LITERAL_FIELDS else ""]
         while pat and pat[-1] in ("", 0):
             pat.pop()
         rec = out.setdefault(rename(name), {})
-        short = {"headers": "h", "cookies": "k", "meta": "m", "html": "x", "scriptSrc": "s",
-                 "url": "u"}[field]
+        if field == "dom":
+            i, sel, kind, k = key
+            if (name, i) in dom_bad:
+                continue
+            rules = rec.setdefault("_dom", {})
+            r = rules.setdefault(i, {"s": sel})
+            if kind == "attributes":
+                r.setdefault("a", {})[k] = pat
+            elif kind == "properties":
+                r.setdefault("p", {})[k] = pat
+            elif kind == "text":
+                r["t"] = pat
+            continue
+        short = SHORT[field]
         if key is None:
             rec.setdefault(short, []).append(pat)
         else:
             k = key.lower() if field in ("headers", "meta") else key
             rec.setdefault(short, {}).setdefault(k, []).append(pat)
+    for rec in out.values():
+        dom = rec.pop("_dom", None)
+        if dom:
+            rec["d"] = [dom[i] for i in sorted(dom)]
     referenced = {rename(split_pat(x)[0]) for t in techs.values()
                   for f in ("implies", "requires") for x in as_list(t.get(f))}
     dns_rules = []
     rows = []
+    legacy = static = browser_only = 0
+    per_signal = {}
     for name, t in sorted(techs.items(), key=lambda kv: rename(kv[0])):
         first = cats.get((t.get("cats") or [0])[0], "Miscellaneous")
         rec = out.get(rename(name), {})
@@ -268,9 +350,23 @@ def main() -> None:
             if dns:
                 dns_rules.append({"name": rename(name), "cat": SAAS_CAT.get(first, "cloud"),
                                   "dns": dns})
-        detectable = any(k in rec for k in ("h", "k", "m", "x", "s", "u", "i"))
+        # any technology whose patterns name exactly one plugin/theme directory (WooCommerce
+        # is filed under Ecommerce); themes and plugins of page builders list several
+        slugs = wp_slugs(t)
+        if slugs and (first in ("WordPress plugins", "WordPress themes") or len(slugs) == 1):
+            rec["ps"] = [list(x) for x in slugs]
+        detectable = any(k in rec for k in (*STATIC_KEYS, *BROWSER_KEYS, "i"))
         if not detectable and not t.get("cpe") and rename(name) not in referenced:
             continue
+        if any(k in rec for k in LEGACY_KEYS):
+            legacy += 1
+        if any(k in rec for k in STATIC_KEYS):
+            static += 1
+        elif any(k in rec for k in BROWSER_KEYS):
+            browser_only += 1
+        for k in (*STATIC_KEYS, *BROWSER_KEYS):
+            if k in rec:
+                per_signal[k] = per_signal.get(k, 0) + 1
         rec = {"n": rename(name), "c": CATS_RU.get(first, "Разное"), **rec}
         if t.get("cpe"):
             rec["cpe"] = t["cpe"]
@@ -293,8 +389,13 @@ def main() -> None:
     OUT_DNS.write_text(json.dumps({"source": f"{REPO}@{COMMIT[:12]}", "license": "GPL-3.0",
                                    "rules": dns_rules}, ensure_ascii=False, indent=0) + "\n",
                        "utf-8")
-    nolit = sum(1 for r in rows for f in ("x", "s", "u") for p in r.get(f, []) if len(p) < 4)
+    nolit = sum(1 for r in rows for f in ("x", "s", "u", "sc", "t", "y", "ro")
+                for p in r.get(f, []) if len(p) < 4)
     stats = {"technologies_upstream": len(techs), "technologies_kept": len(rows),
+             "technologies_legacy_signals": legacy, "technologies_static": static,
+             "technologies_browser_only": browser_only,
+             "technologies_per_signal": dict(sorted(per_signal.items())),
+             "wordpress_slugs": sum(len(r.get("ps", [])) for r in rows),
              "with_cpe": sum(1 for r in rows if "cpe" in r), "dns_rules": len(dns_rules),
              "patterns_total": len(pending), "patterns_skipped": skipped,
              "patterns_without_literal": nolit}

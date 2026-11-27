@@ -35,6 +35,8 @@ use crate::scan::*;
 pub(crate) const K_FRONTIER: &str = "engine.crawl_frontier";
 /// Facts key: script files the crawler saw per host (`BTreeMap<String, Vec<String>>`), for recon.
 pub(crate) const K_SCRIPTS: &str = "engine.crawl_scripts";
+/// Browser signals of pages the crawler rendered (host -> pages), read by the recon stage.
+pub(crate) const K_BROWSER: &str = "engine.crawl_browser";
 /// Request journal note of a linked external storage request.
 pub(crate) const STORAGE_NOTE: &str = "linked_storage";
 /// Script files kept per host for recon.
@@ -198,6 +200,11 @@ pub(crate) fn crawler(c: &Ctx, cfg: &CrawlCfg) -> Crawler {
         max_pages: cfg.max_pages,
         max_time: Duration::from_secs(cfg.max_minutes * 60),
         max_rendered: cfg.max_rendered,
+        // pages rendered as app shells also answer the technology probe (browser signals)
+        render_probe: c
+            .e
+            .current_render()
+            .map(|_| foca_recon::tech::browser::probe_script(1500).0),
         honor_nofollow: cfg.nofollow,
         storage: cfg.storage.then(|| c.e.cfg.endpoints.storage.clone()),
         collect_images: cfg.images,
@@ -458,6 +465,9 @@ pub(crate) async fn after_domain(
             }
         }
         facts::put(&db, K_SCRIPTS, &sc)?;
+        if !out.rendered.is_empty() {
+            store_browser(&db, &out.rendered)?;
+        }
     }
     record_provenance(
         c,
@@ -736,6 +746,39 @@ pub(crate) fn image_budget(c: &Ctx) -> u64 {
         }
     }
     mb * 1024 * 1024
+}
+
+/// Rendered pages kept per host for the recon stage's browser signals.
+const BROWSER_PAGES_PER_HOST: usize = 5;
+
+/// Stores the technology probe answers of rendered pages by host
+/// ([`K_BROWSER`]).
+fn store_browser(
+    db: &foca_store::ProjectDb,
+    rendered: &[foca_search::sources::RenderedProbe],
+) -> Result<(), Stop> {
+    use foca_recon::tech::browser::BrowserSignals;
+    let key = K_BROWSER;
+    let mut all: BTreeMap<String, Vec<BrowserSignals>> = facts::get(db, key);
+    for r in rendered {
+        let Some(h) = url::Url::parse(&r.url)
+            .ok()
+            .and_then(|u| u.host_str().map(str::to_ascii_lowercase))
+        else {
+            continue;
+        };
+        let Some(b) = BrowserSignals::from_eval(&r.url, &r.eval, &r.hosts) else {
+            continue;
+        };
+        let v = all.entry(h).or_default();
+        v.retain(|x| x.url != b.url);
+        v.push(b);
+        if v.len() > BROWSER_PAGES_PER_HOST {
+            v.remove(0);
+        }
+    }
+    facts::put(db, key, &all)?;
+    Ok(())
 }
 
 #[cfg(test)]

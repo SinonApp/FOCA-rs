@@ -20,7 +20,9 @@ use crate::buckets::{find_buckets, merge_buckets, Bucket, BucketStatus};
 use crate::favicon::{favicon_hash, find_icon_links, FaviconHash, IconLink};
 use crate::grepapp::GrepAppResult;
 use crate::js::{analyze_js, inline_scripts, JsAnalysis};
-use crate::tech::{detect, extract_analytics_ids, AnalyticsId, PageInput, Technology};
+use crate::tech::browser::BrowserSignals;
+use crate::tech::Technology;
+use crate::tech::{detect, detect_with, extract_analytics_ids, AnalyticsId, PageInput, SiteExtra};
 use crate::wellknown::WellKnownReport;
 use crate::ReconFinding;
 
@@ -58,7 +60,13 @@ pub struct ReconInput {
     /// Site pages (the first one is treated as the home page).
     pub pages: Vec<PageInput>,
     pub scripts: Vec<ScriptInput>,
+    /// Fetched stylesheets (CSS technology signals).
+    pub styles: Vec<ScriptInput>,
     pub favicon: Option<FaviconInput>,
+    /// Issuer of the site's TLS certificate (from the scan's TLS inspection).
+    pub cert_issuer: Option<String>,
+    /// What the hidden browser read on rendered pages (Android only; the first is the home page).
+    pub browser: Vec<BrowserSignals>,
     /// Document text extracted by foca-meta, searched for bucket references.
     pub documents: Vec<TextInput>,
     /// URL list (archive, crawler), searched for buckets.
@@ -111,18 +119,12 @@ pub fn analyze_site(input: &ReconInput) -> ReconReport {
         if i == 0 {
             rep.icon_links = find_icon_links(&p.html, &p.url);
         }
-        for t in detect(p) {
-            match techs.iter_mut().find(|x| x.name == t.name) {
-                Some(e) => {
-                    if e.version.is_none() {
-                        e.version = t.version;
-                        e.outdated = t.outdated;
-                    }
-                    e.confidence = e.confidence.max(t.confidence);
-                }
-                None => techs.push(t),
-            }
-        }
+        let found = if i == 0 {
+            detect_with(p, &site_extra(input, input.browser.first()))
+        } else {
+            detect(p)
+        };
+        merge_techs(&mut techs, found);
         ids.extend(extract_analytics_ids(&p.html));
         let inl = inline_scripts(&p.html).join("\n;\n");
         if !inl.is_empty() {
@@ -143,6 +145,20 @@ pub fn analyze_site(input: &ReconInput) -> ReconReport {
             }
         }
     }
+    // later rendered pages (single-page app fallback) add only their browser signals
+    for b in input.browser.iter().skip(1) {
+        let page = PageInput {
+            url: b.url.clone(),
+            ..Default::default()
+        };
+        let extra = SiteExtra {
+            browser: Some(b),
+            ..Default::default()
+        };
+        merge_techs(&mut techs, detect_with(&page, &extra));
+    }
+    let parts = crate::tech::cmsparts::find_parts(&input.pages, &techs);
+    crate::tech::cmsparts::merge_into(&mut techs, crate::tech::cmsparts::technologies(&parts));
     for s in &input.scripts {
         rep.js.push(analyze_js(&s.url, &s.body));
         ids.extend(extract_analytics_ids(&s.body));
@@ -168,6 +184,52 @@ pub fn analyze_site(input: &ReconInput) -> ReconReport {
     rep.buckets = merge_buckets(bucket_lists);
     rep.refresh_findings();
     rep
+}
+
+/// Site-wide signal data of `input` for the home page detection.
+fn site_extra<'a>(input: &'a ReconInput, browser: Option<&'a BrowserSignals>) -> SiteExtra<'a> {
+    SiteExtra {
+        scripts: input
+            .scripts
+            .iter()
+            .map(|s| (s.url.as_str(), s.body.as_str()))
+            .collect(),
+        styles: input.styles.iter().map(|s| s.body.as_str()).collect(),
+        cert_issuer: input.cert_issuer.as_deref(),
+        robots: input
+            .wellknown
+            .as_ref()
+            .and_then(|w| w.robots.iter().find(|(_, r)| !r.text.is_empty()))
+            .map(|(_, r)| r.text.as_str()),
+        browser,
+    }
+}
+
+/// Merges technologies found on another page or by another signal: the first version wins,
+/// confidence is the maximum, signals and evidence are united.
+fn merge_techs(techs: &mut Vec<Technology>, found: Vec<Technology>) {
+    for t in found {
+        match techs.iter_mut().find(|x| x.name == t.name) {
+            Some(e) => {
+                if e.version.is_none() {
+                    e.version = t.version;
+                    e.outdated = t.outdated;
+                }
+                e.confidence = e.confidence.max(t.confidence);
+                for s in t.signals {
+                    if !e.signals.contains(&s) {
+                        e.signals.push(s);
+                    }
+                }
+                for ev in t.evidence {
+                    if e.evidence.len() < 8 && !e.evidence.contains(&ev) {
+                        e.evidence.push(ev);
+                    }
+                }
+            }
+            None => techs.push(t),
+        }
+    }
 }
 
 fn f(
@@ -575,6 +637,7 @@ mod tests {
             urls: vec!["https://ex-arch.s3.amazonaws.com/old.zip".into()],
             wellknown: Some(wk),
             grepapp: None,
+            ..Default::default()
         }
     }
 
@@ -707,5 +770,107 @@ mod tests {
             "s.src='https://widget.vendor.example/w.js?apiKey={t}';"
         ));
         assert_eq!(f.sev, Severity::Medium);
+    }
+
+    #[test]
+    fn static_signals_from_fetched_files_tls_and_robots() {
+        let wk = report_from_bodies([(
+            WellKnownKind::Robots,
+            "https://shop.example/robots.txt",
+            "# Powered by Shoporama\nUser-agent: *\nDisallow: /cart\n",
+        )]);
+        let input = ReconInput {
+            target: "shop.example".into(),
+            pages: vec![PageInput {
+                url: "https://shop.example/".into(),
+                headers: vec![],
+                html: concat!(
+                    "<html><head><style>.x{--tw-rotate:0}</style></head>",
+                    "<body><p>Powered by SLAED CMS</p><script>var a='Royal Mail';</script></body></html>"
+                )
+                .into(),
+            }],
+            scripts: vec![ScriptInput {
+                url: "https://shop.example/assets/vendor.js".into(),
+                body: "/*!\n * @overview  Ember - JavaScript Application Framework\n * @version   3.28.1\n */".into(),
+            }],
+            styles: vec![ScriptInput {
+                url: "https://shop.example/assets/app.css".into(),
+                body: ".MuiPaper-root{color:red}".into(),
+            }],
+            cert_issuer: Some("CN=R11, O=Let's Encrypt, C=US".into()),
+            wellknown: Some(wk),
+            ..Default::default()
+        };
+        let rep = analyze_site(&input);
+        let get = |n: &str| {
+            rep.technologies
+                .iter()
+                .find(|t| t.name == n)
+                .unwrap_or_else(|| panic!("{n}: {:?}", rep.technologies))
+        };
+        let ember = get("Ember.js");
+        assert_eq!(ember.version.as_deref(), Some("3.28.1"));
+        assert_eq!(ember.signals, ["script"]);
+        assert!(
+            ember.evidence[0].starts_with("JS file vendor.js:"),
+            "{ember:?}"
+        );
+        assert_eq!(get("SLAED CMS").signals, ["text"]);
+        assert_eq!(get("Tailwind CSS").signals, ["css"]);
+        assert!(get("Material UI").evidence[0].starts_with("CSS: .MuiPaper-root"));
+        let le = get("Let's Encrypt");
+        assert_eq!(le.signals, ["cert"]);
+        assert!(le.evidence[0].contains("TLS issuer"));
+        assert_eq!(get("Shoporama").signals, ["robots"]);
+        // script text is not visible text
+        assert!(rep.technologies.iter().all(|t| t.name != "Royal Mail"));
+        // the same page without the site-wide data finds none of them
+        let bare = analyze_site(&ReconInput {
+            pages: input.pages.clone(),
+            ..Default::default()
+        });
+        let names: Vec<&str> = bare.technologies.iter().map(|t| t.name.as_str()).collect();
+        for n in ["Ember.js", "Material UI", "Let's Encrypt", "Shoporama"] {
+            assert!(!names.contains(&n), "{n}");
+        }
+    }
+
+    #[test]
+    fn wordpress_plugins_join_the_technology_list() {
+        let html = r#"<html><head><meta name="generator" content="WordPress 6.4.2">
+<link rel="stylesheet" href="/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=5.8.4">
+<link rel="stylesheet" href="/wp-content/plugins/fancy-gallery-x/g.css?ver=6.4.2">
+<link rel="stylesheet" href="/wp-content/themes/agency-pro/style.css?ver=2.0.1">
+</head></html>"#;
+        let rep = analyze_site(&ReconInput {
+            target: "blog.example".into(),
+            pages: vec![PageInput {
+                url: "https://blog.example/".into(),
+                headers: vec![],
+                html: html.into(),
+            }],
+            ..Default::default()
+        });
+        let cf7 = rep
+            .technologies
+            .iter()
+            .find(|t| t.slug.as_deref() == Some("contact-form-7"))
+            .expect("cf7");
+        assert_eq!(cf7.version.as_deref(), Some("5.8.4"));
+        assert!(cf7.signals.contains(&"plugin_path".to_string()), "{cf7:?}");
+        let fg = rep
+            .technologies
+            .iter()
+            .find(|t| t.slug.as_deref() == Some("fancy-gallery-x"))
+            .expect("plugin");
+        assert_eq!(fg.version, None, "core ver is ignored");
+        let th = rep
+            .technologies
+            .iter()
+            .find(|t| t.slug.as_deref() == Some("agency-pro"))
+            .expect("theme");
+        assert_eq!(th.category, "Темы WordPress");
+        assert_eq!(th.version.as_deref(), Some("2.0.1"));
     }
 }

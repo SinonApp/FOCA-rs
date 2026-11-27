@@ -267,8 +267,8 @@
    "outputs": [
     {
      "path": "crates/foca-recon/data/webappanalyzer.json.gz",
-     "bytes": 200416,
-     "sha256": "5870ea50475e58ba2805b1e7cd269b5973e2856be03df14c230c155b047e94ed"
+     "bytes": 331501,
+     "sha256": "2b789506042bad1563424d50887ccd916cc250d25a614e0abfe27f0887177e02"
     },
     {
      "path": "crates/foca-net/data/saas_dns.json",
@@ -278,16 +278,36 @@
    ],
    "stats": {
     "technologies_upstream": 7715,
-    "technologies_kept": 5623,
+    "technologies_kept": 7604,
+    "technologies_legacy_signals": 5328,
+    "technologies_static": 5975,
+    "technologies_browser_only": 1589,
+    "technologies_per_signal": {
+     "ci": 6,
+     "d": 1646,
+     "g": 3370,
+     "h": 675,
+     "k": 379,
+     "m": 766,
+     "q": 150,
+     "ro": 1,
+     "s": 3899,
+     "sc": 814,
+     "t": 61,
+     "u": 87,
+     "x": 359,
+     "y": 22
+    },
+    "wordpress_slugs": 347,
     "with_cpe": 466,
     "dns_rules": 147,
-    "patterns_total": 7002,
+    "patterns_total": 15679,
     "patterns_skipped": {
-     "lookaround": 12,
+     "lookaround": 19,
      "size": 14,
      "dns": 0
     },
-    "patterns_without_literal": 60
+    "patterns_without_literal": 70
    }
   }
  }

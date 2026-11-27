@@ -11,7 +11,11 @@
 //! Modules:
 //! - [`favicon`]: Shodan-compatible favicon hash (`http.favicon.hash`), sha256/md5,
 //!   `<link rel=icon>`;
-//! - [`tech`]: site technologies via Wappalyzer-style rules, plus analytics ids (pivots);
+//! - [`tech`]: site technologies via Wappalyzer-style rules (static signals over fetched data,
+//!   browser signals read by the hidden Android WebView in [`tech::browser`]), plus analytics
+//!   ids (pivots);
+//! - [`tech::cmsparts`]: WordPress/Drupal/Joomla/Magento/PrestaShop plugins, themes and modules by
+//!   their asset paths, with versions;
 //! - [`js`]: endpoints and secrets in JavaScript (secrets are always masked);
 //! - [`retire`]: JavaScript library versions and vulnerable ranges (Retire.js data);
 //! - [`grepapp`]: where the domain appears in public code (grep.app);

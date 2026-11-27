@@ -43,4 +43,28 @@ class RenderLogicTest {
   @Test fun proxyBypassIncludesLoopback() {
     assertTrue(RenderLogic.PROXY_BYPASS.containsAll(listOf("localhost", "127.0.0.1", "*.localhost", "::1")))
   }
+
+  /** Probe answers pass through unless they are a script error or too large. */
+  @Test fun evalAnswerIsCapped() {
+    assertEquals("{\"j\":{}}", RenderLogic.capEval("{\"j\":{}}"))
+    assertEquals(null, RenderLogic.capEval(null))
+    assertEquals(null, RenderLogic.capEval("jserr:ReferenceError"))
+    assertEquals(null, RenderLogic.capEval("x".repeat(RenderLogic.MAX_EVAL + 1)))
+    assertEquals(3_000L, RenderLogic.evalTimeout(3_000L, 60_000L))
+    assertEquals(10_000L, RenderLogic.evalTimeout(99_000L, 60_000L))
+    assertEquals(800L, RenderLogic.evalTimeout(3_000L, 800L))
+    assertEquals(500L, RenderLogic.evalTimeout(3_000L, -5L))
+  }
+
+  /** Request hosts are normalised, deduplicated and capped. */
+  @Test fun requestHostsAreCapped() {
+    val set = LinkedHashSet<String>()
+    assertTrue(RenderLogic.addHost(set, "CDN.Example."))
+    assertEquals(false, RenderLogic.addHost(set, "cdn.example"))
+    assertEquals(false, RenderLogic.addHost(set, null))
+    assertEquals(false, RenderLogic.addHost(set, " "))
+    for (i in 0 until 500) RenderLogic.addHost(set, "h$i.example")
+    assertEquals(RenderLogic.MAX_HOSTS, set.size)
+    assertTrue(set.contains("cdn.example"))
+  }
 }

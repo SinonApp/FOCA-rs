@@ -16,15 +16,27 @@
 //! list; rerunning the stage (resume after a stop) overwrites the per-host data. Sites run
 //! `settings.net.hosts_parallel` at once; each is stored as soon as it is done. At the active level
 //! open non-standard web ports of in-scope hosts get a site recon pass too ([`recon_extra_ports`]).
+//!
+//! Technology signals: besides the home page, the fetched scripts and stylesheets, the TLS
+//! certificate issuer (network stage facts) and robots.txt feed the static rules. On Android
+//! (a platform browser is attached) the home page of each site is rendered once in standard and
+//! active profiles, up to `settings.recon.render_hosts` sites per scan, with one read-only probe
+//! script for browser-only signals (JS globals, DOM, request hosts); pages the crawler already
+//! rendered as app shells add theirs (`engine.crawl_browser`). The passive profile renders nothing; without
+//! a browser (CLI, desktop) the scan log notes that browser-only signals were not checked. In the
+//! active profile up to [`foca_recon::tech::cmsparts::MAX_READMES`] WordPress plugin readmes are read
+//! for versions.
 
 use std::collections::BTreeMap;
 use std::future::Future;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use foca_net::Access;
 use foca_recon::buckets::{check_buckets, BucketCheckOptions, BucketStatus};
 use foca_recon::collect::{self, CollectOptions};
 use foca_recon::grepapp::{self, GrepAppError, GrepAppResult};
+use foca_recon::tech::browser::{self, BrowserSignals};
 use foca_recon::webaudit::{self, AuditLevel, WebAuditInput, WebAuditOptions, WebAuditReport};
 use foca_recon::{analyze_site, ReconInput, ReconReport};
 use foca_store::ProjectDb;
@@ -38,6 +50,10 @@ use crate::engine::lock;
 
 /// Project facts key holding the reconnaissance data.
 pub const K_RECON: &str = "engine.recon";
+/// Default of `settings.recon.render_hosts`: home pages rendered for browser signals per scan.
+pub const RENDER_HOSTS: u64 = 10;
+/// Time budget of the probe script inside the page.
+const PROBE_BUDGET_MS: u64 = 1500;
 /// Non-standard web ports that get a site recon pass at the active level.
 pub const EXTRA_WEB_PORTS: &[u16] = &[8080, 8443, 3000, 9000, 5601, 9200];
 const MAX_EXTRA_SITES: usize = 6;
@@ -69,6 +85,9 @@ pub struct SiteRecon {
     pub web: Option<WebAuditReport>,
     /// A reconnaissance source did not answer in the latest scan; some data comes from earlier runs.
     pub incomplete: bool,
+    /// The home page was rendered in the platform browser for browser-only signals.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub rendered: bool,
 }
 
 /// Status of a stage source (for empty UI states).
@@ -221,6 +240,12 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
     let recon_net = c.group_net("recon")?;
     let n = hosts.len();
     let c: &Ctx = c;
+    let renders = AtomicUsize::new(0);
+    let readmes = AtomicUsize::new(0);
+    let render_cap = render_cap(c);
+    if !archive && want("recon") {
+        note_no_browser(c, render_cap);
+    }
     let board = c.host_board(n);
     // earlier data per site is kept if a source fails or is skipped
     let prev = facts::get::<ReconFacts>(&lock(&c.db), K_RECON).sites;
@@ -228,7 +253,7 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
     let work = |i: usize, host: String| {
         let (recon_net, urls, now, sid, board, prev) =
             (&recon_net, &urls, &now, &sid, &board, &prev);
-        let want = &want;
+        let (want, renders, readmes) = (&want, &renders, &readmes);
         async move {
             let host = &host;
             // source states of this site, merged into the stage's in host order at the end
@@ -254,6 +279,7 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
                 let opts = CollectOptions {
                     archive: archive.then(|| c.e.cfg.endpoints.wayback.clone()),
                     max_scripts: MAX_SCRIPTS,
+                    ..Default::default()
                 };
                 // the offline harness serves sites on its own port (`EngineConfig::site_port`)
                 let fetch_host = match c.e.cfg.site_port {
@@ -272,6 +298,13 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
                         site.via = if archive { "archive" } else { "site" }.into();
                         if !archive {
                             crawled_scripts(c, recon_net, host, &mut input).await;
+                            if let Some(b) =
+                                render_home(c, recon_net, u, host, renders, render_cap).await
+                            {
+                                site.rendered = true;
+                                input.browser.push(b);
+                            }
+                            input.browser.extend(crawled_browser(c, host));
                         }
                     }
                     End::Done(Err(e)) => site.error = Some(e.clone()),
@@ -354,7 +387,11 @@ pub(super) async fn stage_recon(c: &mut Ctx) -> Result<(), Stop> {
                     input.grepapp = Some(r);
                 }
             }
+            input.cert_issuer = cert_issuer(c, host);
             let mut rep = analyze_site(&input);
+            if c.level == "active" && page_ok == Some(true) && !archive {
+                readme_versions(c, recon_net, &input, &mut rep, readmes).await;
+            }
             // the source did not answer (error/timeout/skip): earlier data is not erased
             let mut keep_totals = false;
             if let Some(p) = &prev_site {
@@ -558,6 +595,15 @@ pub(super) async fn recon_extra_ports(c: &mut Ctx) -> Result<(), Stop> {
     let now = c.e.now_iso();
     let sid = c.scan_id.clone();
     let c: &Ctx = c;
+    // the site recon stage already used part of the per-scan render budget
+    let used = facts::get::<ReconFacts>(&lock(&c.db), K_RECON)
+        .sites
+        .values()
+        .filter(|s| s.rendered && s.scan == sid)
+        .count();
+    let renders = AtomicUsize::new(used);
+    let render_cap = render_cap(c);
+    let renders = &renders;
     let board = c.host_board(sites.len());
     let items: Vec<(String, String)> = sites.iter().map(|s| (s.clone(), s.clone())).collect();
     let work = |_: usize, site: String| {
@@ -570,6 +616,7 @@ pub(super) async fn recon_extra_ports(c: &mut Ctx) -> Result<(), Stop> {
             let opts = foca_recon::collect::CollectOptions {
                 archive: None,
                 max_scripts: 3,
+                ..Default::default()
             };
             let url = match foca_recon::collect::fetch_site(net, &site, &opts, &mut input).await {
                 Ok(u) => u,
@@ -578,6 +625,15 @@ pub(super) async fn recon_extra_ports(c: &mut Ctx) -> Result<(), Stop> {
                     return Ok(0);
                 }
             };
+            let host = site.split(':').next().unwrap_or(&site).to_string();
+            let rendered = match render_home(c, net, &url, &host, renders, render_cap).await {
+                Some(b) => {
+                    input.browser.push(b);
+                    true
+                }
+                None => false,
+            };
+            input.cert_issuer = cert_issuer(c, &host);
             let rep = foca_recon::analyze_site(&input);
             let db = lock(&c.db);
             let mut nf: NetFacts = facts::get(&db, facts::K_NET);
@@ -601,6 +657,7 @@ pub(super) async fn recon_extra_ports(c: &mut Ctx) -> Result<(), Stop> {
                     at: now.clone(),
                     scan: sid.clone(),
                     report: rep,
+                    rendered,
                     ..Default::default()
                 },
             );
@@ -707,7 +764,9 @@ pub fn snapshot_of(rf: &ReconFacts) -> Value {
         for t in &r.technologies {
             tech.push(
                 json!({ "name": t.name, "version": t.version, "category": t.category,
-                "outdated": t.outdated, "confidence": t.confidence, "host": host }),
+                "outdated": t.outdated, "confidence": t.confidence, "host": host,
+                "signals": t.signals, "evidence": t.evidence, "plugin_of": t.plugin_of,
+                "slug": t.slug, "cpe": t.cpe }),
             );
         }
         for a in &r.analytics_ids {
@@ -812,4 +871,120 @@ async fn crawled_scripts(c: &Ctx, net: &foca_net::NetClient, host: &str, input: 
             n += 1;
         }
     }
+}
+
+/// `settings.recon.render_hosts`: home pages rendered per scan (0 turns rendering off).
+fn render_cap(c: &Ctx) -> usize {
+    c.e.store().settings_get().unwrap_or_default()["recon"]["render_hosts"]
+        .as_u64()
+        .unwrap_or(RENDER_HOSTS) as usize
+}
+
+/// Scan log note when browser-only signals cannot be read (no platform browser or turned off).
+fn note_no_browser(c: &Ctx, cap: usize) {
+    if c.e.current_render().is_none() {
+        tracing::info!(target: "foca::scan", "{}: технологии: браузерные признаки не проверены (нет встроенного браузера: JS-переменные, DOM, XHR)", c.scan_id);
+    } else if cap == 0 {
+        tracing::info!(target: "foca::scan", "{}: технологии: браузерные признаки отключены (recon.render_hosts = 0)", c.scan_id);
+    }
+}
+
+/// Renders the home page `url` once in the platform browser with the read-only probe script
+/// (standard and active profiles, in-scope hosts, within the per-scan budget).
+async fn render_home(
+    c: &Ctx,
+    net: &foca_net::NetClient,
+    url: &str,
+    host: &str,
+    used: &AtomicUsize,
+    cap: usize,
+) -> Option<BrowserSignals> {
+    if c.level == "external" || !net.host_in_scope(host) {
+        return None;
+    }
+    let render = c.e.current_render()?;
+    if used.fetch_add(1, Ordering::SeqCst) >= cap {
+        return None;
+    }
+    let (code, _, _) = browser::probe_script(PROBE_BUDGET_MS);
+    let proxy = net.config().proxy.clone().filter(|p| !p.trim().is_empty());
+    let req = foca_search::RenderRequest::new("recon", Some(url), Duration::from_secs(40))
+        .step(foca_search::RenderStep::Wait {
+            gone: vec![],
+            present: None,
+            timeout_ms: 20_000,
+            abort: vec![],
+        })
+        .step(foca_search::RenderStep::Sleep { ms: 1000 })
+        .step(foca_search::RenderStep::Eval {
+            code,
+            timeout_ms: 3000,
+        })
+        .collecting_hosts()
+        .through_proxy(proxy)
+        .logged_as("recon");
+    let r = net.cancellable(render.fetch(req)).await.ok()?;
+    let mut rec = net.draft("recon", "RENDER", url, host, &Access::TouchesTarget);
+    let out = match r {
+        Ok(p) => {
+            rec.status = p.status;
+            rec.bytes = p.html.len() as u64;
+            let b = p
+                .eval
+                .as_deref()
+                .and_then(|e| BrowserSignals::from_eval(&p.url, e, &p.hosts));
+            tracing::info!(target: "foca::scan", "{}: технологии: {host} отрисован в браузере, {}", c.scan_id,
+                b.as_ref().map_or_else(|| "ответа пробы нет".to_string(), BrowserSignals::summary));
+            b
+        }
+        Err(e) => {
+            rec.error = Some(format!("network: {e}"));
+            None
+        }
+    };
+    net.record(rec);
+    out
+}
+
+/// Browser signals of this host's pages the crawler rendered (app shells).
+fn crawled_browser(c: &Ctx, host: &str) -> Vec<BrowserSignals> {
+    let all: BTreeMap<String, Vec<BrowserSignals>> =
+        facts::get(&lock(&c.db), super::crawl::K_BROWSER);
+    all.get(&host.to_ascii_lowercase())
+        .cloned()
+        .unwrap_or_default()
+}
+
+/// Issuer of the host's TLS certificate from the network stage facts.
+fn cert_issuer(c: &Ctx, host: &str) -> Option<String> {
+    let nf: NetFacts = facts::get(&lock(&c.db), facts::K_NET);
+    let h = nf.hosts.get(&host.to_ascii_lowercase())?;
+    h.tls.as_ref()?["issuer"].as_str().map(String::from)
+}
+
+/// Active profile: WordPress plugin versions from their `readme.txt` (shared per-scan budget).
+async fn readme_versions(
+    c: &Ctx,
+    net: &foca_net::NetClient,
+    input: &ReconInput,
+    rep: &mut ReconReport,
+    used: &AtomicUsize,
+) {
+    let parts = foca_recon::tech::cmsparts::find_parts(&input.pages, &rep.technologies);
+    let want = parts
+        .iter()
+        .filter(|p| p.cms == "wordpress" && p.kind == "plugin")
+        .count();
+    if want == 0 {
+        return;
+    }
+    let max = foca_recon::tech::cmsparts::MAX_READMES;
+    let start = used.fetch_add(want, Ordering::SeqCst).min(max);
+    let left = (max - start).min(want);
+    if left == 0 {
+        return;
+    }
+    let sent =
+        foca_recon::tech::cmsparts::check_readmes(net, &mut rep.technologies, &parts, left).await;
+    tracing::info!(target: "foca::scan", "{}: технологии: проверено readme.txt плагинов WordPress: {sent}", c.scan_id);
 }

@@ -69,4 +69,27 @@ object RenderLogic {
     if (mobileHint != null && mobileHint != mobileUa) out += "Client Hints mobile=$mobileHint не совпадает с UA"
     return out
   }
+
+  /** Largest `eval` answer handed back to the core (the core rejects larger ones too). */
+  const val MAX_EVAL = 256 * 1024
+  /** Most request hosts recorded per request. */
+  const val MAX_HOSTS = 200
+
+  /** Returns the `eval` answer, or `null` when missing, a script error or over [MAX_EVAL]. */
+  fun capEval(v: String?): String? =
+    if (v == null || v.startsWith("jserr:") || v.length > MAX_EVAL) null else v
+
+  /** Time limit of an `eval` step: the requested one within 0.5..10 s and the time left. */
+  fun evalTimeout(requestedMs: Long, leftMs: Long): Long =
+    minOf(requestedMs.coerceIn(500L, 10_000L), maxOf(500L, leftMs))
+
+  /** Records a request host (lowercase, no trailing dot) while the set holds fewer than [MAX_HOSTS]. */
+  fun addHost(set: MutableSet<String>, host: String?): Boolean {
+    val h = host?.trim()?.trimEnd('.')?.lowercase() ?: return false
+    if (h.isEmpty()) return false
+    synchronized(set) {
+      if (set.size >= MAX_HOSTS) return false
+      return set.add(h)
+    }
+  }
 }

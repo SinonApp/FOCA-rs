@@ -66,6 +66,9 @@ pub struct Crawler {
     pub query_variants: usize,
     /// App-shell pages rendered through the platform browser.
     pub max_rendered: usize,
+    /// Read-only script evaluated on every rendered page (technology signals); its answer and
+    /// the request hosts land in [`CrawlOutput::rendered`].
+    pub render_probe: Option<String>,
     /// Consecutive 429/503 answers that stop a host.
     pub limit_stop: u32,
     /// Starting extra interval per host before any rate limit was seen.
@@ -116,6 +119,7 @@ impl Default for Crawler {
             per_template: 100,
             query_variants: 25,
             max_rendered: 30,
+            render_probe: None,
             limit_stop: 5,
             pace_base: Duration::ZERO,
             storage: None,
@@ -221,6 +225,16 @@ pub struct CrawlOutput {
     pub scripts: Vec<(String, String)>,
     /// Page that linked each document URL (provenance), by document URL.
     pub doc_pages: BTreeMap<String, String>,
+    /// Rendered pages with a [`Crawler::render_probe`] answer.
+    pub rendered: Vec<RenderedProbe>,
+}
+
+/// The [`Crawler::render_probe`] answer of one rendered page.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct RenderedProbe {
+    pub url: String,
+    pub eval: String,
+    pub hosts: Vec<String>,
 }
 
 fn origin(u: &Url) -> String {
@@ -1030,6 +1044,15 @@ impl Crawler {
             .step(RenderStep::Sleep { ms: 1500 })
             .through_proxy(proxy)
             .logged_as("crawler");
+        let req = match &self.render_probe {
+            Some(code) => req
+                .step(RenderStep::Eval {
+                    code: code.clone(),
+                    timeout_ms: 3000,
+                })
+                .collecting_hosts(),
+            None => req,
+        };
         st.out.stats.rendered += 1;
         let r = st.ctx.net.cancellable(render.fetch(req)).await?;
         let mut rec = st.ctx.net.draft(
@@ -1044,6 +1067,13 @@ impl Crawler {
                 rec.status = p.status;
                 rec.bytes = p.html.len() as u64;
                 let base = Url::parse(&p.url).unwrap_or_else(|_| page.clone());
+                if let Some(eval) = p.eval.clone().filter(|_| self.render_probe.is_some()) {
+                    st.out.rendered.push(RenderedProbe {
+                        url: base.to_string(),
+                        eval,
+                        hosts: p.hosts.clone(),
+                    });
+                }
                 Some(scan_page(&p.html, &base))
             }
             Err(e) => {

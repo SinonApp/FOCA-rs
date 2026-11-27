@@ -1,5 +1,5 @@
-//! Collects the input for [`crate::analyze_site`] through `NetClient`: the home page, favicon
-//! and scripts of the site (fetched directly with `Access::TouchesTarget`, or from a Wayback
+//! Collects the input for [`crate::analyze_site`] through `NetClient`: the home page, favicon,
+//! scripts and stylesheets of the site (fetched directly with `Access::TouchesTarget`, or from a Wayback
 //! copy with `Access::Passive`), plus robots/sitemap/security.txt from the archive (CDX and
 //! snapshots). Shared by the engine's site recon stage (`foca-engine`) and the CLI
 //! (`foca recon`).
@@ -21,6 +21,9 @@ pub struct CollectOptions {
     pub archive: Option<String>,
     /// Maximum number of external scripts from the same site.
     pub max_scripts: usize,
+    /// Maximum number of same-site stylesheets (`<link rel=stylesheet>`) fetched for CSS
+    /// technology signals.
+    pub max_styles: usize,
 }
 
 impl Default for CollectOptions {
@@ -28,8 +31,40 @@ impl Default for CollectOptions {
         CollectOptions {
             archive: None,
             max_scripts: 5,
+            max_styles: 5,
         }
     }
+}
+
+/// Largest stylesheet fetched for CSS signals.
+const MAX_STYLE_BYTES: u64 = 1 << 20;
+
+/// Absolute URLs of the `<link rel=stylesheet href>` of a page, in document order.
+pub fn stylesheet_links(html: &str, base: &str) -> Vec<String> {
+    static RE: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let re = RE.get_or_init(|| regex::Regex::new(r"(?is)<link\b[^>]*>").expect("re"));
+    let base = url::Url::parse(base).ok();
+    let mut out = Vec::new();
+    for m in re.find_iter(html) {
+        let a = crate::favicon::attrs(m.as_str());
+        let get = |k: &str| a.iter().find(|(n, _)| n == k).map(|(_, v)| v.clone());
+        let is_css = get("rel").is_some_and(|r| {
+            r.split_ascii_whitespace()
+                .any(|x| x.eq_ignore_ascii_case("stylesheet"))
+        });
+        let Some(href) = get("href").filter(|_| is_css) else {
+            continue;
+        };
+        let abs = base
+            .as_ref()
+            .and_then(|b| b.join(&href).ok())
+            .map(|u| u.to_string())
+            .unwrap_or(href);
+        if !out.contains(&abs) {
+            out.push(abs);
+        }
+    }
+    out
 }
 
 /// A response: headers (for an archive copy, `x-archive-orig-*` with the prefix removed) and
@@ -155,6 +190,26 @@ pub async fn fetch_site(
         }
         if let Ok(f) = fetch(client, s, archive, 2 << 20).await {
             input.scripts.push(ScriptInput {
+                url: s.clone(),
+                body: String::from_utf8_lossy(&f.body).into_owned(),
+            });
+        }
+    }
+    let home = input
+        .pages
+        .first()
+        .map(|p| p.html.clone())
+        .unwrap_or_default();
+    for s in stylesheet_links(&home, &url)
+        .iter()
+        .filter(|s| same_site(s, host))
+        .take(opts.max_styles)
+    {
+        if client.is_cancelled() {
+            break;
+        }
+        if let Ok(f) = fetch(client, s, archive, MAX_STYLE_BYTES).await {
+            input.styles.push(ScriptInput {
                 url: s.clone(),
                 body: String::from_utf8_lossy(&f.body).into_owned(),
             });

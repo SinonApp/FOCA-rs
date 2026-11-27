@@ -59,6 +59,10 @@ pub enum RenderStep {
     },
     /// Sleeps inside the page.
     Sleep { ms: u64 },
+    /// Evaluates a read-only JavaScript expression that returns a string (technology signals,
+    /// `foca_recon::tech::browser::probe_script`). The result lands in [`RenderPage::eval`]
+    /// (size-capped by the browser side); the step waits at most `timeout_ms`.
+    Eval { code: String, timeout_ms: u64 },
 }
 
 /// A render fetcher request.
@@ -88,6 +92,10 @@ pub struct RenderRequest {
     pub html: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub base: Option<String>,
+    /// Record the hosts of the requests the page makes while the request runs
+    /// ([`RenderPage::hosts`]).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub collect_hosts: bool,
 }
 
 impl RenderRequest {
@@ -102,7 +110,14 @@ impl RenderRequest {
             module: session.into(),
             html: None,
             base: None,
+            collect_hosts: false,
         }
+    }
+
+    /// Records request hosts seen while the page loads ([`RenderPage::hosts`]).
+    pub fn collecting_hosts(mut self) -> Self {
+        self.collect_hosts = true;
+        self
     }
 
     pub fn step(mut self, s: RenderStep) -> Self {
@@ -153,6 +168,12 @@ pub struct RenderPage {
     /// The script was stopped by the `abort` condition of a `wait` step (matched string), i.e. a captcha, without waiting for the timeout.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub aborted: Option<String>,
+    /// Result of the last `eval` step (a string, usually JSON).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub eval: Option<String>,
+    /// Hosts of the requests made while the request ran (with `collect_hosts`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hosts: Vec<String>,
 }
 
 /// Loads pages in a browser engine (on Android, a bridge to Kotlin).
@@ -247,5 +268,33 @@ mod tests {
         )
         .unwrap();
         assert!(p.wait_timeout && p.missing.is_none());
+        assert!(p.eval.is_none() && p.hosts.is_empty());
+    }
+
+    #[test]
+    fn eval_step_and_host_collection_shape() {
+        let r = RenderRequest::new(
+            "recon",
+            Some("https://site.example/"),
+            Duration::from_secs(20),
+        )
+        .step(RenderStep::Eval {
+            code: "JSON.stringify({})".into(),
+            timeout_ms: 3000,
+        })
+        .collecting_hosts();
+        let v = serde_json::to_value(&r).unwrap();
+        assert_eq!(v["steps"][0]["op"], "eval");
+        assert_eq!(v["steps"][0]["code"], "JSON.stringify({})");
+        assert_eq!(v["collect_hosts"], true);
+        let plain =
+            serde_json::to_value(RenderRequest::new("x", None, Duration::from_secs(5))).unwrap();
+        assert!(plain.get("collect_hosts").is_none());
+        let p: RenderPage = serde_json::from_str(
+            r#"{"html":"","url":"u","ms":5,"eval":"{\"j\":{}}","hosts":["cdn.example"]}"#,
+        )
+        .unwrap();
+        assert_eq!(p.eval.as_deref(), Some("{\"j\":{}}"));
+        assert_eq!(p.hosts, ["cdn.example"]);
     }
 }

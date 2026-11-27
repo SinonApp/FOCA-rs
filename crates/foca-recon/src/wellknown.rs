@@ -67,6 +67,9 @@ pub struct Robots {
     pub host: Option<String>,
     /// Paths that look like hidden sections or documents.
     pub interesting: Vec<HiddenPath>,
+    /// The body (first 64 KiB) for technology signals; not stored.
+    #[serde(default, skip_serializing)]
+    pub text: String,
 }
 
 /// A path worth attention.
@@ -170,6 +173,11 @@ pub fn classify_path(path: &str) -> Option<&'static str> {
 /// Parses robots.txt. `source` is its origin (for [`HiddenPath::source`]).
 pub fn parse_robots(text: &str, source: &str) -> Robots {
     let mut r = Robots::default();
+    let mut cut = text.len().min(64 << 10);
+    while !text.is_char_boundary(cut) {
+        cut -= 1;
+    }
+    r.text = text[..cut].to_string();
     let mut cur: Option<RobotsGroup> = None;
     let mut last_was_agent = false;
     for raw in text.lines() {

@@ -79,7 +79,8 @@ pub(crate) fn defaults() -> Value {
             "max_mb": 15
         },
         "recon": {
-            "screenshots": false
+            "screenshots": false,
+            "render_hosts": 10
         },
         "search": {
             "cc_depth": "latest", "cc_years": 3, "cc_pace_s": 3, "cc_minutes": 5,

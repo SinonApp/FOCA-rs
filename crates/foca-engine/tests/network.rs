@@ -10,4 +10,5 @@ mod network {
     mod ports;
     mod recon;
     mod takeover_http;
+    mod tech_signals;
 }

@@ -76,7 +76,7 @@ can replace these tables at runtime.
 
 | Source | License | Pinned | Shipped as | Used for |
 |---|---|---|---|---|
-| [enthec/webappanalyzer](https://github.com/enthec/webappanalyzer) | GPL-3.0 | `7dba7bf3e8b4` | `crates/foca-recon/data/webappanalyzer.json.gz`, `crates/foca-net/data/saas_dns.json` | Web technology detection (5623 technologies, 466 with CPE), SaaS by DNS (147 rules) |
+| [enthec/webappanalyzer](https://github.com/enthec/webappanalyzer) | GPL-3.0 | `7dba7bf3e8b4` | `crates/foca-recon/data/webappanalyzer.json.gz`, `crates/foca-net/data/saas_dns.json` | Web technology detection (7604 technologies, 466 with CPE), SaaS by DNS (147 rules) |
 | [gitleaks](https://github.com/gitleaks/gitleaks) (© 2019 Zachary Rice) | MIT | `v8.30.1` | `crates/foca-analysis/signatures/secrets_gitleaks.toml` | Secret rules (197 of 222; 20 covered by our tuned rules, 5 path-only) |
 | [endoflife.date](https://github.com/endoflife-date/endoflife.date) (© 2020 endoflife.date contributors) | MIT | `32423d8113b6` | `crates/foca-recon/data/endoflife.tsv.gz` | End-of-life dates (117 products, 2179 cycles past EOL at 2026-11-27) |
 | [FIRST EPSS](https://www.first.org/epss) (`epss.empiricalsecurity.com/epss_scores-2026-11-26.csv.gz`) | Free use, attribution requested | `2026-11-26` | `crates/foca-analysis/signatures/kev_enrich.tsv.gz` | EPSS score and percentile of KEV CVEs; reports credit FIRST in the footer |

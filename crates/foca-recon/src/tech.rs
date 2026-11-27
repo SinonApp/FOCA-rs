@@ -1,6 +1,12 @@
-//! Site technology detection with Wappalyzer-style rules: response headers, `<meta>`
-//! (generator and others), cookies, HTML regexes, `<script src>` and the page URL. JS globals and
-//! the DOM are unavailable (there is no JS engine), so such rules are not supported.
+//! Site technology detection with Wappalyzer-style rules.
+//!
+//! Static signals are evaluated over data the scan already fetched: response headers, `<meta>`
+//! (generator and others), cookies, HTML regexes, `<script src>`, the page URL, the bodies of
+//! fetched JavaScript files, the visible page text, stylesheets (inline `<style>` and fetched
+//! files), the TLS certificate issuer and robots.txt ([`SiteExtra`]). Browser signals (global
+//! JavaScript variables, DOM selectors, request hosts seen during a render) need a real browser:
+//! [`browser::probe_script`] builds one bounded read-only script for the hidden Android WebView
+//! and [`browser::BrowserSignals`] carries its answer back into [`detect_with`].
 //!
 //! Two rule sets are merged by technology name:
 //! * `data/tech.json`: about 130 hand-written rules (GPL-3.0, part of FOCA-rs) with tuned
@@ -25,6 +31,11 @@ use regex::{Regex, RegexBuilder};
 use serde::{Deserialize, Serialize};
 
 use crate::favicon::attrs;
+
+pub mod browser;
+pub mod cmsparts;
+
+use browser::{BrowserSignals, DomRule};
 
 const RULES_JSON: &str = include_str!("../data/tech.json");
 /// Converted webappanalyzer fingerprints (gzip JSON).
@@ -165,6 +176,12 @@ impl Pat {
         }
     }
 
+    /// First match in `s`: (version, matched text). Presence-only patterns never match here.
+    fn find<'s>(&self, s: &'s str) -> Option<(Option<String>, &'s str)> {
+        let m = self.re()?.find(s)?;
+        Some((self.version(m.as_str()).flatten(), m.as_str()))
+    }
+
     /// `Some(version)` when `s` matches (presence-only patterns always match).
     fn version(&self, s: &str) -> Option<Option<String>> {
         if self.src.is_empty() {
@@ -213,14 +230,31 @@ pub fn apply_version_template(t: &str, c: &regex::Captures) -> Option<String> {
     (!v.is_empty() && v.chars().any(|c| c.is_ascii_alphanumeric())).then_some(v)
 }
 
+#[derive(Default)]
 struct Compiled {
     rule: TechRule,
     headers: Vec<(String, Pat)>,
     meta: Vec<(String, Pat)>,
     cookies: Vec<(String, Pat)>,
     html: Vec<Pat>,
+    /// `<script src>` URLs.
     scripts: Vec<Pat>,
     url: Vec<Pat>,
+    /// Bodies of fetched JavaScript files (upstream `scripts`).
+    js_files: Vec<Pat>,
+    /// Visible page text.
+    text: Vec<Pat>,
+    /// Stylesheets: inline `<style>` and fetched CSS files.
+    css: Vec<Pat>,
+    /// TLS certificate issuer.
+    cert: Vec<Pat>,
+    robots: Vec<Pat>,
+    /// Browser only: global JavaScript variable paths (`jQuery.fn.jquery`).
+    globals: Vec<(String, Pat)>,
+    /// Browser only: DOM selectors with conditions.
+    dom: Vec<DomRule>,
+    /// Browser only: hosts of requests made while the page rendered.
+    xhr: Vec<Pat>,
 }
 
 /// An end-of-life release cycle of a technology (endoflife.date).
@@ -278,6 +312,8 @@ struct Db {
     /// endoflife.date cycles by technology name.
     eol: HashMap<String, Vec<EolCycle>>,
     by_name: HashMap<String, usize>,
+    /// WordPress `plugin:<slug>` / `theme:<slug>` directory names -> technology index.
+    wp_slugs: HashMap<String, usize>,
     /// Prefilter over the literals of every upstream html/script/url pattern.
     lits: Option<AhoCorasick>,
     hand: usize,
@@ -313,6 +349,16 @@ struct UpstreamTech {
     x: Vec<Vec<serde_json::Value>>,
     s: Vec<Vec<serde_json::Value>>,
     u: Vec<Vec<serde_json::Value>>,
+    sc: Vec<Vec<serde_json::Value>>,
+    t: Vec<Vec<serde_json::Value>>,
+    y: Vec<Vec<serde_json::Value>>,
+    ci: Vec<Vec<serde_json::Value>>,
+    ro: Vec<Vec<serde_json::Value>>,
+    g: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+    d: Vec<browser::UpstreamDom>,
+    q: Vec<Vec<serde_json::Value>>,
+    /// WordPress plugin/theme directories: `[kind, slug]`.
+    ps: Vec<Vec<String>>,
     i: Vec<String>,
     r: Vec<String>,
     e: Vec<String>,
@@ -357,8 +403,8 @@ fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) ->
             cookies: kv(&r.cookies, false),
             html: r.html.iter().map(|p| Pat::new(p)).collect(),
             scripts: r.scripts.iter().map(|p| Pat::new(p)).collect(),
-            url: Vec::new(),
             rule: r,
+            ..Compiled::default()
         })
         .collect();
     let hand = techs.len();
@@ -369,6 +415,7 @@ fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) ->
         .collect();
     let mut lits = Vec::new();
     let mut seen = HashMap::new();
+    let mut wp_slugs = HashMap::new();
     let n_up = upstream.len();
     for u in upstream {
         let idx = match by_name.get(&u.n) {
@@ -380,12 +427,7 @@ fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) ->
                         cat: u.c.clone(),
                         ..TechRule::default()
                     },
-                    headers: Vec::new(),
-                    meta: Vec::new(),
-                    cookies: Vec::new(),
-                    html: Vec::new(),
-                    scripts: Vec::new(),
-                    url: Vec::new(),
+                    ..Compiled::default()
                 });
                 by_name.insert(u.n.clone(), techs.len() - 1);
                 techs.len() - 1
@@ -401,12 +443,24 @@ fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) ->
             out
         };
         let (h, k, m) = (pats(&u.h), pats(&u.k), pats(&u.m));
+        let globals = pats(&u.g);
         let mut list = |v: &[Vec<serde_json::Value>]| {
             v.iter()
                 .map(|p| Pat::upstream(p, &mut lits, &mut seen))
                 .collect::<Vec<_>>()
         };
         let (x, s, url) = (list(&u.x), list(&u.s), list(&u.u));
+        let (js_files, text, css) = (list(&u.sc), list(&u.t), list(&u.y));
+        let (cert, robots, xhr) = (list(&u.ci), list(&u.ro), list(&u.q));
+        let dom: Vec<DomRule> =
+            u.d.iter()
+                .map(|d| d.compile(&mut |p| Pat::upstream(p, &mut lits, &mut seen)))
+                .collect();
+        for p in &u.ps {
+            if let [kind, slug] = &p[..] {
+                wp_slugs.entry(format!("{kind}:{slug}")).or_insert(idx);
+            }
+        }
         let t = &mut techs[idx];
         t.headers.extend(h);
         t.cookies.extend(k);
@@ -414,6 +468,14 @@ fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) ->
         t.html.extend(x);
         t.scripts.extend(s);
         t.url.extend(url);
+        t.js_files.extend(js_files);
+        t.text.extend(text);
+        t.css.extend(css);
+        t.cert.extend(cert);
+        t.robots.extend(robots);
+        t.globals.extend(globals);
+        t.dom.extend(dom);
+        t.xhr.extend(xhr);
         for i in u.i {
             if !t.rule.implies.contains(&i) && i != t.rule.name {
                 t.rule.implies.push(i);
@@ -439,6 +501,7 @@ fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) ->
         techs,
         eol,
         by_name,
+        wp_slugs,
         lits,
         hand,
         upstream: n_up,
@@ -490,6 +553,40 @@ pub struct TechCounts {
     pub eol_cycles: usize,
     /// Technologies with end-of-life data.
     pub eol_products: usize,
+    /// Technologies with a static signal beyond headers/meta/cookies/html/script src/url: JS
+    /// file content, visible text, CSS, TLS issuer or robots.txt.
+    #[serde(default)]
+    pub with_static_extra: usize,
+    /// Technologies with a browser-only signal (JS globals, DOM, request hosts).
+    #[serde(default)]
+    pub with_browser: usize,
+    /// WordPress plugin/theme directory slugs mapped to technology names.
+    #[serde(default)]
+    pub wp_slugs: usize,
+}
+
+/// A webappanalyzer technology matched by a WordPress plugin/theme directory slug.
+#[derive(Debug, Clone)]
+pub struct KnownPart {
+    pub name: String,
+    pub category: String,
+    pub cpe: Option<String>,
+    pub website: Option<String>,
+}
+
+/// The webappanalyzer technology of WordPress plugin/theme `slug` (`kind` = `plugin`|`theme`).
+pub fn wordpress_slug(kind: &str, slug: &str) -> Option<KnownPart> {
+    let d = db();
+    let i = *d
+        .wp_slugs
+        .get(&format!("{kind}:{}", slug.to_ascii_lowercase()))?;
+    let r = &d.techs[i].rule;
+    Some(KnownPart {
+        name: r.name.clone(),
+        category: r.cat.clone(),
+        cpe: r.cpe.clone(),
+        website: r.website.clone(),
+    })
 }
 
 /// Numbers of the rule database in use.
@@ -502,6 +599,23 @@ pub fn counts() -> TechCounts {
         with_cpe: d.techs.iter().filter(|t| t.rule.cpe.is_some()).count(),
         eol_cycles: d.eol.values().map(Vec::len).sum(),
         eol_products: d.eol.len(),
+        with_static_extra: d
+            .techs
+            .iter()
+            .filter(|t| {
+                !(t.js_files.is_empty()
+                    && t.text.is_empty()
+                    && t.css.is_empty()
+                    && t.cert.is_empty()
+                    && t.robots.is_empty())
+            })
+            .count(),
+        with_browser: d
+            .techs
+            .iter()
+            .filter(|t| !(t.globals.is_empty() && t.dom.is_empty() && t.xhr.is_empty()))
+            .count(),
+        wp_slugs: d.wp_slugs.len(),
     }
 }
 
@@ -529,8 +643,22 @@ pub struct Technology {
     pub outdated: Option<String>,
     pub website: Option<String>,
     /// CPE 2.3 name of the product (upstream table), for matching against vulnerability data.
+    /// For a CMS plugin without an upstream CPE this is a guess with any vendor
+    /// (`cpe:2.3:a:*:<slug>:*:*:*:*:*:wordpress:*:*`), marked by `plugin_of`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cpe: Option<String>,
+    /// Signal kinds that detected it: `header`, `cookie`, `meta`, `html`, `script_src`, `url`,
+    /// `script` (JS file content), `text`, `css`, `cert`, `robots`, `js`, `dom`, `xhr`,
+    /// `plugin_path`, `readme`, `implied`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub signals: Vec<String>,
+    /// A plugin, theme or module of this CMS: `wordpress`, `drupal`, `joomla`, `magento`,
+    /// `prestashop`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plugin_of: Option<String>,
+    /// Directory name of the plugin/theme/module (`contact-form-7`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slug: Option<String>,
 }
 
 /// Compares versions by numeric components (`1.12.4` < `3.5.0`).
@@ -611,18 +739,95 @@ struct Acc {
     conf: u32,
     version: Option<String>,
     evidence: Vec<String>,
+    signals: std::collections::BTreeSet<&'static str>,
 }
 
 impl Acc {
-    fn hit(&mut self, conf: u32, v: Option<String>, ev: String) {
+    fn hit(&mut self, sig: &'static str, conf: u32, v: Option<String>, ev: String) {
         self.conf += conf;
+        self.signals.insert(sig);
         if self.version.is_none() {
             self.version = v;
         }
-        if self.evidence.len() < 5 && !self.evidence.contains(&ev) {
+        if self.evidence.len() < 6 && !self.evidence.contains(&ev) {
             self.evidence.push(ev);
         }
     }
+}
+
+/// Largest body of one fetched JavaScript or CSS file that signal regexes run over.
+pub const MAX_SIGNAL_BODY: usize = 512 << 10;
+/// Largest visible page text that `text` regexes run over.
+const MAX_TEXT: usize = 256 << 10;
+
+/// Site-wide data beyond one page that static and browser signals use. Everything here was
+/// already fetched by the scan: detection sends no requests.
+#[derive(Debug, Clone, Default)]
+pub struct SiteExtra<'a> {
+    /// Fetched JavaScript files: (URL, body).
+    pub scripts: Vec<(&'a str, &'a str)>,
+    /// Fetched stylesheet bodies (inline `<style>` of the page is always used).
+    pub styles: Vec<&'a str>,
+    /// Issuer of the site's TLS certificate (`CN=R11, O=Let's Encrypt, C=US`).
+    pub cert_issuer: Option<&'a str>,
+    /// robots.txt body.
+    pub robots: Option<&'a str>,
+    /// What the hidden browser read on the rendered page.
+    pub browser: Option<&'a BrowserSignals>,
+}
+
+/// Cuts `s` to at most `max` bytes on a char boundary.
+fn head(s: &str, max: usize) -> &str {
+    if s.len() <= max {
+        return s;
+    }
+    let mut i = max;
+    while !s.is_char_boundary(i) {
+        i -= 1;
+    }
+    &s[..i]
+}
+
+/// Inline `<style>` blocks of a page.
+pub fn inline_styles(html: &str) -> Vec<&str> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| Regex::new(r"(?is)<style\b[^>]*>(.*?)</style>").expect("re"));
+    re.captures_iter(html)
+        .filter_map(|c| c.get(1).map(|m| m.as_str()))
+        .collect()
+}
+
+/// Visible text of a page: tags, scripts, styles and comments removed, common entities decoded,
+/// whitespace collapsed.
+pub fn visible_text(html: &str) -> String {
+    static DROP: OnceLock<Regex> = OnceLock::new();
+    static TAG: OnceLock<Regex> = OnceLock::new();
+    let drop = DROP.get_or_init(|| {
+        Regex::new(r"(?is)<!--.*?-->|<(script|style|noscript|template|svg)\b[^>]*>.*?</(?:script|style|noscript|template|svg)\s*>")
+            .expect("re")
+    });
+    let tag = TAG.get_or_init(|| Regex::new(r"(?s)<[^>]*>").expect("re"));
+    let body = drop.replace_all(html, " ");
+    let body = tag.replace_all(&body, " ");
+    let decoded = body
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&copy;", "©");
+    let mut out = String::with_capacity(decoded.len().min(MAX_TEXT));
+    for w in decoded.split_whitespace() {
+        if out.len() + w.len() + 1 > MAX_TEXT {
+            break;
+        }
+        if !out.is_empty() {
+            out.push(' ');
+        }
+        out.push_str(w);
+    }
+    out
 }
 
 fn clip(s: &str, n: usize) -> String {
@@ -633,8 +838,46 @@ fn clip(s: &str, n: usize) -> String {
     }
 }
 
+/// JavaScript file contents and visible text.
+fn static_extra(
+    c: &Compiled,
+    acc: &mut Acc,
+    js: &[(&str, &str)],
+    in_js: &[HashSet<usize>],
+    (text, in_text): (&str, &HashSet<usize>),
+) {
+    for p in &c.js_files {
+        for ((url, body), present) in js.iter().zip(in_js) {
+            if !p.may_match(present) {
+                continue;
+            }
+            if let Some((ver, m)) = p.find(body) {
+                let file = url.rsplit('/').next().unwrap_or(url);
+                acc.hit(
+                    "script",
+                    p.weight(75),
+                    ver,
+                    format!("JS file {}: {}", clip(file, 60), clip(m, 60)),
+                );
+                break;
+            }
+        }
+    }
+    for p in c.text.iter().filter(|p| p.may_match(in_text)) {
+        if let Some((ver, m)) = p.find(text) {
+            acc.hit("text", p.weight(50), ver, format!("text: {}", clip(m, 80)));
+        }
+    }
+}
+
 /// Detects the technologies of a page. The order is deterministic: by category, then name.
 pub fn detect(page: &PageInput) -> Vec<Technology> {
+    detect_with(page, &SiteExtra::default())
+}
+
+/// [`detect`] plus site-wide signals: fetched JavaScript and CSS files, the TLS issuer,
+/// robots.txt and what the hidden browser read on the rendered page.
+pub fn detect_with(page: &PageInput, extra: &SiteExtra) -> Vec<Technology> {
     let db = db();
     let headers: Vec<(String, String)> = page
         .headers
@@ -655,6 +898,20 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
     let in_html = present(&page.html);
     let in_scripts = present(&scripts.join("\n"));
     let in_url = present(&page.url);
+    let js_bodies: Vec<(&str, &str)> = extra
+        .scripts
+        .iter()
+        .map(|(u, b)| (*u, head(b, MAX_SIGNAL_BODY)))
+        .collect();
+    let in_js: Vec<HashSet<usize>> = js_bodies.iter().map(|(_, b)| present(b)).collect();
+    let text = visible_text(&page.html);
+    let in_text = present(&text);
+    let mut styles: Vec<&str> = inline_styles(&page.html);
+    styles.extend(extra.styles.iter().map(|s| head(s, MAX_SIGNAL_BODY)));
+    let css = styles.join("\n");
+    let in_css = present(&css);
+    let robots = extra.robots.map(|r| head(r, 64 << 10)).unwrap_or("");
+    let in_robots = present(robots);
     let mut found: BTreeMap<String, Acc> = BTreeMap::new();
     for c in &db.techs {
         let mut acc = Acc::default();
@@ -666,42 +923,86 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
                     } else {
                         format!("header {h}: {}", clip(v, 80))
                     };
-                    acc.hit(p.weight(100), ver, ev);
+                    acc.hit("header", p.weight(100), ver, ev);
                 }
             }
         }
         for (m, p) in &c.meta {
             for (_, v) in meta.iter().filter(|(k, _)| k == m) {
                 if let Some(ver) = p.version(v) {
-                    acc.hit(p.weight(100), ver, format!("meta {m}: {}", clip(v, 80)));
+                    acc.hit(
+                        "meta",
+                        p.weight(100),
+                        ver,
+                        format!("meta {m}: {}", clip(v, 80)),
+                    );
                 }
             }
         }
         for (name, p) in &c.cookies {
             for (n, v) in cookies.iter().filter(|(n, _)| n.starts_with(name.as_str())) {
                 if let Some(ver) = p.version(v) {
-                    acc.hit(p.weight(100), ver, format!("cookie {n}"));
+                    acc.hit("cookie", p.weight(100), ver, format!("cookie {n}"));
                 }
             }
         }
         for p in c.scripts.iter().filter(|p| p.may_match(&in_scripts)) {
             for s in &scripts {
                 if let Some(ver) = p.version(s) {
-                    acc.hit(p.weight(75), ver, format!("script: {}", clip(s, 120)));
+                    acc.hit(
+                        "script_src",
+                        p.weight(75),
+                        ver,
+                        format!("script: {}", clip(s, 120)),
+                    );
                 }
             }
         }
         for p in c.html.iter().filter(|p| p.may_match(&in_html)) {
-            let Some(r) = p.re() else { continue };
-            if let Some(m) = r.find(&page.html) {
-                let ver = p.version(m.as_str()).flatten();
-                acc.hit(p.weight(50), ver, format!("html: {}", clip(m.as_str(), 80)));
+            if let Some((ver, m)) = p.find(&page.html) {
+                acc.hit("html", p.weight(50), ver, format!("html: {}", clip(m, 80)));
             }
         }
         for p in c.url.iter().filter(|p| p.may_match(&in_url)) {
             if let Some(ver) = p.version(&page.url) {
-                acc.hit(p.weight(50), ver, format!("url: {}", clip(&page.url, 80)));
+                acc.hit(
+                    "url",
+                    p.weight(50),
+                    ver,
+                    format!("url: {}", clip(&page.url, 80)),
+                );
             }
+        }
+        static_extra(c, &mut acc, &js_bodies, &in_js, (&text, &in_text));
+        for p in c.css.iter().filter(|p| p.may_match(&in_css)) {
+            if let Some((ver, m)) = p.find(&css) {
+                acc.hit("css", p.weight(50), ver, format!("CSS: {}", clip(m, 80)));
+            }
+        }
+        if let Some(issuer) = extra.cert_issuer {
+            for p in &c.cert {
+                if let Some(ver) = p.version(issuer) {
+                    acc.hit(
+                        "cert",
+                        p.weight(100),
+                        ver,
+                        format!("TLS issuer: {}", clip(issuer, 80)),
+                    );
+                }
+            }
+        }
+        for p in c.robots.iter().filter(|p| p.may_match(&in_robots)) {
+            if let Some((ver, m)) = p.find(robots) {
+                acc.hit(
+                    "robots",
+                    p.weight(75),
+                    ver,
+                    format!("robots.txt: {}", clip(m, 80)),
+                );
+            }
+        }
+        if let Some(b) = extra.browser {
+            b.evaluate(c, &mut acc);
         }
         if acc.conf > 0 {
             found.insert(c.rule.name.clone(), acc);
@@ -718,7 +1019,7 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
         for imp in &c.rule.implies {
             if !found.contains_key(imp) {
                 let mut a = Acc::default();
-                a.hit(conf, None, format!("implied by {n}"));
+                a.hit("implied", conf, None, format!("implied by {n}"));
                 found.insert(imp.clone(), a);
                 queue.push(imp.clone());
             }
@@ -768,6 +1069,9 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
                 outdated,
                 website: c.rule.website.clone(),
                 cpe: c.rule.cpe.clone(),
+                signals: acc.signals.iter().map(|s| (*s).to_string()).collect(),
+                plugin_of: None,
+                slug: None,
                 name,
             })
         })
@@ -1096,5 +1400,45 @@ mod tests {
         assert!(!version_lt("3.5.0", "3.5"));
         assert!(version_lt("2.4.41", "2.4.58"));
         assert!(!version_lt("10.0", "10.0"));
+    }
+
+    /// The published 2.0.0-beta.3 app loads this table from the signature bundle with the
+    /// struct below (copied from `git show v2.0.0-beta.3:crates/foca-recon/src/tech.rs`): the
+    /// new signal keys must stay ignorable extra fields and every record must still parse.
+    #[test]
+    fn table_still_parses_with_the_beta3_loader() {
+        #[derive(Deserialize)]
+        struct UpstreamFileB3 {
+            #[serde(default)]
+            technologies: Vec<UpstreamTechB3>,
+        }
+        #[derive(Deserialize, Default)]
+        #[serde(default)]
+        #[allow(dead_code)]
+        struct UpstreamTechB3 {
+            n: String,
+            c: String,
+            h: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+            k: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+            m: BTreeMap<String, Vec<Vec<serde_json::Value>>>,
+            x: Vec<Vec<serde_json::Value>>,
+            s: Vec<Vec<serde_json::Value>>,
+            u: Vec<Vec<serde_json::Value>>,
+            i: Vec<String>,
+            r: Vec<String>,
+            e: Vec<String>,
+            cpe: Option<String>,
+            w: Option<String>,
+        }
+        let mut text = String::new();
+        flate2::read::GzDecoder::new(UPSTREAM_GZ)
+            .read_to_string(&mut text)
+            .unwrap();
+        let old: UpstreamFileB3 = serde_json::from_str(&text).expect("beta.3 loader");
+        let now = read_upstream(UPSTREAM_GZ).unwrap();
+        assert_eq!(old.technologies.len(), now.len());
+        assert!(old.technologies.iter().all(|t| !t.n.is_empty()));
+        // the new signals really are in the table
+        assert!(now.iter().any(|t| !t.g.is_empty()) && now.iter().any(|t| !t.sc.is_empty()));
     }
 }
