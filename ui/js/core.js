@@ -750,6 +750,9 @@
     page.addEventListener(
       "scroll",
       () => {
+        // A page that is sliding out can still fire scroll (its scrollTop gets clamped) and would
+        // apply its own FAB rules over the new screen's.
+        if (page !== curPage) return;
         const y = page.scrollTop;
         if (fab && !fab.compact) fb.classList.toggle("small", y > 40 && y > lastY);
         lastY = y;
