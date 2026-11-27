@@ -70,11 +70,18 @@ pub struct Core {
     /// `"{provider}|{base_url}"`.
     pub(crate) ai_models_cache: Mutex<HashMap<String, Vec<Value>>>,
     /// Running document re-analysis jobs by project id (`project_reextract`).
-    pub(crate) reextract_jobs: Mutex<HashMap<String, crate::cmds::reextract::ReJob>>,
+    pub(crate) reextract_jobs: Mutex<HashMap<String, ReJob>>,
     /// Running `ai_summarize` requests by project id (one per project; `ai_cancel` fires the token).
     pub(crate) ai_jobs: Mutex<HashMap<String, CancellationToken>>,
     /// Waiting in-scan retries of postponed dorks by project (`dorks_retry` wakes them).
     pub(crate) dork_jobs: Mutex<HashMap<String, DorkJob>>,
+}
+
+/// A running re-analysis of one project.
+pub(crate) struct ReJob {
+    pub cancel: CancellationToken,
+    pub handle: Option<tokio::task::JoinHandle<()>>,
+    pub progress: Value,
 }
 
 /// A waiting in-scan retry of postponed dorks for one project.

@@ -35,13 +35,6 @@ pub(crate) const BUSY_SCAN: &str =
 pub(crate) const BUSY_RUN: &str = "Повторный анализ документов уже идёт";
 pub(crate) const NOTHING: &str = "Все документы уже разобраны текущей версией";
 
-/// A running re-analysis of one project.
-pub(crate) struct ReJob {
-    pub cancel: CancellationToken,
-    pub handle: Option<tokio::task::JoinHandle<()>>,
-    pub progress: Value,
-}
-
 /// How a run ended for one document.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Outcome {
@@ -197,7 +190,7 @@ impl Engine {
         let running = lock(&self.inner.reextract_jobs)
             .get(&id)
             .map(|j| j.progress.clone());
-        let pending = db.setting(RUN_KEY)?.map(|r| {
+        let pending = db.setting(RUN_KEY)?.filter(|r| !r.is_null()).map(|r| {
             json!({ "mode": r["mode"], "started": r["started"], "total": r["total"],
                 "done": r["done"], "ids": r["ids"] })
         });
@@ -267,7 +260,7 @@ impl Engine {
         let restart = a.get("restart").and_then(Value::as_bool).unwrap_or(false);
         let (run, resumed) = {
             let g = lock(&db);
-            match g.setting(RUN_KEY)?.filter(|_| !restart) {
+            match g.setting(RUN_KEY)?.filter(|v| !v.is_null() && !restart) {
                 Some(r) => (r, true),
                 None => {
                     let total = candidates(g.documents(false)?, &ids).len();
@@ -291,7 +284,7 @@ impl Engine {
             }
             jobs.insert(
                 id.clone(),
-                crate::cmds::reextract::ReJob {
+                crate::engine::ReJob {
                     cancel: cancel.clone(),
                     handle: None,
                     progress: json!({ "done": run["done"], "total": total, "name": "", "stage": "start" }),
@@ -578,9 +571,8 @@ impl Engine {
                 "new_events": new.len(),
             });
             g.set_setting(LAST_KEY, &summary)?;
-            g.conn()
-                .execute("DELETE FROM settings WHERE key = ?1", [RUN_KEY])
-                .map_err(|e| CmdError::internal(e.to_string()))?;
+            // a null record means no unfinished run
+            g.set_setting(RUN_KEY, &Value::Null)?;
             let _ = e.store().refresh_summary(&g);
             Ok(summary)
         })

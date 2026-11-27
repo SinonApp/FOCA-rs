@@ -1,5 +1,7 @@
 //! Document and secret commands: files, deletion, local import, secret reveal and breach checks.
 
+pub(crate) mod reextract;
+
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -26,7 +28,7 @@ impl Engine {
             .into_iter()
             .find(|d| d.doc.id == n)
             .ok_or_else(|| CmdError::not_found(format!("Документ {n} не найден")))?;
-        let path = crate::cmds::reextract::resolve_local(
+        let path = crate::cmds::documents::reextract::resolve_local(
             &self.inner.cfg.data_dir,
             &id,
             d.local_path.as_deref(),

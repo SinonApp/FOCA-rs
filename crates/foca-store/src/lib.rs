@@ -14,6 +14,7 @@
 mod erase;
 pub mod lock;
 pub mod project;
+pub mod revisions;
 pub mod schema;
 pub mod search;
 pub mod settings;
