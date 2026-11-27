@@ -78,13 +78,10 @@ class PlatformLogicTest {
     assertTrue(power.none { it.action == SettingsTargets.ACTION_APP_NOTIFICATIONS })
     assertEquals(listOf("miui_power", "app_details"),
       SettingsTargets.forWhat("Контроль активности", "xiaomi", ignoring = true, sdk = 36, pkg = pkg).map { it.key })
-    // Background pop-ups: "Other permissions" editor, its action, then app details.
+    // No step opens MIUI "Other permissions" any more: the app never starts an activity from the
+    // background, so an old "permissions" key falls back to the app details screen only.
     val perm = SettingsTargets.forWhat("permissions", "xiaomi", ignoring = false, sdk = 36, pkg = pkg)
-    assertEquals(listOf("miui_permissions", "miui_permissions", "app_details"), perm.map { it.key })
-    assertEquals("com.miui.securitycenter/com.miui.permcenter.permissions.PermissionsEditorActivity", perm[0].target)
-    assertEquals(pkg, perm[0].extras["extra_pkgname"])
-    assertEquals(pkg, perm[1].extras["extra_pkgname"])
-    assertTrue(perm.none { it.action == SettingsTargets.ACTION_APP_NOTIFICATIONS })
+    assertEquals(listOf("app_details"), perm.map { it.key })
     assertEquals("miui_autostart", SettingsTargets.forWhat("autostart", "xiaomi", false, 36, pkg).first().key)
   }
 

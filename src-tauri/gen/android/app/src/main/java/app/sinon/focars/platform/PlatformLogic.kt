@@ -107,6 +107,7 @@ object SettingsTargets {
   const val ACTION_REQUEST_IGNORE = "android.settings.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
   const val ACTION_IGNORE_LIST = "android.settings.IGNORE_BATTERY_OPTIMIZATION_SETTINGS"
   const val ACTION_APP_NOTIFICATIONS = "android.settings.APP_NOTIFICATION_SETTINGS"
+  const val ACTION_CHANNEL_NOTIFICATIONS = "android.settings.CHANNEL_NOTIFICATION_SETTINGS"
   const val ACTION_WIRELESS = "android.settings.WIRELESS_SETTINGS"
   const val ACTION_POWER_USAGE = "android.intent.action.POWER_USAGE_SUMMARY"
 
@@ -136,13 +137,14 @@ object SettingsTargets {
           extras = mapOf("package_name" to pkg, "package_label" to "FOCA-rs"))
         if (!ignoring) out += SettingsTarget("battery_optimization", ACTION_REQUEST_IGNORE, withPackageUri = true)
       }
-      // MIUI "Other permissions" (background pop-ups).
-      w.contains("другие разрешения") || w == "permissions" -> {
-        out += SettingsTarget("miui_permissions", pkg = "com.miui.securitycenter",
-          cls = "com.miui.permcenter.permissions.PermissionsEditorActivity",
-          extras = mapOf("extra_pkgname" to pkg))
-        out += SettingsTarget("miui_permissions", action = "miui.intent.action.APP_PERM_EDITOR",
-          extras = mapOf("extra_pkgname" to pkg))
+      // Lock screen: the progress channel settings (lock screen visibility, importance), then app
+      // notifications. There is no runtime permission for this.
+      w.contains("экран блокировки") || w == "lockscreen" -> {
+        if (sdk >= 26) out += SettingsTarget("lockscreen_channel", ACTION_CHANNEL_NOTIFICATIONS,
+          extras = mapOf("android.provider.extra.APP_PACKAGE" to pkg,
+            "android.provider.extra.CHANNEL_ID" to LockscreenLogic.CHANNEL))
+        if (sdk >= 26) out += SettingsTarget("notifications", ACTION_APP_NOTIFICATIONS,
+          extras = mapOf("android.provider.extra.APP_PACKAGE" to pkg))
       }
       w.contains("уведомл") || w.contains("notif") -> {
         if (sdk >= 26) out += SettingsTarget("notifications", ACTION_APP_NOTIFICATIONS,

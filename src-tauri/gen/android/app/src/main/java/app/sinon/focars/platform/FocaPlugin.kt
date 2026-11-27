@@ -876,6 +876,21 @@ class FocaPlugin(private val created: Activity) : Plugin(created) {
       .put("notifications", NotificationManagerCompat.from(ctx).areNotificationsEnabled()))
   }
 
+  /** Lock screen state of the scan progress notification: `on` / `off` / `unknown` (LockscreenLogic). */
+  private fun lockscreenState(): String = try {
+    val en = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+    val ch = if (Build.VERSION.SDK_INT >= 26)
+      ctx.getSystemService(android.app.NotificationManager::class.java)?.getNotificationChannel(LockscreenLogic.CHANNEL)
+    else null
+    fun secure(k: String): Int? =
+      try { android.provider.Settings.Secure.getInt(ctx.contentResolver, k) } catch (_: Throwable) { null }
+    LockscreenLogic.state(en, ch?.importance, ch?.lockscreenVisibility,
+      secure("lock_screen_show_notifications"), secure("lock_screen_show_silent_notifications"))
+  } catch (e: Throwable) {
+    FLog.d("фон: экран блокировки не определён: $e")
+    "unknown"
+  }
+
   /** Background status for Settings › Background (`platform_bg_status`). */
   @Command
   fun bg_status(invoke: Invoke) {
@@ -885,6 +900,7 @@ class FocaPlugin(private val created: Activity) : Plugin(created) {
       .put("oem", RecentsGuard.family())
       .put("autostart", auto)
       .put("battery_unrestricted", ignoring())
+      .put("lockscreen", lockscreenState())
       .put("hide_recents", RecentsGuard.enabled(ctx))
       .put("hide_recents_default", RecentsGuard.aggressive())
       .put("hide_recents_chosen", RecentsGuard.stored(ctx) != null))

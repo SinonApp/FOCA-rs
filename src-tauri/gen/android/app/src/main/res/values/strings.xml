@@ -3,9 +3,10 @@
     <string name="main_activity_title">"FOCA-rs"</string>
     <string name="share_target_label">Check in FOCA-rs</string>
     <string name="scan_service_description">Keeps FOCA-rs scan running in the background and shows progress</string>
-    <string name="scan_channel_name">Scan</string>
+    <string name="scan_channel_name">Scan progress</string>
     <string name="scan_channel_description">Scan progress and stop action</string>
     <string name="scan_title_default">Scanning</string>
+    <string name="scan_public_text">Progress %1$d%%. Open the app for details</string>
     <string name="scan_stopping">Stopping…</string>
     <string name="scan_action_open">Open</string>
     <string name="scan_action_stop">Stop</string>

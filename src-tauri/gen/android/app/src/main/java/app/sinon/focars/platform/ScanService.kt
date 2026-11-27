@@ -56,7 +56,10 @@ data class ScanNote(
  */
 class ScanService : Service() {
   companion object {
-    const val CHANNEL = "scan"
+    /** Progress channel. A new id because channel settings of existing installs cannot be changed:
+     *  the old silent `scan` channel (IMPORTANCE_LOW) kept the notification off the lock screen. */
+    const val CHANNEL = LockscreenLogic.CHANNEL
+    private const val OLD_CHANNEL = "scan"
     const val NOTIF_ID = 4107
     const val NOTIF_INTERRUPTED = 4109
     private const val PREF_SCAN_ACTIVE = "scan_active"
@@ -81,14 +84,21 @@ class ScanService : Service() {
     fun ensureChannel(ctx: Context) {
       if (Build.VERSION.SDK_INT < 26) return
       val nm = ctx.getSystemService(NotificationManager::class.java) ?: return
+      try { if (nm.getNotificationChannel(OLD_CHANNEL) != null) nm.deleteNotificationChannel(OLD_CHANNEL) } catch (_: Throwable) {}
       if (nm.getNotificationChannel(CHANNEL) != null) return
+      // Default importance without sound or vibration: Android and HyperOS hide "silent" (low)
+      // notifications on the lock screen. The lock screen gets the public version (no project name).
       val ch = NotificationChannel(
         CHANNEL,
         ctx.getString(R.string.scan_channel_name),
-        NotificationManager.IMPORTANCE_LOW,
+        NotificationManager.IMPORTANCE_DEFAULT,
       ).apply {
         description = ctx.getString(R.string.scan_channel_description)
         setShowBadge(false)
+        setSound(null, null)
+        enableVibration(false)
+        enableLights(false)
+        lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
       }
       nm.createNotificationChannel(ch)
     }
@@ -179,11 +189,21 @@ class ScanService : Service() {
         .setContentTitle(n.title.ifBlank { res.getString(R.string.scan_title_default) })
         .setContentText(text)
         .setOngoing(true)
+        // Alerts once without sound (the channel has none); setSilent would mark it silent again and
+        // keep it off the lock screen.
         .setOnlyAlertOnce(true)
-        .setSilent(true)
         .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-        .setPriority(NotificationCompat.PRIORITY_LOW)
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
         .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+        .setPublicVersion(NotificationCompat.Builder(ctx, CHANNEL)
+          .setSmallIcon(R.drawable.ic_stat_scan)
+          .setContentTitle(res.getString(R.string.scan_title_default))
+          .setContentText(res.getString(R.string.scan_public_text, n.progress.coerceIn(0, 100)))
+          .setOngoing(true)
+          .setOnlyAlertOnce(true)
+          .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+          .setProgress(100, n.progress.coerceIn(0, 100), false)
+          .build())
         .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         .setContentIntent(open)
         .setProgress(100, n.progress.coerceIn(0, 100), false)

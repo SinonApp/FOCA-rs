@@ -1,9 +1,10 @@
 <resources>
     <string name="share_target_label">Перевірити у FOCA-rs</string>
     <string name="scan_service_description">Утримує скан FOCA-rs у фоні та показує його перебіг</string>
-    <string name="scan_channel_name">Скан</string>
+    <string name="scan_channel_name">Прогрес скану</string>
     <string name="scan_channel_description">Перебіг сканування та кнопка зупинки</string>
     <string name="scan_title_default">Триває скан</string>
+    <string name="scan_public_text">Прогрес %1$d%%. Подробиці в застосунку</string>
     <string name="scan_stopping">Зупиняю…</string>
     <string name="scan_action_open">Відкрити</string>
     <string name="scan_action_stop">Зупинити</string>
