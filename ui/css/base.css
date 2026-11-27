@@ -58,6 +58,8 @@
   --nav-h: 64px;
   /* Form spacing: gap between stacked form controls (a field and the button under it). */
   --form-gap: 12px;
+  /* Gap between stacked blocks (cards, lists, notes). */
+  --block-gap: 10px;
 }
 html[data-theme="light"] {
   --bg: #f2f3f5;
@@ -658,7 +660,12 @@ html.fs-lg .mini .mi-t {
 .card + .card {
   margin-top: 10px;
 }
-.grid > .card + .card {
+/* One vertical rhythm for stacked blocks: cards, lists and notes (banners) never touch, whatever their
+   order. qa/scenarios/block-gaps checks every route for adjacent blocks closer than 8 px. */
+:is(.card, .list, .banner) + :is(.card, .list, .banner) {
+  margin-top: var(--block-gap);
+}
+.grid > :is(.card, .list, .banner) + :is(.card, .list, .banner) {
   margin-top: 0;
 }
 .card.tap:active {
@@ -1896,6 +1903,9 @@ body.no-topbar .activebar {
   border-top: 1px solid var(--stroke);
   box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.18);
   animation: selUp 0.18s ease both;
+}
+.selbar.no-anim {
+  animation: none;
 }
 @keyframes selUp {
   from {

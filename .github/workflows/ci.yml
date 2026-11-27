@@ -48,6 +48,8 @@ jobs:
       - run: npm run lint
       # Demo data invariants and the demo/core contract on the UI side.
       - run: node qa/data-invariants.mjs
+      - run: node qa/check-defaults.mjs
+      - run: node qa/check-release.mjs
       - run: python3 qa/check-docs-links.py
 
   # Kotlin compile of both flavors on every push and pull request (no APK, no .so).

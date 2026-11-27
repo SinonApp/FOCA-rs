@@ -40,6 +40,12 @@ if [ "$WHAT" = all ] || [ "$WHAT" = static ]; then
   node qa/check-ftext.mjs > "$OUT/logs/check-ftext.log" 2>&1; rc=$?
   line=$(tail -1 "$OUT/logs/check-ftext.log")
   if [ $rc -eq 0 ]; then pass "finding texts: $line"; else fail "finding texts (rc=$rc): $line"; grep '^FAIL' "$OUT/logs/check-ftext.log" | head -10; fi
+  # Settings defaults inside their recommended ranges; what's new note matches the app version.
+  for chk in check-defaults check-release; do
+    node qa/$chk.mjs > "$OUT/logs/$chk.log" 2>&1; rc=$?
+    line=$(tail -1 "$OUT/logs/$chk.log")
+    if [ $rc -eq 0 ]; then pass "$chk: $line"; else fail "$chk (rc=$rc): $line"; grep '^FAIL' "$OUT/logs/$chk.log" | head -10; fi
+  done
   # Links and anchors in every .md file.
   python3 qa/check-docs-links.py > "$OUT/logs/docs-links.log" 2>&1; rc=$?
   line=$(tail -1 "$OUT/logs/docs-links.log")

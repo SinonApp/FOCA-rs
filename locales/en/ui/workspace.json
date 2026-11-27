@@ -188,6 +188,7 @@
   "app.appears_after_first_scan": "Appears after the first scan",
   "app.documents": "Documents",
   "app.new": "new",
+  "app.parsed_at_stage": "(parsed at stage {n})",
   "app.analyzed": "analyzed",
   "app.people": "People",
   "app.from_metadata": "from metadata",

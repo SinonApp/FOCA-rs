@@ -353,6 +353,12 @@
       data-act="dt-sort:${seg}"
       aria-label="${F.t("data.sort_cur", { cur: esc(cur[1]) }, "Сортировка: {cur}")}">${ic("sort")}<span>${esc(cur[1])}</span></button></div>`;
   };
+  // Name order in the UI language (Cyrillic and Latin collated, numbers in natural order).
+  const cmpName = (a, b) =>
+    new Intl.Collator(F.i18n ? F.i18n.lang() : "ru", { numeric: true, sensitivity: "base" }).compare(
+      String(a || ""),
+      String(b || ""),
+    );
   F.actions["dt-sort"] = seg => {
     if (seg === "docs") return F.dataDocs.sortSheet();
     const cur = sortOf(seg);
@@ -402,10 +408,10 @@
       .map(p => ({ p, n: personDocs(p.login).length }))
       .sort((a, b) =>
         so === "name"
-          ? a.p.name.localeCompare(b.p.name)
+          ? cmpName(a.p.name, b.p.name)
           : so === "role"
-            ? a.p.role.localeCompare(b.p.role) || b.n - a.n
-            : b.n - a.n || a.p.name.localeCompare(b.p.name),
+            ? cmpName(a.p.role, b.p.role) || b.n - a.n
+            : b.n - a.n || cmpName(a.p.name, b.p.name),
       );
     return (
       sortBar(
@@ -587,14 +593,14 @@
       .slice()
       .sort((a, b) =>
         so === "name"
-          ? a.name.localeCompare(b.name)
+          ? cmpName(a.name, b.name)
           : so === "prio"
             ? (b.priority || 0) - (a.priority || 0) ||
               SEVORD[a.sev] - SEVORD[b.sev] ||
-              a.name.localeCompare(b.name)
+              cmpName(a.name, b.name)
             : so === "type"
               ? isInternal(a) - isInternal(b) || SEVORD[a.sev] - SEVORD[b.sev]
-              : SEVORD[a.sev] - SEVORD[b.sev] || a.name.localeCompare(b.name),
+              : SEVORD[a.sev] - SEVORD[b.sev] || cmpName(a.name, b.name),
       );
     const row = h =>
       navRow({
@@ -698,7 +704,7 @@
       .map((s, i) => ({ s, i }))
       .sort((a, b) =>
         so === "name"
-          ? a.s.name.localeCompare(b.s.name)
+          ? cmpName(a.s.name, b.s.name)
           : so === "docs"
             ? b.s.n - a.s.n
             : b.s.cve - a.s.cve || b.s.n - a.s.n,
@@ -743,7 +749,7 @@
     const l = F.sel
       .os()
       .slice()
-      .sort((a, b) => (so === "name" ? a.name.localeCompare(b.name) : b.docs - a.docs));
+      .sort((a, b) => (so === "name" ? cmpName(a.name, b.name) : b.docs - a.docs));
     return (
       sortBar(
         "os",
@@ -877,7 +883,7 @@
     const so = sortOf("paths");
     const list = demo.folders
       .map((p, i) => ({ p, i, n: LD().filter(d => d.folder === p).length }))
-      .sort((a, b) => (so === "name" ? a.p.localeCompare(b.p) : b.n - a.n));
+      .sort((a, b) => (so === "name" ? cmpName(a.p, b.p) : b.n - a.n));
     return (
       sortBar(
         "paths",
@@ -907,7 +913,7 @@
     const so = sortOf("printers");
     const list = demo.printers
       .map((p, i) => ({ p, i }))
-      .sort((a, b) => (so === "name" ? a.p.name.localeCompare(b.p.name) : b.p.n - a.p.n));
+      .sort((a, b) => (so === "name" ? cmpName(a.p.name, b.p.name) : b.p.n - a.p.n));
     return (
       sortBar(
         "printers",
@@ -1004,8 +1010,8 @@
         (a, b) =>
           !!b.outdated - !!a.outdated ||
           ((b.cve && b.cve.matched) || 0) - ((a.cve && a.cve.matched) || 0) ||
-          a.category.localeCompare(b.category) ||
-          a.name.localeCompare(b.name),
+          cmpName(a.category, b.category) ||
+          cmpName(a.name, b.name),
       );
     const list = all.filter(t => !t.plugin_of);
     const parts = all.filter(t => t.plugin_of);

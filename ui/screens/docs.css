@@ -82,7 +82,8 @@
 
 /* ---------- selection mode ---------- */
 body.dt-selecting #nav,
-body.dt-selecting #searchpill {
+body.dt-selecting #searchpill,
+body.dt-selecting #mini {
   display: none !important;
 }
 body.dt-selecting .snack {

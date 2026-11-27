@@ -757,12 +757,14 @@
         if (fab && !fab.compact) fb.classList.toggle("small", y > 40 && y > lastY);
         lastY = y;
         fabAway();
+        syncMini();
       },
       { passive: true },
     );
     updateChrome();
     if (route.mount) route.mount(page, params);
     fabAway();
+    syncMini();
     placeSnack(); // mount may have added or changed the sticky footer (no-pb, selection bar).
   }
   // ---------- slot for previews/banners above the page (cleared when leaving the screen) ----------
@@ -776,12 +778,55 @@
    * Re-renders the current screen.
    * @param {boolean} [soft] Keep the scroll position and skip the transition animation.
    */
+  // Scroll anchor of a soft re-render: the first row still visible at the top of the page (rows carry
+  // data-id or an id), with its offset, so rows inserted above it (sort "new" during a scan) do not
+  // push the user's place down or back to the top.
+  const anchorSel = el => {
+    if (el.dataset.id) {
+      const cls = [...el.classList].find(c => c !== "row" && c !== "tap" && c !== "sel" && c !== "on");
+      return `${cls ? "." + CSS.escape(cls) : ""}[data-id="${CSS.escape(el.dataset.id)}"]`;
+    }
+    return el.id ? `#${CSS.escape(el.id)}` : null;
+  };
+  const readAnchor = page => {
+    if (!page || page.scrollTop <= 0) return null;
+    const top = page.getBoundingClientRect().top;
+    for (const el of page.querySelectorAll("[data-id], .row[id], [data-anc][id]")) {
+      const r = el.getBoundingClientRect();
+      if (r.height > 0 && r.bottom > top + 1) {
+        const sel = anchorSel(el);
+        return sel ? { sel, off: r.top - top } : null;
+      }
+    }
+    return null;
+  };
+  /**
+   * Re-renders the current screen.
+   * @param {boolean} [soft] Keep the scroll position (page, inner scrollers and the first visible row)
+   *   and skip the transition animation.
+   */
   F.render = soft => {
-    if (soft) {
-      const y = curPage ? curPage.scrollTop : 0;
-      render("none");
-      if (curPage) curPage.scrollTop = y;
-    } else render("none");
+    if (!soft || !curPage) return render("none");
+    const y = curPage.scrollTop;
+    const anchor = readAnchor(curPage);
+    const pos = readScroll();
+    render("none");
+    if (!curPage) return;
+    curPage.scrollTop = y;
+    if (anchor) {
+      const el = curPage.querySelector(anchor.sel);
+      if (el) {
+        const d = el.getBoundingClientRect().top - curPage.getBoundingClientRect().top - anchor.off;
+        if (Math.abs(d) >= 1) curPage.scrollTop = curPage.scrollTop + d;
+      }
+    }
+    (pos ? pos.inner : []).forEach(([key, iy, ix]) => {
+      const el = curPage.querySelector(key);
+      if (el) {
+        el.scrollTop = iy;
+        el.scrollLeft = ix;
+      }
+    });
   };
   F.page = () => curPage;
   /** Updates the current screen's top bar title/subtitle without re-rendering the page. */
@@ -800,11 +845,30 @@
   // most 2-3 per second).
   let liveT = null,
     liveLast = null;
-  function liveRefresh(kind, ev) {
+  // Live re-renders wait while the user touches or scrolls the page (and LIVE_QUIET_MS after it): a
+  // re-render replaces the page element, which would cut a fling short and move the list under the finger.
+  const LIVE_QUIET_MS = 500;
+  let touching = false,
+    lastUserMove = 0;
+  const userMoved = () => (lastUserMove = Date.now());
+  const capt = { passive: true, capture: true };
+  window.addEventListener("touchstart", () => ((touching = true), userMoved()), capt);
+  ["touchend", "touchcancel"].forEach(e =>
+    window.addEventListener(e, () => ((touching = false), userMoved()), capt),
+  );
+  ["wheel", "touchmove"].forEach(e => window.addEventListener(e, userMoved, capt));
+  // Scroll events do not bubble: the capture listener sees the page and inner scrollers.
+  document.addEventListener("scroll", userMoved, capt);
+  const userBusy = () => touching || Date.now() - lastUserMove < LIVE_QUIET_MS;
+  F.liveQuiet = { ms: LIVE_QUIET_MS, busy: userBusy };
+  // Soft re-render of the current screen through the same throttle and touch deferral as live screens
+  // (scan stage results re-render every screen, also those without a live rule).
+  F.liveRender = (kind, ev) => liveRefresh(kind || "db", ev, true);
+  function liveRefresh(kind, ev, force) {
     const route = F.cur && F.cur.r;
     if (!route) return;
     ev = ev || {};
-    if (route.onData) {
+    if (route.onData && !force) {
       try {
         route.onData(kind, ev);
       } catch (e) {
@@ -812,34 +876,65 @@
       }
       return;
     }
-    const want = typeof route.live === "function" ? route.live(kind, ev) : route.live === true;
+    const want = force || (typeof route.live === "function" ? route.live(kind, ev) : route.live === true);
     if (!want) return;
     if (liveT) {
-      liveLast = [kind, ev];
+      liveLast = [kind, ev, force || (liveLast && liveLast[2])];
+      return;
+    }
+    if (userBusy()) {
+      liveLast = [kind, ev, force];
+      const wait = touching ? LIVE_QUIET_MS : Math.max(50, LIVE_QUIET_MS - (Date.now() - lastUserMove));
+      liveT = setTimeout(() => {
+        liveT = null;
+        if (liveLast) {
+          const [k, e, f] = liveLast;
+          liveLast = null;
+          liveRefresh(k, e, f);
+        }
+      }, wait);
       return;
     }
     F.render(true);
     liveT = setTimeout(() => {
       liveT = null;
       if (liveLast) {
-        const [k, e] = liveLast;
+        const [k, e, f] = liveLast;
         liveLast = null;
-        liveRefresh(k, e);
+        liveRefresh(k, e, f);
       }
     }, 350);
   }
 
   // ---------- global chrome: active mode, scan mini bar, bottom padding ----------
+  // The floating scan bar is hidden where it would repeat the page: routes with hideMini, while the
+  // element named by route.miniUntil (the overview scan card) is on screen, and in selection mode (its
+  // action bar owns the bottom edge).
+  const onScreen = sel => {
+    const el = sel && curPage && curPage.querySelector(sel);
+    if (!el) return false;
+    const r = el.getBoundingClientRect(),
+      pr = curPage.getBoundingClientRect();
+    return r.height > 0 && r.bottom > pr.top && r.top < pr.bottom;
+  };
+  const miniWanted = () => {
+    const scan = F.scan,
+      route = F.cur && F.cur.r;
+    if (!scan || !scan.running || !route) return false;
+    if (typeof route.hideMini === "function" ? route.hideMini(F.cur.p) : route.hideMini) return false;
+    if (document.body.classList.contains("dt-selecting")) return false;
+    const until = typeof route.miniUntil === "function" ? route.miniUntil(F.cur.p) : route.miniUntil;
+    return !onScreen(until);
+  };
+  const syncMini = () => {
+    const mini = $("#mini");
+    if (mini) mini.classList.toggle("show", !!miniWanted());
+  };
+  F.syncMini = syncMini;
   function updateChrome() {
     const scan = F.scan;
-    const route = F.cur && F.cur.r;
     const mini = $("#mini");
-    const showMini =
-      scan &&
-      scan.running &&
-      route &&
-      !(typeof route.hideMini === "function" ? route.hideMini(F.cur.p) : route.hideMini);
-    mini.classList.toggle("show", !!showMini);
+    mini.classList.toggle("show", !!miniWanted());
     mini.classList.toggle("active-mode", !!(scan && scan.active));
     if (scan) {
       $("#mi-t").textContent = scan.paused

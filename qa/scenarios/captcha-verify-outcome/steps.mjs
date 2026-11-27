@@ -74,6 +74,16 @@ export default async (page, { out, W, fsc, theme }) => {
       // A granted retry restarts the source (its "running" event clears verifyDone), so either flag proves it.
       ok(`${lang}: done marks verified and asks the core to retry`, (s.verifyDone || s.retryAsked) && !s.btn && s.retries.join() === "startpage", s);
       if (lang === "ru") await page.screenshot({ path: `${out}/captcha-verify-outcome_done_${tag}.png` });
+      // Badge and status line agree: a retry granted after "done" reads "queued again", never
+      // "needs verification"; a new captcha on the re-poll brings the warning back.
+      const row = id => ev(id => { const r = document.getElementById(`scn-src-${id}`); return r ? { pill: r.querySelector(".scn-srh .pill")?.textContent.trim() || "", sub: r.querySelector(".s")?.textContent.trim() || "", btn: !!r.querySelector('[data-act^="scan-verify-src:"]') } : null; }, id);
+      await ev(() => { const s = FOCA.scan.sources.find(x => x.id === "startpage"); Object.assign(s, { status: "blocked", verifyUrl: "https://www.startpage.com/", verifyDone: true, retryAsked: true }); FOCA.render(true); }); await wait(250);
+      let r = await row("startpage");
+      const qd = lang === "en" ? /Queued again/ : /Снова в очереди/, nv = lang === "en" ? /Check needed/i : /Нужна проверка/;
+      ok(`${lang}: after done the badge says queued again, matching the status line`, !!r && qd.test(r.pill) && !nv.test(r.pill) && !r.btn && (lang === "en" ? /passed/i : /пройдена/).test(r.sub), r);
+      await ev(() => { FOCA.emit("scan", { type: "source", id: "startpage", name: "Startpage", status: "running" }); FOCA.emit("scan", { type: "source", id: "startpage", name: "Startpage", status: "blocked", error: "капча / заблокировано: поисковик показал капчу", verify_url: "https://www.startpage.com/" }); FOCA.render(true); }); await wait(250);
+      r = await row("startpage");
+      ok(`${lang}: a captcha on the re-poll shows 'needs verification' again with the button`, !!r && nv.test(r.pill) && r.btn, r);
 
       // Verify all: Cancel on the first engine stops the queue and verifies nothing.
       await blockEngines(["startpage", "mojeek"]); await setOutcome(["cancelled"]);

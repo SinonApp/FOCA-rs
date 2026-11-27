@@ -10749,6 +10749,7 @@
       return {
         oem: "xiaomi",
         autostart: (u.demo_bg || {}).autostart || "off",
+        lockscreen: (u.demo_bg || {}).lockscreen || "on",
         // A state set by a scenario wins; otherwise the flag the Settings screen keeps.
         battery_unrestricted:
           (u.demo_bg || {}).battery === "unknown"
@@ -10762,7 +10763,7 @@
         demo: true,
       };
     },
-    platform_bg_set: ({ hide_recents, demo_autostart, demo_battery } = {}) => {
+    platform_bg_set: ({ hide_recents, demo_autostart, demo_battery, demo_lockscreen } = {}) => {
       const S = load();
       const u = (S.settings.ui = { ...(S.settings.ui || {}) });
       if (typeof hide_recents === "boolean") u.demo_bg = { ...(u.demo_bg || {}), hide_recents };
@@ -10770,6 +10771,8 @@
       // scenarios also set off/unknown and the battery state (true/false/"unknown").
       if (["on", "off", "unknown"].includes(demo_autostart))
         u.demo_bg = { ...(u.demo_bg || {}), autostart: demo_autostart };
+      if (["on", "off", "unknown"].includes(demo_lockscreen))
+        u.demo_bg = { ...(u.demo_bg || {}), lockscreen: demo_lockscreen };
       if (demo_battery === "unknown" || typeof demo_battery === "boolean" || demo_battery === null)
         u.demo_bg = { ...(u.demo_bg || {}), battery: demo_battery };
       save();

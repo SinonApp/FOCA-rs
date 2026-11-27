@@ -25,6 +25,8 @@ Android, especially Xiaomi/HyperOS, closes background apps. On Xiaomi, swiping F
 2. Turn on Hide from Recents during scans: while a scan runs and the app is in the background, its card is not in Recents and cannot be swiped away. Return through the scan notification. Alternatively lock the card in Recents (drag it down or tap the padlock).
 3. Allow notifications: Android treats the persistent scan notification as a sign of running work.
 
+Steps the app can read (autostart on Xiaomi, battery restrictions, notifications) show their real state and tick themselves. The firmware guide asks only for what the scan needs: on Xiaomi autostart, Battery saver: No restrictions and, only if hiding from Recents is off, a locked card; on Samsung Battery: Unrestricted and Never sleeping apps. No pop-up or "Open new windows while running in the background" permission is needed: notifications work without it and the app never opens a window from the background.
+
 If the system kills the app anyway, progress is saved. FOCA-rs tries to resume the scan in the background a little later; on Android 12+ this needs the battery restriction removed, otherwise a Continue notification appears. You can always open the app and resume from where the scan stopped. Pressing Back on the root screen minimizes the app rather than closing it ([ADR-0006](../adr/0006-native-bridge.md)).
 
 ## 0 Documents Found

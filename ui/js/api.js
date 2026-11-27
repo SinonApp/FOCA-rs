@@ -1219,8 +1219,10 @@
   F.on(
     "db",
     d => {
-      if ((d.kind === "project" || d.kind === "scan" || d.kind === "reset") && F.cur && F.render)
-        F.render(true);
+      if (!F.cur || !F.render) return;
+      // A scan result arrives often while the user browses: throttled and deferred while touching.
+      if (d.kind === "scan" && F.liveRender) F.liveRender("db", d);
+      else if (d.kind === "project" || d.kind === "scan" || d.kind === "reset") F.render(true);
     },
     { late: true },
   );

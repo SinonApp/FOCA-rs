@@ -188,6 +188,7 @@
   "app.appears_after_first_scan": "З’явиться після першого скану",
   "app.documents": "Документи",
   "app.new": "нових",
+  "app.parsed_at_stage": "(розбір на етапі {n})",
   "app.analyzed": "розібрано",
   "app.people": "Люди",
   "app.from_metadata": "з метаданих",

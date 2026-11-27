@@ -42,8 +42,8 @@
     pii: ["user", F.t("docs.fi_pii", "Персональные данные"), "var(--warn)"],
   });
   const SORTS = () => [
-    ["date", F.t("docs.sort_date", "Дата: новые сначала")],
-    ["date-asc", F.t("docs.sort_date_asc", "Дата: старые сначала")],
+    ["date", F.t("docs.sort_date_any", "Дата документа или находки: новые сначала")],
+    ["date-asc", F.t("docs.sort_date_any_asc", "Дата документа или находки: старые сначала")],
     ["name", F.t("docs.sort_name", "Имя: А → Я")],
     ["size", F.t("docs.sort_size", "Размер: большие сначала")],
     ["findings", F.t("docs.sort_findings", "Больше находок")],
@@ -59,9 +59,46 @@
   const STATUS_CODES = ["analyzed", "downloaded", "queued", "error"];
   const statusLabel = code => (F.docStatusLabel ? F.docStatusLabel(code) : code);
 
-  const dkey = d => {
-    const m = d.created.match(/(\d+)\.(\d+)\.(\d+) (\d+):(\d+)/);
-    return m ? m[3] + m[2] + m[1] + m[4] + m[5] : "";
+  // Date of a document for sorting and the row: the document's own creation date when the metadata
+  // stage has read it, otherwise when FOCA-rs found it (start of the scan that queued it), marked as
+  // such. Ids grow in discovery order and break ties inside one scan.
+  const scanStart = sid => {
+    if (!sid) return null;
+    const s = (F.db.scans || []).find(x => x.id === sid);
+    if (s && s.started_at) return new Date(s.started_at);
+    if (F.scan && F.scan.scanId === sid && F.scan.startedAt) return new Date(F.scan.startedAt);
+    return null;
+  };
+  const dateOf = d => {
+    if (d.created_at) {
+      const t = new Date(d.created_at);
+      if (!isNaN(t)) return { t: t.getTime(), kind: "created" };
+    }
+    const f = scanStart(d.first_scan);
+    return f && !isNaN(f) ? { t: f.getTime(), kind: "found" } : null;
+  };
+  const collator = () =>
+    new Intl.Collator(F.i18n ? F.i18n.lang() : "ru", { numeric: true, sensitivity: "base" });
+  const byName = (a, b) => collator().compare(a.name, b.name) || a.id - b.id;
+  // Unknown dates go last in both directions; same date: discovery order (id), then name.
+  const byDate = dir => (a, b) => {
+    const x = dateOf(a),
+      y = dateOf(b);
+    if (!x || !y) return (!x ? 1 : 0) - (!y ? 1 : 0) || byName(a, b);
+    return dir * (x.t - y.t) || dir * (a.id - b.id) || byName(a, b);
+  };
+  const dateLabel = d => {
+    const x = dateOf(d);
+    if (!x) return "";
+    if (x.kind === "created") return d.created.slice(0, 10);
+    const t = new Date(x.t);
+    const same = new Date().toDateString() === t.toDateString();
+    const when = same
+      ? `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`
+      : F.fmt && F.fmt.dmy
+        ? F.fmt.dmy(t.toISOString())
+        : t.toLocaleDateString();
+    return F.t("docs.found_at", { t: when }, "найден {t}");
   };
   const fname = n => esc(n).replace(/_/g, "_<wbr>");
   const byId = id => demo.docs.find(d => d.id === +id);
@@ -87,14 +124,29 @@
     );
   /** Comparators for the document sort sheet; anything else sorts by date, newest first. */
   const DOC_SORT = {
-    name: (a, b) => a.name.localeCompare(b.name),
-    size: (a, b) => b.size - a.size,
-    findings: (a, b) => b.findings.length - a.findings.length || dkey(b).localeCompare(dkey(a)),
-    "date-asc": (a, b) => dkey(a).localeCompare(dkey(b)),
+    name: byName,
+    // Larger first; unknown sizes (0 before the download) last.
+    size: (a, b) => (!a.size ? 1 : 0) - (!b.size ? 1 : 0) || b.size - a.size || byName(a, b),
+    findings: (a, b) => b.findings.length - a.findings.length || byDate(-1)(a, b),
+    "date-asc": byDate(1),
   };
-  const byDateDesc = (a, b) => dkey(b).localeCompare(dkey(a));
+  const byDateDesc = byDate(-1);
   const sortL = (l, s) => l.slice().sort(DOC_SORT[s] || byDateDesc);
-  const visible = () => sortL(applyF(state.f), state.sort);
+  // The chosen sort is kept per project (and survives live re-renders during a scan).
+  const syncSort = () => {
+    const pid = (F.db.project && F.db.project.id) || "";
+    if (state.sortPid === pid) return;
+    state.sortPid = pid;
+    let s = null;
+    try {
+      s = localStorage.getItem(`foca-doc-sort:${pid}`);
+    } catch (e) {}
+    state.sort = s && SORTS().some(x => x[0] === s) ? s : "date";
+  };
+  const visible = () => {
+    syncSort();
+    return sortL(applyF(state.f), state.sort);
+  };
   const pl = n =>
     F.plural(
       n,
@@ -169,7 +221,7 @@
       <span class="ext ${esc(d.ext)}">${esc(d.ext)}</span>
       <div class="body"><span class="ext ${esc(d.ext)} dt-ext-in"
         aria-hidden="true">${esc(d.ext)}</span><div class="t dt-fname">${fname(d.name)}</div>
-        <div class="s">${esc(d.user.login)} · ${esc(d.created.slice(0, 10))} · ${util().fmtSize(d.size)}${d.provenance ? ` · ${esc(provShort(d.provenance))}` : ""}</div>
+        <div class="s">${[d.user.login !== "-" ? esc(d.user.login) : "", esc(dateLabel(d)), d.size ? util().fmtSize(d.size) : ""].filter(Boolean).join(" · ")}${d.provenance ? ` · ${esc(provShort(d.provenance))}` : ""}</div>
         ${d.findings.some(k => k !== "eol") || d.stc !== "ok" || cleanOf(d.id) ? `<div class="dt-dmeta">${stPill(d)}${cleanPill(d.id)}${fIcons(d)}</div>` : ""}
       </div>
     </div>`;
@@ -298,6 +350,10 @@
     const on = !!state.sel && F.demo.mode === "normal";
     document.body.classList.toggle("dt-selecting", on);
     const bar = page.querySelector(".dt-selbar");
+    // The bar slides in once per selection session; live re-renders during a scan rebuild the page and
+    // must not replay the animation (the bar jumped on every update).
+    if (bar && state.selBarShown === state.sel) bar.classList.add("no-anim");
+    state.selBarShown = state.sel || null;
     if (on && bar) {
       page.style.paddingBottom = bar.offsetHeight + 24 + "px";
       document.body.style.setProperty("--dt-selbar-h", bar.offsetHeight + "px");
@@ -533,6 +589,9 @@
   Object.assign(F.actions, {
     "dd-sort": k => {
       state.sort = k;
+      try {
+        localStorage.setItem(`foca-doc-sort:${state.sortPid || ""}`, k);
+      } catch (e) {}
       state.shown = CHUNK;
       F.closeSheet();
       F.render();

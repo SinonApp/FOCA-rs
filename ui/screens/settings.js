@@ -321,11 +321,11 @@
           "Сеть → Частный DNS": F.t("settings.android_0", "Сеть → Частный DNS"),
           Приложения: F.t("settings.android_1", "Приложения"),
           "Контроль активности": F.t("settings.android_2", "Контроль активности"),
-          "Другие разрешения": F.t("settings.android_3", "Другие разрешения"),
           Аккумулятор: F.t("settings.android_4", "Аккумулятор"),
           "Ограничения в фоне": F.t("settings.android_5", "Ограничения в фоне"),
           Батарея: F.t("settings.android_6", "Батарея"),
           Уведомления: F.t("settings.android_7", "Уведомления"),
+          "Экран блокировки": F.t("settings.android_8", "Экран блокировки"),
         })[w] || w;
       if (F.isTauri) androidOpen(what);
       else
@@ -917,7 +917,10 @@
         `Safari ${sf.replace(/\.0$/, "")} · macOS`,
         `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${sf} Safari/605.1.15`,
       ],
-      honest: [F.t("settings.ua_honest", "Честный FOCA-rs"), "FOCA-rs/" + (F.APP_VERSION || "2.0.0-beta.4")],
+      honest: [
+        F.t("settings.ua_honest", "Честный FOCA-rs"),
+        "FOCA-rs/" + ((F.state.aboutMeta && F.state.aboutMeta.version) || F.APP_VERSION || "2.0.0-beta.4"),
+      ],
       custom: [F.t("settings.custom", "Свой"), custom || ""],
     }[id];
   }
@@ -2076,9 +2079,10 @@
           "recents_pin",
         ],
         [
-          "Фоновые всплывающие окна",
-          "Другие разрешения › Отображать всплывающие окна в фоне. Разрешить (для уведомления о паузе)",
-          "Другие разрешения",
+          "Прогресс на экране блокировки",
+          "Отдельного разрешения для этого нет, только настройка канала: Уведомления › Прогресс скана › Экран блокировки, показывать. На экране блокировки видны этап и проценты без имени проекта",
+          "Экран блокировки",
+          "lockscreen",
         ],
       ],
     },
@@ -2093,10 +2097,15 @@
         ],
         [
           "Убрать из спящих",
-          "Настройки › Обслуживание устройства › Аккумулятор › Ограничения в фоновом режиме › Неспящие приложения, добавить FOCA-rs",
+          "Настройки › Аккумулятор › Ограничения фонового использования › Неспящие приложения, добавить FOCA-rs. В One UI 5 и раньше этот пункт в разделе Обслуживание устройства › Аккумулятор",
           "Ограничения в фоне",
         ],
-        ["Отключить «Перевод неиспользуемых в спящий режим»", "Там же: выключить переключатель", ""],
+        [
+          "Прогресс на экране блокировки",
+          "Отдельного разрешения для этого нет, только настройка канала: Уведомления › Прогресс скана › Экран блокировки, показывать. На экране блокировки видны этап и проценты без имени проекта",
+          "Экран блокировки",
+          "lockscreen",
+        ],
       ],
     },
     pixel: {
@@ -2115,6 +2124,12 @@
           "Разрешите уведомления: по ним Android понимает, что скан идёт в фоне",
           "Уведомления",
           "notif",
+        ],
+        [
+          "Прогресс на экране блокировки",
+          "Отдельного разрешения для этого нет, только настройка канала: Уведомления › Прогресс скана › Экран блокировки, показывать. На экране блокировки видны этап и проценты без имени проекта",
+          "Экран блокировки",
+          "lockscreen",
         ],
       ],
     },
@@ -2213,6 +2228,10 @@
     }
     // Locking the card in Recents is the alternative to hiding it: not needed while hiding is on.
     if (det === "recents_pin") return bgSt && bgSt.hide_recents === true ? "na" : null;
+    if (det === "lockscreen") {
+      const v = bgSt && bgSt.lockscreen;
+      return v === "on" || v === "off" ? v : null;
+    }
     if (det === "notif") {
       const v = ((F.state.perms && F.state.perms.st) || {}).notifications;
       return typeof v === "boolean" ? (v ? "on" : "off") : "unknown";
@@ -2582,10 +2601,25 @@
   };
 
   // ================= ABOUT & LICENSES =================
+  // Release notes, newest first: [version, date, RU fallback lines]. Texts are keyed by the full version
+  // (2.0.0-beta.4 → settings.chg_2_0_0_beta_4_*). qa/check-release.mjs fails when the newest entry is not
+  // the version in src-tauri/tauri.conf.json or a language lacks a line, so the note cannot go stale.
   const CHANGES = [
     [
       "2.0.0-beta.4",
       "2026-11-27",
+      [
+        "7\u00a0604 технологии сайтов: JS-файлы, стили, текст страниц и сигналы браузера на Android",
+        "Плагины, темы и модули WordPress, Drupal, Joomla, Magento и PrestaShop с версиями",
+        "Офлайн-база CVE: 108\u00a0019 CVE из NVD, находка только когда версия известна",
+        "65 типов файлов (было 40) и более глубокие метаданные Office, PDF и фото",
+        "Группы документов одного автора или компьютера и внутренние серверы на карте сети",
+        "Настройки обхода: главные страницы через браузер, число изображений и трафик на них",
+      ],
+    ],
+    [
+      "2.0.0-beta.1",
+      "2026-11-26",
       [
         "Облачный ИИ с живым списком моделей у 10 провайдеров и настройками рассуждений (Thinking)",
         "Пути компрометации (Attack Paths) и ключевые точки блокировки (Choke Points)",
@@ -2604,10 +2638,13 @@
       ],
     ],
   ];
-  // Texts are keyed by the release without the pre-release suffix (2.0.0-beta.4 → chg_2_0_0_*).
-  const chgL = (v, i, x) => F.t(`settings.chg_${v.split("-")[0].replace(/\./g, "_")}_${i}`, x);
+  const chgL = (v, i, x) => F.t(`settings.chg_${v.replace(/[.-]/g, "_")}_${i}`, x);
+  // Exposed for checks: the version the in-app note describes.
+  F.whatsNew = { version: CHANGES[0][0], date: CHANGES[0][1], count: CHANGES[0][2].length };
+  // Build version shown until platform_device_info answers (bumped with tauri.conf.json).
+  const APP_VERSION_FALLBACK = "2.0.0-beta.4";
   const aboutMeta = (F.state.aboutMeta = F.state.aboutMeta || {
-    version: "2.0.0-beta.4",
+    version: APP_VERSION_FALLBACK,
     flavor: "foss",
     loaded: false,
   });

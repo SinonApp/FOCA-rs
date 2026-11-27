@@ -49,8 +49,6 @@
     Object.defineProperty(obj, field, { get: () => F.t(key, ru), enumerable: true, configurable: true });
   };
   const nf = n => `${n}\u00a0${pw(n, "scan.pl_finding", "находка|находки|находок")}`;
-  const ofFiles = n =>
-    n % 10 === 1 && n % 100 !== 11 ? F.t("scan.of_file_one", "файла") : F.t("scan.of_file_many", "файлов"); // Genitive plural of "file" after an "x/N" counter.
   const setHTML = (el, h) => {
     if (el && el._h !== h) {
       el._h = h;
@@ -434,6 +432,38 @@
     if (!Array.isArray(list) || !list.length) return { i: k, n: STAGES.length };
     return { i: STAGES.slice(0, k).filter(x => list.includes(x.id)).length, n: list.length };
   };
+  // Counter of the running stage from the core progress event (done of total; downloads: handled of
+  // queued). The one pair every scan widget shows: stage row, overview card, floating bar.
+  const stagePair = (s = F.scan) => {
+    const def = s.stageIdx >= 0 ? STAGES[s.stageIdx] : null;
+    return s.stageN && def && s.stageN.stage === def.id && s.stageN.total != null ? s.stageN : null;
+  };
+  const pairText = p =>
+    p.stage === "meta"
+      ? F.t("scan.ctr_parsed_of", { done: num(p.done), total: num(p.total) }, "{done} из {total} разобрано")
+      : p.stage === "download"
+        ? F.t("scan.ctr_queue", { done: num(p.done), total: num(p.total) }, "очередь {done}/{total}")
+        : `${num(p.done)}/${num(p.total)}`;
+  // What the download queue turned into (engine `files` sub-step): the documents number is the
+  // Documents tab count (images included and named), then unreachable, duplicate and skipped files.
+  const breakdownText = b => {
+    if (!b) return "";
+    const out = [
+      F.t("scan.ctr_in_docs", { n: num(b.docs) }, "в документах {n}") +
+        (b.images ? " " + F.t("scan.ctr_images_of", { n: num(b.images) }, "(из них изображений {n})") : ""),
+    ];
+    if (b.failed + b.private)
+      out.push(F.t("scan.ctr_unreachable", { n: num(b.failed + b.private) }, "недоступно {n}"));
+    if (b.duplicates) out.push(F.t("scan.ctr_dups", { n: num(b.duplicates) }, "дубликатов {n}"));
+    if (b.skipped) out.push(F.t("scan.ctr_skipped", { n: num(b.skipped) }, "пропущено {n}"));
+    return out.join(" · ");
+  };
+  const docsFound = N => `${num(N.docs.total)}\u00a0${pw(N.docs.total, "scan.pl_file", "файл|файла|файлов")}`;
+  // Exposed for checks: the summary pair and the download stage row must match.
+  F.scanPair = () => {
+    const p = stagePair();
+    return p ? pairText(p) : null;
+  };
   function derive() {
     const s = F.scan;
     const i = s.stageIdx;
@@ -445,7 +475,11 @@
     s.pauseLabel = s.paused ? reasonOf(s.pauseReason).label || F.t("scan.paused_title", "Скан на паузе") : "";
     if (sameProject()) {
       const N = F.sel.counts();
-      s.summary = `${s.progress}% · ${num(N.docs.downloaded)}/${num(N.docs.total)} ${ofFiles(N.docs.total)} · ${nf(s.feed.length)}`;
+      const p = stagePair(s);
+      // Without a stage counter the summary names the documents found so far, never an "x/x" pair
+      // that would read as finished.
+      const cnt = p ? pairText(p) : docsFound(N);
+      s.summary = `${s.progress}% · ${cnt} · ${nf(s.feed.length)}`;
     } else s.summary = `${s.progress}% · ${s.projectName || ""}`;
   }
 
@@ -594,6 +628,15 @@
           scan.slowNoted = true;
           F.snack(slowText(subOf(ev)), { ms: 6000 });
         }
+        if (ev.id === "files" && ev.docs != null)
+          scan.dlBreak = {
+            docs: +ev.docs || 0,
+            images: +ev.images || 0,
+            failed: +ev.failed || 0,
+            private: +ev.private || 0,
+            duplicates: +ev.duplicates || 0,
+            skipped: +ev.skipped || 0,
+          };
         if (ev.state === "running") scan.substep = subOf(ev);
         else if (!scan.substep || scan.substep.id === ev.id) scan.substep = null;
         // A finished or skipped sub-step with a reason (URL target: subdomains out of scope; download queue
@@ -615,6 +658,9 @@
       case "progress":
         scan.progress = ev.progress;
         if (ev.total != null) scan.stageN = { stage: ev.stage, done: ev.done, total: ev.total };
+        // The download stage keeps its last queue pair once it is over (the row must not fall back to
+        // a different count from the documents table).
+        if (ev.total != null && ev.stage === "download") scan.dlPair = { ...scan.stageN };
         break;
       // Pause/resume from the core (Android environment policy, overheating, "Pause" in the notification).
       case "paused":
@@ -822,24 +868,14 @@
       }
       // Stage counter from the progress event (done/total); the core's download queue is not in the snapshot.
       case "download": {
-        const stageCounts =
-          scan.stageN && scan.stageN.stage === "download" && scan.stageIdx === 1 ? scan.stageN : null;
-        return [
-          stageCounts
-            ? `${num(stageCounts.done)}/${num(stageCounts.total)} ${ofFiles(stageCounts.total)}`
-            : `${num(counts.docs.downloaded)}/${num(counts.docs.total)} ${ofFiles(counts.docs.total)}`,
-        ];
+        const p = stagePair(scan) || scan.dlPair;
+        return [p && p.stage === "download" ? pairText(p) : docsFound(counts), breakdownText(scan.dlBreak)];
       }
       case "meta": {
-        const stageCounts =
-          scan.stageN && scan.stageN.stage === "meta" && scan.stageIdx === 2 ? scan.stageN : null;
+        const p = stagePair(scan);
         return [
-          stageCounts
-            ? F.t(
-                "scan.ctr_parsed_of",
-                { done: num(stageCounts.done), total: num(stageCounts.total) },
-                "{done} из {total} разобрано",
-              )
+          p && p.stage === "meta"
+            ? pairText(p)
             : F.t("scan.ctr_parsed", { n: num(counts.docs.analyzed) }, "{n} разобрано"),
           `${counts.people.meta} ${pw(counts.people.meta, "scan.pl_author", "автор|автора|авторов")}`,
         ];
@@ -912,6 +948,8 @@
     slow: !!x.slow,
     // hosts worked on at once (the `hosts` sub-step of ports, recon and site discovery)
     running: Array.isArray(x.running) ? x.running.map(String) : null,
+    // download queue growth while it is worked on (`files`), new links found inside documents (`doclinks`)
+    added: x.added ? +x.added : 0,
   });
   const SUB_LABEL = {
     dns: () => F.t("scan.sub_dns", "DNS-записи доменов"),
@@ -926,8 +964,15 @@
     crawl: () => F.t("scan.sub_crawl", "Обход сайта"),
     storage: () => F.t("scan.sub_storage", "Внешние хранилища"),
     hosts: () => F.t("scan.sub_hosts", "Хосты"),
+    files: () => F.t("scan.sub_files", "Файлы"),
+    doclinks: () => F.t("scan.sub_doclinks", "Ссылки из документов, проход"),
   };
-  const subLabel = id => (SUB_LABEL[id] ? SUB_LABEL[id]() : id);
+  const subLabel = (id, stage) =>
+    id === "files" && stage === "meta"
+      ? F.t("scan.sub_files_doclinks", "Файлы по ссылкам из документов")
+      : SUB_LABEL[id]
+        ? SUB_LABEL[id]()
+        : id;
   // ---------- per-item controls (scan_control): stage, source, sub-step ----------
   const capsOf = (kind, id) => {
     const c = F.scan.caps || {};
@@ -1073,7 +1118,13 @@
     const x = F.scan.substep;
     if (!x || (x.stage && x.stage !== def.id)) return "";
     if (x.id === "hosts") return hostsHTML(x);
-    const cnt = x.total ? ` ${num(Math.min(x.done, x.total))}/${num(x.total)}` : "";
+    let cnt = x.total ? ` ${num(Math.min(x.done, x.total))}/${num(x.total)}` : "";
+    // Doc-link rounds count from 1; a growing download queue says how many files joined it.
+    if (x.id === "doclinks" && x.total) cnt = ` ${num(Math.min(x.done + 1, x.total))}/${num(x.total)}`;
+    if (x.id === "files" && x.added)
+      cnt += ` · ${F.t("scan.sub_added", { n: num(x.added) }, "+{n} новых в очереди")}`;
+    if (x.id === "doclinks" && x.added)
+      cnt += ` · ${F.t("scan.sub_doclinks_added", { n: num(x.added) }, "в загрузку {n}")}`;
     const slow =
       x.slow && RESOLVER_STEPS.includes(x.id)
         ? `<div class="scn-slow" role="status">${ic("alert")}<span>${esc(slowText(x))}</span></div>
@@ -1082,7 +1133,7 @@
         : "";
     const ctl = RESOLVER_STEPS.includes(x.id) ? ctlBtns("step", x.id, subLabel(x.id), true) : "";
     const held = isHeld(`step:${x.id}`) ? ` · ${F.t("scan.ctl_held", "пауза")}` : "";
-    return `<div class="scn-sub" id="scn-sub-${esc(x.id)}">${ic(held ? "pause" : "spin", held ? "" : "spin")}<span>${esc(subLabel(x.id))}${cnt}${esc(held)}</span></div>${slow}${ctl}`;
+    return `<div class="scn-sub" id="scn-sub-${esc(x.id)}">${ic(held ? "pause" : "spin", held ? "" : "spin")}<span>${esc(subLabel(x.id, x.stage))}${esc(cnt)}${esc(held)}</span></div>${slow}${ctl}`;
   }
   // Crawler card of the search stage: counters, rate state and what happens to the rest of the site.
   function crawlHTML(def) {
@@ -1092,10 +1143,22 @@
     const parts = [
       F.t("scan.crawl_pages", { n: n(c.pages) }, "страниц {n}"),
       F.t("scan.crawl_queued", { n: n(c.queued) }, "в очереди {n}"),
-      F.t("scan.crawl_docs", { n: n(c.docs) }, "документов {n}"),
+      F.t("scan.crawl_docs_site", { n: n(c.docs) }, "документов на сайте {n}"),
       F.t("scan.crawl_storage", { n: n(c.storage) }, "в хранилищах {n}"),
     ];
-    if (c.images) parts.push(F.t("scan.crawl_images", { n: n(c.images) }, "изображений {n}"));
+    // Image links are unique URLs (a logo on every page counts once); only up to crawl.max_images
+    // of them are downloaded.
+    if (c.images) {
+      const cr = (F.db.settings || {}).crawl || {};
+      const cap = cr.max_images != null ? +cr.max_images : 300;
+      parts.push(
+        F.t(
+          "scan.crawl_image_links",
+          { n: n(c.images), max: n(Math.min(cap, c.images)) },
+          "ссылок на изображения {n} (скачаем до {max})",
+        ),
+      );
+    }
     if (c.rendered) parts.push(F.t("scan.crawl_rendered", { n: n(c.rendered) }, "отрисовано {n}"));
     const rate =
       c.rate === "stopped"
@@ -1132,7 +1195,7 @@
           n.msg && n.msg.code === "sub.url_target"
             ? `<div class="scn-subhint">${esc(F.t("scan.sub_hint_add_domain", "Добавьте домен целью, чтобы перебирать поддомены"))}</div>`
             : "";
-        return `<div class="scn-sub scn-subskip" id="scn-subskip-${esc(ids.join("-"))}">${ic("info")}<span>${esc(ids.map(subLabel).join(", "))}: ${esc(why)}</span></div>${hint}`;
+        return `<div class="scn-sub scn-subskip" id="scn-subskip-${esc(ids.join("-"))}">${ic("info")}<span>${esc(ids.map(id => subLabel(id)).join(", "))}: ${esc(why)}</span></div>${hint}`;
       })
       .join("");
   }
@@ -1517,14 +1580,21 @@
               "Проверка пройдена: сработает в следующем скане или после перезапуска источника",
             ),
           };
+        // The check passed and the core accepted the retry: the engine is queued again in this scan. The
+        // badge says so too; a new "running" event clears the flags, and only a repeated captcha brings
+        // back "Needs verification".
+        if (src.verifyUrl && src.retryAsked)
+          return {
+            cls: "warn",
+            pill: `<span class="pill ok">${ic("check")}${esc(F.t("scan.pill_requeued", "Снова в очереди"))}</span>`,
+            sub: F.t("scan.verify_passed", "Проверка пройдена: источник будет опрошен ещё раз в этом скане"),
+          };
         if (src.verifyUrl)
           return {
             cls: "bad",
             pill: `<span class="pill warn">${ic("alert")}${esc(F.t("scan.pill_verify", "Нужна проверка"))}</span>`,
-            sub: src.retryAsked
-              ? F.t("scan.verify_passed", "Проверка пройдена: источник будет опрошен ещё раз в этом скане")
-              : `${dorkWhy(src.error)}: ${F.t("scan.verify_do", "пройдите проверку сами (как в браузере), куки сохранятся")}`,
-            verify: !src.retryAsked,
+            sub: `${dorkWhy(src.error)}: ${F.t("scan.verify_do", "пройдите проверку сами (как в браузере), куки сохранятся")}`,
+            verify: true,
           };
         return {
           cls: "bad",

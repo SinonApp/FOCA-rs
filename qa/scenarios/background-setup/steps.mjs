@@ -1,7 +1,9 @@
 // Demo: OEM background helper and "Hide from Recents during scans".
 // Settings › Background is one screen: the firmware steps show the state the platform reports (autostart and
 // battery: on / off / unknown, re-read when the app returns from system settings) and count it in "done N of M";
-// manual "Done" only for steps the system does not report (pin in Recents, background pop-ups), persisted.
+// manual "Done" only for steps the system does not report (pin in Recents while hiding is off), persisted.
+// There is no "background pop-ups" step: the app never starts an activity from the background, and HyperOS
+// has no permission under the old name.
 // Each "Open" passes the screen name the native layer maps to the right Xiaomi page. The hide-from-Recents
 // toggle (default on for this OEM, stored by the native layer through platform_bg_set) lives here too. The launch
 // screen repeats the autostart/battery card while something is still missing; Debug › Device lists the autostart
@@ -37,12 +39,20 @@ export default async (page, { out }) => {
     const head = () => ev(() => { const h = [...document.querySelectorAll(".page h3, .page .sec-h")].find(e => /Прошивка|Прошивка|Firmware/.test(e.textContent)); return h ? h.textContent.replace(/\s+/g, " ").trim() : ""; });
     const refreshOnResume = async () => { await ev(() => document.dispatchEvent(new Event("visibilitychange"))); await wait(500); };
     let s = await steps();
-    ok("Xiaomi: four steps", s.length === 4, s);
+    ok("Xiaomi: four steps, no background pop-ups step", s.length === 4, s);
+    ok("no step names MIUI Other permissions or pop-ups", !/Другие разрешения|всплывающие/i.test((await text(".st-howto")) || ""), await text(".st-howto"));
     ok("autostart and battery steps show the detected state (off), no manual Done", s[0].state === "off" && s[1].state === "off" && !s[0].manual && !s[1].manual && /Выключено/.test(s[1].pill), s);
-    ok("hiding from Recents is on: the pin-in-Recents step reads 'not needed' (alternatives), pop-ups keep a manual Done", s[2].state === "na" && !s[2].manual && s[2].done && /Не нужно/.test(s[2].pill) && s[3].manual, s);
-    ok("Open buttons: autostart list, battery saver, other permissions; none for the Recents step",
-      s[0].open === "st-android:Приложения" && s[1].open === "st-android:Контроль активности" && !s[2].open && s[3].open === "st-android:Другие разрешения", s);
-    ok("header counts 1 of 4 (the not-needed step)", /выполнено 1 из 4/.test(await head()), await head());
+    ok("hiding from Recents is on: the pin-in-Recents step reads 'not needed' (alternatives)", s[2].state === "na" && !s[2].manual && s[2].done && /Не нужно/.test(s[2].pill), s);
+    ok("Open buttons: autostart list, battery saver; none for the Recents step",
+      s[0].open === "st-android:Приложения" && s[1].open === "st-android:Контроль активности" && !s[2].open, s);
+    ok("lock screen step: detected on, opens the channel settings, says there is no permission", s[3].state === "on" && !s[3].manual && s[3].open === "st-android:Экран блокировки" && /разрешения для этого нет/.test((await text('.st-howto .st-hs[data-step="3"]')) || ""), s[3]);
+    ok("header counts 2 of 4 (not-needed and lock screen)", /выполнено 2 из 4/.test(await head()), await head());
+    await ev(() => FOCA.api.platform_bg_set({ demo_lockscreen: "off" }));
+    await refreshOnResume();
+    s = await steps();
+    ok("lock screen hidden: the step reads off", s[3].state === "off" && /Выключено/.test(s[3].pill), s[3]);
+    await ev(() => FOCA.api.platform_bg_set({ demo_lockscreen: "on" }));
+    await refreshOnResume();
     const ov = await ev(() => { const c = document.querySelector(".st-howto"); return c ? c.scrollWidth - c.clientWidth : -1; });
     ok("steps do not overflow horizontally", ov === 0, ov);
     const chips = await ev(() => [...document.querySelectorAll(".st-chips .chip")].map(c => Math.round(c.getBoundingClientRect().top)));
@@ -55,14 +65,12 @@ export default async (page, { out }) => {
     await shot("chips_360");
     await ev(() => document.getElementById("qa-wide").remove()); await page.setViewportSize({ width: 393, height: 852 }); await wait(200);
 
-    // The phone reports autostart on and battery unrestricted (as on the owner's Xiaomi): 2 of 4 after resume.
+    // The phone reports autostart on and battery unrestricted (as on the owner's Xiaomi): all done after resume.
     await ev(() => FOCA.api.platform_bg_set({ demo_autostart: "on", demo_battery: true }));
     await refreshOnResume();
     s = await steps();
     ok("after resume: autostart and battery read on", s[0].state === "on" && s[1].state === "on" && s[0].done && s[1].done && /Включено/.test(s[0].pill), s);
-    ok("header counts 3 of 4", /выполнено 3 из 4/.test(await head()), await head());
-    await page.click('[data-act="st-bdone:3"]'); await wait(700);
-    ok("manual step 4 marked: 4 of 4", /выполнено 4 из 4/.test(await head()), await head());
+    ok("header counts 4 of 4 with no manual step left", /выполнено 4 из 4/.test(await head()) && !s.some(x => x.manual), await head());
     await shot("steps_ru");
     // Unknown state: Done by hand becomes available for that step.
     await ev(() => FOCA.api.platform_bg_set({ demo_autostart: "unknown", demo_battery: "unknown" }));
@@ -71,10 +79,10 @@ export default async (page, { out }) => {
     ok("unknown state: '? Не удалось определить' with a manual Done", s[0].state === "unknown" && s[0].manual && /Не удалось определить/.test(s[0].pill) && s[1].state === "unknown", s);
     ok("unknown steps are not counted unless marked: 2 of 4", /выполнено 2 из 4/.test(await head()), await head());
     // Manual marks survive a reload.
-    await ev(() => FOCA.api.platform_bg_set({ demo_autostart: "on", demo_battery: true })); await wait(300); // demo saves after 50 ms
+    await page.click('[data-act="st-bdone:0"]'); await wait(300);
     await page.goto("about:blank"); await page.goto(new URL("../../../ui/index.html#/settings/battery", import.meta.url).href); await wait(1200);
-    ok("manual mark persisted across reload: 4 of 4", /выполнено 4 из 4/.test(await head()), await head());
-    await page.click('[data-act="st-bdone:3"]'); await wait(300);
+    ok("manual mark persisted across reload: 3 of 4", /выполнено 3 из 4/.test(await head()), await head());
+    await page.click('[data-act="st-bdone:0"]'); await wait(300);
     // Back to the demo device defaults (battery follows the Settings flag again) for the launch checks.
     await ev(() => FOCA.api.platform_bg_set({ demo_autostart: "off", demo_battery: null }));
     await refreshOnResume();
@@ -116,7 +124,7 @@ export default async (page, { out }) => {
     // EN / UK texts of the card and the toggle.
     await ev(() => FOCA.api.platform_bg_set({ hide_recents: true }));
     await ev(() => FOCA.api.platform_bg_set({ demo_autostart: "on", demo_battery: true }));
-    for (const [lang, re] of [["en", /Hide from Recents during scans[\s\S]*3 of 4 done[\s\S]*Autostart\s*On/], ["uk", /Приховувати з «Нещодавніх» під час скану[\s\S]*виконано 3 з 4[\s\S]*Автозапуск\s*Увімкнено/]]) {
+    for (const [lang, re] of [["en", /Hide from Recents during scans[\s\S]*4 of 4 done[\s\S]*Autostart\s*On/], ["uk", /Приховувати з «Нещодавніх» під час скану[\s\S]*виконано 4 з 4[\s\S]*Автозапуск\s*Увімкнено/]]) {
       await ev(l => FOCA.i18n.setLang(l), lang); await wait(400);
       await ev(() => FOCA.go("/settings/battery")); await wait(700);
       const t = await ev(() => FOCA.page().textContent.replace(/\s+/g, " "));

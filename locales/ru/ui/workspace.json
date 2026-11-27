@@ -188,6 +188,7 @@
   "app.appears_after_first_scan": "Появится после первого скана",
   "app.documents": "Документы",
   "app.new": "новых",
+  "app.parsed_at_stage": "(разбор на этапе {n})",
   "app.analyzed": "разобрано",
   "app.people": "Люди",
   "app.from_metadata": "из метаданных",

@@ -140,5 +140,26 @@ console.log(
   `${coreBad ? "FAIL" : "ok  "} core messages: ${codes.size} demo codes, ${Object.keys(coreRu).length} keys`,
 );
 
+// Stage notes are shown as "<sub-step label>: <core message>": a message must not repeat the label
+// ("External storage: external storage: 485 downloaded").
+let noteBad = 0;
+for (const l of LANGS) {
+  const scanDict = JSON.parse(fs.readFileSync(ROOT + `locales/${l}/ui/scan.json`, "utf8"));
+  const core = JSON.parse(fs.readFileSync(ROOT + `locales/${l}/ui/core.json`, "utf8"));
+  const labels = Object.entries(scanDict)
+    .filter(([k]) => /^scan\.sub_[a-z]+$/.test(k))
+    .map(([, v]) => String(v).toLowerCase().trim())
+    .filter(v => v.length > 3);
+  for (const [k, v] of Object.entries(core)) {
+    const body = String(v).toLowerCase().trim();
+    const hit = labels.find(lb => body.startsWith(lb + ":"));
+    if (hit) {
+      noteBad++;
+      fail(`core.json ${l}: "${k}" starts with the sub-step label "${hit}:" (shown twice on the scan screen)`);
+    }
+  }
+}
+console.log(`${noteBad ? "FAIL" : "ok  "} stage notes do not repeat their label`);
+
 console.log(fails ? `FAILED: ${fails} problem(s)` : "ALL GREEN: i18n static checks");
 process.exit(fails ? 1 : 0);

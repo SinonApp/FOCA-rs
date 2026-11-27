@@ -213,6 +213,8 @@
   F.route("/p/overview", {
     title: () => F.t("overview.title", "Обзор"),
     tab: "overview",
+    // The scan card at the top already shows the progress: the floating bar appears only once it scrolls away.
+    miniUntil: "#ov-scan",
     fab: () =>
       F.scan && F.scan.running
         ? null
@@ -260,7 +262,7 @@
     const mid = counts.findings.high + counts.findings.warn;
     const RC = { crit: "var(--crit)", warn: "var(--warn)", ok: "var(--ok)", none: "var(--layer-3)" }[RK.cls];
     const scanCard = scan.running
-      ? `<div class="card pad tap"
+      ? `<div class="card pad tap" id="ov-scan"
         data-act="go:/p/scan"><div style="display:flex;align-items:center;gap:12px">${ic("spin", "spin")}<div style="flex:1;min-width:0"><div style="font-weight:600">${esc(scan.stageLabel || F.t("core.scan_running", "Скан идёт"))}</div><div class="muted"
         style="font-size:.85rem">${esc(scan.summary || "")}</div></div>${ic("chev", "chev")}</div><div class="pbar"
         style="margin-top:12px"><i style="width:${scan.progress || 0}%"></i></div></div>`
@@ -292,7 +294,7 @@
       </div>
       <div class="grid g3" style="margin-top:10px">
         <div class="card stat tap"
-          data-act="go:/p/data/docs"><div class="k">${esc(F.t("app.documents", "Документы"))}</div><div class="v">${counts.docs.total}</div><div class="d">${counts.docs.new ? `<b>+${counts.docs.new}</b> ${esc(F.t("app.new", "новых"))}` : `${counts.docs.analyzed} ${esc(F.t("app.analyzed", "разобрано"))}`}</div></div>
+          data-act="go:/p/data/docs"><div class="k">${esc(F.t("app.documents", "Документы"))}</div><div class="v">${counts.docs.total}</div><div class="d">${counts.docs.new ? `<b>+${counts.docs.new}</b> ${esc(F.t("app.new", "новых"))}` : `${counts.docs.analyzed} ${esc(F.t("app.analyzed", "разобрано"))}${scan.running && counts.docs.analyzed < counts.docs.total && (F.scan.stageIdx ?? 0) < 2 ? ` ${esc(F.t("app.parsed_at_stage", { n: 3 }, "(разбор на этапе {n})"))}` : ""}`}</div></div>
         <div class="card stat tap"
           data-act="go:/p/data/people"><div class="k">${esc(F.t("app.people", "Люди"))}</div><div class="v">${counts.people.total}</div><div class="d">${counts.people.meta} ${esc(F.t("app.from_metadata", "из метаданных"))}</div></div>
         <div class="card stat tap"

@@ -285,7 +285,7 @@
           F.t("onboard.oem_autostart", "Автозапуск"),
           F.t(
             "onboard.oem_autostart_t",
-            "Безопасность › Приложения › Разрешения › Автозапуск › FOCA-rs, включить. Без этого система закрывает скан после выхода из приложения.",
+            "Настройки › Приложения › Все приложения › FOCA-rs › Автозапуск, включить. Без этого система закрывает скан после выхода из приложения.",
           ),
           "autostart",
         ],
@@ -362,8 +362,29 @@
     if (/oneplus|oppo|realme/.test(m)) return "oneplus";
     return null;
   };
-  const permsRefresh = () =>
-    F.api.platform_permissions_status().then(
+  // Steps the platform can report (MIUI autostart app-op, battery exemption): "on" | "off" | null (manual).
+  const oemDetected = (k, st) => {
+    if (k === "autostart") {
+      const v = perms.bg && perms.bg.autostart;
+      return v === "on" || v === "off" ? v : null;
+    }
+    if (k === "activity" && typeof st.battery === "boolean") return st.battery ? "on" : "off";
+    return null;
+  };
+  const bgRefresh = () =>
+    F.api.platform_bg_status
+      ? F.api.platform_bg_status().then(
+          bg => {
+            const ch = JSON.stringify(bg || null) !== JSON.stringify(perms.bg || null);
+            perms.bg = bg || null;
+            if (ch && F.current() === "/permissions") F.render(true);
+          },
+          () => {},
+        )
+      : null;
+  const permsRefresh = () => {
+    bgRefresh();
+    return F.api.platform_permissions_status().then(
       st => {
         const ch = JSON.stringify(st || {}) !== JSON.stringify(perms.st);
         perms.st = st || {};
@@ -373,6 +394,7 @@
         perms.st = perms.st || {};
       },
     );
+  };
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && F.current && F.current() === "/permissions") permsRefresh();
   });
@@ -413,22 +435,31 @@
       ${
         oemHelp
           ? `${ui.secH(oemHelp[0])}${oemHelp[1]
-              .map(
-                ([
-                  k,
-                  t,
-                  d,
-                  what,
-                ]) => `<div class="card pad ob-perm"><div class="ob-ph">${ui.leadIcon("gear", done[k] ? "var(--ok)" : "")}<div class="ob-pt"><b>${esc(t)}</b>${done[k] ? `<span class="pill ok">${ic("check")}${esc(F.t("onboard.marked", "Отмечено"))}</span>` : `<span class="pill mute">${esc(F.t("onboard.manual", "Вручную"))}</span>`}</div></div>
+              .map(([k, t, d, what]) => {
+                const det = oemDetected(k, st);
+                const okd = det ? det === "on" : !!done[k];
+                const pill =
+                  det === "on"
+                    ? `<span class="pill ok">${ic("check")}${esc(F.t("settings.step_on", "Включено"))}</span>`
+                    : det === "off"
+                      ? `<span class="pill warn">${ic("x")}${esc(F.t("settings.step_off", "Выключено"))}</span>`
+                      : done[k]
+                        ? `<span class="pill ok">${ic("check")}${esc(F.t("onboard.marked", "Отмечено"))}</span>`
+                        : `<span class="pill mute">${esc(F.t("onboard.manual", "Вручную"))}</span>`;
+                return `<div class="card pad ob-perm" data-oem-step="${k}" data-state="${det || "manual"}"><div class="ob-ph">${ui.leadIcon("gear", okd ? "var(--ok)" : "")}<div class="ob-pt"><b>${esc(t)}</b>${pill}</div></div>
         <p class="ob-pw">${esc(d).replace(/ › /g, ` <span class="ob-sep">›</span> `)}</p>
         <div class="btnrow">${
-          what
+          what && det !== "on"
             ? `<button class="btn sm tonal"
           data-act="ob-oem:${what}:${k}">${ic("open")}${esc(F.t("common.open", "Открыть"))}</button>`
             : ""
-        }<button class="btn sm"
-          data-act="ob-oem-done:${k}">${esc(done[k] ? F.t("common.done", "Готово") : F.t("onboard.did_it", "Сделано"))}</button></div></div>`,
-              )
+        }${
+          det
+            ? ""
+            : `<button class="btn sm"
+          data-act="ob-oem-done:${k}">${esc(done[k] ? F.t("common.done", "Готово") : F.t("onboard.did_it", "Сделано"))}</button>`
+        }</div></div>`;
+              })
               .join("")}`
           : ""
       }
