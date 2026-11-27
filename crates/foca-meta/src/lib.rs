@@ -393,7 +393,7 @@ fn extract_ctx(bytes: &[u8], name_hint: Option<&str>, ctx: &Ctx) -> Result<Metad
         DocFormat::Wav | DocFormat::Avi => av::extract_riff(bytes, format, ctx)?,
         DocFormat::Mkv => av::extract_mkv(bytes)?,
         DocFormat::Asf => av::extract_asf(bytes)?,
-        DocFormat::Flac => av::extract_flac(bytes)?,
+        DocFormat::Flac => av::extract_flac(bytes, ctx)?,
         DocFormat::Ogg => av::extract_ogg(bytes)?,
         DocFormat::Kml => geo::extract_kml(bytes, ctx)?,
         DocFormat::Kmz => geo::extract_kmz(bytes, ctx)?,

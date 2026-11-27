@@ -269,7 +269,7 @@ fn walk(
             return Err(MetaError::TooManyEntries("ISOBMFF: too many boxes".into()));
         }
         match &bx.kind {
-            b"moov" | b"trak" | b"mdia" | b"minf" | b"udta" | b"edts" | b"tapt" => {
+            b"moov" | b"trak" | b"mdia" | b"minf" | b"stbl" | b"udta" | b"edts" | b"tapt" => {
                 walk(meta, st, bx.body, bx.start, depth + 1, &bx.kind)?;
             }
             b"meta" => {
@@ -358,7 +358,19 @@ fn walk(
                         *meta.stats.entry(k.into()).or_insert(0) += 1;
                     }
                 }
+                // handler name (`Core Media Video`, `GoPro AVC`, `DJI.AVC`, ...)
+                if let Some(n) = bx.body.get(24..).and_then(handler_name) {
+                    let k = "media:handler_names".to_string();
+                    let cur = meta.fields.entry(k).or_default();
+                    if !cur.split("; ").any(|x| x == n) && cur.len() < 512 {
+                        if !cur.is_empty() {
+                            cur.push_str("; ");
+                        }
+                        cur.push_str(&truncate(&n, 64));
+                    }
+                }
             }
+            b"stsd" => sample_entries(meta, bx.body),
             b"XMP_" => apply_xmp(meta, st, bx.body),
             b"uuid" if bx.body.starts_with(&XMP_UUID) => {
                 apply_xmp(meta, st, bx.body.get(16..).unwrap_or(&[]));
@@ -400,6 +412,43 @@ fn walk(
         }
     }
     Ok(())
+}
+
+/// `hdlr` name: a Pascal string in QuickTime, a C string in MP4.
+fn handler_name(raw: &[u8]) -> Option<String> {
+    let l = usize::from(*raw.first()?);
+    let s = if l > 0 && l + 1 <= raw.len() && raw.len() <= l + 2 {
+        &raw[1..1 + l]
+    } else {
+        raw
+    };
+    clean_str(&qt_text(s).replace('\0', ""))
+}
+
+/// Video sample entries: the 32-byte compressor name (`Lavc61.19.101 libx264`, `Photo - JPEG`).
+fn sample_entries(meta: &mut Metadata, b: &[u8]) {
+    let n = be32(b, 4).unwrap_or(0).min(16);
+    let mut p = 8usize;
+    for _ in 0..n {
+        let Some(size) = be32(b, p).map(|s| s as usize) else {
+            break;
+        };
+        if size < 8 {
+            break;
+        }
+        if size >= 86 {
+            if let Some(name) = b.get(p + 50..p + 82) {
+                let len = usize::from(name[0]).min(31);
+                if let Some(v) = clean_str(&qt_text(&name[1..1 + len])) {
+                    if v.bytes().any(|c| c.is_ascii_digit()) || v.contains("Lavc") {
+                        Metadata::add_unique(&mut meta.software, &v);
+                    }
+                    meta.fields.entry("media:compressor".into()).or_insert(v);
+                }
+            }
+        }
+        p = p.saturating_add(size);
+    }
 }
 
 fn apply_xmp(meta: &mut Metadata, st: &mut State, b: &[u8]) {
@@ -548,6 +597,19 @@ fn heif_meta(meta: &mut Metadata, st: &mut State, b: &[u8], base: usize) -> Resu
             b"iinf" => items = parse_iinf(bx.body, bx.start),
             b"iloc" => locs = parse_iloc(bx.body),
             b"idat" => idat = Some(bx),
+            b"iprp" => {
+                for c in boxes(bx.body, bx.start) {
+                    if &c.kind != b"ipco" {
+                        continue;
+                    }
+                    for p in boxes(c.body, c.start) {
+                        if &p.kind == b"colr" && matches!(p.body.get(0..4), Some(b"prof" | b"rICC"))
+                        {
+                            super::image_extra::icc(meta, &p.body[4..]);
+                        }
+                    }
+                }
+            }
             b"hdlr" => {
                 if let Some(h) = bx.body.get(8..12) {
                     meta.fields
@@ -651,6 +713,7 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
     if meta.gps.is_none() {
         meta.gps = st.gps;
     }
+    super::image_extra::xmp_devices(&mut meta);
     if st.cam != Camera::default() {
         let cam = meta.camera.get_or_insert_with(Camera::default);
         cam.make = cam.make.take().or(st.cam.make);

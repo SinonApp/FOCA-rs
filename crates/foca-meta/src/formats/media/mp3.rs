@@ -24,6 +24,9 @@ pub(crate) fn is_mp3(b: &[u8]) -> bool {
     {
         return true;
     }
+    if frame_len(b, 0).is_some_and(|l| frame_len(b, l).is_some()) {
+        return true;
+    }
     if b.len() >= 132
         && b[0] == 0xFF
         && (b[1] & 0xE0) == 0xE0
@@ -32,6 +35,35 @@ pub(crate) fn is_mp3(b: &[u8]) -> bool {
         return true;
     }
     false
+}
+
+/// Length of a valid MPEG audio Layer III frame header at `at` (two consecutive frames identify
+/// an MP3 without tags).
+fn frame_len(b: &[u8], at: usize) -> Option<usize> {
+    let h = b.get(at..at + 4)?;
+    if h[0] != 0xFF || h[1] & 0xE0 != 0xE0 {
+        return None;
+    }
+    let version = (h[1] >> 3) & 3; // 3 = MPEG1, 2 = MPEG2, 0 = MPEG2.5
+    let layer = (h[1] >> 1) & 3; // 1 = Layer III
+    let br = usize::from(h[2] >> 4);
+    let sr = usize::from((h[2] >> 2) & 3);
+    if version == 1 || layer != 1 || br == 0 || br == 15 || sr == 3 {
+        return None;
+    }
+    const BR1: [usize; 15] = [
+        0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320,
+    ];
+    const BR2: [usize; 15] = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
+    let rates = [44100usize, 48000, 32000][sr];
+    let pad = usize::from((h[2] >> 1) & 1);
+    let len = if version == 3 {
+        144_000 * BR1[br] / rates + pad
+    } else {
+        let rate = if version == 2 { rates / 2 } else { rates / 4 };
+        72_000 * BR2[br] / rate + pad
+    };
+    (len > 4).then_some(at + len)
 }
 
 fn synchsafe_u32(b: &[u8]) -> u32 {
@@ -81,6 +113,32 @@ fn decode_id3_string(data: &[u8]) -> Option<String> {
         _ => decode_text(data),
     };
     clean_str(s.trim_matches('\0'))
+}
+
+/// Splits `encoding, description, terminator, value` (TXXX) into two strings.
+fn id3_pair(f: &[u8]) -> Option<(String, String)> {
+    let enc = *f.first()?;
+    let rest = f.get(1..)?;
+    let wide = matches!(enc, 1 | 2);
+    let cut = if wide {
+        rest.as_chunks::<2>()
+            .0
+            .iter()
+            .position(|c| c == &[0, 0])
+            .map(|i| (i * 2, i * 2 + 2))
+    } else {
+        rest.iter().position(|&c| c == 0).map(|i| (i, i + 1))
+    };
+    let (a, b) = cut.unwrap_or((0, 0));
+    let dec = |x: &[u8]| {
+        let mut v = vec![enc];
+        v.extend_from_slice(x);
+        decode_id3_string(&v)
+    };
+    let desc = dec(&rest[..a]).unwrap_or_default();
+    // a UTF-16 value carries its own BOM
+    let val = dec(rest.get(b..)?)?;
+    Some((desc, val))
 }
 
 pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
@@ -150,6 +208,29 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
                 let fdata = &b[pos..frame_end];
                 pos = frame_end;
                 apply_frame(&mut meta, ctx, id, fdata)?;
+            }
+        }
+    }
+
+    // encoder tag in the first (Xing/Info) frame: `LAME3.98r`, `Lavc58.54`
+    let audio_at = if b.starts_with(b"ID3") {
+        10 + synchsafe_u32(&b[6..10]) as usize
+    } else {
+        0
+    };
+    if let Some(head) = b.get(audio_at..(audio_at + 4096).min(b.len())) {
+        for sig in [&b"LAME"[..], b"Lavc", b"Lavf"] {
+            if let Some(i) = crate::util::find(head, sig, 0) {
+                let tag: String = head[i..(i + 9).min(head.len())]
+                    .iter()
+                    .take_while(|c| c.is_ascii_graphic())
+                    .map(|&c| c as char)
+                    .collect();
+                if tag.len() > 4 {
+                    Metadata::add_unique(&mut meta.software, &tag);
+                    meta.fields.insert("mp3:encoder".into(), tag);
+                }
+                break;
             }
         }
     }
@@ -264,7 +345,103 @@ fn apply_frame(meta: &mut Metadata, ctx: &Ctx, id: &[u8], fdata: &[u8]) -> Resul
                 });
             }
         }
+        b"TCOP" | b"TCR" => {
+            if let Some(v) = decode_id3_string(fdata) {
+                meta.custom
+                    .entry("copyright".into())
+                    .or_insert_with(|| truncate(&v, 512));
+            }
+        }
+        b"TDRL" | b"TDEN" | b"TDOR" | b"TDTG" | b"TORY" | b"TOWN" | b"TOFN" | b"TOAL" | b"TOPE"
+        | b"TPE3" | b"TPE4" | b"TIT1" | b"TIT3" | b"TSRC" | b"TKEY" | b"TLAN" => {
+            if let Some(v) = decode_id3_string(fdata) {
+                let k = String::from_utf8_lossy(id).into_owned();
+                if k == "TOWN" {
+                    meta.add_person(&v, PersonRole::Owner, "id3v2:TOWN");
+                }
+                if k == "TDRL" || k == "TDOR" {
+                    if meta.created.is_none() {
+                        meta.created = crate::util::normalize_date(&v).or(Some(truncate(&v, 64)));
+                    }
+                }
+                meta.fields.insert(format!("id3:{k}"), truncate(&v, 512));
+            }
+        }
+        b"TXXX" | b"TXX" => {
+            // encoding, description\0, value
+            if let Some((desc, val)) = id3_pair(fdata) {
+                if meta.fields.len() < 300 {
+                    meta.fields.insert(
+                        format!("id3:TXXX:{}", truncate(&desc, 64)),
+                        truncate(&val, 1024),
+                    );
+                }
+            }
+        }
+        b"WXXX" | b"WXX" | b"WOAR" | b"WOAS" | b"WOAF" | b"WCOM" | b"WPUB" | b"WORS" => {
+            // URL frames: Latin-1 text (WXXX: encoding + description first)
+            let raw = if id.starts_with(b"WXX") {
+                fdata.get(1..).map(|r| {
+                    let z = r.iter().position(|&c| c == 0).map(|i| i + 1).unwrap_or(0);
+                    let r = &r[z..];
+                    r.strip_prefix(&[0]).unwrap_or(r)
+                })
+            } else {
+                Some(fdata)
+            };
+            if let Some(u) = raw.and_then(|r| clean_str(&decode_text(r).replace('\0', ""))) {
+                Metadata::add_unique(&mut meta.links, &truncate(&u, 1024));
+            }
+        }
+        b"PRIV" => {
+            let z = fdata.iter().position(|&c| c == 0).unwrap_or(fdata.len());
+            if let Some(o) = clean_str(&decode_text(&fdata[..z])) {
+                let cur = meta.fields.entry("id3:PRIV".into()).or_default();
+                if !cur.split("; ").any(|x| x == o) && cur.len() < 1024 {
+                    if !cur.is_empty() {
+                        cur.push_str("; ");
+                    }
+                    cur.push_str(&truncate(&o, 128));
+                }
+            }
+        }
         b"APIC" | b"PIC" => {
+            // encoding, MIME (v2.2: 3-byte format), picture type, description
+            if let Some(&enc) = fdata.first() {
+                let rest = fdata.get(1..).unwrap_or(&[]);
+                let after_mime = if id == b"PIC" {
+                    3.min(rest.len())
+                } else {
+                    rest.iter()
+                        .position(|&c| c == 0)
+                        .map(|i| i + 1)
+                        .unwrap_or(rest.len())
+                };
+                let ptype = rest.get(after_mime).copied();
+                let desc_bytes = rest.get(after_mime + 1..).unwrap_or(&[]);
+                let mut db = vec![enc];
+                db.extend_from_slice(&desc_bytes[..desc_bytes.len().min(512)]);
+                let desc = decode_id3_string(&db)
+                    .map(|d| d.split('\0').next().unwrap_or("").to_string())
+                    .and_then(|d| clean_str(&d));
+                let label = match ptype {
+                    Some(3) => "Cover (front)",
+                    Some(4) => "Cover (back)",
+                    Some(0) => "Other",
+                    _ => "Picture",
+                };
+                let v = match desc {
+                    Some(d) => format!("{label}: {d}"),
+                    None => label.to_string(),
+                };
+                let cur = meta.fields.entry("id3:APIC".into()).or_default();
+                if cur.len() < 1024 {
+                    if !cur.is_empty() {
+                        cur.push_str("; ");
+                    }
+                    cur.push_str(&truncate(&v, 256));
+                }
+            }
             if let Some(pos) = fdata
                 .windows(3)
                 .position(|w| w == [0xFF, 0xD8, 0xFF])
@@ -278,4 +455,48 @@ fn apply_frame(meta: &mut Metadata, ctx: &Ctx, id: &[u8], fdata: &[u8]) -> Resul
         _ => {}
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn frame(id: &[u8], body: &[u8]) -> Vec<u8> {
+        let mut v = id.to_vec();
+        v.extend((body.len() as u32).to_be_bytes());
+        v.extend([0, 0]);
+        v.extend(body);
+        v
+    }
+
+    #[test]
+    fn txxx_copyright_and_untagged_frames() {
+        let mut tags = frame(b"TXXX", b"\x00Source\x00C:\\Users\\olena\\draft.docx");
+        tags.extend(frame(b"TCOP", "\x03© Студія".as_bytes()));
+        tags.extend(frame(b"WXXX", b"\x00\x00https://example.org/a"));
+        let mut b = b"ID3\x03\x00\x00".to_vec();
+        let n = tags.len() as u32;
+        b.extend([
+            (n >> 21) as u8 & 0x7F,
+            (n >> 14) as u8 & 0x7F,
+            (n >> 7) as u8 & 0x7F,
+            n as u8 & 0x7F,
+        ]);
+        b.extend(tags);
+        let limits = crate::Limits::default();
+        let budget = std::cell::Cell::new(limits.max_unzipped_total);
+        let ctx = Ctx::standalone(&limits, &budget);
+        let m = extract(&b, &ctx).unwrap();
+        assert_eq!(m.fields["id3:TXXX:Source"], "C:\\Users\\olena\\draft.docx");
+        assert_eq!(m.custom["copyright"], "© Студія");
+        assert!(m.links.iter().any(|l| l == "https://example.org/a"));
+        // two MPEG-1 Layer III frames (128 kbit/s, 44.1 kHz) without any tag
+        let mut raw = Vec::new();
+        for _ in 0..2 {
+            let mut f = vec![0xFF, 0xFB, 0x90, 0x00];
+            f.resize(417, 0);
+            raw.extend(f);
+        }
+        assert!(is_mp3(&raw));
+    }
 }

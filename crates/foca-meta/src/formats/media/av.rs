@@ -441,7 +441,7 @@ fn asf_ext_content(meta: &mut Metadata, o: &[u8]) {
 
 // ---------- FLAC / Ogg (Vorbis comments) ----------
 
-pub fn extract_flac(b: &[u8]) -> Result<Metadata, MetaError> {
+pub fn extract_flac(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
     crate::guard("flac", || {
         let mut meta = Metadata::new(DocFormat::Flac);
         let mut at = 4;
@@ -452,6 +452,9 @@ pub fn extract_flac(b: &[u8]) -> Result<Metadata, MetaError> {
             if h & 0x7F == 4 {
                 vorbis_comments(&mut meta, data);
             }
+            if h & 0x7F == 6 {
+                flac_picture(&mut meta, data, ctx)?;
+            }
             if h & 0x80 != 0 {
                 break;
             }
@@ -459,6 +462,39 @@ pub fn extract_flac(b: &[u8]) -> Result<Metadata, MetaError> {
         }
         Ok(meta)
     })
+}
+
+/// FLAC PICTURE block: type, MIME, description, then the image (parsed for EXIF/GPS).
+fn flac_picture(meta: &mut Metadata, d: &[u8], ctx: &Ctx) -> Result<(), MetaError> {
+    let ptype = rd_u32be(d, 0).unwrap_or(0);
+    let ml = rd_u32be(d, 4).unwrap_or(0) as usize;
+    let dl_at = 8usize.saturating_add(ml);
+    let dl = rd_u32be(d, dl_at).unwrap_or(0) as usize;
+    let desc = d
+        .get(dl_at + 4..(dl_at + 4).saturating_add(dl).min(d.len()))
+        .and_then(|x| clean_str(&String::from_utf8_lossy(x)));
+    let label = if ptype == 3 {
+        "Cover (front)"
+    } else {
+        "Picture"
+    };
+    let v = match desc {
+        Some(x) => format!("{label}: {}", truncate(&x, 256)),
+        None => label.to_string(),
+    };
+    let cur = meta.fields.entry("flac:picture".into()).or_default();
+    if cur.len() < 1024 {
+        if !cur.is_empty() {
+            cur.push_str("; ");
+        }
+        cur.push_str(&v);
+    }
+    let img_at = (dl_at + 4).saturating_add(dl).saturating_add(16);
+    let il = rd_u32be(d, img_at).unwrap_or(0) as usize;
+    if let Some(img) = d.get(img_at + 4..(img_at + 4).saturating_add(il)) {
+        ctx.attach_child(meta, img, "picture", "FLAC picture")?;
+    }
+    Ok(())
 }
 
 pub fn extract_ogg(b: &[u8]) -> Result<Metadata, MetaError> {
@@ -528,7 +564,9 @@ fn vorbis_comments(meta: &mut Metadata, d: &[u8]) {
                 meta.author.get_or_insert(v.clone());
             }
             "TITLE" => meta.title = Some(v.clone()),
-            "COMMENT" | "DESCRIPTION" => meta.description = Some(v.clone()),
+            "COMMENT" | "DESCRIPTION" => {
+                meta.description.get_or_insert(v.clone());
+            }
             "DATE" => meta.created = Some(v.clone()),
             "ORGANIZATION" | "LABEL" => meta.company = Some(v.clone()),
             "ENCODER" | "ENCODED_BY" | "ENCODED-BY" => {
@@ -542,8 +580,16 @@ fn vorbis_comments(meta: &mut Metadata, d: &[u8]) {
             _ => {}
         }
         if meta.fields.len() < 300 {
-            meta.fields
-                .insert(format!("vorbis:{}", truncate(&key, 64)), v);
+            let cur = meta
+                .fields
+                .entry(format!("vorbis:{}", truncate(&key, 64)))
+                .or_default();
+            if !cur.split("; ").any(|x| x == v) && cur.len() < 2048 {
+                if !cur.is_empty() {
+                    cur.push_str("; ");
+                }
+                cur.push_str(&v);
+            }
         }
     }
 }
