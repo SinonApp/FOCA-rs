@@ -56,11 +56,14 @@ pub(crate) fn tiff_previews<'t>(meta: &mut Metadata, t: &'t [u8]) -> Vec<&'t [u8
                         }
                     }
                 }
-                0x002E if v.starts_with(&[0xFF, 0xD8]) => {
-                    add_preview(meta, v);
-                    full.push(*v);
-                }
                 _ => {}
+            }
+        }
+        // Panasonic JpgFromRaw is larger than the generic entry reader allows
+        if let Some(v) = large_undefined(&ifd, at, 0x002E) {
+            if v.starts_with(&[0xFF, 0xD8]) {
+                add_preview(meta, v);
+                full.push(v);
             }
         }
         let mut take = |o: Option<u64>, l: Option<u64>| {
@@ -84,6 +87,20 @@ pub(crate) fn tiff_previews<'t>(meta: &mut Metadata, t: &'t [u8]) -> Vec<&'t [u8
         }
     }
     full
+}
+
+/// The value of an undefined-type entry `tag` of the IFD at `at`, up to [`MAX_PREVIEW`] bytes.
+fn large_undefined<'t>(ifd: &Ifd<'t>, at: usize, tag: u16) -> Option<&'t [u8]> {
+    let n = usize::from(ifd.u16(at)?).min(512);
+    for i in 0..n {
+        let e = at + 2 + i * 12;
+        if ifd.u16(e)? == tag && ifd.u16(e + 2)? == 7 {
+            let len = (ifd.u32(e + 4)? as usize).min(MAX_PREVIEW);
+            let off = ifd.u32(e + 8)? as usize;
+            return ifd.base.get(off..off.checked_add(len)?);
+        }
+    }
+    None
 }
 
 /// Previews found so far, kept in `fields` as sizes until `finish_previews`.
