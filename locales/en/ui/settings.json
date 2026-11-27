@@ -445,6 +445,7 @@
   "settings.ocr_pages": "Max PDF pages for OCR",
   "settings.ocr_mb": "Max file size for OCR",
   "settings.foss_ocr": "The [b]foss[/b] build (GPL-3.0 / F-Droid) does not include the proprietary Google ML Kit: on the device OCR returns [code]unavailable_in_foss_build[/code]. Use the [b]play[/b] flavor for offline OCR.",
+  "settings.mlkit_privacy": "[b]Google ML Kit[/b] recognises text on the phone itself; documents are not uploaded. It is a Google library, though: while OCR is on, it may send anonymous diagnostics and usage statistics to Google. If that is not acceptable, keep OCR off or install the [b]foss[/b] build, which has no ML Kit.",
   "settings.ocr_hint": "Off by default to save battery. Recognized text is indexed in FTS5 and checked by the PII detector with mandatory masking.",
   "settings.sig_empty": "Databases not loaded",
   "settings.sig_empty_text": "Load a signed bundle of software signatures, CVE and secret-detection rules.",

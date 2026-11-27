@@ -49,6 +49,7 @@ Patch release after phone testing of 2.0.0-beta.4.
 - КЕП wrappers: a file that is a CMS/PKCS#7 SignedData with the document inside (a Ukrainian `.p7s`, or a `.pdf` that is really such a wrapper) is recognised by content; the inner document is parsed as usual and the signer's certificate (name, surname and given name, masked РНОКПП, ЄДРПОУ, organisation, title, CA, signing time) is kept, giving one Medium "signer data in the document" finding per file.
 
 ### Changed
+- Settings, OCR (play build): a warning explains that Google ML Kit runs on the phone but may send anonymous diagnostics and usage statistics to Google while OCR is on, and that the foss build has no ML Kit.
 - First-run terms state honestly that the play build's optional OCR uses Google ML Kit, which may send anonymous diagnostics to Google, and describe how active modules are enabled (profile and scope) instead of promising a per-run confirmation.
 
 - The app no longer loads the 0.5 MB browser demo backend at startup; it is loaded only in the plain browser demo and QA.

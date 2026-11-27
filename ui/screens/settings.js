@@ -3168,7 +3168,7 @@
       <div class="list st-siglist">${rows.map(([i, t, sub]) => ui.row({ lead: ui.leadIcon(i), title: t, sub })).join("")}</div>
 
       ${ui.secH(F.t("settings.ocr_h", "Офлайн-OCR сканов (Android ML Kit)"))}
-      ${isFoss ? `<div class="banner info">${ic("info")}<div>${rich(F.t("settings.foss_ocr", "Сборка [b]foss[/b] (GPL-3.0 / F-Droid) не содержит проприетарного Google ML Kit: на устройстве OCR возвращает [code]unavailable_in_foss_build[/code]. Для офлайн-OCR используйте флейвор [b]play[/b]."))}</div></div>` : ""}
+      ${isFoss ? `<div class="banner info">${ic("info")}<div>${rich(F.t("settings.foss_ocr", "Сборка [b]foss[/b] (GPL-3.0 / F-Droid) не содержит проприетарного Google ML Kit: на устройстве OCR возвращает [code]unavailable_in_foss_build[/code]. Для офлайн-OCR используйте флейвор [b]play[/b]."))}</div></div>` : `<div class="banner warn">${ic("info")}<div>${rich(F.t("settings.mlkit_privacy", "[b]Google ML Kit[/b] распознаёт текст прямо на телефоне, документы никуда не загружаются. Но это библиотека Google: пока OCR включён, она может отправлять в Google обезличенную диагностику и статистику использования. Если это неприемлемо, не включайте OCR или поставьте сборку [b]foss[/b], в ней ML Kit нет."))}</div></div>`}
       <div class="list">
         <div class="row">
           ${ui.leadIcon("doc", ocr.enabled ? "var(--ok)" : "")}
