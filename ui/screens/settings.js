@@ -3020,6 +3020,47 @@
         ) + line(noBreakCodes((sm.frameworks || []).map(fwLabel).join(", "))),
       ],
     ];
+    // Offline NVD CVE table: snapshot date and CVE counts per group.
+    const nvd = d.nvd || {};
+    if (nvd.cves)
+      rows.push([
+        "bug",
+        F.t("settings.sig_nvd", "CVE (NVD)"),
+        line(
+          esc(
+            F.t(
+              "settings.sig_nvd_line",
+              { n: fmtInt(nvd.cves), date: nvd.snapshot || "-" },
+              "{n} CVE · снимок NVD {date}",
+            ),
+          ),
+        ) +
+          line(
+            esc(
+              F.t(
+                "settings.sig_nvd_groups",
+                {
+                  site: fmtInt(nvd.site),
+                  plugin: fmtInt(nvd.plugin),
+                  doc: fmtInt(nvd.doc),
+                  os: fmtInt(nvd.os),
+                },
+                "сайт: {site} · плагины: {plugin} · ПО документов: {doc} · ОС: {os}",
+              ),
+            ),
+          ) +
+          ((d.skipped_tables || []).length
+            ? line(
+                esc(
+                  F.t(
+                    "settings.sig_skipped",
+                    { list: d.skipped_tables.join(", ") },
+                    "Пропущены таблицы новой версии: {list}",
+                  ),
+                ),
+              )
+            : ""),
+      ]);
     // Ingested upstream tables: records the core really loaded and the upstream pin.
     const tables = d.tables || [];
     if (tables.length)

@@ -320,6 +320,9 @@ pub struct Overview {
     /// All outdated software as (name and version, EOL date or reason, CVE count; `None` if
     /// not checked). Includes outdated website technologies.
     pub eol_software: Vec<(String, String, Option<u32>)>,
+    /// Known CVEs per product (offline NVD table): product, where, version, CVE count, severity
+    /// bands with KEV, max CVSS with EPSS, last document, top CVEs (plain text cells).
+    pub cve_products: Vec<Vec<String>>,
     pub people: u32,
     pub emails: u32,
     pub hosts: u32,
@@ -370,6 +373,82 @@ pub fn sw_label_by_id(snap: &Snapshot, id: &str, lang: crate::Lang) -> String {
 }
 
 /// Returns the CVE count; `None` means no data (not checked), not "0 vulnerabilities".
+/// Rows of the "known CVEs per product" table: document software with a CVE summary and site
+/// technologies; products without a version show the known count only. Most matched first.
+fn cve_products(
+    snap: &Snapshot,
+    recon: &crate::recon_view::ReconView,
+    lang: crate::Lang,
+) -> Vec<Vec<String>> {
+    let t = crate::i18n::strings(lang);
+    let mut rows: Vec<(u32, Vec<String>)> = Vec::new();
+    let mut push =
+        |label: String, side: &str, last: Option<&str>, c: &foca_core::api::CveSummary| {
+            if (c.version_known && c.matched == 0) || (!c.version_known && c.known == 0) {
+                return;
+            }
+            let side = match side {
+                "server" => t.side_server,
+                "workstation" => t.side_workstation,
+                _ => t.side_site,
+            };
+            let num = |x: Option<f32>| x.map_or_else(|| "-".to_string(), |v| format!("{v}"));
+            let (count, bands, cvss, top) = if c.version_known {
+                let mut bands = format!("{}/{}/{}/{}", c.critical, c.high, c.medium, c.low);
+                if c.kev > 0 {
+                    bands.push_str(&format!(" · KEV {}", c.kev));
+                }
+                let mut cvss = num(c.max_cvss);
+                if let Some(e) = c.max_epss {
+                    cvss.push_str(&format!(" · EPSS {e:.2}"));
+                }
+                let top: Vec<&str> = c.cves.iter().take(3).map(|r| r.id.as_str()).collect();
+                (c.matched.to_string(), bands, cvss, top.join(", "))
+            } else {
+                (
+                    format!("{} ({})", c.known, t.version_unknown),
+                    "-".into(),
+                    "-".into(),
+                    "-".into(),
+                )
+            };
+            let version = if c.version.is_empty() {
+                "-".to_string()
+            } else {
+                c.version.clone()
+            };
+            rows.push((
+                if c.version_known { c.matched } else { 0 },
+                vec![
+                    label,
+                    side.to_string(),
+                    version,
+                    count,
+                    bands,
+                    cvss,
+                    last.map_or_else(|| "-".to_string(), dmy),
+                    top,
+                ],
+            ));
+        };
+    for s in &snap.software {
+        if let Some(c) = &s.cve_sum {
+            push(sw_label(s, lang), &s.side, s.last_doc.as_deref(), c);
+        }
+    }
+    let mut seen = std::collections::BTreeSet::new();
+    for x in &recon.tech {
+        if let Some(c) = &x.cve {
+            let label = tech_label(&x.name, x.version.as_deref());
+            if seen.insert(label.to_ascii_lowercase()) {
+                push(label, "site", None, c);
+            }
+        }
+    }
+    rows.sort_by(|a, b| b.0.cmp(&a.0).then(a.1[0].cmp(&b.1[0])));
+    rows.into_iter().map(|r| r.1).collect()
+}
+
 pub fn sw_cve(s: &foca_core::api::Software) -> Option<u32> {
     if s.cve == 0 && s.cves.is_empty() {
         None
@@ -461,7 +540,9 @@ pub fn overview(snap: &Snapshot, lang: crate::Lang) -> Overview {
             eol_software.push((label, why, None));
         }
     }
+    let cve_products = cve_products(snap, &recon, lang);
     Overview {
+        cve_products,
         docs_total: live.len() as u32,
         docs_analyzed: live.iter().filter(|d| d.status == "analyzed").count() as u32,
         docs_by_type,

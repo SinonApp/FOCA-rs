@@ -1280,6 +1280,7 @@
     });
     const CODES = tt("insights.code", {
       "sw.kev": "Продукт есть в каталоге эксплуатируемых уязвимостей CISA KEV, сверьте версию.",
+      "sw.cve": "Известные CVE версии продукта из офлайн-базы NVD.",
       "doc.lineage": "Копии и версии одного документа связаны идентификаторами XMP/RSID.",
       "org.structure": "Отделы и роли восстановлены по путям, принтерам и полям документов.",
       "net.internal_map": "Внутренняя сеть (домен, серверы, ПК) восстановлена по документам.",
@@ -1287,6 +1288,7 @@
     Object.keys(CODES).forEach(k => note(k, () => CODES[k]));
     Object.assign(F.fx.CODE_HELP, {
       "sw.kev": "kev",
+      "sw.cve": "cve",
       "doc.lineage": "graph-chain",
       "org.structure": "org-chart",
       "net.internal_map": "netmap",

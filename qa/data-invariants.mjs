@@ -2253,7 +2253,8 @@ for (const id of S.order) {
       typeof apDemo.summary?.total_paths === "number" &&
       apEmpty.paths.length === 0 &&
       apEmpty.choke_points.length === 0 &&
-      sigInit.schema === "foca-sig-bundle/v2" &&
+      sigInit.schema === "foca-sig-bundle/v3" &&
+      sigInit.nvd?.cves > 100000 &&
       sigUp.source === sigInit.source &&
       sigUp.last_check?.outcome === "no_update" &&
       sigAfterUp.source === "bundle" &&

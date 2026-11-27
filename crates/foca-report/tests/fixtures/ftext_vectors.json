@@ -3829,6 +3829,126 @@
  },
  {
   "lang": "en",
+  "rule": "sw.cve",
+  "text": "Устаревшее ПО на рабочих станциях (NVD): X1, известных CVE: 5",
+  "out": "Outdated software on workstations (NVD): X1, known CVEs: 5"
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Уязвимый генератор документов на сервере (NVD): X1, известных CVE: 5",
+  "out": "Vulnerable document generator on the server (NVD): X1, known CVEs: 5"
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Уязвимая версия технологии (NVD): X1, известных CVE: 5",
+  "out": "Vulnerable technology version (NVD): X1, known CVEs: 5"
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Технология обнаружена на сайте организации: X1.",
+  "out": "The technology was detected on the organization's website: X1."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Это расширение X1.",
+  "out": "This is an extension of X1."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Файлы на сайте созданы серверным генератором: уязвимости относятся к серверу, который выпускает документы.",
+  "out": "The files on the site were produced by a server-side generator: the vulnerabilities concern the server that issues the documents."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "ПО найдено в метаданных документов: оно стоит на рабочих станциях авторов. Это разведданные (устаревшее ПО, вектор фишинга с вредоносными вложениями), а не уязвимость сайта.",
+  "out": "The software was found in document metadata: it is installed on the authors' workstations. This is reconnaissance (outdated software, a phishing vector with malicious attachments), not a vulnerability of the site."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: заголовок HTTP).",
+  "out": "Version X1 (source: HTTP header)."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: скрипт).",
+  "out": "Version X1 (source: script)."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: путь плагина).",
+  "out": "Version X1 (source: plugin path)."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: readme плагина).",
+  "out": "Version X1 (source: plugin readme)."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: метаданные документа).",
+  "out": "Version X1 (source: document metadata)."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: HTML).",
+  "out": "Version X1 (source: HTML)."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Известных CVE для этой версии в базе NVD: 2. Критических: 5, высоких: 8, средних: 11, низких: 2; CVSS до X6.",
+  "out": "Known CVEs for this version in the NVD database: 2. Critical: 5, high: 8, medium: 11, low: 2; CVSS up to X6."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Из них эксплуатируются (CISA KEV): 2.",
+  "out": "Exploited in the wild (CISA KEV): 2."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Наибольшая вероятность эксплуатации по EPSS: X1.",
+  "out": "Highest exploitation probability by EPSS: X1."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Последний документ с этой версией: X1.",
+  "out": "Last document with this version: X1."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Известных CVE для продукта в базе NVD: 2, версия не определена.",
+  "out": "Known CVEs for this product in the NVD database: 2, version not determined."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Обновить ПО на рабочих станциях и включить централизованное обновление; учитывать при оценке фишинговых рисков.",
+  "out": "Update the software on the workstations and enable centralized updates; take it into account when assessing phishing risks."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Обновить продукт до версии без известных уязвимостей; сверить список CVE с бюллетенями производителя.",
+  "out": "Update the product to a version without known vulnerabilities; check the CVE list against the vendor advisories."
+ },
+ {
+  "lang": "en",
   "rule": "eol-software",
   "text": "Сигнатура: Word 2010\nДокументов: 2",
   "out": "Signature: Word 2010\nDocuments: 2"
@@ -7666,6 +7786,126 @@
   "rule": "secret",
   "text": "Пароль в строке подключения к данным",
   "out": "Пароль у рядку підключення до даних"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Устаревшее ПО на рабочих станциях (NVD): X1, известных CVE: 5",
+  "out": "Застаріле ПЗ на робочих станціях (NVD): X1, відомих CVE: 5"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Уязвимый генератор документов на сервере (NVD): X1, известных CVE: 5",
+  "out": "Вразливий генератор документів на сервері (NVD): X1, відомих CVE: 5"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Уязвимая версия технологии (NVD): X1, известных CVE: 5",
+  "out": "Вразлива версія технології (NVD): X1, відомих CVE: 5"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Технология обнаружена на сайте организации: X1.",
+  "out": "Технологію виявлено на сайті організації: X1."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Это расширение X1.",
+  "out": "Це розширення X1."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Файлы на сайте созданы серверным генератором: уязвимости относятся к серверу, который выпускает документы.",
+  "out": "Файли на сайті створено серверним генератором: вразливості стосуються сервера, який випускає документи."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "ПО найдено в метаданных документов: оно стоит на рабочих станциях авторов. Это разведданные (устаревшее ПО, вектор фишинга с вредоносными вложениями), а не уязвимость сайта.",
+  "out": "ПЗ знайдено в метаданих документів: воно встановлене на робочих станціях авторів. Це розвідувальні дані (застаріле ПЗ, вектор фішингу зі шкідливими вкладеннями), а не вразливість сайту."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: заголовок HTTP).",
+  "out": "Версія X1 (джерело: заголовок HTTP)."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: скрипт).",
+  "out": "Версія X1 (джерело: скрипт)."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: путь плагина).",
+  "out": "Версія X1 (джерело: шлях плагіна)."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: readme плагина).",
+  "out": "Версія X1 (джерело: readme плагіна)."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: метаданные документа).",
+  "out": "Версія X1 (джерело: метадані документа)."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Версия X1 (источник: HTML).",
+  "out": "Версія X1 (джерело: HTML)."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Известных CVE для этой версии в базе NVD: 2. Критических: 5, высоких: 8, средних: 11, низких: 2; CVSS до X6.",
+  "out": "Відомих CVE для цієї версії в базі NVD: 2. Критичних: 5, високих: 8, середніх: 11, низьких: 2; CVSS до X6."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Из них эксплуатируются (CISA KEV): 2.",
+  "out": "З них експлуатуються (CISA KEV): 2."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Наибольшая вероятность эксплуатации по EPSS: X1.",
+  "out": "Найвища ймовірність експлуатації за EPSS: X1."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Последний документ с этой версией: X1.",
+  "out": "Останній документ із цією версією: X1."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Известных CVE для продукта в базе NVD: 2, версия не определена.",
+  "out": "Відомих CVE для продукту в базі NVD: 2, версію не визначено."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Обновить ПО на рабочих станциях и включить централизованное обновление; учитывать при оценке фишинговых рисков.",
+  "out": "Оновити ПЗ на робочих станціях і ввімкнути централізоване оновлення; враховувати під час оцінки фішингових ризиків."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Обновить продукт до версии без известных уязвимостей; сверить список CVE с бюллетенями производителя.",
+  "out": "Оновити продукт до версії без відомих вразливостей; звірити список CVE з бюлетенями виробника."
  },
  {
   "lang": "uk",

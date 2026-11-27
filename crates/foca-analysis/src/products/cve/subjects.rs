@@ -202,6 +202,19 @@ pub struct TechInput {
     pub evidence: Vec<String>,
 }
 
+impl TechInput {
+    /// The table query of this technology.
+    pub fn query(&self) -> CveQuery {
+        let plugin = self.plugin_of.is_some() && self.slug.is_some();
+        CveQuery {
+            keys: self.cpe.iter().cloned().collect(),
+            slug: self.slug.clone().zip(self.plugin_of.clone()),
+            version: self.version.clone(),
+            source: version_source(&self.evidence, plugin),
+        }
+    }
+}
+
 /// Where a technology version was read from, from its evidence lines.
 pub fn version_source(evidence: &[String], plugin: bool) -> String {
     let e = evidence.join("\n").to_ascii_lowercase();
@@ -224,13 +237,7 @@ pub fn tech_matches(techs: &[TechInput], db: &CveDb) -> Vec<CveMatch> {
     let mut out: BTreeMap<(String, String), CveMatch> = BTreeMap::new();
     for t in techs {
         let plugin = t.plugin_of.is_some() && t.slug.is_some();
-        let q = CveQuery {
-            keys: t.cpe.iter().cloned().collect(),
-            slug: t.slug.clone().zip(t.plugin_of.clone()),
-            version: t.version.clone(),
-            source: version_source(&t.evidence, plugin),
-        };
-        let Some(summary) = db.lookup(&q) else {
+        let Some(summary) = db.lookup(&t.query()) else {
             continue;
         };
         let ver = t.version.clone().unwrap_or_default();

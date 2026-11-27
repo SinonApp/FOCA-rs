@@ -372,7 +372,7 @@
   "findings.n_of": "{i} из {n}",
   "findings.status_set": "Статус: «{st}»",
   "findings.cve_note": "Описание уязвимости из локальной базы CVE (офлайн). Открыть в браузере можно только при наличии сети.",
-  "findings.nvd_snapshot": "NVD, снимок 15.11.2026",
+  "findings.nvd_snapshot": "NVD (офлайн-база приложения)",
   "findings.pb_fail": "Не удалось загрузить плейбук: {e}",
   "findings.in_sel_sub": "В выборке: {n} · учитывается в конструкторе отчёта",
   "findings.select_many_sub": "Массовые действия в списке находок",
@@ -1114,5 +1114,6 @@
   "forensics.s_geo": "Геоданные",
   "forensics.s_ai": "Сгенерировано ИИ",
   "forensics.s_form": "Поля формы",
-  "forensics.s_fonts": "Шрифты"
+  "forensics.s_fonts": "Шрифты",
+  "insights.code.sw.cve": "Известные CVE версии продукта из офлайн-базы NVD."
 }

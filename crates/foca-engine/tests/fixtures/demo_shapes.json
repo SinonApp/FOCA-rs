@@ -1011,6 +1011,16 @@
         "t": [
          "number"
         ]
+       },
+       "side": {
+        "t": [
+         "string"
+        ]
+       },
+       "last_doc": {
+        "t": [
+         "string"
+        ]
        }
       }
      }
@@ -4789,6 +4799,16 @@
        "docs": {
         "t": [
          "number"
+        ]
+       },
+       "side": {
+        "t": [
+         "string"
+        ]
+       },
+       "last_doc": {
+        "t": [
+         "string"
         ]
        }
       }
@@ -16709,6 +16729,64 @@
       }
      }
     },
+    "nvd": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "snapshot": {
+       "t": [
+        "string"
+       ]
+      },
+      "epss": {
+       "t": [
+        "string"
+       ]
+      },
+      "cves": {
+       "t": [
+        "number"
+       ]
+      },
+      "products": {
+       "t": [
+        "number"
+       ]
+      },
+      "ranges": {
+       "t": [
+        "number"
+       ]
+      },
+      "site": {
+       "t": [
+        "number"
+       ]
+      },
+      "plugin": {
+       "t": [
+        "number"
+       ]
+      },
+      "doc": {
+       "t": [
+        "number"
+       ]
+      },
+      "os": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "skipped_tables": {
+     "t": [
+      "array"
+     ],
+     "items": null
+    },
     "feed_url": {
      "t": [
       "string"
@@ -16981,6 +17059,64 @@
       }
      }
     },
+    "nvd": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "snapshot": {
+       "t": [
+        "string"
+       ]
+      },
+      "epss": {
+       "t": [
+        "string"
+       ]
+      },
+      "cves": {
+       "t": [
+        "number"
+       ]
+      },
+      "products": {
+       "t": [
+        "number"
+       ]
+      },
+      "ranges": {
+       "t": [
+        "number"
+       ]
+      },
+      "site": {
+       "t": [
+        "number"
+       ]
+      },
+      "plugin": {
+       "t": [
+        "number"
+       ]
+      },
+      "doc": {
+       "t": [
+        "number"
+       ]
+      },
+      "os": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "skipped_tables": {
+     "t": [
+      "array"
+     ],
+     "items": null
+    },
     "feed_url": {
      "t": [
       "string"
@@ -17251,6 +17387,64 @@
        }
       }
      }
+    },
+    "nvd": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "snapshot": {
+       "t": [
+        "string"
+       ]
+      },
+      "epss": {
+       "t": [
+        "string"
+       ]
+      },
+      "cves": {
+       "t": [
+        "number"
+       ]
+      },
+      "products": {
+       "t": [
+        "number"
+       ]
+      },
+      "ranges": {
+       "t": [
+        "number"
+       ]
+      },
+      "site": {
+       "t": [
+        "number"
+       ]
+      },
+      "plugin": {
+       "t": [
+        "number"
+       ]
+      },
+      "doc": {
+       "t": [
+        "number"
+       ]
+      },
+      "os": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "skipped_tables": {
+     "t": [
+      "array"
+     ],
+     "items": null
     },
     "feed_url": {
      "t": [

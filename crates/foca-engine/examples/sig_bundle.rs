@@ -4,8 +4,8 @@
 //! The signing key is never stored in the repository. See `docs/dev/signature-bundles.md`.
 //!
 //! ```text
-//! cargo run -p foca-engine --example sig_bundle -- build --key <seed file> --out signatures.bundle
-//!     [--version 2026.11.27] [--released 2026-11-27] [--allow-foreign-key]
+//! cargo run -p foca-engine --example sig_bundle -- build --key <seed file> --out signatures-v3.bundle
+//!     [--schema v3|v2] [--version 2026.11.27] [--released 2026-11-27] [--allow-foreign-key]
 //! cargo run -p foca-engine --example sig_bundle -- verify <bundle file>
 //! cargo run -p foca-engine --example sig_bundle -- gen-key <new seed file>
 //! ```
@@ -64,7 +64,14 @@ fn build(args: &[String]) -> Result<(), String> {
             today.day()
         )
     });
-    let mut bundle = sigbundle::bundle_from_builtin("", &released);
+    // v3 (default): every table, feed `signatures-v3`; v2: only the tables 2.0.0-beta.3 reads,
+    // feed `signatures`.
+    let schema = match arg(args, "--schema").as_deref() {
+        None | Some("v3") => sigbundle::BUNDLE_SCHEMA,
+        Some("v2") => sigbundle::BUNDLE_SCHEMA_V2,
+        Some(x) => return Err(format!("--schema {x}: expected v3 or v2")),
+    };
+    let mut bundle = sigbundle::bundle_from_builtin_schema("", &released, schema);
     let catalog = bundle
         .kev_catalog
         .as_ref()
@@ -76,7 +83,8 @@ fn build(args: &[String]) -> Result<(), String> {
     let json = serde_json::to_string(&bundle).map_err(|e| e.to_string())?;
     std::fs::write(&out, &json).map_err(|e| format!("{out}: {e}"))?;
     println!(
-        "{out}: version {} released {} · {} KEV items · {} data tables · {} bytes · sha256 {}",
+        "{out}: {} version {} released {} · {} KEV items · {} data tables · {} bytes · sha256 {}",
+        bundle.schema,
         bundle.version,
         bundle.released_at,
         bundle.kev_additions.len(),

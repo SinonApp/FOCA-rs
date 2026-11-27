@@ -57,10 +57,33 @@ impl Engine {
     /// `last_check`; a failed check is stored too and returned as the error.
     pub(crate) async fn signatures_update(&self, a: &Value) -> CmdResult {
         use crate::services::sigbundle;
-        let url = arg_str(a, "url")
-            .map(str::trim)
-            .filter(|u| !u.is_empty())
-            .unwrap_or(sigbundle::DEFAULT_FEED_URL);
+        let explicit = arg_str(a, "url").map(str::trim).filter(|u| !u.is_empty());
+        let url = explicit.unwrap_or(sigbundle::DEFAULT_FEED_URL);
+        let mut fetched = self.fetch_sig_feed(url).await;
+        if let Err(e) = &fetched {
+            if e.code == "bad_args" {
+                return Err(e.clone());
+            }
+        }
+        let mut used = url;
+        // The official v3 feed falls back to the v2 compatibility feed while nothing is
+        // published there.
+        if explicit.is_none() && matches!(&fetched, Err(e) if e.code == "not_published") {
+            used = sigbundle::FALLBACK_FEED_URL;
+            fetched = self.fetch_sig_feed(used).await;
+        }
+        let st = sigbundle::apply_feed(
+            &self.inner.cfg.data_dir,
+            used,
+            fetched,
+            &sigbundle::official_pubkey_bytes(),
+            self.now(),
+        )?;
+        Self::sig_json(st)
+    }
+
+    /// Downloads a signature feed URL (HTTPS, public host; plain HTTP only to loopback).
+    async fn fetch_sig_feed(&self, url: &str) -> Result<String, CmdError> {
         let parsed = url::Url::parse(url).ok().filter(|u| {
             let scheme_ok = match u.scheme() {
                 "https" => true,
@@ -80,7 +103,7 @@ impl Engine {
                 "URL фида сигнатур должен использовать HTTPS и публичный хост",
             ));
         }
-        let fetched = match self.net_client(Scope::default(), Arc::new(foca_net::NullSink)) {
+        match self.net_client(Scope::default(), Arc::new(foca_net::NullSink)) {
             Ok(net) => match net.get_text(url, "signatures", Access::Passive).await {
                 Ok(raw) => Ok(raw),
                 Err(foca_net::NetError::Status(s @ (404 | 410))) => {
@@ -92,15 +115,7 @@ impl Engine {
                 )),
             },
             Err(e) => Err(e),
-        };
-        let st = sigbundle::apply_feed(
-            &self.inner.cfg.data_dir,
-            url,
-            fetched,
-            &sigbundle::official_pubkey_bytes(),
-            self.now(),
-        )?;
-        Self::sig_json(st)
+        }
     }
 
     /// `signatures_rollback {}` → restores the previous verified bundle or the builtin database.

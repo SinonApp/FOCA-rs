@@ -865,6 +865,23 @@ fn demo_signature_numbers_match_core_status() {
         src.contains(foca_engine::sigbundle::DEFAULT_FEED_URL),
         "demo feed URL"
     );
+    // Offline NVD CVE table numbers (`signatures_status.nvd`).
+    let start = src.find("const DEMO_SIG_NVD = {").expect("DEMO_SIG_NVD");
+    let nvd = &src[start..start + src[start..].find("};").unwrap()];
+    let n = &st.nvd;
+    for (k, v) in [
+        ("snapshot", format!("\"{}\"", n.snapshot)),
+        ("epss", format!("\"{}\"", n.epss)),
+        ("cves", n.cves.to_string()),
+        ("products", n.products.to_string()),
+        ("ranges", n.ranges.to_string()),
+        ("site", n.site.to_string()),
+        ("plugin", n.plugin.to_string()),
+        ("doc", n.doc.to_string()),
+        ("os", n.os.to_string()),
+    ] {
+        assert!(nvd.contains(&format!("{k}: {v},")), "DEMO_SIG_NVD {k}: {v}");
+    }
 }
 
 /// The demo backend keeps a copy of the standards of its finding rules (`DEMO_STANDARDS`); every

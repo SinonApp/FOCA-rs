@@ -3827,6 +3827,126 @@
       "rules": "secret,rdp-password,ica-password,recon.js_secret",
       "pattern": "Пароль в строке подключения к данным",
       "text": "Password in a data connection string"
+    },
+    {
+      "id": "f639",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Устаревшее ПО на рабочих станциях (NVD): {}, известных CVE: {n}",
+      "text": "Outdated software on workstations (NVD): {0}, known CVEs: {1}"
+    },
+    {
+      "id": "f640",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Уязвимый генератор документов на сервере (NVD): {}, известных CVE: {n}",
+      "text": "Vulnerable document generator on the server (NVD): {0}, known CVEs: {1}"
+    },
+    {
+      "id": "f641",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Уязвимая версия технологии (NVD): {}, известных CVE: {n}",
+      "text": "Vulnerable technology version (NVD): {0}, known CVEs: {1}"
+    },
+    {
+      "id": "f642",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Технология обнаружена на сайте организации: {}.",
+      "text": "The technology was detected on the organization's website: {0}."
+    },
+    {
+      "id": "f643",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Это расширение {}.",
+      "text": "This is an extension of {0}."
+    },
+    {
+      "id": "f644",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Файлы на сайте созданы серверным генератором: уязвимости относятся к серверу, который выпускает документы.",
+      "text": "The files on the site were produced by a server-side generator: the vulnerabilities concern the server that issues the documents."
+    },
+    {
+      "id": "f645",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "ПО найдено в метаданных документов: оно стоит на рабочих станциях авторов. Это разведданные (устаревшее ПО, вектор фишинга с вредоносными вложениями), а не уязвимость сайта.",
+      "text": "The software was found in document metadata: it is installed on the authors' workstations. This is reconnaissance (outdated software, a phishing vector with malicious attachments), not a vulnerability of the site."
+    },
+    {
+      "id": "f646",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Версия {} (источник: заголовок HTTP).",
+      "text": "Version {0} (source: HTTP header)."
+    },
+    {
+      "id": "f647",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Версия {} (источник: скрипт).",
+      "text": "Version {0} (source: script)."
+    },
+    {
+      "id": "f648",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Версия {} (источник: путь плагина).",
+      "text": "Version {0} (source: plugin path)."
+    },
+    {
+      "id": "f649",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Версия {} (источник: readme плагина).",
+      "text": "Version {0} (source: plugin readme)."
+    },
+    {
+      "id": "f650",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Версия {} (источник: метаданные документа).",
+      "text": "Version {0} (source: document metadata)."
+    },
+    {
+      "id": "f651",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Версия {} (источник: HTML).",
+      "text": "Version {0} (source: HTML)."
+    },
+    {
+      "id": "f652",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Известных CVE для этой версии в базе NVD: {n}. Критических: {n}, высоких: {n}, средних: {n}, низких: {n}; CVSS до {}.",
+      "text": "Known CVEs for this version in the NVD database: {0}. Critical: {1}, high: {2}, medium: {3}, low: {4}; CVSS up to {5}."
+    },
+    {
+      "id": "f653",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Из них эксплуатируются (CISA KEV): {n}.",
+      "text": "Exploited in the wild (CISA KEV): {0}."
+    },
+    {
+      "id": "f654",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Наибольшая вероятность эксплуатации по EPSS: {}.",
+      "text": "Highest exploitation probability by EPSS: {0}."
+    },
+    {
+      "id": "f655",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Последний документ с этой версией: {}.",
+      "text": "Last document with this version: {0}."
+    },
+    {
+      "id": "f656",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Известных CVE для продукта в базе NVD: {n}, версия не определена.",
+      "text": "Known CVEs for this product in the NVD database: {0}, version not determined."
+    },
+    {
+      "id": "f657",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Обновить ПО на рабочих станциях и включить централизованное обновление; учитывать при оценке фишинговых рисков.",
+      "text": "Update the software on the workstations and enable centralized updates; take it into account when assessing phishing risks."
+    },
+    {
+      "id": "f658",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Обновить продукт до версии без известных уязвимостей; сверить список CVE с бюллетенями производителя.",
+      "text": "Update the product to a version without known vulnerabilities; check the CVE list against the vendor advisories."
     }
   ],
   "tech_cats": {

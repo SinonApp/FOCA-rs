@@ -372,7 +372,7 @@
   "findings.n_of": "{i} of {n}",
   "findings.status_set": "Status: “{st}”",
   "findings.cve_note": "Vulnerability description from the local CVE database (offline). Opening it in a browser requires a network.",
-  "findings.nvd_snapshot": "NVD, snapshot 15.11.2026",
+  "findings.nvd_snapshot": "NVD (offline database of the app)",
   "findings.pb_fail": "Could not load the playbook: {e}",
   "findings.in_sel_sub": "In selection: {n} · used by the report builder",
   "findings.select_many_sub": "Bulk actions in the findings list",
@@ -1114,5 +1114,6 @@
   "forensics.s_geo": "Geodata",
   "forensics.s_ai": "AI-generated",
   "forensics.s_form": "Form fields",
-  "forensics.s_fonts": "Fonts"
+  "forensics.s_fonts": "Fonts",
+  "insights.code.sw.cve": "Known CVEs of the product version from the offline NVD database."
 }

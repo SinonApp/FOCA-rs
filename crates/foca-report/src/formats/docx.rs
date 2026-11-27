@@ -724,6 +724,27 @@ fn render_classic(c: &Ctx, w: &mut DocWriter) {
                 .collect();
             w.table(&[t.software, t.eol, t.cve], &rows);
         }
+        if !ov.cve_products.is_empty() {
+            w.heading(3, t.cve_products);
+            let rows: Vec<Vec<String>> = ov
+                .cve_products
+                .iter()
+                .map(|r| r.iter().map(|x| c.r(x)).collect())
+                .collect();
+            w.table(
+                &[
+                    t.software,
+                    t.side,
+                    t.version,
+                    t.cve,
+                    t.cve_bands,
+                    t.max_cvss,
+                    t.last_doc,
+                    t.top_cves,
+                ],
+                &rows,
+            );
+        }
     }
 
     if s.scope {

@@ -372,7 +372,7 @@
   "findings.n_of": "{i} з {n}",
   "findings.status_set": "Статус: «{st}»",
   "findings.cve_note": "Опис вразливості з локальної бази CVE (офлайн). Відкрити в браузері можна лише за наявності мережі.",
-  "findings.nvd_snapshot": "NVD, знімок 15.11.2026",
+  "findings.nvd_snapshot": "NVD (офлайн-база застосунку)",
   "findings.pb_fail": "Не вдалося завантажити плейбук: {e}",
   "findings.in_sel_sub": "У вибірці: {n} · враховується в конструкторі звіту",
   "findings.select_many_sub": "Масові дії у списку знахідок",
@@ -1114,5 +1114,6 @@
   "forensics.s_geo": "Геодані",
   "forensics.s_ai": "Згенеровано ШІ",
   "forensics.s_form": "Поля форми",
-  "forensics.s_fonts": "Шрифти"
+  "forensics.s_fonts": "Шрифти",
+  "insights.code.sw.cve": "Відомі CVE версії продукту з офлайн-бази NVD."
 }

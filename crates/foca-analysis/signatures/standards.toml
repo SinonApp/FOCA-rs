@@ -574,6 +574,14 @@ iso27001 = ["8.8"]
 kszi = ["6.6"]
 nist = ["RA-5", "SI-2"]
 
+[[rule]]
+id = "sw.cve"
+cwe = ["CWE-1104"]
+owasp = ["A03:2025"]
+iso27001 = ["8.8"]
+kszi = ["6.6"]
+nist = ["RA-5", "SI-2"]
+
 # ── Web and infrastructure ─────────────────────────────────────────────────────────────────
 [[rule]]
 id = "fuzz-backup"

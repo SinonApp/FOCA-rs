@@ -911,9 +911,26 @@
         "/p/data/software"
       ],
       "rel": [
-        "anomalies"
+        "anomalies",
+        "cve"
       ],
       "body": "\n      <p><b>CISA KEV</b> is the catalog of vulnerabilities known to be actively exploited in the wild. The catalog is bundled inside the app and works offline.</p>\n      <ul><li><b>“Possibly vulnerable software”</b>: the product appears in KEV, but the catalog does not specify exact affected versions. Verify the installed version against the vendor's advisory.</li>\n      <li><b>“Likely vulnerable software”</b>: the detected version is already EOL, and KEV lists CVEs published after end of support, meaning no patch exists for it.</li></ul>\n      <p>Versions are inferred from document metadata and service banners rather than directly from endpoints, so these are leads rather than confirmed vulnerabilities. A “ransomware” tag indicates the CVE has been used in ransomware campaigns.</p>\n      <h3>Updating the catalog</h3><p>“Settings → Signature databases and OCR” shows the version of the database in use, how many KEV entries are used for matching, the catalog date and when updates were last checked. If the KEV catalog is older than 30 days, the screen says so. “Check for updates” downloads the official signed bundle, verifies its Ed25519 signature and installs it only if it is newer; the result stays under “Last checked”. A bundle with a wrong signature is rejected. “Rollback” returns to the previous bundle.</p>\n      <p>Besides KEV, the database holds technology fingerprints (webappanalyzer), gitleaks secret rules, end-of-life dates (endoflife.date), EPSS, CVSS and CWE for KEV matches, vulnerable JavaScript libraries (Retire.js), Recog banner and favicon fingerprints, the Public Suffix List and subdomain takeover fingerprints (can-i-take-over-xyz). Each table shows its record count; sources are credited on the Licenses screen. Since 2.0.0-beta.3 bundles are signed with a new key: builds up to beta.2 reject them and keep their built-in databases.</p>\n"
+    },
+    {
+      "id": "cve",
+      "sec": "docs",
+      "icon": "app",
+      "t": "Known CVEs (NVD)",
+      "sub": "offline CVE database with version ranges",
+      "go": [
+        "Software",
+        "/p/data/software"
+      ],
+      "rel": [
+        "kev",
+        "anomalies"
+      ],
+      "body": "\n      <p>FOCA-rs ships an offline copy of the <b>NVD</b> CVE data for every product it can detect: site technologies, WordPress, Drupal and Joomla plugins and themes, and the software found in document metadata. Each CVE carries its affected version ranges, CVSS score, CWE, the CISA KEV flag and the EPSS probability.</p>\n      <ul><li><b>Version known</b>: the cards show how many CVEs match that version (critical, high, medium, low), a KEV badge and the highest EPSS. “Show all CVEs” lists them with a link to NVD. A finding is created with the severity of the worst CVE, one step higher when a CVE is in KEV.</li>\n      <li><b>Version not determined</b>: only “N known CVEs, version not determined” is shown. No finding is created, so the severity is not inflated.</li>\n      <li><b>Server or workstation</b>: generators that run on the site's servers (wkhtmltopdf, TCPDF, iText, Ghostscript, Crystal Reports, 1C, SSRS) are tagged “Server”. Office, Acrobat, LibreOffice and similar desktop software is tagged “Workstations”: its CVEs are reconnaissance (outdated software, a phishing vector), not a vulnerability of the site, and the finding is capped at Medium.</li>\n      <li><b>Newest version</b>: for document software the version of the newest document counts, with “Last document with this version”.</li></ul>\n      <p>Version ranges are matched approximately: for example, Office 16.0 covers Office 2016 and Microsoft 365. Treat matches as leads to verify. The database is updated with the signed signature bundle; “Settings → Signature databases” shows the CVE count and the NVD snapshot date. This product uses data from the NVD API but is not endorsed or certified by the NVD.</p>"
     },
     {
       "id": "org-chart",

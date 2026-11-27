@@ -24,10 +24,30 @@ use sha2::{Digest, Sha256};
 
 use crate::CmdError;
 
-/// Schema identifier of the signature bundles this build writes.
-pub const BUNDLE_SCHEMA: &str = "foca-sig-bundle/v2";
+/// Schema identifier of the signature bundles this build writes for its own feed
+/// ([`DEFAULT_FEED_URL`]): every table of [`TABLES`], including the ones 2.0.0-beta.3 does not
+/// know.
+pub const BUNDLE_SCHEMA: &str = "foca-sig-bundle/v3";
+/// Schema of the compatibility bundle at [`FALLBACK_FEED_URL`], read by 2.0.0-beta.3: only the
+/// tables of [`V2_TABLE_IDS`] in their beta.3 formats.
+pub const BUNDLE_SCHEMA_V2: &str = "foca-sig-bundle/v2";
 /// Older schema that is still accepted (no `tables`).
 pub const BUNDLE_SCHEMA_V1: &str = "foca-sig-bundle/v1";
+
+/// Table ids the published 2.0.0-beta.3 reader knows. It rejects a bundle with any other id, so
+/// the v2 feed carries only these, in formats its parsers accept.
+pub const V2_TABLE_IDS: &[&str] = &[
+    "webappanalyzer",
+    "endoflife",
+    "saas_dns",
+    "gitleaks",
+    "kev_enrich",
+    "retire",
+    "recog",
+    "favicons_md5",
+    "psl",
+    "takeover",
+];
 
 /// Upstream pins and stats of the ingested sources (written by the ingest scripts).
 const SOURCES_LOCK: &str = include_str!("../../../foca-analysis/signatures/sources.lock.json");
@@ -64,6 +84,8 @@ pub const TABLES: &[(&str, &str, &[u8])] = &[
         "can-i-take-over-xyz",
         foca_net::takeover::TAKEOVER_JSON.as_bytes(),
     ),
+    // v3 only (not in V2_TABLE_IDS).
+    ("nvd_cve", "nvd", foca_analysis::cve::NVD_GZ),
 ];
 
 /// A data table shipped in a v2 bundle.
@@ -98,9 +120,14 @@ const OFFICIAL_ED25519_PUBKEY: [u8; 32] = [
     0x9f, 0xf8, 0x86, 0x05, 0xfe, 0x35, 0x34, 0x2a, 0x76, 0x52, 0x6c, 0x20, 0xd3, 0xda, 0xa2, 0x46,
 ];
 
-/// Official update feed: the `signatures.bundle` asset of the rolling `signatures` release.
-/// A rolling tag is used instead of `releases/latest` because GitHub skips pre-releases there.
+/// Official update feed: the `signatures-v3.bundle` asset of the rolling `signatures-v3`
+/// release (schema v3). A rolling tag is used instead of `releases/latest` because GitHub skips
+/// pre-releases there.
 pub const DEFAULT_FEED_URL: &str =
+    "https://github.com/SinonApp/FOCA-rs/releases/download/signatures-v3/signatures-v3.bundle";
+/// Feed of the v2 compatibility bundle (read by 2.0.0-beta.3), used when the v3 feed has
+/// nothing published.
+pub const FALLBACK_FEED_URL: &str =
     "https://github.com/SinonApp/FOCA-rs/releases/download/signatures/signatures.bundle";
 
 /// A KEV snapshot older than this many days is flagged as stale in the status.
@@ -220,6 +247,12 @@ pub struct SigStatus {
     pub std_map: StdMapInfo,
     /// Ingested upstream data tables with the numbers really loaded.
     pub tables: Vec<TableInfo>,
+    /// Offline NVD CVE table in use: snapshot date and CVE counts per group.
+    #[serde(default)]
+    pub nvd: foca_analysis::cve::CveMeta,
+    /// Table ids of the active bundle this build does not know (skipped, newer bundle).
+    #[serde(default)]
+    pub skipped_tables: Vec<String>,
     /// Feed checked by `signatures_update` without a `url`.
     pub feed_url: String,
     /// Result of the last `signatures_update`, `None` before the first check.
@@ -370,6 +403,11 @@ pub fn pubkey_hex_of_seed(seed: &[u8; 32]) -> Result<String, CmdError> {
 /// entry (one item per product key) plus the snapshot header. Secret rules are not included: the
 /// built-in ones already ship with the app and a copy would report every secret twice.
 pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
+    bundle_from_builtin_schema(version, released_at, BUNDLE_SCHEMA)
+}
+
+/// [`bundle_from_builtin`] for a schema: v3 carries every table, v2 only [`V2_TABLE_IDS`].
+pub fn bundle_from_builtin_schema(version: &str, released_at: &str, schema: &str) -> SigBundleV1 {
     let kev = foca_analysis::kev::KevCatalog::builtin();
     let mut kev_additions = Vec::new();
     for (e, k) in kev.keyed_entries() {
@@ -386,7 +424,7 @@ pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
     }
     let db = loaded_db(None, None);
     SigBundleV1 {
-        schema: BUNDLE_SCHEMA.into(),
+        schema: schema.into(),
         version: version.into(),
         released_at: released_at.into(),
         counts: db.counts,
@@ -400,6 +438,7 @@ pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
         secret_additions: Vec::new(),
         tables: TABLES
             .iter()
+            .filter(|(id, ..)| schema != BUNDLE_SCHEMA_V2 || V2_TABLE_IDS.contains(id))
             .map(|(id, src, bytes)| {
                 let t = SigTable {
                     version: lock_pin(src),
@@ -419,7 +458,7 @@ pub fn bundle_from_builtin(version: &str, released_at: &str) -> SigBundleV1 {
 /// Error texts are core messages (`core.sig.*` in `locales/<lang>/ui/core.json`).
 pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<(), CmdError> {
     let bad_sig = |m: &str| CmdError::new("bad_signature", m);
-    if bundle.schema != BUNDLE_SCHEMA && bundle.schema != BUNDLE_SCHEMA_V1 {
+    if ![BUNDLE_SCHEMA, BUNDLE_SCHEMA_V2, BUNDLE_SCHEMA_V1].contains(&bundle.schema.as_str()) {
         return Err(CmdError::new(
             "bad_args",
             format!("Неизвестная схема пакета сигнатур: {}", bundle.schema),
@@ -481,7 +520,8 @@ pub fn verify_bundle(bundle: &SigBundleV1, pubkey_bytes: &[u8; 32]) -> Result<()
             "Таблицы данных допустимы только в пакете схемы v2",
         ));
     }
-    for (id, t) in &bundle.tables {
+    // Forward compatible: ids of a newer build are skipped (listed in `skipped_tables`).
+    for (id, t) in bundle.tables.iter().filter(|(id, _)| is_known_table(id)) {
         let bytes = table_bytes(id, t)?;
         check_table(id, &bytes).map_err(|e| {
             CmdError::new(
@@ -548,6 +588,10 @@ fn b64_decode(s: &str) -> Option<Vec<u8>> {
     Some(out)
 }
 
+fn is_known_table(id: &str) -> bool {
+    TABLES.iter().any(|(k, ..)| *k == id)
+}
+
 /// Decodes a bundle table and checks its id and SHA-256.
 fn table_bytes(id: &str, t: &SigTable) -> Result<Vec<u8>, CmdError> {
     if !TABLES.iter().any(|(k, ..)| *k == id) {
@@ -588,6 +632,7 @@ fn check_table(id: &str, bytes: &[u8]) -> Result<usize, String> {
         "favicons_md5" => Ok(foca_recon::favicon::check_md5_table(text(bytes)?)),
         "psl" => foca_net::dns::psl::Psl::from_gz(bytes).map(|p| p.len()),
         "takeover" => foca_net::takeover::check(text(bytes)?),
+        "nvd_cve" => foca_analysis::cve::check(bytes).map_err(|e| e.0),
         _ => Err(format!("unknown table {id}")),
     }
 }
@@ -638,6 +683,11 @@ fn apply_tables(bundle: Option<&SigBundleV1>) {
     foca_recon::favicon::install_md5_table(&txt("favicons_md5"));
     report("psl", foca_net::dns::psl::install(&pick("psl")));
     report("takeover", foca_net::takeover::install(&txt("takeover")));
+    // The CVE table is large: without a bundle copy the embedded one is parsed lazily.
+    report(
+        "nvd_cve",
+        foca_analysis::cve::install(get("nvd_cve").as_deref()).map_err(|e| e.0),
+    );
     FROM_BUNDLE.store(tables.is_some(), Ordering::SeqCst);
 }
 
@@ -674,6 +724,7 @@ fn table_infos(
                 "favicons_md5" => foca_recon::favicon::md5_count(),
                 "psl" => foca_net::dns::psl::list().len(),
                 "takeover" => foca_net::takeover::services().len(),
+                "nvd_cve" => foca_analysis::cve::db().meta.cves,
                 _ => 0,
             };
             let from_bundle = bundle.and_then(|b| b.tables.get(*id));
@@ -905,6 +956,16 @@ fn make_status(
         software: db.software,
         std_map: db.std_map,
         tables: db.tables,
+        nvd: foca_analysis::cve::db().meta.clone(),
+        skipped_tables: bundle
+            .map(|b| {
+                b.tables
+                    .keys()
+                    .filter(|id| !is_known_table(id))
+                    .cloned()
+                    .collect()
+            })
+            .unwrap_or_default(),
         feed_url: DEFAULT_FEED_URL.into(),
         last_check: read_last_check(data_dir),
     }
@@ -1350,17 +1411,108 @@ mod tests {
             TODAY
         )
         .is_err());
-        // Unknown table ids and tables in a v1 bundle.
-        let mut b = v2_bundle("2026.11.28");
-        let first = b.tables.values().next().unwrap().clone();
-        b.tables.insert("nmap".into(), first);
-        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
-        assert!(verify_bundle(&b, &pk).is_err());
+        // Tables in a v1 bundle.
         let mut b = v2_bundle("2026.11.28");
         b.schema = BUNDLE_SCHEMA_V1.into();
         sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
         assert!(verify_bundle(&b, &pk).is_err());
         assert_eq!(status_with_pubkey(dir.path(), &pk, TODAY).source, "builtin");
+    }
+
+    #[test]
+    fn unknown_table_ids_of_a_newer_build_are_skipped() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let mut b = v2_bundle("2026.11.28");
+        let first = b.tables.values().next().unwrap().clone();
+        b.tables.insert("future_table".into(), first);
+        sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
+        verify_bundle(&b, &pk).unwrap();
+        let st =
+            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk, TODAY)
+                .unwrap();
+        assert_eq!(st.skipped_tables, vec!["future_table".to_string()]);
+        assert!(st.tables.iter().all(|t| t.id != "future_table"));
+        rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
+    }
+
+    /// The reader of the published 2.0.0-beta.3 app, reduced to what decides acceptance: schema
+    /// v1/v2, its table id list (anything else is "Неизвестная таблица"), SHA-256 per table, the
+    /// same canonical payload and Ed25519 key, and its table parsers (unchanged formats).
+    fn beta3_accepts(b: &SigBundleV1, pk: &[u8; 32]) -> Result<(), String> {
+        const BETA3_TABLES: &[&str] = &[
+            "webappanalyzer",
+            "endoflife",
+            "saas_dns",
+            "gitleaks",
+            "kev_enrich",
+            "retire",
+            "recog",
+            "favicons_md5",
+            "psl",
+            "takeover",
+        ];
+        if b.schema != "foca-sig-bundle/v2" && b.schema != "foca-sig-bundle/v1" {
+            return Err(format!("schema {}", b.schema));
+        }
+        let payload = canonical_payload(b);
+        if sha256_hex(&payload) != b.sha256 {
+            return Err("sha256".into());
+        }
+        let sig = hex_decode(&b.signature_ed25519).ok_or("hex")?;
+        UnparsedPublicKey::new(&ED25519, pk)
+            .verify(&payload, &sig)
+            .map_err(|_| "signature")?;
+        for (id, t) in &b.tables {
+            if !BETA3_TABLES.contains(&id.as_str()) {
+                return Err(format!("Неизвестная таблица в пакете сигнатур: {id}"));
+            }
+            let bytes = b64_decode(&t.data).ok_or("base64")?;
+            if sha256_hex(&bytes) != t.sha256 {
+                return Err(format!("{id}: sha256"));
+            }
+            check_table(id, &bytes).map_err(|e| format!("{id}: {e}"))?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn v2_compat_bundle_stays_readable_by_beta3() {
+        let pk = test_pubkey();
+        assert_eq!(V2_TABLE_IDS.len(), 10);
+        let mut v2 = bundle_from_builtin_schema("2026.11.28", "2026-11-28", BUNDLE_SCHEMA_V2);
+        sign_bundle_with_seed(&mut v2, &TEST_SEED).unwrap();
+        assert_eq!(v2.schema, "foca-sig-bundle/v2");
+        assert_eq!(v2.tables.len(), V2_TABLE_IDS.len());
+        assert!(!v2.tables.contains_key("nvd_cve"));
+        beta3_accepts(&v2, &pk).unwrap();
+        verify_bundle(&v2, &pk).unwrap();
+        // The v3 bundle carries tables beta.3 does not know: it must never go to the v2 feed.
+        let mut v3 = bundle_from_builtin("2026.11.28", "2026-11-28");
+        sign_bundle_with_seed(&mut v3, &TEST_SEED).unwrap();
+        assert_eq!(v3.schema, "foca-sig-bundle/v3");
+        assert!(v3.tables.contains_key("nvd_cve"));
+        assert!(beta3_accepts(&v3, &pk).is_err());
+        verify_bundle(&v3, &pk).unwrap();
+    }
+
+    #[test]
+    fn nvd_table_roundtrips_through_a_bundle() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let b = v2_bundle("2026.11.28");
+        let t = &b.tables["nvd_cve"];
+        assert_eq!(b64_decode(&t.data).unwrap(), foca_analysis::cve::NVD_GZ);
+        assert_eq!(t.version, "2026-11-27");
+        let st =
+            import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk, TODAY)
+                .unwrap();
+        let info = st.tables.iter().find(|t| t.id == "nvd_cve").unwrap();
+        assert_eq!(info.source, "bundle");
+        assert!(info.records > 10_000);
+        assert_eq!(st.nvd.snapshot, "2026-11-27");
+        assert_eq!(st.nvd.cves as u32, info.records);
+        rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
     }
 
     #[test]

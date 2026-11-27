@@ -12,6 +12,8 @@ pub struct Tech {
     pub category: String,
     pub outdated: Option<String>,
     pub host: String,
+    /// Offline NVD CVE summary of the technology version.
+    pub cve: Option<foca_core::api::CveSummary>,
 }
 
 #[derive(Debug, Default, Deserialize)]

@@ -758,6 +758,29 @@ fn summary(c: &Ctx, o: &mut String) {
         })
         .collect();
     md_table(c.t.no_data, o, &[t.software, t.eol, t.cve], &rows);
+    if !ov.cve_products.is_empty() {
+        let _ = writeln!(o, "### {}\n", esc(t.cve_products));
+        let rows: Vec<Vec<String>> = ov
+            .cve_products
+            .iter()
+            .map(|r| r.iter().map(|x| c.m(x)).collect())
+            .collect();
+        md_table(
+            c.t.no_data,
+            o,
+            &[
+                t.software,
+                t.side,
+                t.version,
+                t.cve,
+                t.cve_bands,
+                t.max_cvss,
+                t.last_doc,
+                t.top_cves,
+            ],
+            &rows,
+        );
+    }
     let _ = writeln!(o, "### {}\n", esc(t.infra_found));
     let rows = vec![
         vec![esc(t.hosts), ov.hosts.to_string()],

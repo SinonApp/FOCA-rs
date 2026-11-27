@@ -723,6 +723,19 @@ fn code_view(g: &GrepAppResult) -> Value {
             "lines": h.lines.iter().filter(|l| l.matched).take(3).map(|l| json!({ "line": l.line, "text": l.text })).collect::<Vec<_>>() })).collect::<Vec<_>>() })
 }
 
+/// A detected technology as a CVE subject (CPE from the upstream table, version evidence).
+fn cve_input(host: &str, t: &foca_recon::tech::Technology) -> foca_analysis::cve::TechInput {
+    foca_analysis::cve::TechInput {
+        host: host.to_string(),
+        name: t.name.clone(),
+        version: t.version.clone(),
+        cpe: t.cpe.clone(),
+        slug: t.slug.clone(),
+        plugin_of: t.plugin_of.clone(),
+        evidence: t.evidence.clone(),
+    }
+}
+
 /// Returns site technologies for the scan snapshot (`Scan.snapshot.tech`: name to version), used to compare scans.
 pub(crate) fn tech_versions(db: &ProjectDb) -> BTreeMap<String, String> {
     let rf: ReconFacts = facts::get(db, K_RECON);
@@ -762,11 +775,12 @@ pub fn snapshot_of(rf: &ReconFacts) -> Value {
     for (host, s) in &rf.sites {
         let r = &s.report;
         for t in &r.technologies {
+            let cve = foca_analysis::cve::db().lookup(&cve_input(host, t).query());
             tech.push(
                 json!({ "name": t.name, "version": t.version, "category": t.category,
                 "outdated": t.outdated, "confidence": t.confidence, "host": host,
                 "signals": t.signals, "evidence": t.evidence, "plugin_of": t.plugin_of,
-                "slug": t.slug, "cpe": t.cpe }),
+                "slug": t.slug, "cpe": t.cpe, "cve": cve }),
             );
         }
         for a in &r.analytics_ids {
@@ -987,4 +1001,68 @@ async fn readme_versions(
     let sent =
         foca_recon::tech::cmsparts::check_readmes(net, &mut rep.technologies, &parts, left).await;
     tracing::info!(target: "foca::scan", "{}: технологии: проверено readme.txt плагинов WordPress: {sent}", c.scan_id);
+}
+#[cfg(test)]
+mod cve_input_tests {
+    use super::*;
+
+    #[test]
+    fn analysis_reads_the_recon_technologies_for_cve_matching() {
+        assert_eq!(K_RECON, crate::analysis::cves::RECON_KEY);
+        let mut rf = ReconFacts::default();
+        let mut site = SiteRecon::default();
+        site.report.technologies.push(foca_recon::tech::Technology {
+            name: "Nginx".into(),
+            category: "web".into(),
+            version: Some("1.18.0".into()),
+            confidence: 100,
+            evidence: vec!["header server: nginx/1.18.0".into()],
+            outdated: None,
+            website: None,
+            cpe: Some("cpe:2.3:a:f5:nginx:*:*:*:*:*:*:*:*".into()),
+            signals: vec!["header".into()],
+            plugin_of: None,
+            slug: None,
+        });
+        // A WordPress plugin found by its path: matched by slug + CMS.
+        site.report.technologies.push(foca_recon::tech::Technology {
+            name: "Contact Form 7".into(),
+            category: "plugin".into(),
+            version: Some("5.3.1".into()),
+            confidence: 100,
+            evidence: vec!["plugin path: /wp-content/plugins/contact-form-7/readme.txt".into()],
+            outdated: None,
+            website: None,
+            cpe: None,
+            signals: vec!["readme".into()],
+            plugin_of: Some("wordpress".into()),
+            slug: Some("contact-form-7".into()),
+        });
+        rf.sites.insert("www.example.com".into(), site);
+        let got = crate::analysis::cves::tech_inputs_of(&serde_json::to_value(&rf).unwrap());
+        assert_eq!(got.len(), 2);
+        assert_eq!(
+            got[0],
+            cve_input(
+                "www.example.com",
+                &rf.sites["www.example.com"].report.technologies[0]
+            )
+        );
+        let m = foca_analysis::cve::tech_matches(&got, &foca_analysis::cve::db());
+        let nginx = m.iter().find(|x| x.name == "Nginx").unwrap();
+        assert_eq!(nginx.summary.source, "header");
+        assert!(nginx.summary.matched > 0, "{:?}", nginx.summary.product);
+        let cf7 = m.iter().find(|x| x.name == "Contact Form 7").unwrap();
+        assert_eq!(cf7.plugin_of.as_deref(), Some("wordpress"));
+        assert!(
+            cf7.summary.product.contains("contact_form_7@wordpress"),
+            "{}",
+            cf7.summary.product
+        );
+        assert!(
+            cf7.summary.cves.iter().any(|c| c.id == "CVE-2020-35489"),
+            "{:?}",
+            cf7.summary.cves
+        );
+    }
 }

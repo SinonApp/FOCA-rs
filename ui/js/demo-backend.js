@@ -247,6 +247,38 @@
         })[c] ?? c,
     );
 
+  // Generators that run on the site's servers (core: `side` in software.toml).
+  const DEMO_SERVER_SW = new Set(["wkhtmltopdf", "itext", "tcpdf", "gs", "crystal", "1c", "msreporting"]);
+  // CVE summary of a demo software entry, shaped like `Software.cve_sum` of the core.
+  function demoCveSum(s) {
+    const band = v => (v >= 9 ? "critical" : v >= 7 ? "high" : v >= 4 ? "medium" : "low");
+    const sum = {
+      product: s.kind === "office" ? "microsoft:office" : s.id,
+      version: s.ver,
+      version_known: true,
+      source: "meta",
+      known: s.cve,
+      matched: s.cve,
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      max_cvss: null,
+      kev: 0,
+      max_epss: null,
+      cves: [],
+    };
+    s.cves.forEach(([id, v], i) => {
+      sum[band(v)]++;
+      sum.max_cvss = Math.max(sum.max_cvss || 0, v);
+      const kev = i === 0 && v >= 9;
+      if (kev) sum.kev++;
+      sum.cves.push({ id, cvss: v, kev, epss: kev ? 0.94 : null });
+    });
+    sum.medium += Math.max(0, s.cve - s.cves.length);
+    if (sum.kev) sum.max_epss = 0.94;
+    return sum;
+  }
   // ================= reference data =================
   // Software: rel is the release year (a document cannot be older), exts lists the file types it produces.
   const SOFTWARE = [
@@ -1958,6 +1990,12 @@
       });
     });
     const swc = countBy(an, d => d.software);
+    // Newest document date per software, like the core (`last_doc`).
+    const swLast = new Map();
+    an.forEach(d => {
+      const day = String(d.modified_at || d.created_at || "").slice(0, 10);
+      if (d.software && day > (swLast.get(d.software) || "")) swLast.set(d.software, day);
+    });
     st.software = SOFTWARE.filter(s => swc.has(s.id)).map(s => ({
       id: s.id,
       name: s.name,
@@ -1970,6 +2008,9 @@
       cves: s.cves,
       dev: s.dev || null,
       docs: swc.get(s.id),
+      side: DEMO_SERVER_SW.has(s.id) ? "server" : ["camera", "scanner"].includes(s.kind) ? "" : "workstation",
+      last_doc: swLast.get(s.id) || null,
+      ...(s.cves && s.cves.length ? { cve_sum: demoCveSum(s) } : {}),
     }));
     const fc = countBy(an, d => d.folder);
     st.paths = [...fc.entries()]
@@ -4392,6 +4433,61 @@
           : [],
     };
   }
+  // Offline NVD summary of a demo technology (`recon.tech[].cve` of the core): outdated
+  // versions get two matched CVEs, unversioned products only the known count.
+  function demoTechCve(name, ver, old) {
+    const base = { product: "demo:" + name.toLowerCase().replace(/\W+/g, "_"), source: ver ? "header" : "" };
+    if (!ver)
+      return {
+        ...base,
+        version: "",
+        version_known: false,
+        known: 12,
+        matched: 0,
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        max_cvss: null,
+        kev: 0,
+        max_epss: null,
+        cves: [],
+      };
+    if (!old)
+      return {
+        ...base,
+        version: ver,
+        version_known: true,
+        known: 12,
+        matched: 0,
+        critical: 0,
+        high: 0,
+        medium: 0,
+        low: 0,
+        max_cvss: null,
+        kev: 0,
+        max_epss: null,
+        cves: [],
+      };
+    return {
+      ...base,
+      version: ver,
+      version_known: true,
+      known: 12,
+      matched: 2,
+      critical: 0,
+      high: 1,
+      medium: 1,
+      low: 0,
+      max_cvss: 7.5,
+      kev: 0,
+      max_epss: 0.12,
+      cves: [
+        { id: "CVE-2099-1001", cvss: 7.5, kev: false, epss: 0.12 },
+        { id: "CVE-2099-1002", cvss: 5.3, kev: false, epss: null },
+      ],
+    };
+  }
   function reconOf(st, spec, R) {
     const dom = spec.domain || spec.name;
     if (!dom || !(spec.scans || []).length) return emptyRecon();
@@ -4417,6 +4513,7 @@
         plugin_of: null,
         slug: null,
         cpe: null,
+        cve: demoTechCve(d[0], ver, old),
       });
     };
     // CMS plugins and theme by asset path (as the core's cmsparts), with a JS-global version
@@ -7622,6 +7719,7 @@
     "net.internal_map": "T1590||||8.12 8.22||||6.1.2.4",
     "org.structure": "||||8.12||||6.1.2.7",
     "sw.kev": "|CWE-1104|A03:2025||8.8|RA-5 SI-2|||6.6",
+    "sw.cve": "|CWE-1104|A03:2025||8.8|RA-5 SI-2|||6.6",
     "recon.web.hsts_missing": "T1557|CWE-319|A04:2025|WSTG-CONF-07|8.24|SC-8||КВ|",
   };
   const standardsOf = rule => {
@@ -12293,18 +12391,19 @@
   // Signature database status, same shape as the core (sigbundle.rs SigStatus). The built-in numbers
   // match crates/foca-analysis/signatures: kev.tsv.gz header (total 1790, kept 924), 54 KEV product
   // groups, 54 software + 19 OS signatures, 24 secret rules and the standards.toml mapping.
-  const DEMO_SIG_FEED = "https://github.com/SinonApp/FOCA-rs/releases/download/signatures/signatures.bundle";
+  const DEMO_SIG_FEED =
+    "https://github.com/SinonApp/FOCA-rs/releases/download/signatures-v3/signatures-v3.bundle";
   const DEMO_SIG_BUILTIN = {
     version: "2026.11.20",
     released: "2026-11-20",
     total: 1790,
     used: 924,
     products: 54,
-    software: 54,
+    software: 57,
     os: 19,
     secrets: 221,
-    std_rules: 80,
-    std_refs: 464,
+    std_rules: 81,
+    std_refs: 470,
   };
   // Ingested upstream tables: [id, records, version, license] as `signatures_status.tables` reports.
   const DEMO_SIG_TABLES = [
@@ -12318,7 +12417,20 @@
     ["favicons_md5", 645, "f1191e24332c", "BSD-2-Clause"],
     ["psl", 10502, "88b076a1fb2a", "MPL-2.0"],
     ["takeover", 26, "5bd4e1283791", "CC-BY-4.0"],
+    ["nvd_cve", 108019, "2026-11-27", "NVD-public-domain"],
   ];
+  // Offline NVD CVE table of the build (`signatures_status.nvd`).
+  const DEMO_SIG_NVD = {
+    snapshot: "2026-11-27",
+    epss: "2026-11-26",
+    cves: 108019,
+    products: 9248,
+    ranges: 537268,
+    site: 71087,
+    plugin: 17245,
+    doc: 30418,
+    os: 24315,
+  };
   const DEMO_SIG_FRAMEWORKS = [
     ["owasp", "OWASP Top 10:2025"],
     ["mitre", "MITRE ATT&CK v20"],
@@ -12343,7 +12455,7 @@
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const age = Math.max(0, Math.round((today - released) / 86400000));
     return {
-      schema: "foca-sig-bundle/v2",
+      schema: "foca-sig-bundle/v3",
       version: cur ? cur.version : B.version,
       updated_at: cur ? cur.released_at : B.released,
       source: cur ? "bundle" : "builtin",
@@ -12382,6 +12494,8 @@
         license,
         source: cur && cur.tables && cur.tables[id] ? "bundle" : "builtin",
       })),
+      nvd: clone(DEMO_SIG_NVD),
+      skipped_tables: [],
       feed_url: DEMO_SIG_FEED,
       last_check: db._sigCheck ? clone(db._sigCheck) : null,
     };

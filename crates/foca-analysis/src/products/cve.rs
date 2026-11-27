@@ -224,7 +224,8 @@ pub fn cmp_ver(a: &str, b: &str) -> Ordering {
 }
 
 /// Header fields of the table.
-#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct CveMeta {
     pub snapshot: String,
     pub epss: String,
@@ -575,15 +576,16 @@ pub fn db() -> Arc<CveDb> {
 
 /// Validates a bundle table and returns its CVE count.
 pub fn check(gz: &[u8]) -> Result<usize, CveError> {
-    CveDb::parse(gz).map(|d| d.cves.len())
+    CveDb::parse(gz).map(|d| d.meta.cves)
 }
 
-/// Installs a bundle table (replaces the embedded one until restart). Returns the CVE count.
-pub fn install(gz: &[u8]) -> Result<usize, CveError> {
-    let d = CveDb::parse(gz)?;
-    let n = d.cves.len();
+/// Installs a bundle table, or with `None` goes back to the embedded one. Returns the CVE count
+/// of the installed table (0 for the embedded one, which stays lazy).
+pub fn install(gz: Option<&[u8]>) -> Result<usize, CveError> {
+    let d = gz.map(CveDb::parse).transpose()?;
+    let n = d.as_ref().map_or(0, |d| d.meta.cves);
     if let Ok(mut g) = slot().write() {
-        *g = Some(Arc::new(d));
+        *g = d.map(Arc::new);
     }
     Ok(n)
 }

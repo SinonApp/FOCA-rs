@@ -1205,5 +1205,20 @@
   "data.sig_readme": "readme.txt",
   "data.sig_implied": "следует из другой",
   "data.signal_source": "Источник признака",
-  "data.cms_parts": "{cms}: плагины, темы и модули · {host}"
+  "data.cms_parts": "{cms}: плагины, темы и модули · {host}",
+  "data.cve_known_no_version": "{n} известных CVE, версия не определена",
+  "data.cve_none_for_version": "Известных CVE для версии нет",
+  "data.cve_critical_n": "критических: {n}",
+  "data.cve_high_n": "высоких: {n}",
+  "data.cve_medium_n": "средних: {n}",
+  "data.cve_low_n": "низких: {n}",
+  "data.side_server": "Сервер",
+  "data.side_server_hint": "Генератор работает на сервере сайта",
+  "data.side_workstation": "Рабочие станции",
+  "data.side_workstation_hint": "ПО рабочих станций авторов: разведданные, а не уязвимость сайта",
+  "data.vulnerabilities_nvd": "Уязвимости (NVD)",
+  "data.cve_show_all": "Показать все CVE ({n})",
+  "data.cve_list_title": "CVE: {n}",
+  "data.cve_list_note": "{product} {version}: офлайн-база NVD, нажмите на CVE, чтобы открыть NVD.",
+  "data.last_doc_with_version": "Последний документ с этой версией"
 }

@@ -418,6 +418,29 @@ fn summary(c: &Ctx, h: &mut String) {
             .collect();
         html_table(h, &[t.software, t.eol, t.cve], &rows, &[2]);
     }
+    if !ov.cve_products.is_empty() {
+        let _ = write!(h, "<h4>{}</h4>", esc(t.cve_products));
+        let rows: Vec<Vec<String>> = ov
+            .cve_products
+            .iter()
+            .map(|r| r.iter().map(|x| c.h(x)).collect())
+            .collect();
+        html_table(
+            h,
+            &[
+                t.software,
+                t.side,
+                t.version,
+                t.cve,
+                t.cve_bands,
+                t.max_cvss,
+                t.last_doc,
+                t.top_cves,
+            ],
+            &rows,
+            &[3],
+        );
+    }
     h.push_str("</section>\n");
 }
 

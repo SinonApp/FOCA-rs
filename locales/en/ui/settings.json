@@ -932,5 +932,10 @@
   "limits.warn_crawl_doc_depth": "Deeper than {n} steps: links from documents lead far from the target.",
   "crawl.nf_render_hosts": "Home pages via browser",
   "crawl.nf_render_hosts_note": "technologies by JS and DOM, Android only; 0 turns off",
-  "limits.warn_render_hosts": "More than {n} home pages via browser: each opens in the hidden browser, which is slow and drains the battery."
+  "limits.warn_render_hosts": "More than {n} home pages via browser: each opens in the hidden browser, which is slow and drains the battery.",
+  "settings.sig_nvd": "CVEs (NVD)",
+  "settings.sig_nvd_line": "{n} CVEs · NVD snapshot {date}",
+  "settings.sig_nvd_groups": "site: {site} · plugins: {plugin} · document software: {doc} · OS: {os}",
+  "settings.sig_skipped": "Skipped tables of a newer version: {list}",
+  "signatures.tbl.nvd_cve": "CVEs and version ranges (NVD)"
 }

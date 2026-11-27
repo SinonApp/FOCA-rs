@@ -9,7 +9,8 @@ The analysis matches documents against data compiled into the app from
 |---|---|
 | `kev.tsv.gz` | CISA Known Exploited Vulnerabilities snapshot. The header (`# cisa-kev catalog=… released=… total=… kept=…`) gives the CISA catalog size; only the `kept` entries whose product maps to a group in `kev_products.toml` are stored and used for matching. There is no NVD data. Refresh with `update_kev.py`. |
 | `kev_products.toml` | Product groups that link detected software names to KEV entries. |
-| `software.toml` | Software (`[[software]]`) and OS (`[[os]]`) detection signatures. |
+| `software.toml` | Software (`[[software]]`) and OS (`[[os]]`) detection signatures, with the NVD `cpe` keys of each product and `side` (`server` for generators that run on the site's servers such as wkhtmltopdf, TCPDF, iText, Ghostscript, Crystal Reports, 1C and SSRS; `workstation` for desktop software such as Office, Acrobat and LibreOffice). |
+| `nvd_cve.tsv.gz` | Offline CVE table from the NVD CVE JSON 2.0 feeds (public domain): CVSS, CWE, KEV flag, EPSS and affected version ranges of every CVE that names a detectable product (see [Offline CVE table](#offline-cve-table-nvd)). Refresh with `tools/update_nvd.py`. |
 | `secrets.toml` | Built-in secret detection rules (`[[rule]]`). |
 | `standards.toml` | Finding rule to standards mapping (OWASP Top 10:2025, MITRE ATT&CK v20, CWE with the 2025 Top 25 flag, NIST SP 800-53 Rev. 5 = НД ТЗІ 3.6-006-24, ISO/IEC 27001:2022, OWASP WSTG v4.2, GDPR and Law 2297-VI, legacy НД ТЗІ 2.5-004-99 / 3.7-003-05 for КСЗІ). |
 | `secrets_gitleaks.toml` | gitleaks default rules (MIT) converted to the `secrets.toml` format with allowlists and stopwords; our rules run first and win on the same value. |
@@ -40,7 +41,8 @@ after a deliberate version bump. Downloads are cached in `$FOCA_SIG_CACHE` (defa
 `cargo run -p foca-analysis --example regex_check`; patterns it rejects (lookarounds, backreferences,
 over the size limit) are skipped and counted in the lock file. Order: `update_webappanalyzer.py`
 before `update_endoflife.py` (the join reads its output), `update_kev.py` before
-`update_kev_enrich.py`. Then run `python3 qa/gen-licenses.py` and the tests.
+`update_kev_enrich.py`, `update_webappanalyzer.py` and `update_kev.py` before `update_nvd.py`.
+Then run `python3 qa/gen-licenses.py` and the tests.
 
 Not ingested: original Wappalyzer (proprietary), nmap-service-probes (NPSL), trufflehog (AGPL),
 secrets-patterns-db (mixed license), can-i-take-over-dns (no license), nuclei takeover templates
@@ -52,15 +54,63 @@ signature counts, secret rules (built-in plus gitleaks plus bundle rules), the s
 (`std_map.rules`, `std_map.refs`, `std_map.frameworks` labelled from the data) and `tables`: one
 entry per ingested table with the records the module really loaded, the upstream pin, the license and
 `source` (`builtin` or `bundle`). The numbers a bundle claims in its own `counts` field are never
-shown.
+shown. `nvd` gives the snapshot date and CVE counts per group of the CVE table in use.
 
-## Bundle format (`foca-sig-bundle/v2`)
+## Offline CVE table (NVD)
+
+`tools/update_nvd.py` reads the yearly NVD CVE JSON 2.0 feeds
+(`https://nvd.nist.gov/feeds/json/cve/2.0/nvdcve-2.0-<year>.json.gz`, 2002 to the current year) one
+CVE at a time (about 330 MB of RAM, the feeds take about 250 MB on disk in `$FOCA_NVD_CACHE` and are
+deleted after a run unless `--keep-cache` is given). It keeps a CVE when a `vulnerable=true` CPE
+match of its configurations names:
+
+- a CPE of a webappanalyzer technology,
+- a `cpe` key of a `software.toml` signature (document software and OS),
+- any CPE whose `target_sw` is `wordpress`, `drupal` or `joomla` (plugins, themes, modules; keyed
+  `vendor:product@<cms>` so the app also finds them by plugin slug),
+- a CPE identifier of an endoflife.date product.
+
+Per CVE it stores the id, the published year, one CVSS base score and its version (v3.1, then v4.0,
+v3.0, v2; NVD primary scores first), CWE numbers, the KEV flag from `kev.tsv.gz` and the EPSS score
+of the pinned FIRST file; per product the affected ranges (`*`, `=version`, `[a,b)`, `(a,b]`, open
+sides allowed). There is no size cut: every CVSS level, year and plugin stays. The snapshot date
+and the SHA-256 of every yearly feed are pinned in `sources.lock.json` (`nvd`); a new snapshot needs
+`--repin`. Unit tests on a fixture feed: `python3 crates/foca-analysis/signatures/tools/test_update_nvd.py`.
+
+Snapshot 2026-11-27: 108019 CVEs, 9248 products, 537268 ranges, 1.28 MB gzip (9.3 MB as text).
+CVEs per group (one CVE can be in several): site technologies 71087, plugins 17245, document
+software 30418, OS 24315; 609 are in KEV.
+
+The matcher (`foca_analysis::cve`) parses the table lazily on first use (about 0.4 s in a debug
+build, resident size close to the 9.3 MB text) and indexes it by product; a lookup takes a few
+milliseconds. Input: CPE `vendor:product` keys and/or a plugin slug with its CMS, plus the version.
+Output (`CveSummary`): matched CVEs sorted by KEV, CVSS and EPSS, counts by severity, max CVSS,
+KEV count, max EPSS, and the number of known CVEs of the product. Approximations:
+
+- versions compare component by component: numbers numerically, `alpha`/`beta`/`rc`/`dev` before
+  the release, a trailing letter (`1.0.2k`) after it, build metadata after `+` ignored, a leading
+  `v` or `m` (`m120`) dropped, the first token starting with a digit is the version
+  (`Apache/2.4.58 (Unix)` gives `2.4.58`);
+- an NVD entry without version limits (`*`, `-`) matches every version;
+- Microsoft Office versions from documents are editions: `12` = 2007, `14` = 2010, `15` = 2013,
+  `16` = 2016 plus Microsoft 365 Apps (NVD cannot tell 2016, 2019, LTSC and 365 apart in `16.0`);
+  the service pack is unknown, so every CVE of the edition matches;
+- the CPE update field (service pack), `target_hw` and other `target_sw` values are ignored;
+- an OS from metadata without a patch level (Windows 7, Android) has no version: count only.
+
+Findings (`sw.cve`, engine `analysis/cves.rs`): only for a known version; the severity is the
+highest CVSS band, one step higher when a matched CVE is in KEV; workstation software and OS are
+reconnaissance and capped at medium. Document software is judged by the version of its newest
+document (`last_doc`). When a KEV or EOL finding already covers the product, the CVE data is merged
+into it, and products without a version only add the line "N known CVEs, version not determined".
+
+## Bundle format (`foca-sig-bundle/v3` and `/v2`)
 
 A bundle is one JSON object:
 
 ```json
 {
-  "schema": "foca-sig-bundle/v2",
+  "schema": "foca-sig-bundle/v3",
   "version": "2026.11.27",
   "released_at": "2026-11-27",
   "counts": { "cpe": 73, "cve": 930, "secrets": 24, "standards": 438 },
@@ -79,11 +129,16 @@ A bundle is one JSON object:
   `version`, `released_at`, `counts`, `kev_catalog` (omitted when absent), `kev_additions`,
   `cpe_additions`, `secret_additions`, `tables` (omitted when empty) in that order
   (`sigbundle::canonical_payload`).
-- `tables` (v2 only) maps a table id of `sigbundle::TABLES` (`webappanalyzer`, `endoflife`,
-  `saas_dns`, `gitleaks`, `kev_enrich`, `retire`, `recog`, `favicons_md5`, `psl`, `takeover`) to
-  the table file exactly as committed in the repository (gzip or text), base64-encoded, with its
-  SHA-256 and upstream pin. Before installation every table is decoded, its SHA-256 checked and
-  parsed by its module; an unknown id, a hash mismatch or a parse error rejects the whole bundle.
+- `tables` (v2 and v3) maps a table id of `sigbundle::TABLES` to the table file exactly as committed
+  in the repository (gzip or text), base64-encoded, with its SHA-256 and upstream pin. v2 bundles
+  carry only `sigbundle::V2_TABLE_IDS` (`webappanalyzer`, `endoflife`, `saas_dns`, `gitleaks`,
+  `kev_enrich`, `retire`, `recog`, `favicons_md5`, `psl`, `takeover`) in the formats 2.0.0-beta.3
+  parses; v3 bundles carry every table, including `nvd_cve`. Before installation every known table
+  is decoded, its SHA-256 checked and parsed by its module; a hash mismatch or a parse error rejects
+  the whole bundle. A table id this build does not know (from a newer build) is skipped and listed
+  in `signatures_status.skipped_tables`. The published 2.0.0-beta.3 reader rejects any id outside
+  its list, so new tables never go into the v2 bundle; a table whose format changes beyond what the
+  beta.3 parser accepts ships under a new id.
   After installation (and at engine start) the tables replace the built-in ones in the running
   modules; a table the bundle does not carry keeps the built-in data, and a rollback to the
   built-in database restores all built-in tables.
@@ -98,17 +153,20 @@ A bundle is one JSON object:
 - Installation is atomic: `<data>/signatures/current.json`, the replaced bundle moves to
   `previous.json` for `signatures_rollback`.
 
-## Update feed
+## Update feeds
 
-`signatures_update {}` downloads `sigbundle::DEFAULT_FEED_URL`:
+There are two feeds, each the asset of a rolling GitHub release (a rolling tag is used instead of
+`releases/latest/download/…` because GitHub skips pre-releases there, and app builds are published
+as pre-releases):
 
-```
-https://github.com/SinonApp/FOCA-rs/releases/download/signatures/signatures.bundle
-```
+| Feed | Schema | Read by |
+|---|---|---|
+| `https://github.com/SinonApp/FOCA-rs/releases/download/signatures-v3/signatures-v3.bundle` (`sigbundle::DEFAULT_FEED_URL`) | `foca-sig-bundle/v3`, every table | 2.0.0-beta.4 and newer |
+| `https://github.com/SinonApp/FOCA-rs/releases/download/signatures/signatures.bundle` (`sigbundle::FALLBACK_FEED_URL`) | `foca-sig-bundle/v2`, beta.3 tables only | 2.0.0-beta.3, and newer builds while the v3 feed has nothing published |
 
-It is the `signatures.bundle` asset of a rolling GitHub release with the tag `signatures`. A rolling
-tag is used instead of `releases/latest/download/…` because GitHub skips pre-releases there, and app
-builds are published as pre-releases.
+`signatures_update {}` downloads the v3 feed first and falls back to the v2 feed when the v3 feed
+answers HTTP 404/410; `last_check.feed_url` names the feed that answered. With an explicit `url` only
+that URL is checked.
 
 | Feed answer | `last_check.outcome` | Effect |
 |---|---|---|
@@ -132,19 +190,26 @@ hex characters (mode 600).
 2. Build and sign the bundle from that tree:
 
    ```sh
-   scripts/build-sig-bundle.sh /path/to/sig-seed.hex dist/signatures.bundle
+   scripts/build-sig-bundle.sh /path/to/sig-seed.hex dist/signatures-v3.bundle --schema both
    ```
+
+   `--schema both` writes `dist/signatures-v3.bundle` (v3, every table) and
+   `dist/signatures.bundle` (v2, only the tables 2.0.0-beta.3 knows); `--schema v3` (default) or
+   `--schema v2` writes one of them.
 
    The script runs `cargo run -p foca-engine --release --example sig_bundle -- build …`. The bundle
    holds every kept KEV entry of `kev.tsv.gz` plus the snapshot header (`kev_catalog`) and all data
-   tables of `sigbundle::TABLES` (about 0.7 MB of base64 in total); the version
+   tables of the schema (the v3 bundle is about 2.4 MB of base64 with the CVE table); the version
    defaults to the KEV catalog version (`--version` overrides it). Built-in secret rules are not
    copied into the bundle: they already ship with the app. The tool refuses a key whose public key
    differs from the one built into the app (`--allow-foreign-key` is for test bundles only).
-3. Check it: `cargo run -p foca-engine --example sig_bundle -- verify dist/signatures.bundle`.
-4. Upload `signatures.bundle` to the `signatures` release (create it once as a normal release, not a
-   pre-release; replace the asset on every update), for example
-   `gh release upload signatures dist/signatures.bundle --clobber`.
+3. Check them: `cargo run -p foca-engine --example sig_bundle -- verify dist/signatures-v3.bundle`
+   (the script already verifies both).
+4. Upload each bundle to its release (create them once as normal releases, not pre-releases; replace
+   the asset on every update):
+   `gh release upload signatures-v3 dist/signatures-v3.bundle --clobber` and
+   `gh release upload signatures dist/signatures.bundle --clobber`. Never upload a v3 bundle to the
+   `signatures` release: beta.3 rejects it.
 
 ### New signing key
 
@@ -167,10 +232,17 @@ The tool prints the public key bytes to paste into `OFFICIAL_ED25519_PUBKEY` in
 - `cargo test -p foca-engine --lib sigbundle`: install and rollback with a test key, tampered and
   foreign signatures, counts from the loaded tables, KEV age, feed outcomes (`no_update` on 404,
   `installed` once, `up_to_date`, recorded failures), a bundle built from the repository data, v2
-  tables (round trip, tampered, unknown and unparsable tables) and v1 compatibility.
+  tables (round trip, tampered and unparsable tables), unknown table ids skipped, the NVD table round
+  trip, v1 compatibility and `v2_compat_bundle_stays_readable_by_beta3` (the v2 bundle passes a copy
+  of the beta.3 acceptance rules: schema, table id list, hashes, signature, parsers; the v3 bundle
+  does not).
+- `cargo test -p foca-analysis --lib cve`: version comparison table, ranges, matcher (ranges, exact,
+  no version, plugins by slug, Office editions), finding severity, the embedded table with load and
+  lookup timing; `cargo test -p foca-engine --lib cves`: findings (server and workstation, KEV
+  raise, no-version info line, merge with KEV and EOL findings).
 - Per-table unit tests in their modules: `foca-recon` `tech` (merge, version templates, end-of-life
   cycles, startup time), `retire`, `favicon`; `foca-net` `recog`, `psl`, `takeover`, `saas`;
-  `foca-analysis` `secrets` (gitleaks rules and allowlists) and `kev` (enrichment).
+  `foca-analysis` `secrets` (gitleaks rules and allowlists), `kev` (enrichment) and `cve`.
 - `cargo test -p foca-engine --test ops signatures`: the command against a local feed server (404,
   foreign signature, refused URL) including `message_msg` codes.
 - `crates/foca-engine/tests/contract_shape.rs`: demo backend shapes and the demo copy of the numbers

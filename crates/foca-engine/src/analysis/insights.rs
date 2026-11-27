@@ -10,23 +10,24 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use foca_analysis::attack_paths::{self, AttackPathReport};
 use foca_analysis::chain::{self, ChainOpts};
-use foca_analysis::findings::{finding_id, ru_n};
+use foca_analysis::findings::ru_n;
 use foca_analysis::graphview::{self, Layer};
 use foca_analysis::insights::{self, Insights};
 use foca_analysis::netmap::{NetKind, PkiInput};
 use foca_analysis::{analyze, Analysis, DocInput, PrevState};
-use foca_core::api::{self, FindingProvenance, FindingRel};
-use foca_core::{FindingStatus, Severity};
+use foca_core::api;
+use foca_core::Severity;
 use foca_store::ProjectDb;
 use serde_json::{json, Value};
 use time::OffsetDateTime;
 
+use super::draft::{finding, restore_triage};
 use crate::analysis::facts::{self, NetFacts};
 use crate::CmdError;
 
 /// Rule ids of the findings.
 pub const RULE_ANOMALY: &str = "doc.anomaly";
-pub const RULE_KEV: &str = "sw.kev";
+pub use super::draft::RULE_KEV;
 pub const RULE_LINEAGE: &str = "doc.lineage";
 pub const RULE_ORG: &str = "org.structure";
 pub const RULE_NETMAP: &str = "net.internal_map";
@@ -85,7 +86,7 @@ pub(crate) fn build_insights(
     now: OffsetDateTime,
 ) -> Insights {
     let pki = pki_inputs(db);
-    if let Some(cat) = db
+    let mut ins = if let Some(cat) = db
         .path()
         .parent()
         .and_then(crate::services::sigbundle::active_kev_catalog)
@@ -93,7 +94,13 @@ pub(crate) fn build_insights(
         insights::build_with_kev(inputs, a, &pki, now, &cat)
     } else {
         insights::build(inputs, a, &pki, now)
-    }
+    };
+    // Web technologies live in the recon facts, not in the analysis.
+    ins.cve.extend(foca_analysis::cve::tech_matches(
+        &super::cves::tech_inputs(db),
+        &foca_analysis::cve::db(),
+    ));
+    ins
 }
 
 /// Recomputes the analysis and the insights from the project (read only).
@@ -176,86 +183,13 @@ pub fn apply(a: &mut Analysis, ins: &Insights, prev: &PrevState, now: &str) {
         }
     }
     for mut f in findings(a, ins, now, prev.scan_id.as_deref()) {
-        if let Some(p) = prev.findings.get(&f.id) {
-            f.status = match p.status {
-                FindingStatus::Fixed => FindingStatus::New,
-                s => s,
-            };
-            if let Some(s) = p.sev {
-                f.sev = s;
-            }
-            f.notes = p.notes.clone();
-            f.photos = p.photos.clone();
-            for t in &p.tags {
-                if !f.tags.contains(t) {
-                    f.tags.push(t.clone());
-                }
-            }
-            if p.first_scan.is_some() {
-                f.first_scan = p.first_scan.clone();
-            }
-            if let Some(t) = &p.time {
-                f.time = t.clone();
-            }
-        }
+        restore_triage(&mut f, prev);
         a.resolved.retain(|id| *id != f.id);
         if !a.findings.iter().any(|x| x.id == f.id) {
             a.findings.push(f);
         }
     }
-}
-
-#[allow(clippy::too_many_arguments)]
-fn finding(
-    rule: &str,
-    key: &str,
-    title: String,
-    sev: Severity,
-    category: &str,
-    mitre: &str,
-    description: String,
-    recommendation: &str,
-    evidence: String,
-    docs: Vec<u64>,
-    now: &str,
-    scan: Option<&str>,
-) -> api::Finding {
-    api::Finding {
-        id: finding_id(rule, key),
-        title,
-        sev,
-        status: FindingStatus::New,
-        host: "-".into(),
-        category: category.into(),
-        source: "Аналитика".into(),
-        module: "analysis".into(),
-        active: false,
-        time: now.to_string(),
-        first_scan: scan.map(str::to_string),
-        fixed_scan: None,
-        tags: vec![],
-        cve: vec![],
-        cvss: None,
-        mitre: mitre.into(),
-        description,
-        recommendation: recommendation.into(),
-        evidence,
-        request: String::new(),
-        url: None,
-        doc: docs.first().copied(),
-        notes: vec![],
-        photos: vec![],
-        rel: FindingRel {
-            people: vec![],
-            pcs: vec![],
-            docs: docs.clone(),
-        },
-        provenance: FindingProvenance {
-            rule: rule.into(),
-            fields: vec![],
-            docs,
-        },
-    }
+    super::cves::apply(a, ins, prev, now);
 }
 
 /// Findings derived from the insights (Russian texts; the report translates them by rule).

@@ -1205,5 +1205,20 @@
   "data.sig_readme": "readme.txt",
   "data.sig_implied": "випливає з іншої",
   "data.signal_source": "Джерело ознаки",
-  "data.cms_parts": "{cms}: плагіни, теми та модулі · {host}"
+  "data.cms_parts": "{cms}: плагіни, теми та модулі · {host}",
+  "data.cve_known_no_version": "{n} відомих CVE, версію не визначено",
+  "data.cve_none_for_version": "Відомих CVE для версії немає",
+  "data.cve_critical_n": "критичних: {n}",
+  "data.cve_high_n": "високих: {n}",
+  "data.cve_medium_n": "середніх: {n}",
+  "data.cve_low_n": "низьких: {n}",
+  "data.side_server": "Сервер",
+  "data.side_server_hint": "Генератор працює на сервері сайту",
+  "data.side_workstation": "Робочі станції",
+  "data.side_workstation_hint": "ПЗ робочих станцій авторів: розвідувальні дані, а не вразливість сайту",
+  "data.vulnerabilities_nvd": "Вразливості (NVD)",
+  "data.cve_show_all": "Показати всі CVE ({n})",
+  "data.cve_list_title": "CVE: {n}",
+  "data.cve_list_note": "{product} {version}: офлайн-база NVD, натисніть на CVE, щоб відкрити NVD.",
+  "data.last_doc_with_version": "Останній документ із цією версією"
 }

@@ -1205,5 +1205,20 @@
   "data.sig_readme": "readme.txt",
   "data.sig_implied": "implied",
   "data.signal_source": "Signal source",
-  "data.cms_parts": "{cms}: plugins, themes and modules · {host}"
+  "data.cms_parts": "{cms}: plugins, themes and modules · {host}",
+  "data.cve_known_no_version": "{n} known CVEs, version not determined",
+  "data.cve_none_for_version": "No known CVEs for this version",
+  "data.cve_critical_n": "critical: {n}",
+  "data.cve_high_n": "high: {n}",
+  "data.cve_medium_n": "medium: {n}",
+  "data.cve_low_n": "low: {n}",
+  "data.side_server": "Server",
+  "data.side_server_hint": "The generator runs on the site's server",
+  "data.side_workstation": "Workstations",
+  "data.side_workstation_hint": "Software of the authors' workstations: reconnaissance, not a vulnerability of the site",
+  "data.vulnerabilities_nvd": "Vulnerabilities (NVD)",
+  "data.cve_show_all": "Show all CVEs ({n})",
+  "data.cve_list_title": "CVEs: {n}",
+  "data.cve_list_note": "{product} {version}: offline NVD database, tap a CVE to open NVD.",
+  "data.last_doc_with_version": "Last document with this version"
 }

@@ -534,3 +534,88 @@ fn english_report_date_and_no_evidence_repeating_description() {
     );
     assert!(card.contains("https://www.example.com/"));
 }
+
+/// The executive summary lists known CVEs per product (offline NVD table) in every format and
+/// language: document software with its side and last document, unversioned products as a count.
+#[test]
+fn cve_summary_per_product_in_reports() {
+    use foca_core::api::{CveRef, CveSummary, Software};
+    let mut s = fixture().snap.clone();
+    s.software.push(Software {
+        id: "tcpdf".into(),
+        name: "TCPDF".into(),
+        ver: "6.2.13".into(),
+        kind: "pdf".into(),
+        docs: 2,
+        side: "server".into(),
+        last_doc: Some("2026-05-01".into()),
+        cve_sum: Some(CveSummary {
+            product: "tecnick:tcpdf".into(),
+            version: "6.2.13".into(),
+            version_known: true,
+            matched: 2,
+            known: 9,
+            critical: 1,
+            medium: 1,
+            max_cvss: Some(9.8),
+            kev: 1,
+            max_epss: Some(0.5),
+            cves: vec![CveRef {
+                id: "CVE-2099-0001".into(),
+                cvss: Some(9.8),
+                kev: true,
+                epss: Some(0.5),
+            }],
+            ..Default::default()
+        }),
+        ..Default::default()
+    });
+    s.software.push(Software {
+        id: "acro".into(),
+        name: "Adobe Acrobat".into(),
+        kind: "pdf".into(),
+        docs: 1,
+        side: "workstation".into(),
+        cve_sum: Some(CveSummary {
+            product: "adobe:acrobat".into(),
+            known: 40,
+            ..Default::default()
+        }),
+        ..Default::default()
+    });
+    for (lang, head, side, unknown) in [
+        (
+            Lang::En,
+            "Known CVEs per product (NVD)",
+            "site server",
+            "40 (version not determined)",
+        ),
+        (
+            Lang::Uk,
+            "Відомі CVE за продуктами (NVD)",
+            "сервер сайту",
+            "40 (версію не визначено)",
+        ),
+        (
+            Lang::Ru,
+            "Известные CVE по продуктам (NVD)",
+            "сервер сайта",
+            "40 (версия не определена)",
+        ),
+    ] {
+        for fmt in [ReportFormat::Md, ReportFormat::Html] {
+            let r = text(&foca_report::build_report(
+                &s,
+                &ReportOptions { lang, ..opts(fmt) },
+                NOW,
+            ));
+            assert!(r.contains(head), "{lang:?} {fmt:?}");
+            assert!(r.contains(side), "{lang:?} {fmt:?}");
+            assert!(r.contains("1/0/1/0 · KEV 1"), "{lang:?} {fmt:?}");
+            assert!(r.contains("9.8 · EPSS 0.50"), "{lang:?} {fmt:?}");
+            assert!(r.contains("01.05.2026"), "{lang:?} {fmt:?}");
+            assert!(r.contains("CVE-2099-0001"), "{lang:?} {fmt:?}");
+            assert!(r.contains(unknown), "{lang:?} {fmt:?}");
+        }
+    }
+}

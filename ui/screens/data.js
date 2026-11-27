@@ -624,6 +624,73 @@
     return bar + `<div class="list">${list.map(row).join("")}</div>`;
   }
 
+  // ---------- Offline NVD CVE summary (software, OS and technology cards) ----------
+  const CVE_SHEETS = {};
+  function cvePills(c) {
+    if (!c) return "";
+    if (!c.version_known)
+      return c.known
+        ? `<span class="pill mute">${ic("bug")}${esc(F.t("data.cve_known_no_version", { n: c.known }, "{n} известных CVE, версия не определена"))}</span>`
+        : "";
+    if (!c.matched)
+      return `<span class="pill ok">${ic("check")}${esc(F.t("data.cve_none_for_version", "Известных CVE для версии нет"))}</span>`;
+    const p = (n, cls, key, def) =>
+      n ? `<span class="pill ${cls}">${ic("bug")}${esc(F.t(key, { n }, def))}</span>` : "";
+    return (
+      p(c.critical, "crit", "data.cve_critical_n", "критических: {n}") +
+      p(c.high, "bad", "data.cve_high_n", "высоких: {n}") +
+      p(c.medium, "warn", "data.cve_medium_n", "средних: {n}") +
+      p(c.low, "mute", "data.cve_low_n", "низких: {n}") +
+      (c.kev ? `<span class="pill crit">KEV ${c.kev}</span>` : "") +
+      (c.max_epss != null ? `<span class="chip">EPSS ${Number(c.max_epss).toFixed(2)}</span>` : "")
+    );
+  }
+  function sidePill(side) {
+    if (side === "server")
+      return `<span class="pill bad" title="${esc(F.t("data.side_server_hint", "Генератор работает на сервере сайта"))}">${esc(F.t("data.side_server", "Сервер"))}</span>`;
+    if (side === "workstation")
+      return `<span class="pill mute" title="${esc(F.t("data.side_workstation_hint", "ПО рабочих станций авторов: разведданные, а не уязвимость сайта"))}">${esc(F.t("data.side_workstation", "Рабочие станции"))}</span>`;
+    return "";
+  }
+  function cveRow(r) {
+    const v = r.cvss;
+    return ui.row({
+      lead: ui.leadIcon("bug", v >= 9 ? "var(--crit)" : v >= 7 ? "var(--bad)" : v >= 4 ? "var(--warn)" : ""),
+      title: `<span class="mono">${esc(r.id)}</span>`,
+      sub: [
+        v != null ? `CVSS ${Number(v).toFixed(1)}` : "",
+        r.kev ? "KEV" : "",
+        r.epss != null ? `EPSS ${Number(r.epss).toFixed(2)}` : "",
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      tail: `<button class="ib" data-act="fd-cve:${esc(r.id)}" aria-label="${esc(F.t("findings.open_nvd", "Открыть NVD"))}">${ic("open")}</button>`,
+    });
+  }
+  // Top CVEs of a summary with a "show all" sheet.
+  function cveBlock(c, key) {
+    if (!c || !c.version_known || !c.matched) return "";
+    CVE_SHEETS[key] = c;
+    const top = (c.cves || []).slice(0, 10);
+    return (
+      ui.secH(F.t("data.vulnerabilities_nvd", "Уязвимости (NVD)"), c.matched) +
+      `<div class="chips wrap">${cvePills(c)}</div><div class="list">${top.map(cveRow).join("")}</div>` +
+      ((c.cves || []).length > top.length
+        ? `<button class="btn block" data-act="dt-cves:${esc(key)}">${ic("bug")}${esc(F.t("data.cve_show_all", { n: c.cves.length }, "Показать все CVE ({n})"))}</button>`
+        : "")
+    );
+  }
+  F.actions["dt-cves"] = key => {
+    const c = CVE_SHEETS[key];
+    if (!c) return;
+    F.sheet({
+      title: F.t("data.cve_list_title", { n: c.cves.length }, "CVE: {n}"),
+      full: true,
+      html: `<p class="fhint">${esc(F.t("data.cve_list_note", { product: c.product, version: c.version }, "{product} {version}: офлайн-база NVD, нажмите на CVE, чтобы открыть NVD."))}</p><div class="list">${c.cves.map(cveRow).join("")}</div>`,
+    });
+  };
+  F.cveUi = { pills: cvePills, side: sidePill };
+
   // ---------- Software ----------
   function segSoftware() {
     const so = sortOf("software");
@@ -648,10 +715,12 @@
           navRow({
             lead: ui.leadIcon("app", s.eol ? "var(--warn)" : ""),
             title: esc(s.name),
-            sub: `${esc(F.t("data.version", "версия"))} <span class="mono">${esc(s.ver)}</span> · ${plural(s.n, F.t("projects.document", "документ"), F.t("projects.documents", "документа"), F.t("projects.document_many", "документов"))}<div class="dt-tags">${s.eol ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.end_support", "Поддержка завершена"))}</span>` : `<span class="pill ok">${ic("check")}${esc(F.t("data.supported", "Поддерживается"))}</span>`}${
-              s.cve
-                ? `<span class="pill ${s.cve > 10 ? "crit" : "bad"}">${ic("bug")}${s.cve} CVE</span>`
-                : `<span class="pill mute"
+            sub: `${esc(F.t("data.version", "версия"))} <span class="mono">${esc(s.ver)}</span> · ${plural(s.n, F.t("projects.document", "документ"), F.t("projects.documents", "документа"), F.t("projects.document_many", "документов"))}<div class="dt-tags">${s.eol ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.end_support", "Поддержка завершена"))}</span>` : `<span class="pill ok">${ic("check")}${esc(F.t("data.supported", "Поддерживается"))}</span>`}${sidePill(s.side)}${
+              s.cve_sum
+                ? cvePills(s.cve_sum)
+                : s.cve
+                  ? `<span class="pill ${s.cve > 10 ? "crit" : "bad"}">${ic("bug")}${s.cve} CVE</span>`
+                  : `<span class="pill mute"
         title="${esc(F.t("data.no_cve_data_version_not_checked", "Данных CVE для этой версии нет, не проверялось"))}">${esc(F.t("data.cve_no_data", "CVE: нет данных"))}</span>`
             }</div>`,
             path: F.dataEntityPath("software", i),
@@ -920,7 +989,12 @@
     return ui.row({
       lead: ui.leadIcon(t.plugin_of ? "path" : "app", t.outdated ? "var(--warn)" : ""),
       title: esc(t.name) + (t.version ? ` <span class="mono">${esc(t.version)}</span>` : ""),
-      sub: `${esc(techCat(t.category))} · ${esc(t.host)}<div class="dt-tags">${t.outdated ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.outdated_2", "Устарело"))}</span><span class="muted">${esc(t.outdated)}</span>` : t.version ? `<span class="pill ok">${ic("check")}${esc(F.t("data.current_branch", "Актуальная ветка"))}</span>` : `<span class="pill mute">${esc(F.t("data.version_unknown", "Версия не определена"))}</span>`}${sigs.map(s => `<span class="pill mute" title="${esc(F.t("data.signal_source", "Источник признака"))}">${esc(sigLabel(s))}</span>`).join("")}</div>${ev ? `<small class="muted mono dt-path">${esc(ev)}</small>` : ""}`,
+      sub: `${esc(techCat(t.category))} · ${esc(t.host)}<div class="dt-tags">${cvePills(t.cve)}${t.outdated ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.outdated_2", "Устарело"))}</span><span class="muted">${esc(t.outdated)}</span>` : t.version ? `<span class="pill ok">${ic("check")}${esc(F.t("data.current_branch", "Актуальная ветка"))}</span>` : `<span class="pill mute">${esc(F.t("data.version_unknown", "Версия не определена"))}</span>`}${sigs.map(s => `<span class="pill mute" title="${esc(F.t("data.signal_source", "Источник признака"))}">${esc(sigLabel(s))}</span>`).join("")}</div>${ev ? `<small class="muted mono dt-path">${esc(ev)}</small>` : ""}`,
+      tail:
+        t.cve && t.cve.version_known && t.cve.matched
+          ? ((CVE_SHEETS["tech:" + t.host + ":" + t.name] = t.cve),
+            `<button class="ib" data-act="dt-cves:${esc("tech:" + t.host + ":" + t.name)}" aria-label="${esc(F.t("data.cve_show_all", { n: t.cve.cves.length }, "Показать все CVE ({n})"))}">${ic("bug")}</button>`)
+          : "",
     });
   }
   function segTech() {
@@ -928,7 +1002,10 @@
       .slice()
       .sort(
         (a, b) =>
-          !!b.outdated - !!a.outdated || a.category.localeCompare(b.category) || a.name.localeCompare(b.name),
+          !!b.outdated - !!a.outdated ||
+          ((b.cve && b.cve.matched) || 0) - ((a.cve && a.cve.matched) || 0) ||
+          a.category.localeCompare(b.category) ||
+          a.name.localeCompare(b.name),
       );
     const list = all.filter(t => !t.plugin_of);
     const parts = all.filter(t => t.plugin_of);
@@ -1836,32 +1913,47 @@
             (sw.eol
               ? `<span class="pill warn">${ic("alert")}${esc(F.t("data.end_support", "Поддержка завершена"))}</span>`
               : `<span class="pill ok">${ic("check")}${esc(F.t("data.supported", "Поддерживается"))}</span>`) +
-            (sw.cve ? `<span class="pill crit">${ic("bug")}${sw.cve} CVE</span>` : ""),
+            sidePill(sw.side) +
+            (sw.cve_sum
+              ? cvePills(sw.cve_sum)
+              : sw.cve
+                ? `<span class="pill crit">${ic("bug")}${sw.cve} CVE</span>`
+                : ""),
           facts: [
             [F.t("about.version", "Версия"), `<span class="mono">${esc(sw.ver)}</span>`],
             [F.t("data.documents_count", "Документов"), sw.n],
+            ...(sw.last_doc
+              ? [
+                  [
+                    F.t("data.last_doc_with_version", "Последний документ с этой версией"),
+                    esc(dmy(sw.last_doc)),
+                  ],
+                ]
+              : []),
             [F.t("data.eol_date", "Конец поддержки"), esc(swx.eol)],
             [F.t("data.users_count", "Пользователей"), users.length],
           ],
         }) +
         searchBtns(sw.name, { sw: [sw.name] }) +
-        (swx.cves.length
-          ? ui.secH(F.t("data.vulnerabilities", "Уязвимости"), sw.cve) +
-            `<div class="list">${swx.cves
-              .map(([c, v]) =>
-                ui.row({
-                  lead: ui.leadIcon("bug", v >= 9 ? "var(--crit)" : "var(--bad)"),
-                  title: `<span class="mono">${esc(c)}</span>`,
-                  sub: `CVSS ${v.toFixed(1)} · ${v >= 9 ? F.t("data.critical", "критическая") : F.t("data.high", "высокая")}`,
-                  tail: `<button class="ib"
+        (sw.cve_sum
+          ? cveBlock(sw.cve_sum, "sw:" + sw.id)
+          : swx.cves.length
+            ? ui.secH(F.t("data.vulnerabilities", "Уязвимости"), sw.cve) +
+              `<div class="list">${swx.cves
+                .map(([c, v]) =>
+                  ui.row({
+                    lead: ui.leadIcon("bug", v >= 9 ? "var(--crit)" : "var(--bad)"),
+                    title: `<span class="mono">${esc(c)}</span>`,
+                    sub: `CVSS ${v.toFixed(1)} · ${v >= 9 ? F.t("data.critical", "критическая") : F.t("data.high", "высокая")}`,
+                    tail: `<button class="ib"
               data-act="copy:${esc(c)}"
               aria-label="${F.t("data.copy_c", { c: esc(c) }, "Копировать {c}")}">${ic("copy")}</button>`,
-                }),
-              )
-              .join(
-                "",
-              )}${sw.cve > swx.cves.length ? `<div class="row"><div class="body"><div class="s">${F.t("data.n_more_local_cve_database", { n: sw.cve - swx.cves.length }, "и ещё {n} в локальной базе CVE")}</div></div></div>` : ""}</div>`
-          : "") +
+                  }),
+                )
+                .join(
+                  "",
+                )}${sw.cve > swx.cves.length ? `<div class="row"><div class="body"><div class="s">${F.t("data.n_more_local_cve_database", { n: sw.cve - swx.cves.length }, "и ещё {n} в локальной базе CVE")}</div></div></div>` : ""}</div>`
+            : "") +
         docsBlock(docs, F.t("app.documents", "Документы"), { sw: [sw.name] }) +
         relatedBlock({
           [F.t("data.rel_people", "Люди")]: ["users", users.slice(0, 8).map(personRow)],

@@ -932,5 +932,10 @@
   "limits.warn_crawl_doc_depth": "Глибше {n} кроків: посилання з документів ведуть далеко від цілі.",
   "crawl.nf_render_hosts": "Головних сторінок через браузер",
   "crawl.nf_render_hosts_note": "технології за JS і DOM, лише Android; 0 вимикає",
-  "limits.warn_render_hosts": "Понад {n} головних сторінок через браузер: кожна відкривається в прихованому браузері, це повільно й витрачає батарею."
+  "limits.warn_render_hosts": "Понад {n} головних сторінок через браузер: кожна відкривається в прихованому браузері, це повільно й витрачає батарею.",
+  "settings.sig_nvd": "CVE (NVD)",
+  "settings.sig_nvd_line": "{n} CVE · знімок NVD {date}",
+  "settings.sig_nvd_groups": "сайт: {site} · плагіни: {plugin} · ПЗ документів: {doc} · ОС: {os}",
+  "settings.sig_skipped": "Пропущено таблиці нової версії: {list}",
+  "signatures.tbl.nvd_cve": "CVE і діапазони версій (NVD)"
 }
