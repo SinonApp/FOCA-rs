@@ -24,10 +24,10 @@ Status legend: ✅ done · ⏳ planned or needs a device check · ✖ excluded
 
 ## Current Status
 
-🧪 2.0.0-beta.2: second beta with fixes from phone tests of 2.0.0-beta.1 (see the [changelog](../CHANGELOG.md)). 2.0.0-beta.1 was the first public release, published as a GitHub Pre-release (tag `v2.0.0-beta.1`). All 2.0 milestones (`2.0-M1`-`2.0-M9`) and the `1.1.1`-`1.6` series are in. Expect rough edges; problems go to [GitHub issues](https://github.com/SinonApp/FOCA-rs/issues/new/choose).
+🧪 2.0.0-beta.3: third beta with fixes from phone tests of 2.0.0-beta.2, scan deletion, parallel hosts, AI summary history and a real signature update feed (see the [changelog](../CHANGELOG.md)). 2.0.0-beta.1 was the first public release, published as a GitHub Pre-release (tag `v2.0.0-beta.1`). All 2.0 milestones (`2.0-M1`-`2.0-M9`) and the `1.1.1`-`1.6` series are in. Expect rough edges; problems go to [GitHub issues](https://github.com/SinonApp/FOCA-rs/issues/new/choose).
 
 - Android package `app.sinon.focars`, two builds: `foss` (GPL-3.0 only, no Google libraries) and `play` (adds optional offline ML Kit OCR).
-- The APK is signed with a new key: uninstall a previous 1.x or 2.0 preview build before installing. 2.0.0-beta.2 installs over 2.0.0-beta.1.
+- The APK is signed with a new key: uninstall a previous 1.x or 2.0 preview build before installing. 2.0.0-beta.3 installs over 2.0.0-beta.2 and 2.0.0-beta.1 and keeps projects.
 
 ---
 
@@ -54,7 +54,7 @@ Work done after the 2.0 milestones, from phone tests and a full audit:
 
 ## Next
 
-Planned for the betas after `2.0.0-beta.2`. Order may change with bug reports.
+Planned for the betas after `2.0.0-beta.3`. Order may change with bug reports.
 
 - ⏳ **More OEM background tests**: Samsung One UI, Huawei/EMUI, Oppo/ColorOS, vivo/Funtouch and stock Android 15/16, swipe-away, "clear all", battery saver, and the headless resume path.
 - ⏳ **Sub-step counters beyond the network stage**: ports, site recon and site search.
@@ -176,7 +176,7 @@ Planned for the betas after `2.0.0-beta.2`. Order may change with bug reports.
 
 ## Specification Status Summary
 
-In FOCA-rs 2.0.0-beta.2:
+In FOCA-rs 2.0.0-beta.3:
 
 - ✅ **Implemented across the full Android-applicable scope**: projects & honest scope (`F-1`-`F-3`, `I-23`), search & download (`F-4`-`F-9`, `I-9`, `I-21`), document formats & forensics (`3.4`, `F-10`-`F-12`, `I-1`-`I-7`), DNS/RDAP/subdomains/AXFR/mail/TLS/ports (`F-13`, `F-14`, `F-16`-`F-20`, `I-11`, `I-12`), analysis, CISA KEV + CPE/CVE semver ranges, Attack Paths, graph/globe/timeline (`F-22`-`F-24`, `I-8`, `I-10`, `I-14`-`I-16`), reports, DOCX, Custody, STIX 2.1, defensive hygiene (`F-25`, `F-26`, `I-18`, `I-19`), screenshots & `pHash` (`I-13`), monitoring & alerts (`I-17`), Cloud-only AI (`I-20`), sandboxed declarative + WASM plugins (`F-27`-`F-30`), signed `Ed25519` signature bundles (`I-25`), declarative CLI `foca run scenario.toml` (`F-31`, `F-32`), and live `EN / RU / UA` localization (`N-7`).
 - ⚠️ Adapted by design: FOCA Roles/Vulnerabilities tree (`F-21`) → Findings + Data segments; Rhai (`I-24`) → declarative regex rule sets & sandboxed plugins; TOML config (`F-33`) → SQLite settings + Android Keystore + CLI `scenario.toml`.

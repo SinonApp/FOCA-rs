@@ -10470,7 +10470,7 @@
       sdk: 36,
       rom: "HyperOS 2.0",
       abi: "arm64-v8a, armeabi-v7a",
-      app_version: "2.0.0-beta.2",
+      app_version: "2.0.0-beta.3",
       flavor: "foss",
       mem_total_mb: 7642,
       mem_avail_mb: 2318,

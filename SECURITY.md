@@ -4,10 +4,10 @@
 
 | Version | Supported |
 |---|---|
-| 2.0.0-beta.2 (latest pre-release) | ✅ security fixes |
+| 2.0.0-beta.3 (latest pre-release) | ✅ security fixes |
 | 1.x | ✖, please update (uninstall first: 2.0 is signed with a new key) |
 
-Fixes land on `develop` and ship in the next beta.
+Fixes land on `main` and ship in the next beta.
 
 ## Reporting a vulnerability
 
