@@ -382,6 +382,18 @@ impl<'a> State<'a> {
             || self.ctx.out_of_time(Duration::from_secs(3))
     }
 
+    /// Holds new requests while the scan is paused. The wall-time budget keeps running, so a long
+    /// pause ends the crawl at its deadline with the frontier kept for the next scan.
+    async fn hold(&self) -> Result<(), NetError> {
+        while self.ctx.is_paused() && !self.out_of_time() {
+            self.ctx
+                .net
+                .cancellable(tokio::time::sleep(Duration::from_millis(250)))
+                .await?;
+        }
+        Ok(())
+    }
+
     fn add_doc(&mut self, u: &Url, page: &str) -> bool {
         let Some(ext) = self.ctx.filter.matches(u.as_str()) else {
             return false;
@@ -640,6 +652,7 @@ impl Crawler {
             if ctx.net.is_cancelled() {
                 return Err(NetError::Cancelled);
             }
+            st.hold().await?;
             if st.out_of_time() {
                 break;
             }
@@ -734,6 +747,7 @@ impl Crawler {
             if ctx.net.is_cancelled() {
                 return Err(NetError::Cancelled);
             }
+            st.hold().await?;
             if st.out.stats.pages >= self.max_pages {
                 st.out.stats.stop = Some(CrawlStop::Pages);
                 break;

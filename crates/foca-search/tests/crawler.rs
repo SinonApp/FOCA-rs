@@ -351,3 +351,27 @@ async fn crawl_renders_app_shell() {
         .iter()
         .any(|(s, _)| s.ends_with("/assets/index.js")));
 }
+
+/// A paused scan holds the crawl: no request goes out until the pause is lifted.
+#[tokio::test]
+async fn crawl_waits_while_the_scan_is_paused() {
+    let srv = TestServer::start(|r| match r.path() {
+        "/" => html(r#"<a href="/a">a</a>"#),
+        "/a" => html("<p>end</p>"),
+        _ => TestResponse::status(404),
+    })
+    .await;
+    let (ctx, _sink) = ctx("127.0.0.1");
+    let (tx, rx) = tokio::sync::watch::channel(Some("user".to_string()));
+    let ctx = ctx.with_pause(rx);
+    let mut cr = Crawler::with_start(&format!("{}/", srv.url()));
+    cr.use_sitemap = false;
+    cr.respect_robots = false;
+    let run = tokio::spawn(async move { cr.crawl(&ctx, "127.0.0.1").await });
+    tokio::time::sleep(std::time::Duration::from_millis(600)).await;
+    assert!(srv.requests().is_empty(), "{:?}", srv.requests());
+    tx.send_replace(None);
+    let (_, st) = run.await.unwrap().unwrap();
+    assert_eq!(st.pages, 2);
+    assert!(st.finished);
+}

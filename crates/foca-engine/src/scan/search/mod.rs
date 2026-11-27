@@ -177,7 +177,8 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
     }
     let search_net = c.group_net("search")?;
     let make_ctx = |d: &str, k: usize| -> (SearchCtx, Value) {
-        let mut ctx = SearchCtx::new(search_net.clone());
+        // the crawl holds its requests while the scan is paused
+        let mut ctx = SearchCtx::new(search_net.clone()).with_pause(c.pause.clone());
         ctx.limit = limit;
         if let Some(f) = &ext_filter {
             ctx.filter = f.clone();

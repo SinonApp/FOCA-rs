@@ -107,6 +107,9 @@ pub struct SearchCtx {
     pub headless: bool,
     /// Shared dork board of the scan (queue, failover, budget, cache); `None` lets the engine use its own.
     pub dorks: Option<Arc<DorkBoard>>,
+    /// Pause state of the scan (`Some(reason)` while paused); long sources that touch the target
+    /// hold their requests while it is set ([`SearchCtx::with_pause`]).
+    pause: Option<tokio::sync::watch::Receiver<Option<String>>>,
 }
 
 /// Retry callback: `(source id, retry number starting at 1, reason)`.
@@ -132,7 +135,19 @@ impl SearchCtx {
             render: None,
             headless: false,
             dorks: None,
+            pause: None,
         }
+    }
+
+    /// Follows the scan's pause state (`Some(reason)` while paused).
+    pub fn with_pause(mut self, pause: tokio::sync::watch::Receiver<Option<String>>) -> Self {
+        self.pause = Some(pause);
+        self
+    }
+
+    /// Returns `true` while the scan is paused.
+    pub fn is_paused(&self) -> bool {
+        self.pause.as_ref().is_some_and(|p| p.borrow().is_some())
     }
 
     /// Returns the time left until the soft deadline (`None` if there is no deadline).
