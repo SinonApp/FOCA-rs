@@ -272,7 +272,11 @@
     return `
       ${
         !sel && all
-          ? `<button class="fx-ftsb" data-act="go:/p/docs-search">${ic("search")}<span>${esc(F.t("docs.fts", "Поиск по тексту документов"))}</span>${ic("chev", "chev")}</button>`
+          ? `<button class="fx-ftsb" data-act="go:/p/docs-search">${ic("search")}<span>${esc(F.t("docs.fts", "Поиск по тексту документов"))}</span>${ic("chev", "chev")}</button>${
+              F.reextract
+                ? `<button class="fx-ftsb dt-rx" data-act="rx-open">${ic("refresh")}<span>${esc(F.t("reextract.btn", "Переанализировать документы"))}</span>${ic("chev", "chev")}</button>`
+                : ""
+            }`
           : ""
       }
       ${
@@ -321,6 +325,7 @@
           ["dd-bulk:dl", "download", F.t("docs.bulk_dl", "Скачать")],
           ["dd-bulk:clean", "eraser", F.t("docs.bulk_clean", "Очистить")],
           ["dd-bulk:export", "export", F.t("docs.bulk_export", "Экспорт")],
+          ["dd-bulk:rx", "refresh", F.t("reextract.bulk", "Переанализировать")],
           ["dd-bulk:del", "x", F.t("common.delete", "Удалить")],
         ]
           .map(
@@ -693,6 +698,9 @@
             showCleaned(r, F.t("docs.cleaned_many", { n: pl(n) }, "Очищенные копии в папке приложения: {n}")),
           e => F.snack(F.t("docs.clean_fail", { err: e.message || e }, "Не удалось очистить: {err}")),
         );
+      } else if (kind === "rx") {
+        exitSel();
+        if (F.reextract) F.reextract.open(ids, "sel");
       } else if (kind === "export") {
         exitSel();
         if (F.exportSheet)

@@ -10248,6 +10248,221 @@
       ...toolTiming,
     };
   }
+  // ---- re-analysis of stored documents (docs/API.md → project_reextract); deterministic fake run ----
+  // Demo documents count as analysed by the current extraction until QA ages them (_reextractAge).
+  // Every fifth document has no stored file (a URL only), so the re-download option has something to do.
+  const RX_REV = 1;
+  const RX_JOBS = {};
+  const rxState = st => (st.reextract = st.reextract || { aged: {}, last: null, run: null });
+  const rxHasFile = d => d.id % 5 !== 0;
+  const rxCandidates = (st, ids) =>
+    st.docs.filter(
+      d =>
+        !d.deleted &&
+        (d.status === "analyzed" || d.status === "error") &&
+        (!ids || !ids.length || ids.includes(d.id)),
+    );
+  function rxCounts(id) {
+    const s = snapshot(id);
+    const sev = { crit: 0, high: 0, warn: 0, low: 0, info: 0 };
+    const live = s.findings.filter(f => f.status !== "false");
+    live.forEach(f => (sev[f.sev] = (sev[f.sev] || 0) + 1));
+    const docs = s.docs.filter(d => !d.deleted);
+    return {
+      docs: docs.length,
+      text: docs.filter(d => rxHasFile(d) || d.ext !== "jpg").length,
+      people: (s.people || []).length,
+      emails: (s.emails || []).length,
+      phones: (s.phones || []).length,
+      findings: sev,
+      findings_total: live.length,
+    };
+  }
+  function reextractStatus({ project } = {}) {
+    const st = P(project);
+    const rx = rxState(st);
+    const docs = rxCandidates(st);
+    const out = { total: 0, files: 0, missing: 0, missing_bytes: 0, no_url: 0 };
+    let files = 0,
+      missing = 0,
+      missingBytes = 0;
+    docs.forEach(d => {
+      const has = rxHasFile(d);
+      if (has) files++;
+      else {
+        missing++;
+        missingBytes += (d.size || 0) * 1024;
+      }
+      if (!rx.aged[d.id]) return;
+      out.total++;
+      if (has) out.files++;
+      else {
+        out.missing++;
+        out.missing_bytes += (d.size || 0) * 1024;
+      }
+    });
+    const job = RX_JOBS[project];
+    return {
+      project,
+      format_rev: RX_REV,
+      version: "2.0.0-beta.4.1",
+      docs: docs.length,
+      files,
+      missing,
+      missing_bytes: missingBytes,
+      outdated: out,
+      running: job ? clone(job.progress) : null,
+      pending: rx.run
+        ? {
+            mode: rx.run.mode,
+            started: rx.run.started,
+            total: rx.run.total,
+            done: rx.run.done,
+            ids: rx.run.ids,
+          }
+        : null,
+      last: rx.last ? clone(rx.last) : null,
+      scan_running: !!RUN,
+    };
+  }
+  function projectReextract({
+    project,
+    mode = "stored",
+    ids = [],
+    outdated = false,
+    restart = false,
+    wait = false,
+  } = {}) {
+    const st = P(project);
+    if (outdated && !ids.length) {
+      const aged = rxState(st).aged;
+      ids = rxCandidates(st)
+        .filter(d => aged[d.id])
+        .map(d => d.id);
+      if (!ids.length) throw apiErr("nothing", "Все документы уже разобраны текущей версией");
+    }
+    if (RUN)
+      throw apiErr("busy", "Идёт скан: повторный анализ документов можно запустить после его завершения");
+    if (RX_JOBS[project]) throw apiErr("busy", "Повторный анализ документов уже идёт");
+    if (!["stored", "stored_and_missing"].includes(mode)) throw apiErr("bad_args", `mode: ${mode}`);
+    const rx = rxState(st);
+    const resumed = !!(rx.run && !restart);
+    if (!resumed) {
+      const todo = rxCandidates(st, ids).map(d => d.id);
+      rx.run = {
+        mode,
+        ids,
+        started: `${TODAY}T12:00:00`,
+        total: todo.length,
+        done: 0,
+        todo,
+        before: rxCounts(project),
+        tally: {},
+      };
+    }
+    const run = rx.run;
+    save();
+    const job = (RX_JOBS[project] = {
+      progress: { done: run.done, total: run.total, name: "", stage: "start" },
+      cancel: false,
+    });
+    const ev = (stage, name = "", extra = {}) => {
+      job.progress = { done: run.done, total: run.total, name, stage };
+      emit({ type: "reextract", project, stage, done: run.done, total: run.total, name, ...extra });
+    };
+    const step = () => {
+      if (job.cancel) {
+        delete RX_JOBS[project];
+        save();
+        ev("cancelled");
+        return false;
+      }
+      if (run.done >= run.todo.length) {
+        finish();
+        return false;
+      }
+      const d = st.docs.find(x => x.id === run.todo[run.done]);
+      const has = d && rxHasFile(d);
+      if (d && !has && run.mode === "stored_and_missing") ev("download", d.name);
+      else ev("file", d ? d.name : "");
+      const k = !d
+        ? "failed"
+        : has
+          ? "reparsed"
+          : run.mode === "stored_and_missing"
+            ? "downloaded"
+            : "no_file";
+      run.tally[k] = (run.tally[k] || 0) + 1;
+      if (d && k !== "no_file") delete rx.aged[d.id];
+      run.done++;
+      return true;
+    };
+    const finish = () => {
+      const t = run.tally;
+      const summary = {
+        mode: run.mode,
+        ids: run.ids,
+        started: run.started,
+        finished: `${TODAY}T12:01:00`,
+        format_rev: RX_REV,
+        version: "2.0.0-beta.4.1",
+        total: run.total,
+        processed: run.done,
+        reparsed: t.reparsed || 0,
+        downloaded: t.downloaded || 0,
+        no_file: t.no_file || 0,
+        failed: t.failed || 0,
+        net_blocked: null,
+        before: run.before,
+        after: rxCounts(project),
+        new_findings: 0,
+        new_ids: [],
+        removed_findings: 0,
+        new_events: 0,
+      };
+      rx.last = summary;
+      rx.run = null;
+      delete RX_JOBS[project];
+      save();
+      job.progress = { done: run.done, total: run.total, name: "", stage: "done" };
+      const done = {
+        type: "reextract",
+        project,
+        stage: "done",
+        done: run.done,
+        total: run.total,
+        name: "",
+        summary,
+      };
+      emit(done);
+      return done;
+    };
+    ev("start");
+    if (wait) {
+      while (step());
+      return rx.last && !rx.run
+        ? {
+            type: "reextract",
+            project,
+            stage: "done",
+            done: run.done,
+            total: run.total,
+            name: "",
+            summary: clone(rx.last),
+          }
+        : null;
+    }
+    const tick = () => {
+      if (step()) job.timer = setTimeout(tick, 90);
+    };
+    job.timer = setTimeout(tick, 90);
+    return { started: true, resumed, total: run.total, mode: run.mode };
+  }
+  function reextractCancel({ project } = {}) {
+    const job = RX_JOBS[project];
+    if (job) job.cancel = true;
+    return { cancelled: !!job };
+  }
   const COMMANDS = {
     project_list: () => load().order.map(id => summary(P(id))),
     project_snapshot: ({ id }) => snapshot(id),
@@ -12239,6 +12454,9 @@
       return { ...r, demo_case: true };
     },
     import_cancel: () => ({ ok: false }),
+    project_reextract: a => projectReextract(a),
+    reextract_status: a => reextractStatus(a),
+    reextract_cancel: a => reextractCancel(a),
     platform_pick_folder: () => ({
       ok: true,
       cancelled: false,
@@ -12694,6 +12912,14 @@
       STATE = JSON.parse(raw);
       if (STATE.run) recoverRun();
       return { ok: true };
+    },
+    // For QA: documents of a project count as analysed by an older extraction (the update banner).
+    _reextractAge(project, ids) {
+      const st = P(project);
+      const rx = rxState(st);
+      st.docs.filter(d => !d.deleted && (!ids || ids.includes(d.id))).forEach(d => (rx.aged[d.id] = true));
+      save();
+      return reextractStatus({ project });
     },
     _oos: oosOf,
     _infra: infraOf,

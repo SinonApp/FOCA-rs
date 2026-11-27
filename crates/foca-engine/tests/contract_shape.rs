@@ -497,6 +497,26 @@ async fn contract_shape_matches_demo_backend_inner() {
         "ai_summary_delete",
         json!({ "project": id, "summary": sm["id"] })
     );
+    c!(
+        "reextract_status",
+        "reextract_status",
+        json!({ "project": id })
+    );
+    c!(
+        "project_reextract",
+        "project_reextract",
+        json!({ "project": id, "mode": "stored_and_missing", "ids": [1, 2, 3, 5], "wait": true })
+    );
+    c!(
+        "reextract_status",
+        "reextract_status",
+        json!({ "project": id })
+    );
+    c!(
+        "reextract_cancel",
+        "reextract_cancel",
+        json!({ "project": id })
+    );
     c!("project_snapshot", "project_snapshot", json!({ "id": id }));
     c!("project_open", "project_open", json!({ "id": id }));
     c!("project_list", "project_list", json!({}));

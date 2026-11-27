@@ -91,8 +91,14 @@ body.dt-selecting .snack {
 }
 .dt-selgrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2px;
+}
+@container (max-width: 30rem) {
+  .dt-selgrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
 }
 @container (max-width: 22rem) {
   .dt-selgrid {
@@ -415,4 +421,98 @@ body.dt-selecting .snack {
 }
 .dt-prov-exp {
   margin: 2px 0 0;
+}
+
+/* ---------- re-analysis of stored documents (screens/reextract.js) ---------- */
+.fx-ftsb.dt-rx {
+  margin-top: 8px;
+}
+.rx-ov {
+  margin-top: 10px;
+}
+.rx-banner .btnrow {
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.rx-what {
+  margin: 0 0 12px;
+}
+.rx-facts,
+.rx-opts {
+  margin-bottom: 12px;
+}
+.rx-opt .s {
+  overflow-wrap: anywhere;
+}
+.rx-load {
+  display: grid;
+  place-items: center;
+  min-height: 96px;
+}
+.rx-prog {
+  display: grid;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+.rx-prog-n {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.rx-prog-what {
+  overflow-wrap: anywhere;
+  color: var(--text-3);
+}
+.rx-diff {
+  display: grid;
+  gap: 2px;
+  container-type: inline-size;
+}
+.rx-dr {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto 3.2em;
+  gap: 8px;
+  align-items: baseline;
+  min-height: 32px;
+}
+.rx-dl {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rx-dv {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.rx-da {
+  color: var(--text-3);
+}
+.rx-dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+}
+.rx-dd.up {
+  color: var(--ok);
+  font-weight: 600;
+}
+.rx-dd.down {
+  color: var(--warn);
+  font-weight: 600;
+}
+/* Narrow card or large font: the label goes above its numbers. */
+@container (max-width: 20rem) {
+  .rx-dr {
+    grid-template-columns: auto auto auto minmax(0, 1fr);
+    row-gap: 0;
+    padding: 4px 0;
+  }
+  .rx-dl {
+    grid-column: 1 / -1;
+  }
+}
+.rx-fbtns {
+  flex-wrap: wrap;
+}
+.rx-fbtns .btn {
+  flex: 1 1 auto;
 }

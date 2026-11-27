@@ -144,6 +144,24 @@ async fn reextract_reparses_stored_files_and_keeps_triage() {
         )
         .await;
     assert_eq!(bad.code, "bad_args");
+    // only outdated documents: none left
+    let none = e
+        .err(
+            "project_reextract",
+            json!({ "project": id, "outdated": true }),
+        )
+        .await;
+    assert_eq!(none.code, "nothing");
+    sql(e.dir.path(), &id)
+        .execute("UPDATE documents SET extractor_rev = NULL WHERE id = 2", [])
+        .unwrap();
+    let r = e
+        .call(
+            "project_reextract",
+            json!({ "project": id, "outdated": true, "wait": true }),
+        )
+        .await;
+    assert_eq!(r["summary"]["total"], 1, "{r}");
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]

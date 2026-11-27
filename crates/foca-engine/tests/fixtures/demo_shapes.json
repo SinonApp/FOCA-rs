@@ -20341,6 +20341,617 @@
     }
    }
   },
+  "reextract_status": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "project": {
+     "t": [
+      "string"
+     ]
+    },
+    "format_rev": {
+     "t": [
+      "number"
+     ]
+    },
+    "version": {
+     "t": [
+      "string"
+     ]
+    },
+    "docs": {
+     "t": [
+      "number"
+     ]
+    },
+    "files": {
+     "t": [
+      "number"
+     ]
+    },
+    "missing": {
+     "t": [
+      "number"
+     ]
+    },
+    "missing_bytes": {
+     "t": [
+      "number"
+     ]
+    },
+    "outdated": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "total": {
+       "t": [
+        "number"
+       ]
+      },
+      "files": {
+       "t": [
+        "number"
+       ]
+      },
+      "missing": {
+       "t": [
+        "number"
+       ]
+      },
+      "missing_bytes": {
+       "t": [
+        "number"
+       ]
+      },
+      "no_url": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "running": {
+     "t": [
+      "null"
+     ]
+    },
+    "pending": {
+     "t": [
+      "null"
+     ]
+    },
+    "last": {
+     "t": [
+      "null",
+      "object"
+     ],
+     "keys": {
+      "mode": {
+       "t": [
+        "string"
+       ]
+      },
+      "ids": {
+       "t": [
+        "array"
+       ],
+       "items": {
+        "t": [
+         "number"
+        ]
+       }
+      },
+      "started": {
+       "t": [
+        "string"
+       ]
+      },
+      "finished": {
+       "t": [
+        "string"
+       ]
+      },
+      "format_rev": {
+       "t": [
+        "number"
+       ]
+      },
+      "version": {
+       "t": [
+        "string"
+       ]
+      },
+      "total": {
+       "t": [
+        "number"
+       ]
+      },
+      "processed": {
+       "t": [
+        "number"
+       ]
+      },
+      "reparsed": {
+       "t": [
+        "number"
+       ]
+      },
+      "downloaded": {
+       "t": [
+        "number"
+       ]
+      },
+      "no_file": {
+       "t": [
+        "number"
+       ]
+      },
+      "failed": {
+       "t": [
+        "number"
+       ]
+      },
+      "net_blocked": {
+       "t": [
+        "null"
+       ]
+      },
+      "before": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "docs": {
+         "t": [
+          "number"
+         ]
+        },
+        "text": {
+         "t": [
+          "number"
+         ]
+        },
+        "people": {
+         "t": [
+          "number"
+         ]
+        },
+        "emails": {
+         "t": [
+          "number"
+         ]
+        },
+        "phones": {
+         "t": [
+          "number"
+         ]
+        },
+        "findings": {
+         "t": [
+          "object"
+         ],
+         "keys": {
+          "crit": {
+           "t": [
+            "number"
+           ]
+          },
+          "high": {
+           "t": [
+            "number"
+           ]
+          },
+          "warn": {
+           "t": [
+            "number"
+           ]
+          },
+          "low": {
+           "t": [
+            "number"
+           ]
+          },
+          "info": {
+           "t": [
+            "number"
+           ]
+          }
+         }
+        },
+        "findings_total": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      },
+      "after": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "docs": {
+         "t": [
+          "number"
+         ]
+        },
+        "text": {
+         "t": [
+          "number"
+         ]
+        },
+        "people": {
+         "t": [
+          "number"
+         ]
+        },
+        "emails": {
+         "t": [
+          "number"
+         ]
+        },
+        "phones": {
+         "t": [
+          "number"
+         ]
+        },
+        "findings": {
+         "t": [
+          "object"
+         ],
+         "keys": {
+          "crit": {
+           "t": [
+            "number"
+           ]
+          },
+          "high": {
+           "t": [
+            "number"
+           ]
+          },
+          "warn": {
+           "t": [
+            "number"
+           ]
+          },
+          "low": {
+           "t": [
+            "number"
+           ]
+          },
+          "info": {
+           "t": [
+            "number"
+           ]
+          }
+         }
+        },
+        "findings_total": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      },
+      "new_findings": {
+       "t": [
+        "number"
+       ]
+      },
+      "new_ids": {
+       "t": [
+        "array"
+       ],
+       "items": null
+      },
+      "removed_findings": {
+       "t": [
+        "number"
+       ]
+      },
+      "new_events": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "scan_running": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
+  "project_reextract": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "type": {
+     "t": [
+      "string"
+     ]
+    },
+    "project": {
+     "t": [
+      "string"
+     ]
+    },
+    "stage": {
+     "t": [
+      "string"
+     ]
+    },
+    "done": {
+     "t": [
+      "number"
+     ]
+    },
+    "total": {
+     "t": [
+      "number"
+     ]
+    },
+    "name": {
+     "t": [
+      "string"
+     ]
+    },
+    "summary": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "mode": {
+       "t": [
+        "string"
+       ]
+      },
+      "ids": {
+       "t": [
+        "array"
+       ],
+       "items": {
+        "t": [
+         "number"
+        ]
+       }
+      },
+      "started": {
+       "t": [
+        "string"
+       ]
+      },
+      "finished": {
+       "t": [
+        "string"
+       ]
+      },
+      "format_rev": {
+       "t": [
+        "number"
+       ]
+      },
+      "version": {
+       "t": [
+        "string"
+       ]
+      },
+      "total": {
+       "t": [
+        "number"
+       ]
+      },
+      "processed": {
+       "t": [
+        "number"
+       ]
+      },
+      "reparsed": {
+       "t": [
+        "number"
+       ]
+      },
+      "downloaded": {
+       "t": [
+        "number"
+       ]
+      },
+      "no_file": {
+       "t": [
+        "number"
+       ]
+      },
+      "failed": {
+       "t": [
+        "number"
+       ]
+      },
+      "net_blocked": {
+       "t": [
+        "null"
+       ]
+      },
+      "before": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "docs": {
+         "t": [
+          "number"
+         ]
+        },
+        "text": {
+         "t": [
+          "number"
+         ]
+        },
+        "people": {
+         "t": [
+          "number"
+         ]
+        },
+        "emails": {
+         "t": [
+          "number"
+         ]
+        },
+        "phones": {
+         "t": [
+          "number"
+         ]
+        },
+        "findings": {
+         "t": [
+          "object"
+         ],
+         "keys": {
+          "crit": {
+           "t": [
+            "number"
+           ]
+          },
+          "high": {
+           "t": [
+            "number"
+           ]
+          },
+          "warn": {
+           "t": [
+            "number"
+           ]
+          },
+          "low": {
+           "t": [
+            "number"
+           ]
+          },
+          "info": {
+           "t": [
+            "number"
+           ]
+          }
+         }
+        },
+        "findings_total": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      },
+      "after": {
+       "t": [
+        "object"
+       ],
+       "keys": {
+        "docs": {
+         "t": [
+          "number"
+         ]
+        },
+        "text": {
+         "t": [
+          "number"
+         ]
+        },
+        "people": {
+         "t": [
+          "number"
+         ]
+        },
+        "emails": {
+         "t": [
+          "number"
+         ]
+        },
+        "phones": {
+         "t": [
+          "number"
+         ]
+        },
+        "findings": {
+         "t": [
+          "object"
+         ],
+         "keys": {
+          "crit": {
+           "t": [
+            "number"
+           ]
+          },
+          "high": {
+           "t": [
+            "number"
+           ]
+          },
+          "warn": {
+           "t": [
+            "number"
+           ]
+          },
+          "low": {
+           "t": [
+            "number"
+           ]
+          },
+          "info": {
+           "t": [
+            "number"
+           ]
+          }
+         }
+        },
+        "findings_total": {
+         "t": [
+          "number"
+         ]
+        }
+       }
+      },
+      "new_findings": {
+       "t": [
+        "number"
+       ]
+      },
+      "new_ids": {
+       "t": [
+        "array"
+       ],
+       "items": null
+      },
+      "removed_findings": {
+       "t": [
+        "number"
+       ]
+      },
+      "new_events": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    }
+   }
+  },
+  "reextract_cancel": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "cancelled": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
   "scan_control": {
    "t": [
     "object"

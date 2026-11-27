@@ -189,6 +189,12 @@ const stp = call("project_snapshot", { id: "agro" }).scans.slice(-1)[0];
 put("scan_start", call("scan_start", { project: "agro", profile: "passive", resume_from: stp.id }));
 B._ff(80);
 off();
+// Re-analysis of stored documents: status, a synchronous run (wait), cancel without a job.
+B._reextractAge("contoso", [1, 2, 3, 5]);
+put("reextract_status", call("reextract_status", { project: "contoso" }));
+put("project_reextract", call("project_reextract", { project: "contoso", mode: "stored_and_missing", ids: [1, 2, 3, 5], wait: true }));
+put("reextract_status", call("reextract_status", { project: "contoso" }));
+put("reextract_cancel", call("reextract_cancel", { project: "contoso" }));
 put("scan_control", call("scan_control", { kind: "stage", id: "network", action: "pause" }));
 for (const e of evs) out.events[e.type] = out.events[e.type] ? merge(out.events[e.type], shape(e)) : shape(e);
 // Quick tools without a project and the scan queue

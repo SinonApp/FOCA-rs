@@ -280,8 +280,9 @@
     const activeSub = sc.activeTargets.length
       ? `${esc(F.t("app.full_profile", "Профиль «Полный»:"))} ${sc.activeTargets.join(", ")}`
       : F.t("app.no_network_targets_external", "Нет сетевых целей: только внешние источники");
+    const rx = F.reextract && !scan.running ? F.reextract : null;
     return `
-      ${otherCard}${scanCard}
+      ${otherCard}${rx ? rx.bannerHtml() : ""}${scanCard}
       <div class="card pad tap" data-act="go:/p/findings"
         style="display:flex;align-items:center;gap:16px;margin-top:10px">
         <div style="position:relative;width:76px;height:76px;flex:none"><svg viewBox="0 0 76 76"
@@ -300,6 +301,7 @@
         <div class="card stat tap"
           data-act="go:/p/data/hosts"><div class="k">${esc(F.t("app.hosts", "Хосты"))}</div><div class="v">${counts.hosts.total}</div><div class="d">${counts.hosts.internal} ${esc(F.t("app.internal", "внутренних"))}</div></div>
       </div>
+      ${rx ? rx.overviewRow() : ""}
       ${ui.secH(F.t("menu.scope", "Скоуп"), "", `<button class="sec-a" data-act="go:/p/scope">${esc(F.t("app.edit", "Изменить"))}</button>`)}
       <div class="list">
         ${ui.row({ lead: ui.leadIcon("users"), title: esc(sc.client || F.project.client || F.t("app.client_not_specified", "Заказчик не указан")), sub: sc.basis ? esc(sc.basis) : F.t("app.no_authorization_note", "Заметка о разрешении не указана"), act: "go:/p/scope" })}

@@ -1022,6 +1022,10 @@
     // Built-in reference case (docs/API.md → demo_case_import): same result and import events as import_offline.
     demo_case_import: (o = {}) => run("demo_case_import", o),
     import_cancel: () => run("import_cancel", {}),
+    // Re-analysis of stored documents (docs/API.md → project_reextract): background job, `reextract` events.
+    project_reextract: (o = {}) => run("project_reextract", { project: cur(), ...o }),
+    reextract_status: (o = {}) => run("reextract_status", { project: cur(), ...o }),
+    reextract_cancel: (o = {}) => run("reextract_cancel", { project: cur(), ...o }),
     docs_search: (q, o = {}) => run("docs_search", { project: cur(), q, ...o }),
     doc_get: id => run("doc_get", { project: cur(), id: +id }),
     rules_get: () => run("rules_get", { project: cur() }),

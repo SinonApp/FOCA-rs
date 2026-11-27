@@ -33,6 +33,7 @@ const LAST_KEY: &str = "reextract.last";
 pub(crate) const BUSY_SCAN: &str =
     "Идёт скан: повторный анализ документов можно запустить после его завершения";
 pub(crate) const BUSY_RUN: &str = "Повторный анализ документов уже идёт";
+pub(crate) const NOTHING: &str = "Все документы уже разобраны текущей версией";
 
 /// A running re-analysis of one project.
 pub(crate) struct ReJob {
@@ -225,7 +226,7 @@ impl Engine {
         Ok(json!({ "cancelled": tok.is_some() }))
     }
 
-    /// `project_reextract { project, mode: "stored" | "stored_and_missing", ids?, restart?, wait? }`.
+    /// `project_reextract { project, mode: "stored" | "stored_and_missing", ids?, outdated?, restart?, wait? }`.
     /// Starts the background run and returns `{ started, resumed, total }`; with `wait: true`
     /// (CLI, tests) it returns the final summary instead.
     pub(crate) async fn project_reextract(&self, a: &Value) -> CmdResult {
@@ -244,7 +245,25 @@ impl Engine {
             "stored" => "stored",
             m => return Err(CmdError::new("bad_args", format!("mode: {m}"))),
         };
-        let ids = arg_ids(a, "ids");
+        let mut ids = arg_ids(a, "ids");
+        // `outdated: true`: only documents an older extraction revision analysed
+        if ids.is_empty() && a.get("outdated").and_then(Value::as_bool) == Some(true) {
+            let g = lock(&db);
+            let old: BTreeSet<u64> = g
+                .doc_revs()?
+                .into_iter()
+                .filter(|r| r.rev < FORMAT_REV)
+                .map(|r| r.id)
+                .collect();
+            ids = candidates(g.documents(false)?, &[])
+                .into_iter()
+                .map(|d| d.doc.id)
+                .filter(|id| old.contains(id))
+                .collect();
+            if ids.is_empty() {
+                return Err(CmdError::new("nothing", NOTHING));
+            }
+        }
         let restart = a.get("restart").and_then(Value::as_bool).unwrap_or(false);
         let (run, resumed) = {
             let g = lock(&db);
