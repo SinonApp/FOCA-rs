@@ -6,7 +6,7 @@
 
 use foca_core::{DocFormat, Metadata};
 
-use super::irb;
+use super::{image, irb};
 use crate::formats::media::indesign::xmp_packets;
 use crate::util::{clean_str, decode_text, truncate};
 use crate::{xmp, Ctx, MetaError};
@@ -70,7 +70,11 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
         pos += 4;
         let ir_end = pos.saturating_add(ir_len as usize).min(b.len());
         if let Some(section) = b.get(pos..ir_end) {
-            xmp_applied = irb::apply(&mut meta, section, ctx, "8BIM:Thumbnail")?;
+            let res = irb::apply(&mut meta, section, ctx, "8BIM:Thumbnail")?;
+            xmp_applied = res.xmp_seen;
+            for tiff in res.exif {
+                image::apply_exif_tiff(&mut meta, tiff, ctx);
+            }
         }
         pos = ir_end;
     }

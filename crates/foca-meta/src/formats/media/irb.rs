@@ -6,7 +6,6 @@
 
 use foca_core::{DocFormat, Metadata, PersonRole};
 
-use super::image;
 use crate::util::{clean_str, decode_text, truncate};
 use crate::{xmp, Ctx, MetaError};
 
@@ -81,14 +80,23 @@ pub(crate) fn blocks(b: &[u8]) -> Vec<Resource<'_>> {
     out
 }
 
+/// What a resource section left for the caller.
+pub(crate) struct Applied {
+    /// An XMP packet was found and applied.
+    pub xmp_seen: bool,
+    /// Raw TIFF/EXIF blocks (resources 0x0422/0x0423) for the EXIF parser.
+    pub exif: Vec<Vec<u8>>,
+}
+
 /// Applies all resources of a section; `thumb_label` names the embedded thumbnail child.
 pub(crate) fn apply(
     meta: &mut Metadata,
     section: &[u8],
     ctx: &Ctx,
     thumb_label: &str,
-) -> Result<bool, MetaError> {
+) -> Result<Applied, MetaError> {
     let mut xmp_seen = false;
+    let mut exif = Vec::new();
     let mut paths: Vec<String> = Vec::new();
     for r in blocks(section) {
         match r.id {
@@ -149,7 +157,9 @@ pub(crate) fn apply(
             }
             0x0422 | 0x0423 => {
                 let tiff = r.data.strip_prefix(b"Exif\0\0").unwrap_or(r.data);
-                image::apply_exif_tiff(meta, tiff.to_vec(), ctx);
+                if exif.len() < 4 {
+                    exif.push(tiff.to_vec());
+                }
             }
             0x040C | 0x0409 => {
                 // 28-byte thumbnail header, then a JFIF JPEG
@@ -176,7 +186,7 @@ pub(crate) fn apply(
             truncate(&paths.join("; "), 2048),
         );
     }
-    Ok(xmp_seen)
+    Ok(Applied { xmp_seen, exif })
 }
 
 /// VersionInfo (0x0421): version, has-real-merged flag, writer and reader names.

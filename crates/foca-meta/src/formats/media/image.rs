@@ -446,7 +446,10 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
                         xmp::apply(&mut meta, &map, "xmp");
                     }
                     0xED if data.starts_with(b"Photoshop 3.0\0") => {
-                        super::irb::apply(&mut meta, &data[14..], ctx, "8BIM:Thumbnail")?;
+                        let res = super::irb::apply(&mut meta, &data[14..], ctx, "8BIM:Thumbnail")?;
+                        for tiff in res.exif {
+                            apply_exif_tiff(&mut meta, tiff, ctx);
+                        }
                     }
                     0xFE => {
                         if let Some(c) = clean_str(&crate::util::decode_text(data)) {
@@ -463,8 +466,8 @@ pub fn extract(b: &[u8], format: DocFormat, ctx: &Ctx) -> Result<Metadata, MetaE
         DocFormat::Png => png_chunks(&mut meta, b, ctx)?,
         DocFormat::Tiff => {
             // TIFF-based RAW (NEF, ARW, DNG, PEF, ...) and multi-page TIFF: JPEG previews
-            super::raw::tiff_previews(&mut meta, b, ctx);
-            super::raw::finish_previews(&mut meta);
+            super::previews::tiff_previews(&mut meta, b);
+            super::previews::finish_previews(&mut meta);
             if ex.as_ref().is_some_and(|e| {
                 e.get_field(Tag(Context::Tiff, 0xC612), In::PRIMARY)
                     .is_some()

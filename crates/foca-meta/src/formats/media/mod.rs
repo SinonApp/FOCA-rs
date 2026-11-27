@@ -9,6 +9,7 @@ pub(crate) mod irb;
 pub(crate) mod isobmff;
 pub(crate) mod mp3;
 pub(crate) mod postscript;
+pub(crate) mod previews;
 pub(crate) mod psd;
 pub(crate) mod raster;
 pub(crate) mod raw;

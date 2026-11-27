@@ -8,15 +8,14 @@
 //! Layouts follow ExifTool `CanonRaw.pm`, `Canon.pm` (CR3), `FujiFilm.pm`, `MinoltaRaw.pm`,
 //! `SigmaRaw.pm` and `PanasonicRaw.pm` (GPL-1+/Artistic).
 
-use foca_core::{Camera, DocFormat, Gps, Metadata, PersonRole, Thumbnail};
+use foca_core::{Camera, DocFormat, Gps, Metadata, PersonRole};
 
 use super::image;
 use super::image_extra::{self, Ifd};
+use super::previews::{self, MAX_PREVIEW};
 use crate::util::{clean_str, rd_u32le, truncate, utf16le};
 use crate::{Ctx, MetaError};
 
-/// Maximum size of one preview JPEG taken from a RAW file.
-const MAX_PREVIEW: usize = 32 << 20;
 /// Canon CR3 metadata box UUID.
 const CR3_UUID: [u8; 16] = [
     0x85, 0xC0, 0xB6, 0x87, 0x82, 0x0F, 0x11, 0xE0, 0x81, 0x11, 0xF4, 0xCE, 0x46, 0x2B, 0x6A, 0x48,
@@ -92,9 +91,11 @@ pub fn extract(b: &[u8], ctx: &Ctx) -> Result<Metadata, MetaError> {
                 t[2..4].copy_from_slice(&[42, 0]);
             }
         }
-        tiff_previews(&mut meta, &t, ctx);
+        for jpg in previews::tiff_previews(&mut meta, &t) {
+            merge_jpeg(&mut meta, jpg, ctx);
+        }
     }
-    finish_previews(&mut meta);
+    previews::finish_previews(&mut meta);
     image_extra::xmp_devices(&mut meta);
     Ok(meta)
 }
@@ -183,7 +184,7 @@ fn raf(meta: &mut Metadata, b: &[u8], ctx: &Ctx) -> Result<(), MetaError> {
     let (off, len) = (off as usize, (len as usize).min(MAX_PREVIEW));
     if let Some(jpg) = off.checked_add(len).and_then(|e| b.get(off..e)) {
         merge_jpeg(meta, jpg, ctx);
-        add_preview(meta, jpg);
+        previews::add_preview(meta, jpg);
     }
     Ok(())
 }
@@ -275,7 +276,7 @@ fn x3f(meta: &mut Metadata, b: &[u8]) {
             }
             b"IMA2" | b"IMAG" if sec.starts_with(b"SECi") && rd_u32le(sec, 12) == Some(18) => {
                 if let Some(jpg) = sec.get(28..).filter(|j| j.starts_with(&[0xFF, 0xD8])) {
-                    add_preview(meta, &jpg[..jpg.len().min(MAX_PREVIEW)]);
+                    previews::add_preview(meta, &jpg[..jpg.len().min(MAX_PREVIEW)]);
                 }
             }
             _ => {}
@@ -349,7 +350,7 @@ fn crw(meta: &mut Metadata, b: &[u8]) {
                         meta.created = crate::util::unix_to_iso(i64::from(t));
                     }
                 }
-                0x2007 => add_preview(meta, &data[..data.len().min(MAX_PREVIEW)]),
+                0x2007 => previews::add_preview(meta, &data[..data.len().min(MAX_PREVIEW)]),
                 k if matches!(k & 0x3800, 0x2800 | 0x3000) && depth < 4 => {
                     stack.push((s, s + data.len(), depth + 1))
                 }
@@ -363,18 +364,6 @@ fn crw(meta: &mut Metadata, b: &[u8]) {
     if cam != Camera::default() {
         meta.camera = Some(cam);
     }
-}
-
-/// Entries of the first IFD of a small TIFF block (CR3 `CMTn`).
-fn first_ifd(t: &[u8]) -> Option<(Ifd<'_>, usize)> {
-    let le = match t.get(0..2)? {
-        b"II" => true,
-        b"MM" => false,
-        _ => return None,
-    };
-    let ifd = Ifd { base: t, le };
-    let first = ifd.u32(4)? as usize;
-    Some((ifd, first))
 }
 
 fn rationals(ifd: &Ifd, v: &[u8]) -> Vec<f64> {
@@ -443,7 +432,7 @@ fn cr3(meta: &mut Metadata, b: &[u8], ctx: &Ctx) {
                 image::apply_exif_tiff(meta, t.to_vec(), ctx);
             }
             b"CMT2" => {
-                let Some((ifd, at)) = first_ifd(t) else {
+                let Some((ifd, at)) = previews::first_ifd(t) else {
                     continue;
                 };
                 let cam = meta.camera.get_or_insert_with(Camera::default);
@@ -464,12 +453,12 @@ fn cr3(meta: &mut Metadata, b: &[u8], ctx: &Ctx) {
                 }
             }
             b"CMT3" => {
-                if let Some((ifd, at)) = first_ifd(t) {
+                if let Some((ifd, at)) = previews::first_ifd(t) {
                     image_extra::maker_note(meta, "canon", t, at, ifd.le);
                 }
             }
             b"CMT4" => {
-                let Some((ifd, at)) = first_ifd(t) else {
+                let Some((ifd, at)) = previews::first_ifd(t) else {
                     continue;
                 };
                 let (mut lat, mut lon, mut alt) = (None, None, None);
@@ -515,119 +504,8 @@ fn cr3(meta: &mut Metadata, b: &[u8], ctx: &Ctx) {
         meta.add_person(&o, PersonRole::Owner, "exif:CameraOwnerName");
     }
     for p in previews {
-        add_preview(meta, &p[..p.len().min(MAX_PREVIEW)]);
+        previews::add_preview(meta, &p[..p.len().min(MAX_PREVIEW)]);
     }
-}
-
-/// Collects JPEG previews of a TIFF-based RAW: IFD chain and SubIFDs (JPEGInterchangeFormat or
-/// a single JPEG strip) and the Panasonic `JpgFromRaw` (0x002E) whose EXIF is merged.
-pub(crate) fn tiff_previews(meta: &mut Metadata, t: &[u8], ctx: &Ctx) {
-    let Some((ifd, first)) = first_ifd(t) else {
-        return;
-    };
-    let mut queue = vec![first];
-    let mut seen = Vec::new();
-    while let Some(at) = queue.pop() {
-        if at == 0 || seen.contains(&at) || seen.len() >= 32 {
-            continue;
-        }
-        seen.push(at);
-        let entries = ifd.entries(at);
-        let mut jpeg_off = None;
-        let mut jpeg_len = None;
-        let mut strip = None;
-        let mut strip_len = None;
-        let mut compression = 0;
-        for (tag, ty, count, v) in &entries {
-            match tag {
-                0x0201 => jpeg_off = ifd.num(*ty, v),
-                0x0202 => jpeg_len = ifd.num(*ty, v),
-                0x0111 if *count == 1 => strip = ifd.num(*ty, v),
-                0x0117 if *count == 1 => strip_len = ifd.num(*ty, v),
-                0x0103 => compression = ifd.num(*ty, v).unwrap_or(0),
-                0x014A => {
-                    for c in v.as_chunks::<4>().0.iter().take(16) {
-                        if let Some(o) = ifd.u32_of(c) {
-                            queue.push(o as usize);
-                        }
-                    }
-                }
-                0x002E if v.starts_with(&[0xFF, 0xD8]) => {
-                    merge_jpeg(meta, v, ctx);
-                    add_preview(meta, v);
-                }
-                _ => {}
-            }
-        }
-        let mut take = |o: Option<u64>, l: Option<u64>| {
-            if let (Some(o), Some(l)) = (o, l) {
-                let (o, l) = (o as usize, (l as usize).min(MAX_PREVIEW));
-                if let Some(j) = o.checked_add(l).and_then(|e| t.get(o..e)) {
-                    if j.starts_with(&[0xFF, 0xD8]) {
-                        add_preview(meta, j);
-                    }
-                }
-            }
-        };
-        take(jpeg_off, jpeg_len);
-        if matches!(compression, 6 | 7) {
-            take(strip, strip_len);
-        }
-        // next IFD in the chain
-        let n = ifd.u16(at).unwrap_or(0) as usize;
-        if let Some(next) = ifd.u32(at + 2 + n * 12) {
-            queue.push(next as usize);
-        }
-    }
-}
-
-/// Previews found so far, kept in `fields` as sizes until `finish_previews`.
-fn add_preview(meta: &mut Metadata, jpg: &[u8]) {
-    if !jpg.starts_with(&[0xFF, 0xD8]) {
-        return;
-    }
-    let n = meta.stats.entry("previews".into()).or_insert(0);
-    *n += 1;
-    let largest = meta
-        .fields
-        .get("raw:preview_bytes")
-        .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(0);
-    if jpg.len() > largest {
-        meta.fields
-            .insert("raw:preview_bytes".into(), jpg.len().to_string());
-        PREVIEW.with(|p| *p.borrow_mut() = jpg.to_vec());
-    }
-    match &meta.thumbnail {
-        Some(t) if t.data.len() <= jpg.len() => {}
-        _ => {
-            meta.thumbnail = Some(Thumbnail {
-                mime: "image/jpeg".into(),
-                data: jpg.to_vec(),
-                differs: None,
-            });
-        }
-    }
-}
-
-thread_local! {
-    /// The largest preview of the RAW file being parsed (compared with the thumbnail).
-    static PREVIEW: std::cell::RefCell<Vec<u8>> = const { std::cell::RefCell::new(Vec::new()) };
-}
-
-/// Compares the smallest JPEG (thumbnail) with the largest preview; always call it after
-/// collecting previews (it clears the per-thread preview buffer).
-pub(crate) fn finish_previews(meta: &mut Metadata) {
-    let preview = PREVIEW.with(|p| std::mem::take(&mut *p.borrow_mut()));
-    let Some(t) = meta.thumbnail.as_mut() else {
-        return;
-    };
-    if preview.is_empty() || preview.len() == t.data.len() || t.differs.is_some() {
-        return;
-    }
-    t.differs = std::panic::catch_unwind(|| crate::thumbcmp::thumbnail_differs(&preview, &t.data))
-        .ok()
-        .flatten();
 }
 
 #[cfg(test)]

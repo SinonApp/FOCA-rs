@@ -424,7 +424,7 @@ pub(crate) struct Ifd<'a> {
     pub le: bool,
 }
 
-impl Ifd<'_> {
+impl<'a> Ifd<'a> {
     pub(crate) fn u16(&self, o: usize) -> Option<u16> {
         if self.le {
             rd_u16le(self.base, o)
@@ -444,7 +444,7 @@ impl Ifd<'_> {
     }
 
     /// Entries `(tag, type, count, value bytes)` of the IFD at `at`.
-    pub(crate) fn entries(&self, at: usize) -> Vec<(u16, u16, u32, &[u8])> {
+    pub(crate) fn entries(&self, at: usize) -> Vec<(u16, u16, u32, &'a [u8])> {
         let mut out = Vec::new();
         let n = self.u16(at).unwrap_or(0).min(512) as usize;
         for i in 0..n {
