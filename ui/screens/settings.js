@@ -438,7 +438,7 @@
         ${item("theme", "", F.t("settings.appearance", "Внешний вид"), F.t("settings.appearance_sub", { theme: THEME_L()[state.look.theme] || state.look.theme, lang: LANG_L()[langLook()] || langLook(), fs: Math.round(curFs() * 100) }), "/settings/appearance")}
         ${item("bug", "", F.t("settings.debug", "Отладка"), F.t("settings.debug_sub", "Журналы, запросы, сбои, устройство"), "/settings/debug")}
         ${item("info", "var(--accent)", F.t("settings.help", "Помощь"), F.t("settings.help_sub", "Офлайн-справка и глоссарий"), "/help")}
-        ${item("info", "", F.t("settings.about", "О программе"), `FOCA-rs ${aboutMeta.version || "2.0.0-beta.3"} · GPL-3.0`, "/settings/about", F.betaChip ? F.betaChip() : "")}
+        ${item("info", "", F.t("settings.about", "О программе"), `FOCA-rs ${aboutMeta.version || "2.0.0-beta.4"} · GPL-3.0`, "/settings/about", F.betaChip ? F.betaChip() : "")}
       </div>`;
   }
   F.route("/settings", {
@@ -917,7 +917,7 @@
         `Safari ${sf.replace(/\.0$/, "")} · macOS`,
         `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/${sf} Safari/605.1.15`,
       ],
-      honest: [F.t("settings.ua_honest", "Честный FOCA-rs"), "FOCA-rs/" + (F.APP_VERSION || "2.0.0-beta.3")],
+      honest: [F.t("settings.ua_honest", "Честный FOCA-rs"), "FOCA-rs/" + (F.APP_VERSION || "2.0.0-beta.4")],
       custom: [F.t("settings.custom", "Свой"), custom || ""],
     }[id];
   }
@@ -2584,7 +2584,7 @@
   // ================= ABOUT & LICENSES =================
   const CHANGES = [
     [
-      "2.0.0-beta.3",
+      "2.0.0-beta.4",
       "2026-11-27",
       [
         "Облачный ИИ с живым списком моделей у 10 провайдеров и настройками рассуждений (Thinking)",
@@ -2604,10 +2604,10 @@
       ],
     ],
   ];
-  // Texts are keyed by the release without the pre-release suffix (2.0.0-beta.3 → chg_2_0_0_*).
+  // Texts are keyed by the release without the pre-release suffix (2.0.0-beta.4 → chg_2_0_0_*).
   const chgL = (v, i, x) => F.t(`settings.chg_${v.split("-")[0].replace(/\./g, "_")}_${i}`, x);
   const aboutMeta = (F.state.aboutMeta = F.state.aboutMeta || {
-    version: "2.0.0-beta.3",
+    version: "2.0.0-beta.4",
     flavor: "foss",
     loaded: false,
   });

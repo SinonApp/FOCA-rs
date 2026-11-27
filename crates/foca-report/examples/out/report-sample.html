@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="generator" content="FOCA-rs 2.0.0-beta.3">
+<meta name="generator" content="FOCA-rs 2.0.0-beta.4">
 <meta name="referrer" content="no-referrer">
 <title>Отчёт о тестировании на проникновение - contoso.example</title>
 <style>
@@ -100,8 +100,8 @@ footer.gen { margin-top: 2em; border-top: 1px solid var(--line); padding-top: 6p
 <nav class="toc"><h2>Содержание</h2><ol><li><a href="#summary">Резюме для руководства</a></li><li><a href="#scope">Скоуп</a></li><li><a href="#findings">Находки</a></li><li><a href="#fixed">Исправленные находки</a></li><li><a href="#people">Люди</a></li><li><a href="#infra">Инфраструктура</a></li><li><a href="#docs">Документы</a></li><li><a href="#log">Журнал запросов</a></li><li><a href="#appx">Приложения</a></li></ol></nav>
 <section id="summary">
 <h2>Резюме для руководства</h2>
-<div class="riskbox"><div class="risk crit"><div class="s">Общий уровень риска</div><div class="n">100<small>/100</small></div><div class="l">Критический</div><div class="s">по находкам отчёта</div></div><div class="chart"><h4>Находки по важности</h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 124" role="img" aria-label="Находки по важности"><text x="0" y="14" font-size="11" fill="#334155">Критический</text><rect x="96" y="3" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="3" width="21.0" height="14" rx="3" fill="#b91c1c"/><text x="324" y="14" font-size="11" font-weight="700" fill="#0f172a">4</text><text x="0" y="38" font-size="11" fill="#334155">Высокий</text><rect x="96" y="27" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="27" width="131.0" height="14" rx="3" fill="#c2410c"/><text x="324" y="38" font-size="11" font-weight="700" fill="#0f172a">25</text><text x="0" y="62" font-size="11" fill="#334155">Средний</text><rect x="96" y="51" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="51" width="220.0" height="14" rx="3" fill="#a16207"/><text x="324" y="62" font-size="11" font-weight="700" fill="#0f172a">42</text><text x="0" y="86" font-size="11" fill="#334155">Низкий</text><rect x="96" y="75" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="75" width="146.7" height="14" rx="3" fill="#1d4ed8"/><text x="324" y="86" font-size="11" font-weight="700" fill="#0f172a">28</text><text x="0" y="110" font-size="11" fill="#334155">Инфо</text><rect x="96" y="99" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="99" width="15.7" height="14" rx="3" fill="#475569"/><text x="324" y="110" font-size="11" font-weight="700" fill="#0f172a">3</text></svg></div></div>
-<p>В ходе работ выявлено находок: <b>102</b>; из них критических: 4, высоких: 25. Исправлено к моменту отчёта: <b>1</b>.</p>
+<div class="riskbox"><div class="risk crit"><div class="s">Общий уровень риска</div><div class="n">100<small>/100</small></div><div class="l">Критический</div><div class="s">по находкам отчёта</div></div><div class="chart"><h4>Находки по важности</h4><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 124" role="img" aria-label="Находки по важности"><text x="0" y="14" font-size="11" fill="#334155">Критический</text><rect x="96" y="3" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="3" width="21.5" height="14" rx="3" fill="#b91c1c"/><text x="324" y="14" font-size="11" font-weight="700" fill="#0f172a">4</text><text x="0" y="38" font-size="11" fill="#334155">Высокий</text><rect x="96" y="27" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="27" width="139.5" height="14" rx="3" fill="#c2410c"/><text x="324" y="38" font-size="11" font-weight="700" fill="#0f172a">26</text><text x="0" y="62" font-size="11" fill="#334155">Средний</text><rect x="96" y="51" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="51" width="220.0" height="14" rx="3" fill="#a16207"/><text x="324" y="62" font-size="11" font-weight="700" fill="#0f172a">41</text><text x="0" y="86" font-size="11" fill="#334155">Низкий</text><rect x="96" y="75" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="75" width="150.2" height="14" rx="3" fill="#1d4ed8"/><text x="324" y="86" font-size="11" font-weight="700" fill="#0f172a">28</text><text x="0" y="110" font-size="11" fill="#334155">Инфо</text><rect x="96" y="99" width="220" height="14" rx="3" fill="#f1f5f9"/><rect x="96" y="99" width="16.1" height="14" rx="3" fill="#475569"/><text x="324" y="110" font-size="11" font-weight="700" fill="#0f172a">3</text></svg></div></div>
+<p>В ходе работ выявлено находок: <b>102</b>; из них критических: 4, высоких: 26. Исправлено к моменту отчёта: <b>1</b>.</p>
 <h4>Наиболее значимые</h4><ul><li><span class="badge crit">Критический</span> Плохое замазывание: текст под закраской читается (redacted.pdf) <span class="muted">(files.contoso.example)</span></li><li><span class="badge crit">Критический</span> Ссылки на облачные пространства и URL с токенами в personal.docx <span class="muted">(files.contoso.example)</span></li><li><span class="badge crit">Критический</span> Пароль в строке подключения <span class="muted">(files.contoso.example)</span></li><li><span class="badge crit">Критический</span> ICA-файл с паролем в открытом виде (buh.ica) <span class="muted">(files.contoso.example)</span></li><li><span class="badge high">Высокий</span> Внутренние почтовые серверы и адреса в заголовках письма (budget.msg) <span class="muted">(files.contoso.example)</span></li></ul>
 <p><b>Рекомендуется устранить критические находки в течение 7 дней.</b></p>
 <div class="grid2"><div><h4>Документы по типам</h4><table><thead><tr><th>Тип</th><th class="num">Число</th></tr></thead><tbody>
@@ -277,19 +277,8 @@ MAC: 00:15:5d:01:02:03</pre>
 <p class="small"><b>MITRE ATT&amp;CK v20:</b> T1592.001 · Gather Victim Host Information: Hardware</p>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_host_mac</span>; Поля: lnk; Документы: network.lnk</div>
 </article>
-<article class="finding high" id="f-1844032805376125">
-<h3><span class="id">F-8</span><span>Пароль в тексте документа · schedule.xlsx</span> <span class="badge high">Высокий</span></h3>
-<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
-<h4>Описание</h4><p class="txt">В публично доступном документе «schedule.xlsx» найден секрет (Пароль в тексте документа): текст, строка 4.</p>
-<h4>Доказательство</h4><pre class="ev">текст, строка 4:
-Provider=SQLOLEDB.1;Password=Bi••••••023;User ID=billing_ro;Data Source=SRV-SQL02;Initial Catalog=billing</pre>
-<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
-<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
-<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
-<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 4; Документы: schedule.xlsx</div>
-</article>
 <article class="finding high" id="f-2327360552150180">
-<h3><span class="id">F-9</span><span>Ярлык LNK раскрывает имя компьютера и MAC-адрес (backup.zip)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-8</span><span>Ярлык LNK раскрывает имя компьютера и MAC-адрес (backup.zip)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Ярлык Windows хранит NetBIOS-имя компьютера, MAC-адрес сетевой карты и серийный номер тома, на котором он создан.</p>
 <h4>Доказательство</h4><pre class="ev">Компьютер: ws-042
@@ -302,7 +291,7 @@ MAC: 0a:00:27:00:00:2a
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_host_mac</span>; Поля: lnk; Документы: backup.zip</div>
 </article>
 <article class="finding high" id="f-2642145922110628">
-<h3><span class="id">F-10</span><span>Удалённый текст восстанавливается из старых ревизий PDF (revisions.pdf)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-9</span><span>Удалённый текст восстанавливается из старых ревизий PDF (revisions.pdf)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">PDF сохранён инкрементально: в предыдущих ревизиях остался текст, удалённый из последней версии.</p>
 <h4>Доказательство</h4><pre class="ev">ревизия 2: «Salary of Ivan Petrenko: 1000 UAH»</pre>
@@ -312,7 +301,7 @@ MAC: 0a:00:27:00:00:2a
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_removed_text</span>; Поля: pdf_revisions; Документы: revisions.pdf</div>
 </article>
 <article class="finding high" id="f-3797108615332530">
-<h3><span class="id">F-11</span><span>Номер банковской карты в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-10</span><span>Номер банковской карты в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
 <h4>Доказательство</h4><pre class="ev">Картка ••••••••••11
@@ -323,7 +312,7 @@ Visa</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 5; Документы: personal.docx</div>
 </article>
 <article class="finding high" id="f-4093912777283590">
-<h3><span class="id">F-12</span><span>РНОКПП (ІПН) физлица в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-11</span><span>РНОКПП (ІПН) физлица в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
 <h4>Доказательство</h4><pre class="ev">Отримувач: Іван Петренко, РНОКПП ••••••••70</pre>
@@ -333,7 +322,7 @@ Visa</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 3; Документы: personal.docx</div>
 </article>
 <article class="finding high" id="f-4395653510081468">
-<h3><span class="id">F-13</span><span>Миниатюра EXIF может отличаться от фото (photo.jpg)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-12</span><span>Миниатюра EXIF может отличаться от фото (photo.jpg)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 5.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Фото отредактировано в графическом редакторе, но встроенная миниатюра EXIF сохранена: она может показывать исходный (необрезанный, незамазанный) кадр.</p>
 <h4>Доказательство</h4><pre class="ev">Apple iPhone 13 Pro
@@ -344,7 +333,7 @@ Visa</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">thumbnail</span>; Поля: thumbnail; Документы: photo.jpg</div>
 </article>
 <article class="finding high" id="f-4515652483894158">
-<h3><span class="id">F-14</span><span>RDP-файл с сохранённым паролем (SRV-TS01.rdp)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-13</span><span>RDP-файл с сохранённым паролем (SRV-TS01.rdp)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В публично доступном документе «SRV-TS01.rdp» найден секрет (Сохранённый пароль в .rdp-файле): поле rdp:password 51.</p>
 <h4>Доказательство</h4><pre class="ev">поле rdp:password 51:
@@ -355,7 +344,7 @@ rdp:password 51: 01••••••000</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">rdp-password</span>; Поля: поле rdp:password 51; Документы: SRV-TS01.rdp</div>
 </article>
 <article class="finding high" id="f-4521026984896936">
-<h3><span class="id">F-15</span><span>Удалённый текст восстанавливается из старых ревизий PDF (signed_modified.pdf)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-14</span><span>Удалённый текст восстанавливается из старых ревизий PDF (signed_modified.pdf)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">PDF сохранён инкрементально: в предыдущих ревизиях остался текст, удалённый из последней версии.</p>
 <h4>Доказательство</h4><pre class="ev">ревизия 2: «Contract No 42 between Example LLC and Ivan Petrenko»</pre>
@@ -365,7 +354,7 @@ rdp:password 51: 01••••••000</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.pdf_removed_text</span>; Поля: pdf_revisions; Документы: signed_modified.pdf</div>
 </article>
 <article class="finding high" id="f-4617155266903053">
-<h3><span class="id">F-16</span><span>Пароль в тексте документа · objstm.pdf</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-15</span><span>Пароль в тексте документа · objstm.pdf</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В публично доступном документе «objstm.pdf» найден секрет (Пароль в тексте документа): текст, строка 1.</p>
 <h4>Доказательство</h4><pre class="ev">текст, строка 1:
@@ -376,7 +365,7 @@ Config: password=Wi••••••24! host=dev.contoso.example</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 1; Документы: objstm.pdf</div>
 </article>
 <article class="finding high" id="f-4643423553488658">
-<h3><span class="id">F-17</span><span>Скрытый текст и скрытые строки/столбцы в hidden.xlsx</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-16</span><span>Скрытый текст и скрытые строки/столбцы в hidden.xlsx</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Документ содержит скрытое форматирование (w:vanish) или скрытые строки и столбцы таблицы: при просмотре их не видно, но данные остаются в файле.</p>
 <h4>Доказательство</h4><pre class="ev">скрытые строки Payroll!3:4: «Ivan Petrenko | 12000 | Bonus fund»
@@ -387,7 +376,7 @@ Config: password=Wi••••••24! host=dev.contoso.example</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.hidden_content</span>; Поля: hidden_content; Документы: hidden.xlsx</div>
 </article>
 <article class="finding high" id="f-5244044064978664">
-<h3><span class="id">F-18</span><span>Номер счёта IBAN в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-17</span><span>Номер счёта IBAN в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
 <h4>Доказательство</h4><pre class="ev">IBAN ••••••••••01
@@ -398,7 +387,7 @@ Config: password=Wi••••••24! host=dev.contoso.example</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 4; Документы: personal.docx</div>
 </article>
 <article class="finding high" id="f-5470257240133855">
-<h3><span class="id">F-19</span><span>Документ изменён после подписания (signed_modified.pdf)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-18</span><span>Документ изменён после подписания (signed_modified.pdf)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">После байтов, покрытых подписью (/ByteRange), в файл дописаны изменения: видимое содержимое может отличаться от подписанного.</p>
 <h4>Доказательство</h4><pre class="ev">Подписант: Іван Петренко
@@ -416,7 +405,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.modified_after_signing</span>; Поля: signatures; Документы: signed_modified.pdf</div>
 </article>
 <article class="finding high" id="f-5838019996286731">
-<h3><span class="id">F-20</span><span>Архив с опасными путями (Zip-Slip): backup.zip</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-19</span><span>Архив с опасными путями (Zip-Slip): backup.zip</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Имена файлов в архиве выходят за пределы папки распаковки (../, абсолютные пути): архив враждебен или повреждён.</p>
 <h4>Доказательство</h4><pre class="ev">../../evil.txt</pre>
@@ -424,6 +413,16 @@ E-mail: ivan.petrenko@example.com
 <h4>Рекомендация</h4><p class="txt">Не распаковывать архив; проверить источник файла.</p>
 <p class="small"><b>MITRE ATT&amp;CK v20:</b> T1204.002 · User Execution: Malicious File</p>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">zip.path_traversal</span>; Поля: zip:unsafe_names; Документы: backup.zip</div>
+</article>
+<article class="finding high" id="f-6174048165863137">
+<h3><span class="id">F-20</span><span>Внешние источники данных в schedule.xlsx</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.</p>
+<h4>Доказательство</h4><pre class="ev">billing (odbc): server=SRV-SQL02; database=billing; user=billing_ro; provider=SQLOLEDB.1; password=***</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.data_connection</span>; Поля: connections; Документы: schedule.xlsx</div>
 </article>
 <article class="finding high" id="f-6444728501797632">
 <h3><span class="id">F-21</span><span>Пароль в тексте документа · legacy.doc</span> <span class="badge high">Высокий</span></h3>
@@ -455,8 +454,19 @@ E-mail: ivan.petrenko@example.com
 <p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_relay</span>; Поля: received; Документы: backup.zip</div>
 </article>
+<article class="finding high" id="f-7153783704734486">
+<h3><span class="id">F-24</span><span>Пароль в строке подключения к данным</span> <span class="badge high">Высокий</span></h3>
+<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
+<h4>Описание</h4><p class="txt">В публично доступном документе «schedule.xlsx» найден секрет (Пароль в строке подключения к данным): поле xl/connections.xml.</p>
+<h4>Доказательство</h4><pre class="ev">поле xl/connections.xml:
+xl/connections.xml: [r••••••ng]</pre>
+<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
+<h4>Рекомендация</h4><p class="txt">Немедленно сменить (отозвать) секрет, удалить документ с сайта и из кэшей поисковиков, проверить журналы использования.</p>
+<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1552.001 · Unsecured Credentials: Credentials In Files</p>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: поле xl/connections.xml; Документы: schedule.xlsx</div>
+</article>
 <article class="finding high" id="f-7248772110644103">
-<h3><span class="id">F-24</span><span>Скрытый текст и скрытые строки/столбцы в signed_hidden.docx</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-25</span><span>Скрытый текст и скрытые строки/столбцы в signed_hidden.docx</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Документ содержит скрытое форматирование (w:vanish) или скрытые строки и столбцы таблицы: при просмотре их не видно, но данные остаются в файле.</p>
 <h4>Доказательство</h4><pre class="ev">скрытый текст word/document.xml: «Internal note: budget 2M UAH, contact Ivan Petrenko.»</pre>
@@ -466,7 +476,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.hidden_content</span>; Поля: hidden_content; Документы: signed_hidden.docx</div>
 </article>
 <article class="finding high" id="f-7524900944238472">
-<h3><span class="id">F-25</span><span>IP-адрес отправителя в заголовках письма (backup.zip)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-26</span><span>IP-адрес отправителя в заголовках письма (backup.zip)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Заголовок X-Originating-IP раскрывает адрес рабочей станции отправителя.</p>
 <h4>Доказательство</h4><pre class="ev">10.20.30.42</pre>
@@ -475,7 +485,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.originating_ip</span>; Поля: x-originating-ip; Документы: backup.zip</div>
 </article>
 <article class="finding high" id="f-7535434955610667">
-<h3><span class="id">F-26</span><span>SAS-токен Azure</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-27</span><span>SAS-токен Azure</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 7.5</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В публично доступном документе «personal.docx» найден секрет (SAS-токен Azure): текст, строка 9.</p>
 <h4>Доказательство</h4><pre class="ev">текст, строка 9:
@@ -486,7 +496,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">secret</span>; Поля: текст, строка 9; Документы: personal.docx</div>
 </article>
 <article class="finding high" id="f-7762374077804913">
-<h3><span class="id">F-27</span><span>IP-адрес отправителя в заголовках письма (budget.eml)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-28</span><span>IP-адрес отправителя в заголовках письма (budget.eml)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Заголовок X-Originating-IP раскрывает адрес рабочей станции отправителя.</p>
 <h4>Доказательство</h4><pre class="ev">10.20.30.42</pre>
@@ -495,7 +505,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.originating_ip</span>; Поля: x-originating-ip; Документы: budget.eml</div>
 </article>
 <article class="finding high" id="f-7789053018638507">
-<h3><span class="id">F-28</span><span>Гриф ограничения доступа в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-29</span><span>Гриф ограничения доступа в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Документ с грифом ограничения доступа опубликован в открытом доступе.</p>
 <h4>Доказательство</h4><pre class="ev">ДСК
@@ -506,7 +516,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 1; Документы: personal.docx</div>
 </article>
 <article class="finding high" id="f-8328876455711510">
-<h3><span class="id">F-29</span><span>Серия и номер паспорта в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
+<h3><span class="id">F-30</span><span>Серия и номер паспорта в документе (personal.docx)</span> <span class="badge high">Высокий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.</p>
 <h4>Доказательство</h4><pre class="ev">Паспорт серія ••••••56</pre>
@@ -516,7 +526,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pii</span>; Поля: текст, строка 6; Документы: personal.docx</div>
 </article>
 <article class="finding warn" id="f-85183289290847">
-<h3><span class="id">F-30</span><span>Данные подписанта (КЕП) в документе signed.pdf: Іван Петренко</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-31</span><span>Данные подписанта (КЕП) в документе signed.pdf: Іван Петренко</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).</p>
 <h4>Доказательство</h4><pre class="ev">Подписант: Іван Петренко
@@ -534,7 +544,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.signer_identity</span>; Поля: signatures; Документы: signed.pdf</div>
 </article>
 <article class="finding warn" id="f-197987133671330">
-<h3><span class="id">F-31</span><span>Данные подписанта (КЕП) в документе signed_hidden.docx: John Doe</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-32</span><span>Данные подписанта (КЕП) в документе signed_hidden.docx: John Doe</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).</p>
 <h4>Доказательство</h4><pre class="ev">Подписант: John Doe
@@ -559,7 +569,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.signer_identity</span>; Поля: signatures; Документы: signed_hidden.docx</div>
 </article>
 <article class="finding warn" id="f-267007005377796">
-<h3><span class="id">F-32</span><span>Adobe Acrobat Pro XI (EOL) у 1 документа</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-33</span><span>Adobe Acrobat Pro XI (EOL) у 1 документа</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">1 документ создан в Adobe Acrobat Pro XI (11.0.23), поддержка завершена 2017-10-15. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
 <h4>Доказательство</h4><pre class="ev">Сигнатура: Adobe Acrobat Pro XI (11.0.23)
@@ -570,7 +580,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: report.pdf</div>
 </article>
 <article class="finding warn" id="f-734461552619590">
-<h3><span class="id">F-33</span><span>Скан без текстового слоя: exiftool-PDF.pdf</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-34</span><span>Скан без текстового слоя: exiftool-PDF.pdf</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.</p>
 <h4>Доказательство</h4><pre class="ev">exiftool-PDF.pdf</pre>
@@ -579,7 +589,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.scan_without_text</span>; Поля: scan_without_text; Документы: exiftool-PDF.pdf</div>
 </article>
 <article class="finding warn" id="f-1002006954531649">
-<h3><span class="id">F-34</span><span>Документ с макросами VBA: legacy.doc</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-35</span><span>Документ с макросами VBA: legacy.doc</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
 <h4>Доказательство</h4><pre class="ev">Модули: AutoOpen, ThisDocument</pre>
@@ -589,7 +599,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: legacy.doc</div>
 </article>
 <article class="finding warn" id="f-1579388999814052">
-<h3><span class="id">F-35</span><span>Скан без текстового слоя: scan.pdf</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-36</span><span>Скан без текстового слоя: scan.pdf</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.</p>
 <h4>Доказательство</h4><pre class="ev">scan.pdf</pre>
@@ -598,7 +608,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.scan_without_text</span>; Поля: scan_without_text; Документы: scan.pdf</div>
 </article>
 <article class="finding warn" id="f-1669500316956834">
-<h3><span class="id">F-36</span><span>Внутренний домен в Message-ID (budget.msg)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-37</span><span>Внутренний домен в Message-ID (budget.msg)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.</p>
 <h4>Доказательство</h4><pre class="ev">exch01.corp.example.test</pre>
@@ -607,7 +617,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_domain</span>; Поля: message-id; Документы: budget.msg</div>
 </article>
 <article class="finding warn" id="f-2365130770357058">
-<h3><span class="id">F-37</span><span>Документ с макросами VBA: budget.xls</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-38</span><span>Документ с макросами VBA: budget.xls</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
 <h4>Доказательство</h4><pre class="ev">Модули: Module1</pre>
@@ -617,7 +627,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: budget.xls</div>
 </article>
 <article class="finding warn" id="f-2530076048520018">
-<h3><span class="id">F-38</span><span>Скан без текстового слоя: exiftool-PDF2.pdf</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-39</span><span>Скан без текстового слоя: exiftool-PDF2.pdf</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.</p>
 <h4>Доказательство</h4><pre class="ev">exiftool-PDF2.pdf</pre>
@@ -626,7 +636,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.scan_without_text</span>; Поля: scan_without_text; Документы: exiftool-PDF2.pdf</div>
 </article>
 <article class="finding warn" id="f-2760886356798816">
-<h3><span class="id">F-39</span><span>Adobe Photoshop CC 2019 (EOL) у 2 документов</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-40</span><span>Adobe Photoshop CC 2019 (EOL) у 2 документов</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">2 документа созданы в Adobe Photoshop CC 2019, снято с поддержки. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
 <h4>Доказательство</h4><pre class="ev">Сигнатура: Adobe Photoshop CC 2019
@@ -637,7 +647,7 @@ E-mail: ivan.petrenko@example.com
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: photo.jpg, screenshot.png</div>
 </article>
 <article class="finding warn" id="f-2851723822429832">
-<h3><span class="id">F-40</span><span>GPS-координаты в 6 фото</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-41</span><span>GPS-координаты в 6 фото</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Опубликованные фото содержат координаты съёмки и модель устройства: раскрываются расположение объектов и устройства сотрудников.</p>
 <h4>Доказательство</h4><pre class="ev">photo.jpg: 47.92000, 33.43000 · Apple iPhone 13 Pro
@@ -651,7 +661,7 @@ contacts.vcf: 50.45010, 30.52340 · -</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">gps</span>; Поля: gps; Документы: photo.jpg, iphone.mov, photo.heic, survey.mp4, contacts.vcf, exiftool-GPS.jpg</div>
 </article>
 <article class="finding warn" id="f-3030740073630396">
-<h3><span class="id">F-41</span><span>Устаревшая ОС iOS 16.6 у 1 документа</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-42</span><span>Устаревшая ОС iOS 16.6 у 1 документа</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Метаданные 1 документа указывают, что он создан в iOS 16.6: ОС без обновлений безопасности.</p>
 <h4>Доказательство</h4><pre class="ev">ОС: iOS 16.6
@@ -662,7 +672,7 @@ contacts.vcf: 50.45010, 30.52340 · -</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-os</span>; Поля: os; Документы: photo.jpg</div>
 </article>
 <article class="finding warn" id="f-3049935570249775">
-<h3><span class="id">F-42</span><span>Документ с макросами VBA: schedule.xlsx</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-43</span><span>Документ с макросами VBA: schedule.xlsx</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
 <h4>Доказательство</h4><pre class="ev">Модули: Module1, ThisWorkbook</pre>
@@ -672,7 +682,7 @@ contacts.vcf: 50.45010, 30.52340 · -</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: schedule.xlsx</div>
 </article>
 <article class="finding warn" id="f-3160105223994947">
-<h3><span class="id">F-43</span><span>Reply-To отличается от отправителя (budget.eml)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-44</span><span>Reply-To отличается от отправителя (budget.eml)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Ответы на письмо уходят на другой адрес, чем адрес отправителя: типичный признак фишинга или личного ящика сотрудника.</p>
 <h4>Доказательство</h4><pre class="ev">i.petrenko.private@example.net</pre>
@@ -682,7 +692,7 @@ contacts.vcf: 50.45010, 30.52340 · -</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.reply_to_mismatch</span>; Поля: reply-to; Документы: budget.eml</div>
 </article>
 <article class="finding warn" id="f-3304329716141493">
-<h3><span class="id">F-44</span><span>Структура Exchange (X.500) в письме (budget.msg)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-45</span><span>Структура Exchange (X.500) в письме (budget.msg)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Адреса X.500 Exchange раскрывают название организации, административной группы и учётные записи.</p>
 <h4>Доказательство</h4><pre class="ev">/O=EXCHANGELABS/OU=EXCHANGE ADMINISTRATIVE GROUP (FYDIBOHF23SPDLT)/CN=RECIPIENTS/CN=I.PETRENKO</pre>
@@ -691,7 +701,7 @@ contacts.vcf: 50.45010, 30.52340 · -</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.exchange_x500</span>; Поля: x500; Документы: budget.msg</div>
 </article>
 <article class="finding warn" id="f-3363332903505234">
-<h3><span class="id">F-45</span><span>Личные контакты в визитных карточках (contacts.vcf)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-46</span><span>Личные контакты в визитных карточках (contacts.vcf)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).</p>
 <h4>Доказательство</h4><pre class="ev">adr: ••••••••••на
@@ -702,7 +712,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pim.contact_pii</span>; Поля: vcf; Документы: contacts.vcf</div>
 </article>
 <article class="finding warn" id="f-3424681174690463">
-<h3><span class="id">F-46</span><span>iOS 16.6 (EOL) у 1 документа</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-47</span><span>iOS 16.6 (EOL) у 1 документа</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">1 документ создан в iOS 16.6, поддержка завершена 2024-09-16. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.</p>
 <h4>Доказательство</h4><pre class="ev">Сигнатура: iOS 16.6
@@ -713,7 +723,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-software</span>; Поля: application, producer; Документы: photo.jpg</div>
 </article>
 <article class="finding warn" id="f-3539139857020118">
-<h3><span class="id">F-47</span><span>Reply-To отличается от отправителя (backup.zip)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-48</span><span>Reply-To отличается от отправителя (backup.zip)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Ответы на письмо уходят на другой адрес, чем адрес отправителя: типичный признак фишинга или личного ящика сотрудника.</p>
 <h4>Доказательство</h4><pre class="ev">i.petrenko.private@example.net</pre>
@@ -723,7 +733,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.reply_to_mismatch</span>; Поля: reply-to; Документы: backup.zip</div>
 </article>
 <article class="finding warn" id="f-4041191195790325">
-<h3><span class="id">F-48</span><span>Устаревшая ОС iOS 17.4 у 2 документов</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-49</span><span>Устаревшая ОС iOS 17.4 у 2 документов</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: sw</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Метаданные 2 документов указывают, что они созданы в iOS 17.4: ОС без обновлений безопасности.</p>
 <h4>Доказательство</h4><pre class="ev">ОС: iOS 17.4
@@ -734,7 +744,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">eol-os</span>; Поля: os; Документы: iphone.mov, photo.heic</div>
 </article>
 <article class="finding warn" id="f-4192625953950789">
-<h3><span class="id">F-49</span><span>Ярлык LNK указывает на сетевой ресурс (network.lnk)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-50</span><span>Ярлык LNK указывает на сетевой ресурс (network.lnk)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Ярлык ссылается на файл на сетевом ресурсе: раскрываются имя файлового сервера и структура папок.</p>
 <h4>Доказательство</h4><pre class="ev">\\FS01.corp.example.test\buh$\Звіти\2024\Q1.xlsx
@@ -745,7 +755,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.lnk_unc_path</span>; Поля: lnk; Документы: network.lnk</div>
 </article>
 <article class="finding warn" id="f-4322514331920272">
-<h3><span class="id">F-50</span><span>Внутренний домен в Message-ID (budget.eml)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-51</span><span>Внутренний домен в Message-ID (budget.eml)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.</p>
 <h4>Доказательство</h4><pre class="ev">exch01.corp.example.test</pre>
@@ -754,7 +764,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_domain</span>; Поля: message-id; Документы: budget.eml</div>
 </article>
 <article class="finding warn" id="f-4438722874752781">
-<h3><span class="id">F-51</span><span>Внутренний домен в Message-ID (backup.zip)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-52</span><span>Внутренний домен в Message-ID (backup.zip)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Идентификатор письма содержит внутреннее имя почтового сервера или домена Active Directory.</p>
 <h4>Доказательство</h4><pre class="ev">exch01.corp.example.test</pre>
@@ -763,7 +773,7 @@ tel: ••••••••••00; ••••••••••01</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">mail.internal_domain</span>; Поля: message-id; Документы: backup.zip</div>
 </article>
 <article class="finding warn" id="f-4455355463343130">
-<h3><span class="id">F-52</span><span>Ссылки на онлайн-встречи в календаре (meeting.ics)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-53</span><span>Ссылки на онлайн-встречи в календаре (meeting.ics)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Приглашение содержит ссылки подключения к Teams/Zoom (иногда с паролем): посторонний может войти на встречу.</p>
 <h4>Доказательство</h4><pre class="ev">https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d
@@ -774,7 +784,7 @@ https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0</pr
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">cal.meeting_link</span>; Поля: meeting_links; Документы: meeting.ics</div>
 </article>
 <article class="finding warn" id="f-4455696781164829">
-<h3><span class="id">F-53</span><span>Исправления и удалённый текст сохранены в contract.docx</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-54</span><span>Исправления и удалённый текст сохранены в contract.docx</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">В документе сохранены режим рецензирования (2 исправления, из них 1 удаление) и 1 комментарий: видны прежние формулировки и внутренняя переписка.</p>
 <h4>Доказательство</h4><pre class="ev">удалено a.bondar, 2024-03-14T17:02:00: «1 250 000 грн»
@@ -786,7 +796,7 @@ https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0</pr
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">revisions</span>; Поля: revisions, comments; Документы: contract.docx</div>
 </article>
 <article class="finding warn" id="f-4805809646702033">
-<h3><span class="id">F-54</span><span>Серийный номер устройства в медиафайле (iphone.mov)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-55</span><span>Серийный номер устройства в медиафайле (iphone.mov)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Видео или фото содержит серийный номер камеры/телефона: по нему связываются другие публикации с того же устройства.</p>
 <h4>Доказательство</h4><pre class="ev">EXAMPLE-SN-0042</pre>
@@ -796,22 +806,20 @@ https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0</pr
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">media.device_serial</span>; Поля: camera; Документы: iphone.mov</div>
 </article>
 <article class="finding warn" id="f-4980204480961259">
-<h3><span class="id">F-55</span><span>Внешние источники данных в hidden.xlsx</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-56</span><span>Внешние источники данных в hidden.xlsx</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.</p>
 <h4>Доказательство</h4><pre class="ev">chart:xl/charts/chart1.xml:externalRef: &#39;C:\Users\ipetrenko\Desktop\[budget.xlsx]Sheet1&#39;!$A$1:$A$5
-xl:connection:srv-sql01 Payroll:database: Payroll
-xl:connection:srv-sql01 Payroll:odcFile: C:\Users\ipetrenko\Documents\My Data Sources\srv-sql01 Payroll.odc
-xl:connection:srv-sql01 Payroll:user: svc_report
 xl:pivotCache1:refreshedBy: Ivan Petrenko
-xl:pivotCache1:source: Payroll!A1:D10</pre>
+xl:pivotCache1:source: Payroll!A1:D10
+srv-sql01 Payroll (odbc): server=srv-sql01.corp.example.com; database=Payroll; user=svc_report; provider=SQLOLEDB.1; target=C:\Users\ipetrenko\Documents\My Data Sources\srv-sql01 Payroll.odc</pre>
 <p class="small">URL: <a href="https://files.contoso.example/corpus/forensics/hidden.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/forensics/hidden.xlsx</a></p>
 <h4>Рекомендация</h4><p class="txt">Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).</p>
 <p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.data_connection</span>; Поля: connections; Документы: hidden.xlsx</div>
 </article>
 <article class="finding warn" id="f-5364394301822533">
-<h3><span class="id">F-56</span><span>Документ с макросами VBA: vbaProject.bin</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-57</span><span>Документ с макросами VBA: vbaProject.bin</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 4.3</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Опубликованный документ содержит проект VBA: исходный код макросов раскрывает внутреннюю логику, пути и иногда учётные данные; такие файлы приучают пользователей включать макросы.</p>
 <h4>Доказательство</h4><pre class="ev">Модули: Module1, ThisWorkbook</pre>
@@ -821,7 +829,7 @@ xl:pivotCache1:source: Payroll!A1:D10</pre>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">macros</span>; Поля: has_macros; Документы: vbaProject.bin</div>
 </article>
 <article class="finding warn" id="f-6066455233748157">
-<h3><span class="id">F-57</span><span>Личные контакты в визитных карточках (backup.zip)</span> <span class="badge warn">Средний</span></h3>
+<h3><span class="id">F-58</span><span>Личные контакты в визитных карточках (backup.zip)</span> <span class="badge warn">Средний</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: people</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).</p>
 <h4>Доказательство</h4><pre class="ev">nested/inner.zip → contacts/i.petrenko.vcf: adr: ••••••••••на
@@ -830,17 +838,6 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 <p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
 <h4>Рекомендация</h4><p class="txt">Не публиковать файлы контактов .vcf.</p>
 <div class="prov"><b>Происхождение:</b> Правило: <span class="mono">pim.contact_pii</span>; Поля: vcf; Документы: backup.zip</div>
-</article>
-<article class="finding warn" id="f-6174048165863137">
-<h3><span class="id">F-58</span><span>Внешние источники данных в schedule.xlsx</span> <span class="badge warn">Средний</span></h3>
-<div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>Впервые: 20.11.2026 11:40</span></div>
-<h4>Описание</h4><p class="txt">Подключения к базам данных, файлы .odc, сводные таблицы и внешние ссылки диаграмм раскрывают серверы, базы, учётные записи и пути к файлам.</p>
-<h4>Доказательство</h4><pre class="ev">xl:connection:billing:database: billing
-xl:connection:billing:user: billing_ro</pre>
-<p class="small">URL: <a href="https://files.contoso.example/corpus/ooxml/schedule.xlsx" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/ooxml/schedule.xlsx</a></p>
-<h4>Рекомендация</h4><p class="txt">Удалять подключения к данным и кэши сводных таблиц перед публикацией (вставлять значения).</p>
-<p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590 · Gather Victim Network Information</p>
-<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">doc.data_connection</span>; Поля: connections; Документы: schedule.xlsx</div>
 </article>
 <article class="finding warn" id="f-6261556990791460">
 <h3><span class="id">F-59</span><span>Разные авторы или программы в ревизиях PDF (signed_modified.pdf)</span> <span class="badge warn">Средний</span></h3>
@@ -1092,8 +1089,8 @@ t.melnyk - Тетяна Мельник</pre>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Пути шаблонов, вложений и ссылок в 17 документах раскрывают логины сотрудников и структуру файловых ресурсов.</p>
 <h4>Доказательство</h4><pre class="ev">\\FS01.corp.example.test\finance$ by i.petrenko
-C:\Users\ipetrenko\Desktop\[budget.xlsx]Sheet1
 C:\Users\ipetrenko\Documents\My Data Sources\srv-sql01 Payroll.odc
+C:\Users\ipetrenko\Desktop\[budget.xlsx]Sheet1
 \\SRV-FILE01\photo\TES2
 \\SRV-FILE01\scan$\2023-11
 C:\Users\m.shevchuk\Pictures\Screenshots\portal.png</pre>
@@ -1159,14 +1156,14 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png</pre>
 <h3><span class="id">F-87</span><span>Внутренние адреса и имена хостов в документе (4)</span> <span class="badge low">Низкий</span></h3>
 <div class="meta"><span>Статус: Новая</span><span>Хост: files.contoso.example</span><span>Категория: docs</span><span>CVSS 3.7</span><span>Впервые: 20.11.2026 11:40</span></div>
 <h4>Описание</h4><p class="txt">Текст или поля документа «backup.zip» раскрывают внутреннюю адресацию сети: 10.20.30.42, 10.20.0.15, 192.168.10.17, 10.20.0.16.</p>
-<h4>Доказательство</h4><pre class="ev">текст, строка 31: 10••••••.42, 10.20.0.15
-текст, строка 31: 10.20.30.42, 10••••••.15
-текст, строка 51: 19••••••.17, 10.20.0.16
-текст, строка 51: 192.168.10.17, 10••••••.16</pre>
+<h4>Доказательство</h4><pre class="ev">текст, строка 32: 10••••••.42, 10.20.0.15
+текст, строка 32: 10.20.30.42, 10••••••.15
+текст, строка 52: 19••••••.17, 10.20.0.16
+текст, строка 52: 192.168.10.17, 10••••••.16</pre>
 <p class="small">URL: <a href="https://files.contoso.example/corpus/archive/backup.zip" rel="noopener noreferrer nofollow">https://files.contoso.example/corpus/archive/backup.zip</a></p>
 <h4>Рекомендация</h4><p class="txt">Удалять технические подробности (адреса, имена серверов) из публикуемых документов.</p>
 <p class="small"><b>MITRE ATT&amp;CK v20:</b> T1590.005 · Gather Victim Network Information: IP Addresses</p>
-<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: текст, строка 31, текст, строка 51; Документы: backup.zip</div>
+<div class="prov"><b>Происхождение:</b> Правило: <span class="mono">internal-addresses</span>; Поля: текст, строка 32, текст, строка 52; Документы: backup.zip</div>
 </article>
 <article class="finding low" id="f-4410412564460717">
 <h3><span class="id">F-88</span><span>Идентификатор арендатора Microsoft 365 в письме (backup.zip)</span> <span class="badge low">Низкий</span></h3>
@@ -1646,12 +1643,12 @@ user name · документов: 1</pre>
 <tr><td>pass</td><td>buh.ica</td><td>поле ica:1C Бухгалтерія.ClearPassword</td><td><span class="badge crit">Критический</span></td><td><span class="mono">Bu••••••23!</span></td></tr>
 <tr><td>api</td><td>personal.docx</td><td>текст, строка 9</td><td><span class="badge high">Высокий</span></td><td><span class="mono">Ab••••••%3D</span></td></tr>
 <tr><td>pass</td><td>legacy.doc</td><td>текст, строка 1</td><td><span class="badge high">Высокий</span></td><td><span class="mono">P@••••••019</span></td></tr>
-<tr><td>pass</td><td>schedule.xlsx</td><td>текст, строка 4</td><td><span class="badge high">Высокий</span></td><td><span class="mono">Bi••••••023</span></td></tr>
+<tr><td>pass</td><td>schedule.xlsx</td><td>поле xl/connections.xml</td><td><span class="badge high">Высокий</span></td><td><span class="mono">[r••••••ng]</span></td></tr>
 <tr><td>pass</td><td>objstm.pdf</td><td>текст, строка 1</td><td><span class="badge high">Высокий</span></td><td><span class="mono">Wi••••••24!</span></td></tr>
 <tr><td>pass</td><td>SRV-TS01.rdp</td><td>поле rdp:password 51</td><td><span class="badge high">Высокий</span></td><td><span class="mono">01••••••000</span></td></tr>
 </tbody></table>
 <h3>Параметры отчёта</h3><dl class="kv"><dt>Только подтверждённые</dt><dd>нет</dd><dt>Важность от</dt><dd>все</dd><dt>Только выбранные</dt><dd>нет</dd><dt>Секреты</dt><dd>частично</dd></dl>
 </section>
-<footer class="gen"><span>Сформировано FOCA-rs 2.0.0-beta.3 · 20.11.2026</span><span>Конфиденциально</span></footer>
+<footer class="gen"><span>Сформировано FOCA-rs 2.0.0-beta.4 · 20.11.2026</span><span>Конфиденциально</span></footer>
 </body>
 </html>

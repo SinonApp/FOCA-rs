@@ -14,7 +14,7 @@ findings_warn: 41
 findings_low: 28
 findings_info: 3
 secrets: hide
-generator: "FOCA-rs 2.0.0-beta.3"
+generator: "FOCA-rs 2.0.0-beta.4"
 tags: [foca, pentest, report]
 ---
 
@@ -2476,4 +2476,4 @@ user name · документов: 1
 - **Секреты:** скрыты
 
 ---
-*Сформировано FOCA-rs 2.0.0-beta.3 · 20.11.2026*
+*Сформировано FOCA-rs 2.0.0-beta.4 · 20.11.2026*

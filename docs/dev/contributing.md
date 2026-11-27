@@ -15,7 +15,7 @@
 
 ## Branches and Commits
 
-- All work happens on `main`; releases are tags on `main` (`vX.Y.Z`, pre-releases like `v2.0.0-beta.3`). `main` must build and pass `qa/run-all.sh`.
+- All work happens on `main`; releases are tags on `main` (`vX.Y.Z`, pre-releases like `v2.0.0-beta.4`). `main` must build and pass `qa/run-all.sh`.
 - Open pull requests against `main`.
 - Use Conventional Commits in English with a crate or layer scope:
   `feat(ports): add TCP port scan stage`, `fix(ui): ...`, `docs(adr): ...`. Mark breaking changes with `!` (`feat(core)!: ...`). The subject says what changed, in the imperative, without task or ticket codes.

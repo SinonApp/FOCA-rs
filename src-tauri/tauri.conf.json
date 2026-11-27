@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "FOCA-rs",
-  "version": "2.0.0-beta.3",
+  "version": "2.0.0-beta.4",
   "identifier": "app.sinon.focars",
   "build": { "frontendDist": "../ui" },
   "app": {
@@ -29,7 +29,7 @@
   },
   "bundle": {
     "active": false,
-    "android": { "versionCode": 2000005 },
+    "android": { "versionCode": 2000006 },
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/icon.png", "icons/icon.ico"]
   }
 }

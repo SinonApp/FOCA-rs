@@ -12,7 +12,7 @@ finding rule, screen, scan stage or command) are in [docs/dev/contributing.md](d
 
 ## Branches and commits
 
-- All work happens on `main`; releases are tags on `main` (`vX.Y.Z`, pre-releases like `v2.0.0-beta.3`). Open pull requests against `main`.
+- All work happens on `main`; releases are tags on `main` (`vX.Y.Z`, pre-releases like `v2.0.0-beta.4`). Open pull requests against `main`.
 - [Conventional Commits](https://www.conventionalcommits.org/) in English, scoped to the crate or layer:
   `feat(engine): …`, `fix(ui): …`, `docs(user): …`, `refactor(foca-net): …`. Imperative subject, no task codes.
 - One logical change per commit. Stage your own paths (`git add <paths>`), not `git add -A`.
