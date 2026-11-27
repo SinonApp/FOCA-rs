@@ -982,16 +982,17 @@ impl Fuzzer {
                         samples.len() as u64 + u64::from(bad) + root_requests + cross.len() as u64;
                     // one page for any address, and it is the home page itself: a distinct "not
                     // found" page with status 200 is only a soft 404 and fuzzing goes on
-                    let home = root.as_ref().is_some_and(|r| {
-                        samples[0].same_catch_all(r) || samples[0].same_page_as(r)
-                    });
-                    if home
-                        && !cross.is_empty()
-                        && cross.iter().all(|s| s.same_catch_all(&samples[0]))
-                    {
-                        run.catch_all
-                            .entry((ctx.origin.clone(), ctx.vhost.clone()))
-                            .or_insert_with(|| (samples[0].clone(), 0));
+                    // (no canary answered: nothing to compare)
+                    if let (Some(first), Some(r)) = (samples.first(), root.as_ref()) {
+                        let home = first.same_catch_all(r) || first.same_page_as(r);
+                        if home
+                            && !cross.is_empty()
+                            && cross.iter().all(|s| s.same_catch_all(first))
+                        {
+                            run.catch_all
+                                .entry((ctx.origin.clone(), ctx.vhost.clone()))
+                                .or_insert_with(|| (first.clone(), 0));
+                        }
                     }
                     run.stats.requests += n;
                     run.stats.calibration_requests += n;
