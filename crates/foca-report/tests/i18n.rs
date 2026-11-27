@@ -403,7 +403,9 @@ fn log_export_errors_in_export_language() {
                 "{csv}"
             );
             assert!(
-                csv.contains("out_of_scope: mta-sts.example.com (not among the targets or excluded)"),
+                csv.contains(
+                    "out_of_scope: mta-sts.example.com (not among the targets or excluded)"
+                ),
                 "{csv}"
             );
             assert!(
