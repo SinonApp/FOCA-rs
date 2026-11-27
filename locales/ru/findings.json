@@ -3695,6 +3695,12 @@
       "rules": "secret,rdp-password,ica-password,recon.js_secret",
       "pattern": "Учётные данные в команде curl",
       "text": "Учётные данные в команде curl"
+    },
+    {
+      "id": "f617",
+      "rules": "ports-outdated,recon.outdated_tech",
+      "pattern": "версия {} не поддерживается: ветка {} снята с поддержки {} (endoflife.date)",
+      "text": "версия {} не поддерживается: ветка {} снята с поддержки {} (endoflife.date)"
     }
   ],
   "tech_cats": {

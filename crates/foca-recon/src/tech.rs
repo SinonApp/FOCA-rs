@@ -29,6 +29,9 @@ use crate::favicon::attrs;
 const RULES_JSON: &str = include_str!("../data/tech.json");
 /// Converted webappanalyzer fingerprints (gzip JSON).
 pub const UPSTREAM_GZ: &[u8] = include_bytes!("../data/webappanalyzer.json.gz");
+/// endoflife.date release cycles past their end of life at the snapshot (gzip TSV, written by
+/// `foca-analysis/signatures/tools/update_endoflife.py`).
+pub const EOL_GZ: &[u8] = include_bytes!("../data/endoflife.tsv.gz");
 
 /// A technology rule (as in `data/tech.json`).
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -220,9 +223,60 @@ struct Compiled {
     url: Vec<Pat>,
 }
 
+/// An end-of-life release cycle of a technology (endoflife.date).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct EolCycle {
+    pub cycle: String,
+    /// End-of-life date (ISO).
+    pub date: String,
+}
+
+/// Parses the endoflife.date table into technology name -> cycles.
+pub fn parse_eol(gz: &[u8]) -> Result<HashMap<String, Vec<EolCycle>>, String> {
+    let mut text = String::new();
+    flate2::read::GzDecoder::new(gz)
+        .read_to_string(&mut text)
+        .map_err(|e| format!("gzip: {e}"))?;
+    let mut out: HashMap<String, Vec<EolCycle>> = HashMap::new();
+    for line in text
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.is_empty())
+    {
+        let f: Vec<&str> = line.split('\t').collect();
+        let [tech, _product, cycle, date, ..] = f[..] else {
+            return Err(format!("bad row: {line}"));
+        };
+        out.entry(tech.to_string()).or_default().push(EolCycle {
+            cycle: cycle.to_string(),
+            date: date.to_string(),
+        });
+    }
+    Ok(out)
+}
+
+/// End-of-life note for `version` when its release cycle (the version cut to the cycle's
+/// component count, `8.1.31` -> `8.1`) is in `cycles`.
+pub fn eol_cycle_note(cycles: &[EolCycle], version: &str) -> Option<String> {
+    let c = cycles.iter().find(|c| {
+        let n = c.cycle.split('.').count();
+        let cut: Vec<&str> = version.split(['.', '-', '_']).take(n).collect();
+        let cut = cut.join(".");
+        cut.split('.').count() == n
+            && cut.chars().next().is_some_and(|ch| ch.is_ascii_digit())
+            && !version_lt(&cut, &c.cycle)
+            && !version_lt(&c.cycle, &cut)
+    })?;
+    Some(format!(
+        "версия {version} не поддерживается: ветка {} снята с поддержки {} (endoflife.date)",
+        c.cycle, c.date
+    ))
+}
+
 /// The merged rule database.
 struct Db {
     techs: Vec<Compiled>,
+    /// endoflife.date cycles by technology name.
+    eol: HashMap<String, Vec<EolCycle>>,
     by_name: HashMap<String, usize>,
     /// Prefilter over the literals of every upstream html/script/url pattern.
     lits: Option<AhoCorasick>,
@@ -280,7 +334,7 @@ fn read_upstream(gz: &[u8]) -> Result<Vec<UpstreamTech>, String> {
     Ok(f.technologies)
 }
 
-fn build_db(upstream: Vec<UpstreamTech>) -> Db {
+fn build_db(upstream: Vec<UpstreamTech>, eol: HashMap<String, Vec<EolCycle>>) -> Db {
     let f: RulesFile = serde_json::from_str(RULES_JSON).expect("data/tech.json");
     let kv = |m: &BTreeMap<String, String>, lower: bool| {
         m.iter()
@@ -383,6 +437,7 @@ fn build_db(upstream: Vec<UpstreamTech>) -> Db {
     });
     Db {
         techs,
+        eol,
         by_name,
         lits,
         hand,
@@ -400,18 +455,28 @@ fn db() -> Arc<Db> {
         return d;
     }
     let mut g = db_slot().write().unwrap_or_else(|e| e.into_inner());
-    g.get_or_insert_with(|| Arc::new(build_db(read_upstream(UPSTREAM_GZ).unwrap_or_default())))
-        .clone()
+    g.get_or_insert_with(|| {
+        Arc::new(build_db(
+            read_upstream(UPSTREAM_GZ).unwrap_or_default(),
+            parse_eol(EOL_GZ).unwrap_or_default(),
+        ))
+    })
+    .clone()
 }
 
-/// Replaces the upstream table (a signed signature bundle) and returns its technology count.
-/// The hand rules stay; an invalid table leaves the current rules untouched.
-pub fn install_upstream(gz: &[u8]) -> Result<usize, String> {
-    let up = read_upstream(gz)?;
-    let n = up.len();
-    let new = Arc::new(build_db(up));
+/// Replaces the upstream fingerprint table and/or the end-of-life table (a signed signature
+/// bundle; `None` keeps the built-in one) and returns (technologies, eol cycles). The hand rules
+/// stay; an invalid table leaves the current database untouched.
+pub fn install_upstream(
+    tech_gz: Option<&[u8]>,
+    eol_gz: Option<&[u8]>,
+) -> Result<(usize, usize), String> {
+    let up = read_upstream(tech_gz.unwrap_or(UPSTREAM_GZ))?;
+    let eol = parse_eol(eol_gz.unwrap_or(EOL_GZ))?;
+    let counts = (up.len(), eol.values().map(Vec::len).sum());
+    let new = Arc::new(build_db(up, eol));
     *db_slot().write().unwrap_or_else(|e| e.into_inner()) = Some(new);
-    Ok(n)
+    Ok(counts)
 }
 
 /// Loaded rule numbers: hand rules, upstream records and merged technologies.
@@ -421,6 +486,10 @@ pub struct TechCounts {
     pub upstream: usize,
     pub technologies: usize,
     pub with_cpe: usize,
+    /// endoflife.date release cycles past end of life.
+    pub eol_cycles: usize,
+    /// Technologies with end-of-life data.
+    pub eol_products: usize,
 }
 
 /// Numbers of the rule database in use.
@@ -431,6 +500,8 @@ pub fn counts() -> TechCounts {
         upstream: d.upstream,
         technologies: d.techs.len(),
         with_cpe: d.techs.iter().filter(|t| t.rule.cpe.is_some()).count(),
+        eol_cycles: d.eol.values().map(Vec::len).sum(),
+        eol_products: d.eol.len(),
     }
 }
 
@@ -675,9 +746,15 @@ pub fn detect(page: &PageInput) -> Vec<Technology> {
                 .version
                 .as_deref()
                 .and_then(|v| eol_branch_note(&c.rule.eol_branches, v));
+            // Hand EOL data first, then endoflife.date, then the hand "older than" threshold.
+            let cycle_eol = || {
+                let v = acc.version.as_deref()?;
+                eol_cycle_note(db.eol.get(&name)?, v)
+            };
             let outdated = match (&c.rule.eol, &c.rule.outdated_below, &acc.version) {
                 (Some(e), _, _) => Some(e.clone()),
                 _ if branch_eol.is_some() => branch_eol,
+                _ if cycle_eol().is_some() => cycle_eol(),
                 (_, Some(min), Some(v)) if version_lt(v, min) => {
                     Some(format!("версия {v} старее {min}"))
                 }
@@ -845,6 +922,41 @@ mod tests {
     }
 
     #[test]
+    fn endoflife_cycles_flag_versions_past_eol() {
+        let c = counts();
+        assert!(c.eol_products > 100 && c.eol_cycles > 1500, "{c:?}");
+        let d = db();
+        let nginx = &d.eol["Nginx"];
+        let n = eol_cycle_note(nginx, "1.24.0").unwrap();
+        assert!(n.contains("ветка 1.24") && n.contains("2024-04-23"), "{n}");
+        // `1.2` must not match the `1.24` cycle, nor a bare major version a minor cycle.
+        assert!(eol_cycle_note(nginx, "1.2.9")
+            .unwrap()
+            .contains("ветка 1.2 "));
+        assert_eq!(eol_cycle_note(nginx, "1"), None);
+        assert_eq!(eol_cycle_note(&d.eol["PHP"], "8.4.1"), None);
+        // In detection: hand EOL branches win, endoflife.date fills the gaps.
+        let t = detect(&PageInput {
+            url: "https://x.example/".into(),
+            headers: vec![
+                ("Server".into(), "nginx/1.24.0".into()),
+                ("X-Powered-By".into(), "PHP/7.4.3".into()),
+            ],
+            html: String::new(),
+        });
+        assert!(get(&t, "Nginx")
+            .outdated
+            .as_deref()
+            .unwrap()
+            .contains("endoflife.date"));
+        assert!(get(&t, "PHP")
+            .outdated
+            .as_deref()
+            .unwrap()
+            .contains("выпуски до 7.4"));
+    }
+
+    #[test]
     fn version_templates() {
         let r = Regex::new(r"nginx(?:/([\d.]+))?").unwrap();
         let c = r.captures("nginx/1.25.3").unwrap();
@@ -896,7 +1008,10 @@ mod tests {
     fn startup_and_detect_stay_fast() {
         // The merged database is built once; measure a fresh build and one detect on a page.
         let t0 = std::time::Instant::now();
-        let d = build_db(read_upstream(UPSTREAM_GZ).unwrap());
+        let d = build_db(
+            read_upstream(UPSTREAM_GZ).unwrap(),
+            parse_eol(EOL_GZ).unwrap(),
+        );
         let build = t0.elapsed();
         assert!(d.techs.len() > 5000);
         let t1 = std::time::Instant::now();

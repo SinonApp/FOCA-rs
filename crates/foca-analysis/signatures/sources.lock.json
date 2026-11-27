@@ -1,6 +1,30 @@
 {
  "_about": "Pinned upstream versions of the ingested signature sources",
  "sources": {
+  "endoflife": {
+   "repo": "https://github.com/endoflife-date/endoflife.date",
+   "commit": "32423d8113b6b6cbef02c167ce18a0934203d0fd",
+   "license": "MIT",
+   "license_file": "LICENSE",
+   "license_sha256": "c5872e49d74084853ebdf61b82f4ee820570f0545c1ff296c5c838eacac923d0",
+   "attribution": "End-of-life dates from endoflife.date, Copyright 2020 endoflife.date contributors, MIT License, https://endoflife.date",
+   "snapshot": "2026-11-27",
+   "inputs": {
+    "*": "416f9725d45e24aceec796587c0ae83eea7e692035b56d20771bc065c8456583"
+   },
+   "outputs": [
+    {
+     "path": "crates/foca-recon/data/endoflife.tsv.gz",
+     "bytes": 13499,
+     "sha256": "b9a771de5ade7346e881a90098b5322ea707a3c21070937a31f76d803bd45246"
+    }
+   ],
+   "stats": {
+    "products_upstream": 490,
+    "products_kept": 117,
+    "cycles": 2179
+   }
+  },
   "gitleaks": {
    "repo": "https://github.com/gitleaks/gitleaks",
    "tag": "v8.30.1",
