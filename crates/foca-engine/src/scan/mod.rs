@@ -204,6 +204,8 @@ pub(crate) struct Ctx {
     skip: Arc<Mutex<std::collections::HashSet<String>>>,
     /// Chosen items of a narrowed run (follow-up of selected items); `None` for a normal scan.
     sel: Option<selection::Selection>,
+    /// The deep Common Crawl sweep still running after the search stage.
+    cc_lane: Option<search::cc_lane::CcLane>,
 }
 
 impl Ctx {
@@ -240,7 +242,30 @@ impl Ctx {
             scope,
             skip: run.skip.clone(),
             sel,
+            cc_lane: None,
             e,
+        }
+    }
+
+    /// A copy of this context for background work of the same run that outlives the current
+    /// stage (it follows the same stop, pause, skip set and network client).
+    pub(crate) fn detached(&self) -> Ctx {
+        Ctx {
+            e: self.e.clone(),
+            st: self.st.clone(),
+            cancel: self.cancel.clone(),
+            pause: self.pause.clone(),
+            net: self.net.clone(),
+            db: self.db.clone(),
+            scan_id: self.scan_id.clone(),
+            level: self.level.clone(),
+            domains: self.domains.clone(),
+            direct_ips: self.direct_ips.clone(),
+            start_stage: self.start_stage,
+            scope: self.scope.clone(),
+            skip: self.skip.clone(),
+            sel: self.sel.clone(),
+            cc_lane: None,
         }
     }
 
@@ -546,6 +571,10 @@ pub(crate) async fn pipeline(mut c: Ctx) -> Result<(), Stop> {
             continue;
         }
         c.enter(i);
+        if i >= 2 {
+            // documents the background Common Crawl sweep found after the search stage
+            search::cc_lane::catch_up(&mut c, i, stage.0 == "report").await?;
+        }
         let t0 = std::time::Instant::now();
         tracing::info!(target: "foca::scan", "{}: этап «{}», старт", c.scan_id, label);
         let r = match i {

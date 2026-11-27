@@ -13,6 +13,7 @@ use serde_json::{json, Value};
 use crate::analysis::facts::{self, NetFacts};
 use crate::engine::lock;
 
+pub(crate) mod cc_lane;
 pub(crate) mod dorks;
 
 use super::documents::{crawl, downloader};
@@ -33,7 +34,13 @@ fn take_retries(skip: &Mutex<std::collections::HashSet<String>>) -> Vec<String> 
 }
 
 pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
-    let c: &Ctx = c;
+    let lane = search(c).await?;
+    // the deep Common Crawl sweep keeps going in the background; the scan does not wait for it
+    c.cc_lane = lane;
+    Ok(())
+}
+
+async fn search(c: &Ctx) -> Result<Option<cc_lane::CcLane>, Stop> {
     let ep = c.e.cfg.endpoints.clone();
     let keys = c.e.current_keys();
     let ids = lock(&c.st).source_ids.clone();
@@ -205,44 +212,18 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
         (ctx, round)
     };
     let cref: &Ctx = c;
-    // the deep Common Crawl lane: one domain after another, its own time budget, the same skip set
-    let lane = async {
-        let mut out = LaneOut::default();
-        let Some(cc) = deep_cc.as_ref() else {
-            return Ok::<LaneOut, Stop>(out);
-        };
-        let minutes = settings["search"]["cc_minutes"]
-            .as_u64()
-            .unwrap_or(15)
-            .clamp(1, 240);
-        let ctl = foca_search::SourceCtl {
-            timeout: std::time::Duration::from_secs(minutes * 60 / nd as u64 / 10)
-                .max(std::time::Duration::from_secs(6)),
-            skip: cref.skip.clone(),
-            parallel: 1,
-        };
-        let one: [Box<dyn DocumentSource>; 1] = [Box::new(cc.clone())];
-        for (k, d) in doms.iter().enumerate() {
-            let (ctx, round) = make_ctx(d, k);
-            let res = foca_search::run_sources_ctl(
-                &one,
-                &ctx,
-                d,
-                &ctl,
-                |id, t| running_event(cref, id, t, &round),
-                |r| {
-                    source_done_event(cref, r, &round);
-                },
-            )
-            .await;
-            match res {
-                Ok(r) => out.res.push(r),
-                Err(foca_net::NetError::Cancelled) => return Err(Stop::Cancelled),
-                Err(e) => return Err(Stop::Error(e.to_string())),
-            }
-        }
-        Ok(out)
-    };
+    // the deep Common Crawl lane: started now, one domain after another, its own time budget
+    let lane = deep_cc.map(|cc| {
+        let jobs: Vec<(String, SearchCtx, Value)> = doms
+            .iter()
+            .enumerate()
+            .map(|(k, d)| {
+                let (ctx, round) = make_ctx(d, k);
+                (d.clone(), ctx, round)
+            })
+            .collect();
+        cc_lane::spawn(cref, cc, &settings, jobs, enq.clone(), known.clone())
+    });
     let main = async {
         for (k, d) in doms.iter().enumerate() {
             cref.gate().await?;
@@ -321,29 +302,7 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
         }
         Ok::<(), Stop>(())
     };
-    // both run at once; a stopped or skipped stage drops the lane (its finished snapshots are saved)
-    let mut lane = std::pin::pin!(lane);
-    let mut lane_out: Option<Result<LaneOut, Stop>> = None;
-    {
-        let mut main = std::pin::pin!(main);
-        loop {
-            tokio::select! {
-                r = &mut main => { r?; break; }
-                o = &mut lane, if lane_out.is_none() => lane_out = Some(o),
-            }
-        }
-    }
-    let lane_out = match lane_out {
-        Some(o) => o?,
-        None => lane.await?,
-    };
-    for r in lane_out.res {
-        for s in &r.sources {
-            tally.add(s);
-        }
-        merge_hosts(&mut ct_hosts, &mut host_src, &r);
-        found.extend(r.urls);
-    }
+    main.await?;
     let c: &Ctx = cref;
     let drop = enq.enqueue(found, &known)?;
     // storage files linked from in-scope pages share the download limit with the documents
@@ -415,6 +374,16 @@ pub(super) async fn stage_search(c: &mut Ctx) -> Result<(), Stop> {
              другой сети",
         );
     }
+    save_hosts(c, ct_hosts, host_src)?;
+    Ok(lane)
+}
+
+/// Adds the hosts the sources found to the network facts, with the sources that found them.
+fn save_hosts(
+    c: &Ctx,
+    ct_hosts: BTreeSet<String>,
+    host_src: std::collections::BTreeMap<String, Vec<String>>,
+) -> Result<(), Stop> {
     let db = lock(&c.db);
     let mut f: NetFacts = facts::get(&db, facts::K_NET);
     f.ct_hosts.extend(ct_hosts);
@@ -457,12 +426,6 @@ impl Tally {
             _ => {}
         }
     }
-}
-
-/// Results of the deep Common Crawl lane, one per domain.
-#[derive(Default)]
-struct LaneOut {
-    res: Vec<foca_search::SearchResult>,
 }
 
 fn merge_hosts(
@@ -588,6 +551,23 @@ impl Enqueuer {
         &self.db
     }
 
+    /// Documents this scan may still queue: the limit minus its download tasks so far (crawled
+    /// images have their own caps).
+    fn room(&self) -> usize {
+        let queued = lock(&self.db)
+            .tasks(None)
+            .map(|v| {
+                v.iter()
+                    .filter(|t| {
+                        t.scan_id.as_deref() == Some(self.scan_id.as_str())
+                            && !crawl::is_crawled_image(&t.source, &t.url)
+                    })
+                    .count()
+            })
+            .unwrap_or(0);
+        self.limit.saturating_sub(queued)
+    }
+
     /// Queues found URLs for download: (1) documents of hosts outside the scope are dropped (a URL
     /// target covers only its own host, so dork hits on its subdomains would only be refused at
     /// download); (2) with the passive profile, target site URLs are replaced with Wayback copies
@@ -652,7 +632,9 @@ impl Enqueuer {
                 ok
             })
             .collect();
-        let pick = foca_search::pick_fair(fresh, self.limit);
+        // the room left under the limit: later batches (the background Common Crawl lane, the
+        // in-scan dork retry) count what this scan already queued
+        let pick = foca_search::pick_fair(fresh, self.room());
         let queue = StoreQueue::new(self.db.clone(), Some(self.scan_id.clone()));
         drop.added = queue.enqueue(&pick).map_err(Stop::Error)?;
         tracing::info!(target: "foca::scan", "{}: в загрузку {} новых (лимит {}, известных {}; найдено {}, вне скоупа {}, другой тип {}, уже известны {}, без архивной копии {})",

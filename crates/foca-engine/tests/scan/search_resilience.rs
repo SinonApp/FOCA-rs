@@ -187,11 +187,16 @@ async fn in_scan_retry_runs_after_cool_down_while_the_scan_runs() {
 
 /// Common Crawl index with two snapshots; counts every index call.
 async fn cc_server() -> TestServer {
+    cc_server_with(Duration::ZERO).await
+}
+
+/// The same index, each snapshot call answered after `delay`.
+async fn cc_server_with(delay: Duration) -> TestServer {
     let base = Arc::new(OnceLock::<String>::new());
     let b2 = base.clone();
     let srv = TestServer::start(move |r| {
         let b = b2.get().unwrap();
-        match r.path() {
+        let resp = match r.path() {
             "/collinfo.json" => TestResponse::ok(format!(
                 r#"[{{"id":"CC-MAIN-2026-43","cdx-api":"{b}/A-index"}},{{"id":"CC-MAIN-2019-04","cdx-api":"{b}/B-index"}}]"#
             )),
@@ -204,6 +209,11 @@ async fn cc_server() -> TestServer {
                 "{\"url\": \"https://www.example.test/cc-old.pdf\", \"timestamp\": \"20190110000000\", \"mime\": \"application/pdf\", \"status\": \"200\"}\n",
             ),
             _ => TestResponse::status(404),
+        };
+        if r.path().ends_with("-index") && !delay.is_zero() {
+            resp.delay(delay)
+        } else {
+            resp
         }
     })
     .await;
@@ -257,6 +267,51 @@ async fn deep_common_crawl_runs_beside_sources_and_resumes_from_cache() {
     // quick mode reuses the cached snapshots as well
     scan("latest").await;
     assert_eq!(cc.hits("/B-index"), 2);
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn deep_common_crawl_does_not_hold_the_search_stage() {
+    let dir = tempfile::tempdir().unwrap();
+    // archive downloads are slow, so the sweep finishes while the scan downloads
+    let srv = server(1500).await;
+    let cc = cc_server_with(Duration::from_millis(300)).await;
+    let col = format!("{}/collinfo.json", cc.url());
+    let (engine, events, _) =
+        open_with(dir.path(), &srv.url(), Arc::new(MemoryKeys::new()), |cfg| {
+            cfg.endpoints.cc_collinfo = col
+        });
+    let id = project(&engine).await;
+    invoke(
+        &engine,
+        "scan_start",
+        json!({ "project": id, "profile": "passive", "sources": ["cc", "wayback"],
+            "cc_depth": "all" }),
+    )
+    .await;
+    idle(&engine, &events).await;
+    let ev = events.lock().unwrap().clone();
+    let pos = |f: &dyn Fn(&Value) -> bool| ev.iter().position(f);
+    let download = pos(&|x| x["type"] == "stage" && x["stage"] == "download").unwrap();
+    let cc_done = pos(&|x| x["type"] == "source" && x["id"] == "cc" && x["status"] == "ok")
+        .expect("the sweep finished within the scan");
+    assert!(
+        download < cc_done,
+        "the search stage ended before the deep sweep: download at {download}, cc at {cc_done}"
+    );
+    // what the sweep found later still went to the download queue of this scan
+    let log = invoke(
+        &engine,
+        "request_log_get",
+        json!({ "project": id, "limit": 100000 }),
+    )
+    .await;
+    assert!(
+        log.as_array()
+            .unwrap()
+            .iter()
+            .any(|r| r["url"].as_str().unwrap_or("").contains("cc-new.pdf")),
+        "the late Common Crawl document was fetched"
+    );
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]

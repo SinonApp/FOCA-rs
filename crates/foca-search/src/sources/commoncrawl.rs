@@ -8,12 +8,17 @@
 //! ([`crate::rate::Throttle`]). `showNumPages` skips empty snapshots before any page is fetched.
 //! The same URL seen in many snapshots is kept once with its first and last capture time.
 //!
+//! A sweep over years stops early when the newest [`CommonCrawl::empty_stop`] snapshots that
+//! answered hold no capture of the domain (older crawls would not either); `All` still checks
+//! every snapshot. Connection failures (refused, TLS drops) get one retry per snapshot, and
+//! [`CommonCrawl::conn_stop`] unreachable snapshots in a row end the sweep for this scan.
+//!
 //! With a cache directory the sweep is resumable: finished snapshots and their hits are stored
 //! per domain and file type filter. A rescan within [`CommonCrawl::cache_ttl`] sends no request
 //! for finished snapshots; older snapshots never change, so their results are kept for
 //! [`CommonCrawl::resume_ttl`] and a stopped deep sweep continues where it left off.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -164,6 +169,8 @@ pub struct CcState {
     pub done: BTreeMap<String, i64>,
     /// Hits by dedup key.
     pub hits: BTreeMap<String, CcHit>,
+    /// Finished snapshots that hold no capture of the domain at all.
+    pub empty: BTreeSet<String>,
 }
 
 impl CcState {
@@ -212,6 +219,8 @@ impl CcState {
     fn prune(&mut self, now: i64, cc: &CommonCrawl) {
         let keep = cc.resume_ttl.as_secs() as i64;
         self.done.retain(|_, t| now.saturating_sub(*t) < keep);
+        let done = &self.done;
+        self.empty.retain(|id| done.contains_key(id));
         if self.done.is_empty() {
             self.hits.clear();
         }
@@ -264,6 +273,11 @@ pub struct CommonCrawl {
     pub resume_ttl: Duration,
     /// Hits kept per domain in the cache.
     pub max_cached: usize,
+    /// A sweep over years stops after this many answered snapshots without any capture of the
+    /// domain (0 = never).
+    pub empty_stop: usize,
+    /// Snapshots in a row that fail to connect before the sweep gives up for this scan.
+    pub conn_stop: usize,
 }
 
 impl Default for CommonCrawl {
@@ -282,6 +296,8 @@ impl Default for CommonCrawl {
             cache_ttl: Duration::from_secs(24 * 3600),
             resume_ttl: Duration::from_secs(30 * 24 * 3600),
             max_cached: 20_000,
+            empty_stop: 6,
+            conn_stop: 3,
         }
     }
 }
@@ -291,7 +307,29 @@ enum Got {
     Body(String),
     NoCaptures,
     Failed(String),
+    /// The index could not be reached (connection refused, TLS drop, DNS), even after a retry.
+    Unreachable(String),
     Stop,
+}
+
+/// Outcome of one snapshot.
+enum Swept {
+    /// Every page was read; `empty` when the snapshot holds no capture of the domain.
+    Done {
+        empty: bool,
+    },
+    /// Stopped by the rate-limit throttle.
+    Stopped,
+    Failed(String),
+    Unreachable(String),
+}
+
+/// A failure to reach the index at all, as opposed to an HTTP answer or a slow one.
+fn conn_error(e: &NetError) -> bool {
+    matches!(
+        e,
+        NetError::Request(_) | NetError::Dns(_) | NetError::Io(_) | NetError::Proxy(_)
+    )
 }
 
 impl CommonCrawl {
@@ -529,6 +567,13 @@ impl CommonCrawl {
                 }
                 Ok(r) => return Ok(Got::Failed(format!("HTTP {}", r.status()))),
                 Err(NetError::Cancelled) => return Err(NetError::Cancelled),
+                Err(e) if conn_error(&e) => {
+                    // a dropped connection rarely heals within seconds: one retry, then move on
+                    if attempt >= self.retries.min(1) {
+                        return Ok(Got::Unreachable(e.to_string()));
+                    }
+                    last = e.to_string();
+                }
                 Err(e) => last = e.to_string(),
             }
             if attempt >= self.retries {
@@ -547,8 +592,7 @@ impl CommonCrawl {
         }
     }
 
-    /// Sweeps one snapshot: page count, then pages. `Ok(true)` when it finished (empty or all
-    /// pages read), `Ok(false)` when stopped by the throttle.
+    /// Sweeps one snapshot: page count, then pages.
     async fn sweep_index(
         &self,
         ctx: &SearchCtx,
@@ -556,7 +600,7 @@ impl CommonCrawl {
         domain: &str,
         st: &mut CcState,
         thr: &Throttle,
-    ) -> Result<Result<bool, String>, NetError> {
+    ) -> Result<Swept, NetError> {
         let pages = match self
             .call(
                 ctx,
@@ -565,16 +609,17 @@ impl CommonCrawl {
             )
             .await?
         {
-            Got::NoCaptures => return Ok(Ok(true)),
-            Got::Stop => return Ok(Ok(false)),
-            Got::Failed(e) => return Ok(Err(e)),
+            Got::NoCaptures => return Ok(Swept::Done { empty: true }),
+            Got::Stop => return Ok(Swept::Stopped),
+            Got::Failed(e) => return Ok(Swept::Failed(e)),
+            Got::Unreachable(e) => return Ok(Swept::Unreachable(e)),
             Got::Body(b) => serde_json::from_str::<Value>(b.trim())
                 .ok()
                 .and_then(|v| v["pages"].as_u64())
                 .unwrap_or(1) as usize,
         };
         if pages == 0 {
-            return Ok(Ok(true));
+            return Ok(Swept::Done { empty: true });
         }
         for p in 0..pages.min(self.max_pages.max(1)) {
             let body = match self
@@ -587,8 +632,9 @@ impl CommonCrawl {
             {
                 Got::Body(b) => b,
                 Got::NoCaptures => break,
-                Got::Stop => return Ok(Ok(false)),
-                Got::Failed(e) => return Ok(Err(e)),
+                Got::Stop => return Ok(Swept::Stopped),
+                Got::Failed(e) => return Ok(Swept::Failed(e)),
+                Got::Unreachable(e) => return Ok(Swept::Unreachable(e)),
             };
             let rows = parse_cc_ndjson(&body);
             if rows.is_empty() {
@@ -611,7 +657,7 @@ impl CommonCrawl {
                 st.add(url, ts, mime, len, &ext);
             }
         }
-        Ok(Ok(true))
+        Ok(Swept::Done { empty: false })
     }
 
     /// Runs the sweep for a domain and returns the found URLs with notes.
@@ -628,13 +674,29 @@ impl CommonCrawl {
         let mut finished = 0usize;
         let mut stopped = false;
         let mut cut_short = false;
+        // answered snapshots with and without captures of the domain, newest first
+        let (mut empty, mut captured) = (0usize, 0usize);
+        let mut no_captures = false;
+        let mut unreachable_run = 0usize;
+        let mut unreachable = false;
+        let early = matches!(self.depth, CcDepth::Years(_)) && self.empty_stop > 0;
         for idx in &list {
             if !self.depth.deep() && answered >= self.max_indexes.max(1) {
+                break;
+            }
+            // older snapshots remain: the newest ones already say the domain is not crawled
+            if early && captured == 0 && empty >= self.empty_stop {
+                no_captures = true;
                 break;
             }
             if st.fresh(&idx.id, idx.id == newest, now, self) {
                 answered += 1;
                 finished += 1;
+                if st.empty.contains(&idx.id) {
+                    empty += 1;
+                } else {
+                    captured += 1;
+                }
                 continue;
             }
             if ctx.out_of_time(Duration::from_secs(8)) {
@@ -642,18 +704,36 @@ impl CommonCrawl {
                 break;
             }
             match self.sweep_index(ctx, idx, domain, &mut st, &thr).await? {
-                Ok(true) => {
+                Swept::Done { empty: e } => {
                     answered += 1;
                     finished += 1;
+                    unreachable_run = 0;
                     st.done.insert(idx.id.clone(), now);
+                    if e {
+                        empty += 1;
+                        st.empty.insert(idx.id.clone());
+                    } else {
+                        captured += 1;
+                        st.empty.remove(&idx.id);
+                    }
                 }
-                Ok(false) => {
+                Swept::Stopped => {
                     stopped = true;
                     break;
                 }
-                Err(e) => {
+                Swept::Failed(e) => {
                     tracing::warn!(target: "foca::source", "cc: индекс {} недоступен: {e}", idx.label());
                     errs.push(format!("{}: {e}", idx.label()));
+                }
+                Swept::Unreachable(e) => {
+                    tracing::warn!(target: "foca::source", "cc: индекс {} недоступен: {e}", idx.label());
+                    errs.push(format!("{}: {e}", idx.label()));
+                    unreachable_run += 1;
+                    if unreachable_run >= self.conn_stop.max(1) {
+                        unreachable = true;
+                        self.save_state(domain, &ctx.filter, &st);
+                        break;
+                    }
                 }
             }
             // saved after every snapshot, so a killed scan resumes from here
@@ -695,7 +775,13 @@ impl CommonCrawl {
         if stopped {
             notes.push(rate::THROTTLED_NOTE.into());
         }
-        if self.depth.deep() && finished < list.len() && (stopped || cut_short || !errs.is_empty())
+        if no_captures {
+            notes.push(no_captures_note(empty));
+        }
+        if self.depth.deep()
+            && !no_captures
+            && finished < list.len()
+            && (stopped || cut_short || unreachable || !errs.is_empty())
         {
             notes.push(format!(
                 "проверено снимков {finished} из {}: остальные продолжатся в следующем скане",
@@ -707,6 +793,11 @@ impl CommonCrawl {
         }
         Ok(f)
     }
+}
+
+/// Note of a sweep over years that stopped after `n` snapshots without any capture.
+fn no_captures_note(n: usize) -> String {
+    format!("в последних снимках ({n}) нет захватов домена: более старые не проверялись")
 }
 
 impl DocumentSource for CommonCrawl {

@@ -4737,7 +4737,7 @@
         screenshots: false,
       },
       // Search depth and retries (core settings.search).
-      search: { cc_depth: "latest", cc_years: 3, cc_pace_s: 3, cc_minutes: 15, dork_retry_min: 15 },
+      search: { cc_depth: "latest", cc_years: 3, cc_pace_s: 3, cc_minutes: 5, dork_retry_min: 15 },
       ai: {
         provider: "deepseek",
         model: "",

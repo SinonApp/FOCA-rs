@@ -100,7 +100,9 @@ The public Common Crawl index is unreliable: snapshots answer 400/404/502/504 at
 - asks the index at most once every 3 seconds (`settings.search.cc_pace_s`, never lower against the public index) and retries 5xx/400/timeouts with a growing pause;
 - treats 404 as "no captures" and uses `showNumPages` to skip empty snapshots before fetching pages;
 - filters by status and file type on the server, then keeps every URL once with its first and last capture;
-- runs a deep sweep (last N years or all snapshots) in the background of the Search stage, beside the other sources, within `settings.search.cc_minutes`;
+- gives a snapshot one retry after a connection failure (refused, TLS drop) and stops the sweep for this scan after three unreachable snapshots in a row;
+- stops a sweep over N years once the six newest answered snapshots hold no capture of the domain (older crawls would not either); "all snapshots" still checks every one;
+- runs a deep sweep (last N years or all snapshots) in the background: it starts with the Search stage, but the stage ends when the other sources end. The sweep keeps going during the next stages within `settings.search.cc_minutes` (default 5 per scan); documents it finds later are downloaded when the next stage starts, and whatever is still left 10 seconds after the report starts continues in the next scan;
 - caches results per domain on the device: a rescan within 24 hours sends no request for finished snapshots, and an unfinished deep sweep continues in the next scan;
 - falls back to the Wayback copy when a Common Crawl URL is dead now.
 

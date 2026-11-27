@@ -176,6 +176,124 @@ async fn years_depth_skips_old_snapshots() {
     assert_eq!(srv.hits("/E-index"), 0, "2019 is outside");
 }
 
+/// Ten snapshots, newest first: only the oldest one holds a capture of the domain.
+async fn sparse_index() -> TestServer {
+    let base = Arc::new(OnceLock::<String>::new());
+    let b2 = base.clone();
+    let srv = TestServer::start(move |r| {
+        let b = b2.get().unwrap();
+        let p = r.path();
+        if p == "/collinfo.json" {
+            let list: Vec<String> = (0..10)
+                .map(|i| {
+                    format!(
+                        r#"{{"id":"CC-MAIN-{}-10","cdx-api":"{b}/S{i}-index"}}"#,
+                        2026 - i
+                    )
+                })
+                .collect();
+            return TestResponse::ok(format!("[{}]", list.join(",")));
+        }
+        match (p, r.query("showNumPages").is_some()) {
+            ("/S9-index", true) => TestResponse::ok(r#"{"pages": 1}"#),
+            ("/S9-index", false) => {
+                TestResponse::ok(row("https://www.example.com/old.pdf", "20170110000000"))
+            }
+            // "No Captures found"
+            _ => TestResponse::status(404),
+        }
+    })
+    .await;
+    base.set(srv.url()).unwrap();
+    srv
+}
+
+fn snapshot_calls(srv: &TestServer) -> usize {
+    srv.requests()
+        .iter()
+        .filter(|r| r.path().ends_with("-index"))
+        .count()
+}
+
+#[tokio::test]
+async fn years_sweep_stops_when_the_newest_snapshots_have_no_captures() {
+    let srv = sparse_index().await;
+    let dir = tempfile::tempdir().unwrap();
+    let cc = CommonCrawl {
+        cache_dir: Some(dir.path().to_path_buf()),
+        ..CommonCrawl::with_collinfo(&format!("{}/collinfo.json?sparse", srv.url()))
+    }
+    .with_depth(CcDepth::Years(20));
+    let c = ctx();
+    let f = cc.find(&c, "example.com").await.unwrap();
+    assert!(f.urls.is_empty());
+    assert_eq!(snapshot_calls(&srv), 6, "six empty snapshots, then stop");
+    let note = f.note.unwrap_or_default();
+    assert!(note.contains("нет захватов домена"), "{note}");
+    assert!(!note.contains("продолжатся"), "{note}");
+    // the next scan answers from the cache without a request
+    let f2 = cc.find(&c, "example.com").await.unwrap();
+    assert!(f2.urls.is_empty());
+    assert_eq!(snapshot_calls(&srv), 6);
+    // all snapshots chosen explicitly: every one is checked
+    let all = CommonCrawl {
+        cache_dir: Some(dir.path().to_path_buf()),
+        ..CommonCrawl::with_collinfo(&format!("{}/collinfo.json?sparse", srv.url()))
+    }
+    .with_depth(CcDepth::All);
+    let f3 = all.find(&c, "example.com").await.unwrap();
+    assert_eq!(f3.urls.len(), 1, "the oldest capture is found");
+    assert_eq!(snapshot_calls(&srv), 6 + 4 + 1);
+}
+
+#[tokio::test]
+async fn unreachable_index_gives_up_per_snapshot_and_stops_the_sweep() {
+    let closed = {
+        let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        l.local_addr().unwrap().port()
+    };
+    let dead = format!("http://127.0.0.1:{closed}");
+    let d2 = dead.clone();
+    let srv = TestServer::start(move |r| match r.path() {
+        "/collinfo.json" => TestResponse::ok(format!(
+            "[{}]",
+            (0..6)
+                .map(|i| format!(r#"{{"id":"CC-MAIN-2026-{i:02}","cdx-api":"{d2}/X{i}-index"}}"#))
+                .collect::<Vec<_>>()
+                .join(",")
+        )),
+        _ => TestResponse::status(404),
+    })
+    .await;
+    let sink = Arc::new(MemorySink::new());
+    let (scope, _) = Scope::from_lines("", "");
+    let cfg = NetConfig {
+        global_rps: None,
+        source_rps: Default::default(),
+        retries: 0,
+        ..Default::default()
+    };
+    let mut c = SearchCtx::new(NetClient::new(cfg, scope, sink.clone()).unwrap());
+    c.filter = ExtFilter::parse("pdf");
+    let cc = CommonCrawl {
+        backoff: Some(Duration::from_millis(5)),
+        retries: 3,
+        ..CommonCrawl::with_collinfo(&format!("{}/collinfo.json?dead", srv.url()))
+    }
+    .with_depth(CcDepth::All);
+    let t0 = Instant::now();
+    let e = cc.find(&c, "example.com").await.unwrap_err();
+    assert!(e.to_string().contains("недоступны"), "{e}");
+    let attempts = sink
+        .records()
+        .iter()
+        .filter(|r| r.url.starts_with(&dead))
+        .count();
+    // one retry per snapshot, three unreachable snapshots in a row end the sweep
+    assert_eq!(attempts, 6, "{attempts}");
+    assert!(t0.elapsed() < Duration::from_secs(5), "{:?}", t0.elapsed());
+}
+
 #[tokio::test]
 async fn throttled_index_stops_with_limit_status() {
     let base = Arc::new(OnceLock::<String>::new());

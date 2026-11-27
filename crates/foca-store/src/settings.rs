@@ -82,7 +82,7 @@ pub(crate) fn defaults() -> Value {
             "screenshots": false
         },
         "search": {
-            "cc_depth": "latest", "cc_years": 3, "cc_pace_s": 3, "cc_minutes": 15,
+            "cc_depth": "latest", "cc_years": 3, "cc_pace_s": 3, "cc_minutes": 5,
             "dork_retry_min": 15
         },
         "lang": "auto",
