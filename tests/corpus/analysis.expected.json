@@ -3117,6 +3117,50 @@
       "active": false,
       "category": "docs",
       "cve": [],
+      "cvss": 9.1,
+      "description": "Конфиденциальный фрагмент закрыт тёмным прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
+      "doc": 5,
+      "evidence": "стр. 1 (black): «Passport AB123456 Ivan Petrenko»\nстр. 2 (black): «Account UA00 0000 0000 secret»",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 1457178891231802,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "forensics",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          5
+        ],
+        "fields": [
+          "bad_redactions"
+        ],
+        "rule": "doc.bad_redaction"
+      },
+      "recommendation": "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.",
+      "rel": {
+        "docs": [
+          5
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "crit",
+      "source": "Форензика документов",
+      "status": "new",
+      "tags": [
+        "forensics"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "Плохое замазывание: текст под закраской читается (redacted.pdf)",
+      "url": "https://files.contoso.example/corpus/forensics/redacted.pdf"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
       "cvss": null,
       "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
       "doc": 4,
@@ -3934,50 +3978,6 @@
       "time": "2026-11-20T12:00:00",
       "title": "Пароль в тексте документа",
       "url": "https://files.contoso.example/corpus/pdf/objstm.pdf"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": 7.5,
-      "description": "Конфиденциальный фрагмент закрыт тёмным прямоугольником поверх текста, но сам текст остался в документе: его можно скопировать или извлечь любой программой просмотра PDF.",
-      "doc": 5,
-      "evidence": "стр. 1 (black): «Passport AB123456 Ivan Petrenko»\nстр. 2 (black): «Account UA00 0000 0000 secret»",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 1457178891231802,
-      "mitre": "T1213 · Data from Information Repositories",
-      "module": "forensics",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          5
-        ],
-        "fields": [
-          "bad_redactions"
-        ],
-        "rule": "doc.bad_redaction"
-      },
-      "recommendation": "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.",
-      "rel": {
-        "docs": [
-          5
-        ],
-        "pcs": [],
-        "people": []
-      },
-      "request": "",
-      "sev": "high",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [
-        "forensics"
-      ],
-      "time": "2026-11-20T12:00:00",
-      "title": "Плохое замазывание: текст под закраской читается (redacted.pdf)",
-      "url": "https://files.contoso.example/corpus/forensics/redacted.pdf"
     },
     {
       "active": false,
