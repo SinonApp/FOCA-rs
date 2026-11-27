@@ -10393,78 +10393,117 @@
       "eol": false,
       "eol_date": null,
       "id": "windows",
+      "last_doc": null,
       "name": "Windows",
       "released": null,
       "ver": ""
     },
     {
+      "cpe": [
+        "apple:macos",
+        "apple:mac_os_x"
+      ],
       "docs": 4,
       "eol": false,
       "eol_date": null,
       "id": "macos",
+      "last_doc": null,
       "name": "macOS",
       "released": null,
       "ver": ""
     },
     {
+      "cpe": [
+        "microsoft:windows_10",
+        "microsoft:windows_11"
+      ],
       "docs": 4,
       "eol": false,
       "eol_date": null,
       "id": "win10",
+      "last_doc": null,
       "name": "Windows 10/11",
       "released": 2015,
       "ver": ""
     },
     {
+      "cpe": [
+        "apple:iphone_os",
+        "apple:ipados"
+      ],
       "docs": 2,
       "eol": true,
       "eol_date": "2025-09-15",
       "id": "ios174",
+      "last_doc": null,
       "name": "iOS 17.4",
       "released": 2023,
       "ver": "17.4"
     },
     {
+      "cpe": [
+        "microsoft:windows_xp"
+      ],
       "docs": 2,
       "eol": true,
       "eol_date": "2014-04-08",
       "id": "winxp",
+      "last_doc": null,
       "name": "Windows XP",
       "released": 2001,
       "ver": ""
     },
     {
+      "cpe": [
+        "google:android"
+      ],
       "docs": 1,
       "eol": false,
       "eol_date": null,
       "id": "android",
+      "last_doc": null,
       "name": "Android",
       "released": null,
       "ver": ""
     },
     {
+      "cpe": [
+        "apple:iphone_os",
+        "apple:ipados"
+      ],
       "docs": 1,
       "eol": true,
       "eol_date": "2024-09-16",
       "id": "ios166",
+      "last_doc": null,
       "name": "iOS 16.6",
       "released": 2022,
       "ver": "16.6"
     },
     {
+      "cpe": [
+        "microsoft:windows_7",
+        "microsoft:windows_server_2008"
+      ],
       "docs": 1,
       "eol": true,
       "eol_date": "2020-01-14",
       "id": "win7",
+      "last_doc": null,
       "name": "Windows 7 / Server 2008 R2",
       "released": 2009,
       "ver": ""
     },
     {
+      "cpe": [
+        "microsoft:windows_xp",
+        "microsoft:windows_server_2003"
+      ],
       "docs": 1,
       "eol": true,
       "eol_date": "2015-07-14",
       "id": "winxp64",
+      "last_doc": null,
       "name": "Windows XP x64 / Server 2003",
       "released": 2003,
       "ver": ""
@@ -11348,6 +11387,10 @@
   ],
   "software": [
     {
+      "cpe": [
+        "adobe:photoshop",
+        "adobe:photoshop_cc"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11356,11 +11399,17 @@
       "eol_date": null,
       "id": "ps7",
       "kind": "image",
+      "last_doc": null,
       "name": "Adobe Photoshop 7.0",
       "released": 2002,
+      "side": "workstation",
       "ver": "7.0"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:excel"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11369,8 +11418,10 @@
       "eol_date": null,
       "id": "excel",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office Excel",
       "released": null,
+      "side": "workstation",
       "ver": ""
     },
     {
@@ -11382,11 +11433,17 @@
       "eol_date": null,
       "id": "fujifilm",
       "kind": "camera",
+      "last_doc": null,
       "name": "Fujifilm (камера)",
       "released": null,
+      "side": "",
       "ver": ""
     },
     {
+      "cpe": [
+        "apple:iphone_os",
+        "apple:ipados"
+      ],
       "cve": 0,
       "cves": [],
       "dev": "Apple iPhone 15 Pro",
@@ -11395,11 +11452,17 @@
       "eol_date": "2025-09-15",
       "id": "ios174",
       "kind": "camera",
+      "last_doc": null,
       "name": "iOS 17.4",
       "released": 2023,
+      "side": "",
       "ver": "17.4"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:outlook"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11408,11 +11471,17 @@
       "eol_date": null,
       "id": "outlook2016",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office Outlook 2016-2024 / 365",
       "released": 2016,
+      "side": "workstation",
       "ver": "16"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:powerpoint"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11421,11 +11490,17 @@
       "eol_date": null,
       "id": "ppt",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office PowerPoint",
       "released": null,
+      "side": "workstation",
       "ver": ""
     },
     {
+      "cpe": [
+        "adobe:photoshop",
+        "adobe:photoshop_cc"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11434,11 +11509,17 @@
       "eol_date": null,
       "id": "ps2019",
       "kind": "image",
+      "last_doc": null,
       "name": "Adobe Photoshop CC 2019",
       "released": 2018,
+      "side": "workstation",
       "ver": "CC 2019"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:visio"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11447,11 +11528,17 @@
       "eol_date": null,
       "id": "visio",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office Visio",
       "released": null,
+      "side": "workstation",
       "ver": ""
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:word"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11460,11 +11547,17 @@
       "eol_date": null,
       "id": "word",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office Word",
       "released": null,
+      "side": "workstation",
       "ver": ""
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:word"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11473,11 +11566,18 @@
       "eol_date": "2023-04-11",
       "id": "word2013",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office Word 2013",
       "released": 2013,
+      "side": "workstation",
       "ver": "15"
     },
     {
+      "cpe": [
+        "adobe:acrobat",
+        "adobe:acrobat_dc",
+        "adobe:acrobat_reader_dc"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11486,8 +11586,10 @@
       "eol_date": "2017-10-15",
       "id": "acro11",
       "kind": "pdf",
+      "last_doc": null,
       "name": "Adobe Acrobat Pro XI",
       "released": 2012,
+      "side": "workstation",
       "ver": "11.0.23"
     },
     {
@@ -11499,11 +11601,16 @@
       "eol_date": null,
       "id": "android-samsung",
       "kind": "camera",
+      "last_doc": null,
       "name": "Samsung Galaxy (Android)",
       "released": null,
+      "side": "",
       "ver": ""
     },
     {
+      "cpe": [
+        "apache:openoffice"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11512,8 +11619,10 @@
       "eol_date": null,
       "id": "aoo41",
       "kind": "office",
+      "last_doc": null,
       "name": "Apache OpenOffice 4.1.14",
       "released": 2014,
+      "side": "workstation",
       "ver": "4.1.14"
     },
     {
@@ -11525,8 +11634,10 @@
       "eol_date": null,
       "id": "canon-camera",
       "kind": "camera",
+      "last_doc": null,
       "name": "Canon (камера)",
       "released": null,
+      "side": "",
       "ver": ""
     },
     {
@@ -11538,11 +11649,17 @@
       "eol_date": null,
       "id": "canon-ir",
       "kind": "scanner",
+      "last_doc": null,
       "name": "Canon imageRUNNER 1.2",
       "released": null,
+      "side": "",
       "ver": "1.2"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:excel"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11551,8 +11668,10 @@
       "eol_date": "2020-10-13",
       "id": "excel2010",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Excel 2010",
       "released": 2010,
+      "side": "workstation",
       "ver": "14"
     },
     {
@@ -11564,8 +11683,10 @@
       "eol_date": null,
       "id": "graphicconverter",
       "kind": "image",
+      "last_doc": null,
       "name": "GraphicConverter",
       "released": null,
+      "side": "",
       "ver": ""
     },
     {
@@ -11577,11 +11698,16 @@
       "eol_date": null,
       "id": "greenshot",
       "kind": "image",
+      "last_doc": null,
       "name": "Greenshot 1.2.10",
       "released": null,
+      "side": "workstation",
       "ver": "1.2.10"
     },
     {
+      "cpe": [
+        "artifex:ghostscript"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11590,11 +11716,16 @@
       "eol_date": null,
       "id": "gs",
       "kind": "pdf",
+      "last_doc": null,
       "name": "Ghostscript 9.50",
       "released": null,
+      "side": "server",
       "ver": "9.50"
     },
     {
+      "cpe": [
+        "adobe:indesign"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11603,11 +11734,16 @@
       "eol_date": null,
       "id": "indesign",
       "kind": "image",
+      "last_doc": null,
       "name": "Adobe InDesign 19.2",
       "released": null,
+      "side": "workstation",
       "ver": "19.2"
     },
     {
+      "cpe": [
+        "inkscape:inkscape"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11616,11 +11752,17 @@
       "eol_date": null,
       "id": "inkscape",
       "kind": "image",
+      "last_doc": null,
       "name": "Inkscape 1.1.2",
       "released": null,
+      "side": "workstation",
       "ver": "1.1.2"
     },
     {
+      "cpe": [
+        "apple:iphone_os",
+        "apple:ipados"
+      ],
       "cve": 0,
       "cves": [],
       "dev": "Apple iPhone 13 Pro",
@@ -11629,11 +11771,16 @@
       "eol_date": "2024-09-16",
       "id": "ios166",
       "kind": "camera",
+      "last_doc": null,
       "name": "iOS 16.6",
       "released": 2022,
+      "side": "",
       "ver": "16.6"
     },
     {
+      "cpe": [
+        "adobe:lightroom"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11642,11 +11789,16 @@
       "eol_date": null,
       "id": "lightroom",
       "kind": "image",
+      "last_doc": null,
       "name": "Adobe Lightroom 13.2",
       "released": null,
+      "side": "workstation",
       "ver": "13.2"
     },
     {
+      "cpe": [
+        "libreoffice:libreoffice"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11655,11 +11807,17 @@
       "eol_date": "2022-06-12",
       "id": "lo72",
       "kind": "office",
+      "last_doc": null,
       "name": "LibreOffice 7.2.5.2",
       "released": 2021,
+      "side": "workstation",
       "ver": "7.2.5.2"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:powerpoint"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11668,11 +11826,17 @@
       "eol_date": null,
       "id": "macppt",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft PowerPoint для Mac",
       "released": null,
+      "side": "workstation",
       "ver": ""
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:word"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11681,11 +11845,16 @@
       "eol_date": "2013-04-09",
       "id": "macword2008",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Word 2008 для Mac",
       "released": 2008,
+      "side": "workstation",
       "ver": "12"
     },
     {
+      "cpe": [
+        "openoffice:openoffice.org"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11694,8 +11863,10 @@
       "eol_date": "2011-04-15",
       "id": "ooo3",
       "kind": "office",
+      "last_doc": null,
       "name": "OpenOffice.org 3.2",
       "released": 2008,
+      "side": "workstation",
       "ver": "3.2"
     },
     {
@@ -11707,11 +11878,17 @@
       "eol_date": null,
       "id": "pdfcreator",
       "kind": "pdf",
+      "last_doc": null,
       "name": "PDFCreator 3.2.0",
       "released": null,
+      "side": "workstation",
       "ver": "3.2.0"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:powerpoint"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11720,11 +11897,17 @@
       "eol_date": null,
       "id": "ppt2016",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office PowerPoint 2016-2024 / 365",
       "released": 2016,
+      "side": "workstation",
       "ver": "16"
     },
     {
+      "cpe": [
+        "microsoft:office",
+        "microsoft:publisher"
+      ],
       "cve": 0,
       "cves": [],
       "dev": null,
@@ -11733,8 +11916,10 @@
       "eol_date": null,
       "id": "publisher2016",
       "kind": "office",
+      "last_doc": null,
       "name": "Microsoft Office Publisher 2016-2024 / 365",
       "released": 2016,
+      "side": "workstation",
       "ver": "16"
     }
   ]
