@@ -1009,7 +1009,7 @@ for (const id of S.order) {
     [R.riskScore([oosF]), R.riskScore([liveF, oosF])],
   );
   // "Critical" level needs an in-scope live critical finding: an out-of-scope one never sets it.
-  const highs = Array.from({ length: 19 }, () => ({ sev: "high", status: "new", tags: [] }));
+  const highs = Array.from({ length: 7 }, () => ({ sev: "crit", status: "new", category: "web", tags: [] }));
   const lvl = l => R.riskLevel(R.riskScore(l), R.hasCrit(l));
   ok(
     "risk level: out-of-scope critical finding does not make it Critical",
@@ -1017,6 +1017,19 @@ for (const id of S.order) {
       lvl([...highs, liveF]) === "crit" &&
       !R.hasCrit([{ ...liveF, status: "fixed" }]),
     [lvl([...highs, oosF]), lvl([...highs, liveF])],
+  );
+  // Same numbers as the Rust test `rules::tests::risk_rule`: repeats in one category count w/k,
+  // metadata-only exposure stops at 75, no critical finding at 89.
+  const hd = Array.from({ length: 3 }, () => ({ sev: "high", status: "new", category: "docs", tags: [] }));
+  const meta = Array.from({ length: 300 }, (_, i) => ({ sev: "high", status: "new", category: ["docs", "people", "sw"][i % 3], tags: [] }));
+  const net = Array.from({ length: 300 }, (_, i) => ({ sev: "high", status: "new", category: ["web", "tls", "dns", "mail", "cloud", "hosts"][i % 6], tags: [] }));
+  ok(
+    "risk: dampened repeats, exposure and no-critical caps",
+    R.riskScore(hd) === 21 &&
+      R.riskScore([...hd, { sev: "high", status: "new", category: "web" }, { ...oosF, category: "web" }]) === 30 &&
+      R.riskScore(meta) === 75 &&
+      R.riskScore(net) === 89,
+    [R.riskScore(hd), R.riskScore(meta), R.riskScore(net)],
   );
   B.invokeSync("demo_reset");
   await F.api.project_list();

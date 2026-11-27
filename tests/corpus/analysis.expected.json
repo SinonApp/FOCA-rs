@@ -3261,7 +3261,9 @@
       "sev": "crit",
       "source": "Форензика документов",
       "status": "new",
-      "tags": [],
+      "tags": [
+        "credential"
+      ],
       "time": "2026-11-20T12:00:00",
       "title": "Ссылки на облачные пространства и URL с токенами в personal.docx",
       "url": "https://files.contoso.example/corpus/forensics/personal.docx"
@@ -5947,134 +5949,6 @@
       "category": "docs",
       "cve": [],
       "cvss": null,
-      "description": "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.",
-      "doc": 57,
-      "evidence": "exiftool-PDF.pdf",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 5561310249231084,
-      "mitre": "",
-      "module": "forensics",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          57
-        ],
-        "fields": [
-          "scan_without_text"
-        ],
-        "rule": "doc.scan_without_text"
-      },
-      "recommendation": "Проверить скан вручную; не публиковать сканы личных документов.",
-      "rel": {
-        "docs": [
-          57
-        ],
-        "pcs": [],
-        "people": [
-          "p.harvey"
-        ]
-      },
-      "request": "",
-      "sev": "warn",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Скан без текстового слоя: exiftool-PDF.pdf",
-      "url": "https://files.contoso.example/corpus/real/exiftool-PDF.pdf"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
-      "description": "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.",
-      "doc": 58,
-      "evidence": "exiftool-PDF2.pdf",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 6352259458030564,
-      "mitre": "",
-      "module": "forensics",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          58
-        ],
-        "fields": [
-          "scan_without_text"
-        ],
-        "rule": "doc.scan_without_text"
-      },
-      "recommendation": "Проверить скан вручную; не публиковать сканы личных документов.",
-      "rel": {
-        "docs": [
-          58
-        ],
-        "pcs": [],
-        "people": []
-      },
-      "request": "",
-      "sev": "warn",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Скан без текстового слоя: exiftool-PDF2.pdf",
-      "url": "https://files.contoso.example/corpus/real/exiftool-PDF2.pdf"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
-      "description": "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.",
-      "doc": 7,
-      "evidence": "scan.pdf",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 2958753000410710,
-      "mitre": "",
-      "module": "forensics",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          7
-        ],
-        "fields": [
-          "scan_without_text"
-        ],
-        "rule": "doc.scan_without_text"
-      },
-      "recommendation": "Проверить скан вручную; не публиковать сканы личных документов.",
-      "rel": {
-        "docs": [
-          7
-        ],
-        "pcs": [],
-        "people": []
-      },
-      "request": "",
-      "sev": "warn",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Скан без текстового слоя: scan.pdf",
-      "url": "https://files.contoso.example/corpus/forensics/scan.pdf"
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
       "description": "Книга содержит скрытые листы: они не видны при просмотре, но доступны любому, кто откроет файл.",
       "doc": 38,
       "evidence": "Зарплати\nСлужбовий",
@@ -8084,6 +7958,134 @@
     },
     {
       "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": null,
+      "description": "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.",
+      "doc": 57,
+      "evidence": "exiftool-PDF.pdf",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 5561310249231084,
+      "mitre": "",
+      "module": "forensics",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          57
+        ],
+        "fields": [
+          "scan_without_text"
+        ],
+        "rule": "doc.scan_without_text"
+      },
+      "recommendation": "Проверить скан вручную; не публиковать сканы личных документов.",
+      "rel": {
+        "docs": [
+          57
+        ],
+        "pcs": [],
+        "people": [
+          "p.harvey"
+        ]
+      },
+      "request": "",
+      "sev": "info",
+      "source": "Форензика документов",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Скан без текстового слоя: exiftool-PDF.pdf",
+      "url": "https://files.contoso.example/corpus/real/exiftool-PDF.pdf"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": null,
+      "description": "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.",
+      "doc": 58,
+      "evidence": "exiftool-PDF2.pdf",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 6352259458030564,
+      "mitre": "",
+      "module": "forensics",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          58
+        ],
+        "fields": [
+          "scan_without_text"
+        ],
+        "rule": "doc.scan_without_text"
+      },
+      "recommendation": "Проверить скан вручную; не публиковать сканы личных документов.",
+      "rel": {
+        "docs": [
+          58
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "info",
+      "source": "Форензика документов",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Скан без текстового слоя: exiftool-PDF2.pdf",
+      "url": "https://files.contoso.example/corpus/real/exiftool-PDF2.pdf"
+    },
+    {
+      "active": false,
+      "category": "docs",
+      "cve": [],
+      "cvss": null,
+      "description": "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.",
+      "doc": 7,
+      "evidence": "scan.pdf",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 2958753000410710,
+      "mitre": "",
+      "module": "forensics",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          7
+        ],
+        "fields": [
+          "scan_without_text"
+        ],
+        "rule": "doc.scan_without_text"
+      },
+      "recommendation": "Проверить скан вручную; не публиковать сканы личных документов.",
+      "rel": {
+        "docs": [
+          7
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "info",
+      "source": "Форензика документов",
+      "status": "new",
+      "tags": [],
+      "time": "2026-11-20T12:00:00",
+      "title": "Скан без текстового слоя: scan.pdf",
+      "url": "https://files.contoso.example/corpus/forensics/scan.pdf"
+    },
+    {
+      "active": false,
       "category": "people",
       "cve": [],
       "cvss": null,
@@ -8123,52 +8125,6 @@
       "time": "2026-11-20T12:00:00",
       "title": "Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name",
       "url": null
-    },
-    {
-      "active": false,
-      "category": "docs",
-      "cve": [],
-      "cvss": null,
-      "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
-      "doc": 50,
-      "evidence": "Онлайн-встреча: https://example.zoom.us/j/1234567890?pwd=EXAMPLE\nОнлайн-встреча: https://teams.microsoft.com/l/meetup-join/\nОнлайн-встреча: https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d\nОнлайн-встреча: https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0",
-      "first_scan": "corpus-s1",
-      "fixed_scan": null,
-      "host": "files.contoso.example",
-      "id": 3450749083141518,
-      "mitre": "T1213.003 · Data from Information Repositories: Code Repositories",
-      "module": "forensics",
-      "notes": [],
-      "photos": [],
-      "provenance": {
-        "docs": [
-          50
-        ],
-        "fields": [
-          "links"
-        ],
-        "rule": "doc.links"
-      },
-      "recommendation": "Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам.",
-      "rel": {
-        "docs": [
-          50
-        ],
-        "pcs": [],
-        "people": [
-          "i.petrenko",
-          "john.doe",
-          "o.kovalenko"
-        ]
-      },
-      "request": "",
-      "sev": "info",
-      "source": "Форензика документов",
-      "status": "new",
-      "tags": [],
-      "time": "2026-11-20T12:00:00",
-      "title": "Ссылки на облачные пространства и URL с токенами в meeting.ics",
-      "url": "https://files.contoso.example/corpus/pim/meeting.ics"
     }
   ],
   "gps": [
@@ -11504,8 +11460,8 @@
   ],
   "resolved": [],
   "risk": {
-    "level": "critical",
-    "score": 100
+    "level": "high",
+    "score": 88
   },
   "secrets": [
     {

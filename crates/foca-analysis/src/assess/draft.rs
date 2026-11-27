@@ -25,7 +25,7 @@ pub(crate) struct Draft {
 }
 
 /// CVSS v3 qualitative band of a score: 9.0+ critical, 7.0-8.9 high, 4.0-6.9 medium, below low.
-pub(crate) fn cvss_band(score: f32) -> Severity {
+pub fn cvss_band(score: f32) -> Severity {
     if score >= 9.0 {
         Severity::Critical
     } else if score >= 7.0 {
@@ -39,7 +39,7 @@ pub(crate) fn cvss_band(score: f32) -> Severity {
 
 /// The score shown with a rule whose severity is set by the rule itself: one value per band, so
 /// the severity label and the CVSS number never disagree.
-pub(crate) fn band_cvss(sev: Severity) -> f32 {
+pub fn band_cvss(sev: Severity) -> f32 {
     match sev {
         Severity::Critical => 9.1,
         Severity::High => 7.5,

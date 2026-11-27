@@ -191,6 +191,7 @@ pub fn apply(a: &mut Analysis, ins: &Insights, prev: &PrevState, now: &str) {
         }
     }
     super::cves::apply(a, ins, prev, now);
+    super::calibrate::apply(a, ins, prev, now);
 }
 
 /// Findings derived from the insights (Russian texts; the report translates them by rule).
@@ -269,6 +270,7 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
     }
     let mut kev_groups: BTreeMap<(String, String, u8), KevGroup> = BTreeMap::new();
     let mut kev_order: Vec<(String, String, u8)> = Vec::new();
+    let mut kev_subjects: BTreeMap<(String, String, u8), BTreeSet<String>> = BTreeMap::new();
     for k in &ins.kev {
         let probe = if k.subject.ver.is_empty() {
             k.subject.name.clone()
@@ -280,6 +282,10 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
             _ => 0,
         };
         let gkey = (k.product_key.clone(), probe.to_ascii_lowercase(), kind_ord);
+        kev_subjects
+            .entry(gkey.clone())
+            .or_default()
+            .insert(k.subject.id.clone());
         let subj_docs: Vec<u64> = a
             .facts
             .iter()
@@ -471,6 +477,20 @@ pub fn findings(a: &Analysis, ins: &Insights, now: &str, scan: Option<&str>) -> 
         f.tags = vec!["kev".into(), g.confidence.clone()];
         if g.eol {
             f.tags.push("eol".into());
+        }
+        // Workstation software (document metadata) is reconnaissance: medium at most, also for
+        // old KEV entries; server-side generators keep their severity.
+        let server = a.software.iter().any(|s| {
+            s.side == "server"
+                && kev_subjects
+                    .get(&gkey)
+                    .is_some_and(|ids| ids.contains(&s.id))
+        });
+        if g.kind != foca_analysis::kev::SubjectKind::Tech && !server {
+            if f.sev.rank() > Severity::Medium.rank() {
+                f.sev = Severity::Medium;
+            }
+            f.tags.push("workstation".into());
         }
         out.push(f);
     }

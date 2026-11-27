@@ -75,7 +75,9 @@ impl PiiKind {
     pub fn sev(self) -> Severity {
         match self {
             PiiKind::Card | PiiKind::Passport | PiiKind::IdCard => Severity::High,
-            PiiKind::Rnokpp | PiiKind::Iban => Severity::High,
+            // High next to a person's name or with several values ([`summarize`]); an
+            // organisation's own account (requisites) is low.
+            PiiKind::Rnokpp | PiiKind::Iban => Severity::Medium,
             PiiKind::Edrpou => Severity::Info,
             PiiKind::Phone => Severity::Low,
             PiiKind::Marking => Severity::Medium,
@@ -295,6 +297,24 @@ impl Ctx<'_> {
         a[..end].to_lowercase()
     }
 
+    /// A person's full name within ~80 characters around the value.
+    fn near_name(&self, s: usize, e: usize) -> bool {
+        let mut a = s.saturating_sub(240);
+        while !self.text.is_char_boundary(a) {
+            a -= 1;
+        }
+        let mut b = (e + 240).min(self.text.len());
+        while !self.text.is_char_boundary(b) {
+            b += 1;
+        }
+        let around: String = {
+            let before: String = self.text[a..s].chars().rev().take(80).collect();
+            let after: String = self.text[e..b].chars().take(80).collect();
+            before.chars().rev().collect::<String>() + " " + &after
+        };
+        re_person().is_match(&around)
+    }
+
     fn near(&self, s: usize, e: usize, words: &[&str]) -> bool {
         let b = self.before(s, 60);
         let a = self.after(e, 20);
@@ -480,6 +500,45 @@ const IDCARD_WORDS: &[&str] = &[
     "номер документа",
     "документ №",
 ];
+const CARD_WORDS: &[&str] = &[
+    "карт",
+    "card",
+    "visa",
+    "mastercard",
+    "№ рахунку",
+    "cvv",
+    "cvc",
+    "термін дії",
+    "срок действия",
+    "expiry",
+    "exp.",
+    "valid thru",
+];
+/// Words of an organisation's requisites (its own account in a licence or invoice).
+const ORG_WORDS: &[&str] = &[
+    "єдрпоу",
+    "едрпоу",
+    "тов ",
+    "університет",
+    "университет",
+    "установ",
+    "заклад",
+    "підприємств",
+    "предприят",
+    "казначейств",
+    "дксу",
+    "реквізит",
+    "реквизит",
+    "юридична адреса",
+    "юридический адрес",
+];
+/// A person's full name: surname with initials, three capitalised words, or a ПІБ label.
+fn re_person() -> &'static Regex {
+    static R: OnceLock<Regex> = OnceLock::new();
+    R.get_or_init(|| {
+        re(r"(?:\b(?:ПІБ|ФІО|ФИО|П\.І\.Б\.|Ф\.И\.О\.)|[А-ЯІЇЄҐ][а-яіїєґ'’]{2,}\s+[А-ЯІЇЄҐ]\.\s?[А-ЯІЇЄҐ]\.|[А-ЯІЇЄҐ]\.\s?[А-ЯІЇЄҐ]\.\s?[А-ЯІЇЄҐ][а-яіїєґ'’]{2,}|[А-ЯІЇЄҐ][а-яіїєґ'’]{2,}\s+[А-ЯІЇЄҐ][а-яіїєґ'’]{2,}\s+[А-ЯІЇЄҐ][а-яіїєґ'’]{2,}(?:вич|вна|ович|івна|ївна|евич|евна|ич|на)\b|[А-ЯІЇЄҐ][а-яіїєґ'’]{2,}\s+[А-ЯІЇЄҐ][а-яіїєґ'’]+(?:енко|ук|юк|чук|ський|цький|ська|цька|ов|ова|ев|ева|ін|іна|ин|ина|як|ко)\b)")
+    })
+}
 const PHONE_WORDS: &[&str] = &[
     "тел", "моб", "phone", "tel", "факс", "fax", "viber", "telegram",
 ];
@@ -494,6 +553,13 @@ fn iban(c: &Ctx, out: &mut Vec<PiiHit>) {
             .to_ascii_uppercase();
         if iban_ua_valid(&v) {
             let mfo = v[4..10].to_string();
+            let sev = if c.near_name(m.start(), m.end()) {
+                Some(Severity::High)
+            } else if c.near(m.start(), m.end(), ORG_WORDS) {
+                Some(Severity::Low)
+            } else {
+                None
+            };
             c.push(
                 out,
                 PiiKind::Iban,
@@ -502,7 +568,7 @@ fn iban(c: &Ctx, out: &mut Vec<PiiHit>) {
                 v,
                 Confidence::High,
                 Some(format!("МФО {mfo}")),
-                None,
+                sev,
             );
         }
     }
@@ -528,11 +594,12 @@ fn cards(c: &Ctx, out: &mut Vec<PiiHit>) {
         let Some(brand) = card_brand(&num) else {
             continue;
         };
-        let conf = if c.near(
-            m.start(),
-            m.end(),
-            &["карт", "card", "visa", "mastercard", "№ рахунку"],
-        ) {
+        // Card context: a card word, CVV or expiry nearby, or the printed 4x4 grouping.
+        // Without it a lone Luhn-valid number is dropped from the findings ([`summarize`]),
+        // still masked.
+        let grouped =
+            raw.len() == 19 && raw.split([' ', '-']).filter(|g| g.len() == 4).count() == 4;
+        let conf = if grouped || c.near(m.start(), m.end(), CARD_WORDS) {
             Confidence::High
         } else {
             Confidence::Medium
@@ -581,7 +648,7 @@ fn rnokpp(c: &Ctx, out: &mut Vec<PiiHit>) {
                 Confidence::Medium
             },
             None,
-            None,
+            c.near_name(m.start(), m.end()).then_some(Severity::High),
         );
     }
 }
@@ -1048,7 +1115,33 @@ fn mask_with_samples(text: &str, place: &str) -> (String, Vec<(PiiHit, String)>)
 }
 
 fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
+    // A lone card-like number without card context is not reported (still masked).
+    let cards: Vec<&PiiHit> = hits
+        .iter()
+        .map(|(h, _)| h)
+        .filter(|h| h.kind == PiiKind::Card)
+        .collect();
+    let mut card_values: Vec<&str> = cards.iter().map(|h| h.value.expose()).collect();
+    card_values.sort_unstable();
+    card_values.dedup();
+    let drop_cards =
+        card_values.len() < 2 && cards.iter().all(|h| h.confidence == Confidence::Medium);
+    // Several personal account or tax numbers (not an organisation's requisites): high.
+    let several = |k: PiiKind| {
+        let mut v: Vec<&str> = hits
+            .iter()
+            .filter(|(h, _)| h.kind == k && h.sev != Severity::Low)
+            .map(|(h, _)| h.value.expose())
+            .collect();
+        v.sort_unstable();
+        v.dedup();
+        v.len() >= 2
+    };
+    let (many_iban, many_rnokpp) = (several(PiiKind::Iban), several(PiiKind::Rnokpp));
     for (h, sample) in hits {
+        if h.kind == PiiKind::Card && drop_cards {
+            continue;
+        }
         let kind = h.kind.id();
         let i = match into.iter().position(|p| p.kind == kind) {
             Some(i) => i,
@@ -1064,8 +1157,13 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
         };
         let p = &mut into[i];
         p.count += 1;
-        if h.sev < p.sev {
-            p.sev = h.sev;
+        let sev = match h.kind {
+            PiiKind::Iban if many_iban && h.sev != Severity::Low => Severity::High,
+            PiiKind::Rnokpp if many_rnokpp => Severity::High,
+            _ => h.sev,
+        };
+        if p.count == 1 || sev < p.sev {
+            p.sev = sev;
         }
         if p.samples.len() < 3 {
             let c: String = sample.chars().take(160).collect();
@@ -1202,6 +1300,65 @@ mod tests {
 
     fn kinds(t: &str) -> Vec<PiiKind> {
         scan(t, "текст").into_iter().map(|h| h.kind).collect()
+    }
+
+    fn found(t: &str) -> Vec<(String, Severity)> {
+        let m = foca_core::Metadata::default();
+        sanitize(&m, Some(t))
+            .0
+            .pii
+            .into_iter()
+            .map(|p| (p.kind, p.sev))
+            .collect()
+    }
+
+    #[test]
+    fn card_numbers_need_context_or_several_values() {
+        assert!(found("Номер замовлення 4111111111111111 від 12.03").is_empty());
+        let k = |t: &str| found(t).into_iter().any(|(k, _)| k == "card");
+        assert!(k("Картка: 4111111111111111"));
+        assert!(k("Номер 4111 1111 1111 1111"));
+        assert!(k("4111111111111111 та 5500000000000004"));
+    }
+
+    #[test]
+    fn iban_and_rnokpp_severity_by_context() {
+        let iban = mk_iban("3052990000026007233566001");
+        let sev = |t: &str, kind: &str| {
+            found(t)
+                .into_iter()
+                .find(|(k, _)| k == kind)
+                .map(|(_, s)| s)
+        };
+        assert_eq!(
+            sev(&format!("Рахунок {iban}"), "iban"),
+            Some(Severity::Medium)
+        );
+        assert_eq!(
+            sev(
+                &format!("ТОВ «Приклад», код ЄДРПОУ 12345678, р/р {iban}"),
+                "iban"
+            ),
+            Some(Severity::Low)
+        );
+        assert_eq!(
+            sev(&format!("Отримувач: Іван Петренко, рахунок {iban}"), "iban"),
+            Some(Severity::High)
+        );
+        let iban2 = mk_iban("3052990000026007233566002");
+        assert_eq!(
+            sev(&format!("Рахунок {iban}\nРахунок {iban2}"), "iban"),
+            Some(Severity::High)
+        );
+        let r = mk_rnokpp("312456789");
+        assert_eq!(
+            sev(&format!("РНОКПП {r}"), "rnokpp"),
+            Some(Severity::Medium)
+        );
+        assert_eq!(
+            sev(&format!("Петренко І. П., РНОКПП {r}"), "rnokpp"),
+            Some(Severity::High)
+        );
     }
 
     #[test]

@@ -105,6 +105,23 @@ pub struct LinkHit {
     pub sev: Severity,
 }
 
+/// Token kind of a meeting passcode in a join link (`zoom.us/j/…?pwd=`): reported by its own
+/// rule, never as a credential.
+pub const MEETING_PASSCODE: &str = "meeting_passcode";
+
+impl LinkHit {
+    /// A meeting join link with the passcode in the URL.
+    pub fn meeting_passcode(&self) -> bool {
+        self.tokens.iter().any(|t| t.kind == MEETING_PASSCODE)
+    }
+
+    /// A real credential in the URL (signature, access token, SAS, webhook, password), meeting
+    /// passcodes excluded.
+    pub fn has_credential(&self) -> bool {
+        self.tokens.iter().any(|t| t.kind != MEETING_PASSCODE)
+    }
+}
+
 /// Maximum links returned per text.
 pub const MAX_LINKS: usize = 1000;
 
@@ -350,7 +367,7 @@ pub fn classify(url: &str) -> Option<LinkHit> {
         service = Some(Service::Meeting);
         resource = Some("zoom".into());
         if let Some(pw) = get("pwd") {
-            tokens.push(("pwd".into(), "query".into(), pw.into()));
+            tokens.push(("pwd".into(), MEETING_PASSCODE.into(), pw.into()));
         }
     } else if ends(&host, "teams.microsoft.com") && path_l.contains("meetup-join") {
         service = Some(Service::Meeting);
@@ -453,6 +470,10 @@ pub fn classify(url: &str) -> Option<LinkHit> {
         if kl == "key" && service == Some(Service::GoogleDocs) {
             continue;
         }
+        // A meeting passcode is not a credential of the organisation (own rule).
+        if service == Some(Service::Meeting) && matches!(kl.as_str(), "pwd" | "pass" | "password") {
+            continue;
+        }
         tokens.push((k.to_string(), "query".into(), v.to_string()));
     }
     if let Some(ui) = p.userinfo {
@@ -479,17 +500,21 @@ pub fn classify(url: &str) -> Option<LinkHit> {
     for (_, _, v) in &tokens {
         shown = shown.replace(v.as_str(), &foca_core::api::mask(v));
     }
-    let sev = if tokens.iter().any(|(_, k, _)| k != "query")
-        || tokens.iter().any(|(n, _, _)| {
+    let creds: Vec<&(String, String, String)> = tokens
+        .iter()
+        .filter(|(_, k, _)| k != MEETING_PASSCODE)
+        .collect();
+    let sev = if creds.iter().any(|(_, k, _)| k != "query")
+        || creds.iter().any(|(n, _, _)| {
             n.to_ascii_lowercase().contains("pass")
                 || n == "pwd"
                 || n == "secret"
                 || n == "client_secret"
         }) {
         Severity::High
-    } else if !tokens.is_empty() {
+    } else if !creds.is_empty() {
         Severity::Medium
-    } else if internal || (shared && service.is_some()) {
+    } else if internal || (shared && service.is_some()) || !tokens.is_empty() {
         Severity::Low
     } else {
         Severity::Info
@@ -497,8 +522,8 @@ pub fn classify(url: &str) -> Option<LinkHit> {
     let sev = if matches!(
         service,
         Some(Service::Slack | Service::Discord | Service::Teams | Service::Telegram)
-    ) && !tokens.is_empty()
-        || tokens
+    ) && !creds.is_empty()
+        || creds
             .iter()
             .any(|(_, k, _)| k == "azure_sas" || k == "aws_presigned" || k == "userinfo")
             && expires.is_none()
@@ -626,6 +651,20 @@ mod tests {
         assert!(one("https://gitlab.example.corp/team/app").internal);
         assert!(one("http://10.0.0.5/wiki").internal);
         assert!(!one("https://github.com/x/y").internal);
+    }
+
+    #[test]
+    fn meeting_passcode_is_not_a_credential() {
+        let z = one("https://us02web.zoom.us/j/81234567890?pwd=QWxhZGRpbjpvcGVuIHNlc2FtZQ09");
+        assert_eq!(z.service, Some(Service::Meeting));
+        assert!(z.meeting_passcode() && !z.has_credential());
+        assert_eq!(z.sev, Severity::Low);
+        assert!(!z.url.contains("QWxhZGRpbjpvcGVu"), "{}", z.url);
+        // A share link without a token parameter carries no credential either.
+        let g = one("https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQr/view?usp=sharing");
+        assert!(!g.has_credential() && g.tokens.is_empty());
+        let s = one("https://example.blob.core.windows.net/c/f.pdf?sv=2022-11-02&sp=r&sig=AbCdEfGhIjKlMnOpQrStUvWxYz012345");
+        assert!(s.has_credential());
     }
 
     #[test]

@@ -5,14 +5,14 @@ client: "ТОВ «Контосо Енерджі»"
 date: 2026-11-20
 template: full
 lang: ru
-risk: 100
-risk_level: crit
-findings: 107
+risk: 88
+risk_level: high
+findings: 106
 findings_crit: 4
 findings_high: 25
-findings_warn: 42
+findings_warn: 39
 findings_low: 33
-findings_info: 3
+findings_info: 5
 secrets: hide
 generator: "FOCA-rs 2.0.0-beta.4"
 tags: [foca, pentest, report]
@@ -24,15 +24,15 @@ tags: [foca, pentest, report]
 
 ## Резюме для руководства
 
-**Общий уровень риска: 100/100** (Критический): по находкам отчёта
+**Общий уровень риска: 88/100** (Высокий): по находкам отчёта
 
 | Важность | Число |
 | --- | --- |
 | Критический | 4 |
 | Высокий | 25 |
-| Средний | 42 |
+| Средний | 39 |
 | Низкий | 33 |
-| Инфо | 3 |
+| Инфо | 5 |
 
 Исправлено к моменту отчёта: **1**
 
@@ -781,25 +781,7 @@ E-mail: ivan.petrenko@example.com
 
 *Происхождение: Правило eol-software; Документы: report.pdf*
 
-### F-33 · Скан без текстового слоя: exiftool-PDF.pdf - Средний
-
-**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
-
-**Описание.** Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.
-
-**Доказательство:**
-
-```text
-exiftool-PDF.pdf
-```
-
-**URL:** https://files.contoso.example/corpus/real/exiftool-PDF.pdf
-
-**Рекомендация.** Проверить скан вручную; не публиковать сканы личных документов.
-
-*Происхождение: Правило doc.scan\_without\_text; Документы: exiftool-PDF.pdf*
-
-### F-34 · Документ с макросами VBA: legacy.doc - Средний
+### F-33 · Документ с макросами VBA: legacy.doc - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1059.005 · Command and Scripting Interpreter: Visual Basic
 
@@ -817,25 +799,7 @@ exiftool-PDF.pdf
 
 *Происхождение: Правило macros; Документы: legacy.doc*
 
-### F-35 · Скан без текстового слоя: scan.pdf - Средний
-
-**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
-
-**Описание.** Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.
-
-**Доказательство:**
-
-```text
-scan.pdf
-```
-
-**URL:** https://files.contoso.example/corpus/forensics/scan.pdf
-
-**Рекомендация.** Проверить скан вручную; не публиковать сканы личных документов.
-
-*Происхождение: Правило doc.scan\_without\_text; Документы: scan.pdf*
-
-### F-36 · Внутренний домен в Message-ID (budget.msg) - Средний
+### F-34 · Внутренний домен в Message-ID (budget.msg) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -853,7 +817,7 @@ exch01.corp.example.test
 
 *Происхождение: Правило mail.internal\_domain; Документы: budget.msg*
 
-### F-37 · Документ с макросами VBA: budget.xls - Средний
+### F-35 · Документ с макросами VBA: budget.xls - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1059.005 · Command and Scripting Interpreter: Visual Basic
 
@@ -871,25 +835,7 @@ exch01.corp.example.test
 
 *Происхождение: Правило macros; Документы: budget.xls*
 
-### F-38 · Скан без текстового слоя: exiftool-PDF2.pdf - Средний
-
-**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
-
-**Описание.** Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.
-
-**Доказательство:**
-
-```text
-exiftool-PDF2.pdf
-```
-
-**URL:** https://files.contoso.example/corpus/real/exiftool-PDF2.pdf
-
-**Рекомендация.** Проверить скан вручную; не публиковать сканы личных документов.
-
-*Происхождение: Правило doc.scan\_without\_text; Документы: exiftool-PDF2.pdf*
-
-### F-39 · Adobe Photoshop CC 2019 (EOL) у 2 документов - Средний
+### F-36 · Adobe Photoshop CC 2019 (EOL) у 2 документов - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -908,7 +854,7 @@ exiftool-PDF2.pdf
 
 *Происхождение: Правило eol-software; Документы: photo.jpg, screenshot.png*
 
-### F-40 · GPS-координаты в 6 фото - Средний
+### F-37 · GPS-координаты в 6 фото - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1591.001 · Gather Victim Org Information: Determine Physical Locations
 
@@ -930,7 +876,7 @@ contacts.vcf: 50.45010, 30.52340 · -
 
 *Происхождение: Правило gps; Документы: photo.jpg, iphone.mov, photo.heic, survey.mp4, contacts.vcf, exiftool-GPS.jpg*
 
-### F-41 · Устаревшая ОС iOS 16.6 у 1 документа - Средний
+### F-38 · Устаревшая ОС iOS 16.6 у 1 документа - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1592.002 · Gather Victim Host Information: Software
 
@@ -949,7 +895,7 @@ contacts.vcf: 50.45010, 30.52340 · -
 
 *Происхождение: Правило eol-os; Документы: photo.jpg*
 
-### F-42 · Документ с макросами VBA: schedule.xlsx - Средний
+### F-39 · Документ с макросами VBA: schedule.xlsx - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1059.005 · Command and Scripting Interpreter: Visual Basic
 
@@ -967,7 +913,7 @@ contacts.vcf: 50.45010, 30.52340 · -
 
 *Происхождение: Правило macros; Документы: schedule.xlsx*
 
-### F-43 · Reply-To отличается от отправителя (budget.eml) - Средний
+### F-40 · Reply-To отличается от отправителя (budget.eml) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1566 · Phishing
 
@@ -985,7 +931,7 @@ i.petrenko.private@example.net
 
 *Происхождение: Правило mail.reply\_to\_mismatch; Документы: budget.eml*
 
-### F-44 · Структура Exchange (X.500) в письме (budget.msg) - Средний
+### F-41 · Структура Exchange (X.500) в письме (budget.msg) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1003,7 +949,7 @@ i.petrenko.private@example.net
 
 *Происхождение: Правило mail.exchange\_x500; Документы: budget.msg*
 
-### F-45 · Личные контакты в визитных карточках (contacts.vcf) - Средний
+### F-42 · Личные контакты в визитных карточках (contacts.vcf) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** people
 
@@ -1023,7 +969,7 @@ tel: ••••••••••00; ••••••••••01
 
 *Происхождение: Правило pim.contact\_pii; Документы: contacts.vcf*
 
-### F-46 · iOS 16.6 (EOL) у 1 документа - Средний
+### F-43 · iOS 16.6 (EOL) у 1 документа - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1042,7 +988,7 @@ tel: ••••••••••00; ••••••••••01
 
 *Происхождение: Правило eol-software; Документы: photo.jpg*
 
-### F-47 · Reply-To отличается от отправителя (backup.zip) - Средний
+### F-44 · Reply-To отличается от отправителя (backup.zip) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1566 · Phishing
 
@@ -1060,7 +1006,7 @@ i.petrenko.private@example.net
 
 *Происхождение: Правило mail.reply\_to\_mismatch; Документы: backup.zip*
 
-### F-48 · Устаревшая ОС iOS 17.4 у 2 документов - Средний
+### F-45 · Устаревшая ОС iOS 17.4 у 2 документов - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1592.002 · Gather Victim Host Information: Software
 
@@ -1079,7 +1025,7 @@ i.petrenko.private@example.net
 
 *Происхождение: Правило eol-os; Документы: iphone.mov, photo.heic*
 
-### F-49 · Ярлык LNK указывает на сетевой ресурс (network.lnk) - Средний
+### F-46 · Ярлык LNK указывает на сетевой ресурс (network.lnk) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1135 · Network Share Discovery
 
@@ -1098,7 +1044,7 @@ i.petrenko.private@example.net
 
 *Происхождение: Правило doc.lnk\_unc\_path; Документы: network.lnk*
 
-### F-50 · Внутренний домен в Message-ID (budget.eml) - Средний
+### F-47 · Внутренний домен в Message-ID (budget.eml) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1116,7 +1062,7 @@ exch01.corp.example.test
 
 *Происхождение: Правило mail.internal\_domain; Документы: budget.eml*
 
-### F-51 · Миниатюра EXIF может отличаться от фото (photo.jpg) - Средний
+### F-48 · Миниатюра EXIF может отличаться от фото (photo.jpg) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1591 · Gather Victim Org Information
 
@@ -1135,7 +1081,7 @@ Apple iPhone 13 Pro
 
 *Происхождение: Правило thumbnail; Документы: photo.jpg*
 
-### F-52 · Внутренний домен в Message-ID (backup.zip) - Средний
+### F-49 · Внутренний домен в Message-ID (backup.zip) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1153,7 +1099,7 @@ exch01.corp.example.test
 
 *Происхождение: Правило mail.internal\_domain; Документы: backup.zip*
 
-### F-53 · Ссылки на онлайн-встречи в календаре (meeting.ics) - Средний
+### F-50 · Ссылки на онлайн-встречи в календаре (meeting.ics) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1173,7 +1119,7 @@ https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0
 
 *Происхождение: Правило cal.meeting\_link; Документы: meeting.ics*
 
-### F-54 · Исправления и удалённый текст сохранены в contract.docx - Средний
+### F-51 · Исправления и удалённый текст сохранены в contract.docx - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1193,7 +1139,7 @@ https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0
 
 *Происхождение: Правило revisions; Документы: contract.docx*
 
-### F-55 · Серийный номер устройства в медиафайле (iphone.mov) - Средний
+### F-52 · Серийный номер устройства в медиафайле (iphone.mov) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1592.001 · Gather Victim Host Information: Hardware
 
@@ -1211,7 +1157,7 @@ EXAMPLE-SN-0042
 
 *Происхождение: Правило media.device\_serial; Документы: iphone.mov*
 
-### F-56 · Внешние источники данных в hidden.xlsx - Средний
+### F-53 · Внешние источники данных в hidden.xlsx - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590 · Gather Victim Network Information
 
@@ -1232,7 +1178,7 @@ srv-sql01 Payroll (odbc): server=srv-sql01.corp.example.com; database=Payroll; u
 
 *Происхождение: Правило doc.data\_connection; Документы: hidden.xlsx*
 
-### F-57 · Документ с макросами VBA: vbaProject.bin - Средний
+### F-54 · Документ с макросами VBA: vbaProject.bin - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1059.005 · Command and Scripting Interpreter: Visual Basic
 
@@ -1250,7 +1196,7 @@ srv-sql01 Payroll (odbc): server=srv-sql01.corp.example.com; database=Payroll; u
 
 *Происхождение: Правило macros; Документы: vbaProject.bin*
 
-### F-58 · Личные контакты в визитных карточках (backup.zip) - Средний
+### F-55 · Личные контакты в визитных карточках (backup.zip) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** people
 
@@ -1270,7 +1216,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило pim.contact\_pii; Документы: backup.zip*
 
-### F-59 · Разные авторы или программы в ревизиях PDF (signed\_modified.pdf) - Средний
+### F-56 · Разные авторы или программы в ревизиях PDF (signed\_modified.pdf) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1289,7 +1235,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило doc.pdf\_revision\_authors; Документы: signed\_modified.pdf*
 
-### F-60 · PDF содержит JavaScript: report.pdf - Средний
+### F-57 · PDF содержит JavaScript: report.pdf - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1204.002 · User Execution: Malicious File
 
@@ -1301,7 +1247,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило pdf-javascript; Документы: report.pdf*
 
-### F-61 · Скрытые листы в budget.xls: Зарплати, Службовий - Средний
+### F-58 · Скрытые листы в budget.xls: Зарплати, Службовий - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1320,7 +1266,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило hidden-sheets; Документы: budget.xls*
 
-### F-62 · Скрытые листы в schedule.xlsx: Зарплати, Паролі - Средний
+### F-59 · Скрытые листы в schedule.xlsx: Зарплати, Паролі - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1339,7 +1285,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило hidden-sheets; Документы: schedule.xlsx*
 
-### F-63 · Исправления и удалённый текст сохранены в letter.odt - Средний
+### F-60 · Исправления и удалённый текст сохранены в letter.odt - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1358,7 +1304,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило revisions; Документы: letter.odt*
 
-### F-64 · Разные авторы или программы в ревизиях PDF (report.pdf) - Средний
+### F-61 · Разные авторы или программы в ревизиях PDF (report.pdf) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1377,7 +1323,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило doc.pdf\_revision\_authors; Документы: report.pdf*
 
-### F-65 · iOS 17.4 (EOL) у 2 документов - Средний
+### F-62 · iOS 17.4 (EOL) у 2 документов - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1396,7 +1342,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило eol-software; Документы: iphone.mov, photo.heic*
 
-### F-66 · Разные авторы или программы в ревизиях PDF (revisions.pdf) - Средний
+### F-63 · Разные авторы или программы в ревизиях PDF (revisions.pdf) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1415,7 +1361,7 @@ nested/inner.zip → contacts/i.petrenko.vcf: tel: •••••••••�
 
 *Происхождение: Правило doc.pdf\_revision\_authors; Документы: revisions.pdf*
 
-### F-67 · Данные подписанта (КЕП) в документе signed\_modified.pdf: Іван Петренко - Средний
+### F-64 · Данные подписанта (КЕП) в документе signed\_modified.pdf: Іван Петренко - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** people · **MITRE ATT&CK v20:** T1589.001 · Gather Victim Identity Information: Credentials
 
@@ -1441,7 +1387,7 @@ E-mail: ivan.petrenko@example.com
 
 *Происхождение: Правило doc.signer\_identity; Документы: signed\_modified.pdf*
 
-### F-68 · Внешние источники данных в network.vsdx - Средний
+### F-65 · Внешние источники данных в network.vsdx - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590 · Gather Victim Network Information
 
@@ -1460,7 +1406,7 @@ visio:data.01.file: C:\Users\i.petrenko\Documents\assets.xlsx
 
 *Происхождение: Правило doc.data\_connection; Документы: network.vsdx*
 
-### F-69 · Серийный номер устройства в медиафайле (photo.heic) - Средний
+### F-66 · Серийный номер устройства в медиафайле (photo.heic) - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1592.001 · Gather Victim Host Information: Hardware
 
@@ -1478,7 +1424,7 @@ EXAMPLE-BODY-0042
 
 *Происхождение: Правило media.device\_serial; Документы: photo.heic*
 
-### F-70 · Microsoft Office Word 2013 (EOL) у 2 документов - Средний
+### F-67 · Microsoft Office Word 2013 (EOL) у 2 документов - Средний
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1497,7 +1443,7 @@ EXAMPLE-BODY-0042
 
 *Происхождение: Правило eol-software; Документы: contract.docx, report.pdf*
 
-### F-71 · Раскрыты имена и логины 20 сотрудников - Средний
+### F-68 · Раскрыты имена и логины 20 сотрудников - Средний
 
 **Статус:** Новая · **Хост:** \- · **Категория:** people · **MITRE ATT&CK v20:** T1589.003 · Gather Victim Identity Information: Employee Names
 
@@ -1520,7 +1466,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило mass-names*
 
-### F-72 · Microsoft Excel 2010 (EOL) у 1 документа - Низкий
+### F-69 · Microsoft Excel 2010 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1540,7 +1486,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: schedule.xlsx*
 
-### F-73 · Microsoft PowerPoint 2002 (XP) (EOL) у 1 документа - Низкий
+### F-70 · Microsoft PowerPoint 2002 (XP) (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1560,7 +1506,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: exiftool-FlashPix.ppt*
 
-### F-74 · Комментарии рецензентов сохранены в schedule.xlsx - Низкий
+### F-71 · Комментарии рецензентов сохранены в schedule.xlsx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1579,7 +1525,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило revisions; Документы: schedule.xlsx*
 
-### F-75 · Adobe Photoshop 7.0 (EOL) у 3 документов - Низкий
+### F-72 · Adobe Photoshop 7.0 (EOL) у 3 документов - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1599,7 +1545,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: exiftool-ExifTool.jpg, exiftool-GPS.jpg, exiftool-PDF.pdf*
 
-### F-76 · Внутренние адреса и имена хостов в документе (2) · budget.msg - Низкий
+### F-73 · Внутренние адреса и имена хостов в документе (2) · budget.msg - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1618,7 +1564,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило internal-addresses; Документы: budget.msg*
 
-### F-77 · Комментарии рецензентов сохранены в report.pdf - Низкий
+### F-74 · Комментарии рецензентов сохранены в report.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1636,7 +1582,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило revisions; Документы: report.pdf*
 
-### F-78 · Старые ревизии PDF сохранены в report.pdf - Низкий
+### F-75 · Старые ревизии PDF сохранены в report.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1654,7 +1600,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило pdf-revisions; Документы: report.pdf*
 
-### F-79 · Microsoft Office PowerPoint 2003 (EOL) у 1 документа - Низкий
+### F-76 · Microsoft Office PowerPoint 2003 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1674,7 +1620,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: poi-basic\_test\_ppt\_file.ppt*
 
-### F-80 · Microsoft Word 2010 (EOL) у 1 документа - Низкий
+### F-77 · Microsoft Word 2010 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1694,7 +1640,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило eol-software; Документы: legacy.doc*
 
-### F-81 · Старые ревизии PDF сохранены в signed\_modified.pdf - Низкий
+### F-78 · Старые ревизии PDF сохранены в signed\_modified.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1712,7 +1658,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило pdf-revisions; Документы: signed\_modified.pdf*
 
-### F-82 · Комментарии рецензентов сохранены в strategy.pptx - Низкий
+### F-79 · Комментарии рецензентов сохранены в strategy.pptx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1730,7 +1676,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило revisions; Документы: strategy.pptx*
 
-### F-83 · Внутренние адреса и имена хостов в документе (1) · contract.docx - Низкий
+### F-80 · Внутренние адреса и имена хостов в документе (1) · contract.docx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1748,7 +1694,7 @@ t.melnyk - Тетяна Мельник
 
 *Происхождение: Правило internal-addresses; Документы: contract.docx*
 
-### F-84 · Внутренние пути и логины в метаданных 17 документов - Низкий
+### F-81 · Внутренние пути и логины в метаданных 17 документов - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1592 · Gather Victim Host Information
 
@@ -1771,7 +1717,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-paths; Документы: backup.zip, hidden.xlsx, photo.jpg, scan.tiff, screenshot.png, annual.indd, network.lnk, report.lnk, letter.odt, legacy.doc, contract.docx, schedule.xlsx, meeting.ics, SRV-TS01.rdp, buh.ica, logo.svg, network.vsdx*
 
-### F-85 · Внутренние адреса и имена хостов в документе (1) · buh.ica - Низкий
+### F-82 · Внутренние адреса и имена хостов в документе (1) · buh.ica - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1789,7 +1735,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-addresses; Документы: buh.ica*
 
-### F-86 · Устаревшая ОС Windows 7 / Server 2008 R2 у 1 документа - Низкий
+### F-83 · Устаревшая ОС Windows 7 / Server 2008 R2 у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1592.002 · Gather Victim Host Information: Software
 
@@ -1809,7 +1755,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-os; Документы: legacy.doc*
 
-### F-87 · Устаревшая ОС Windows XP у 2 документов - Низкий
+### F-84 · Устаревшая ОС Windows XP у 2 документов - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1592.002 · Gather Victim Host Information: Software
 
@@ -1829,7 +1775,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-os; Документы: poi-SampleDoc.doc, poi-SampleSS.xls*
 
-### F-88 · Идентификатор арендатора Microsoft 365 в письме (budget.eml) - Низкий
+### F-85 · Идентификатор арендатора Microsoft 365 в письме (budget.eml) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1847,7 +1793,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило mail.m365\_tenant; Документы: budget.eml*
 
-### F-89 · Комментарии рецензентов сохранены в network.vsdx - Низкий
+### F-86 · Комментарии рецензентов сохранены в network.vsdx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1865,7 +1811,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило revisions; Документы: network.vsdx*
 
-### F-90 · Внутренние адреса и имена хостов в документе (4) - Низкий
+### F-87 · Внутренние адреса и имена хостов в документе (4) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -1886,7 +1832,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-addresses; Документы: backup.zip*
 
-### F-91 · Microsoft Office Word 2007 (EOL) у 1 документа - Низкий
+### F-88 · Microsoft Office Word 2007 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1906,7 +1852,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-software; Документы: poi-SampleDoc.doc*
 
-### F-92 · Идентификатор арендатора Microsoft 365 в письме (backup.zip) - Низкий
+### F-89 · Идентификатор арендатора Microsoft 365 в письме (backup.zip) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -1924,7 +1870,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило mail.m365\_tenant; Документы: backup.zip*
 
-### F-93 · Microsoft Word 2008 для Mac (EOL) у 1 документа - Низкий
+### F-90 · Microsoft Word 2008 для Mac (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -1944,7 +1890,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-software; Документы: exiftool-OOXML.docx*
 
-### F-94 · Старые ревизии PDF сохранены в revisions.pdf - Низкий
+### F-91 · Старые ревизии PDF сохранены в revisions.pdf - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1962,7 +1908,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило pdf-revisions; Документы: revisions.pdf*
 
-### F-95 · Предыдущие версии метаданных сохранены в legacy.doc - Низкий
+### F-92 · Предыдущие версии метаданных сохранены в legacy.doc - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213 · Data from Information Repositories
 
@@ -1981,7 +1927,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило pdf-revisions; Документы: legacy.doc*
 
-### F-96 · LibreOffice 7.2.5.2 (EOL) у 1 документа - Низкий
+### F-93 · LibreOffice 7.2.5.2 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -2001,7 +1947,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило eol-software; Документы: letter.odt*
 
-### F-97 · Внутренние адреса и имена хостов в документе (2) · budget.eml - Низкий
+### F-94 · Внутренние адреса и имена хостов в документе (2) · budget.eml - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -2020,7 +1966,7 @@ C:\Users\m.shevchuk\Pictures\Screenshots\portal.png
 
 *Происхождение: Правило internal-addresses; Документы: budget.eml*
 
-### F-98 · Имена 9 компьютеров и серверов внутренней сети - Низкий
+### F-95 · Имена 9 компьютеров и серверов внутренней сети - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590 · Gather Victim Network Information
 
@@ -2038,7 +1984,7 @@ ENG-WS11, SRV-FILE01, MFP-2F, BUH-PC-07, WS-042, NAS02, SRV-PRN01, SRV-SQL02, FS
 
 *Происхождение: Правило internal-pcs; Документы: photo.jpg, scan.tiff, network.lnk, report.lnk, letter.odt, legacy.doc, contract.docx, schedule.xlsx, meeting.ics*
 
-### F-99 · Microsoft Office Excel 2007 (EOL) у 1 документа - Низкий
+### F-96 · Microsoft Office Excel 2007 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -2058,7 +2004,7 @@ ENG-WS11, SRV-FILE01, MFP-2F, BUH-PC-07, WS-042, NAS02, SRV-PRN01, SRV-SQL02, FS
 
 *Происхождение: Правило eol-software; Документы: poi-SampleSS.xls*
 
-### F-100 · Время подписи и метка TSA расходятся более чем на сутки (signed\_hidden.docx) - Низкий
+### F-97 · Время подписи и метка TSA расходятся более чем на сутки (signed\_hidden.docx) - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
@@ -2083,7 +2029,7 @@ ENG-WS11, SRV-FILE01, MFP-2F, BUH-PC-07, WS-042, NAS02, SRV-PRN01, SRV-SQL02, FS
 
 *Происхождение: Правило doc.signature\_tsa\_gap; Документы: signed\_hidden.docx*
 
-### F-101 · Параметры удалённого доступа раскрыты в файле SRV-TS01.rdp - Низкий
+### F-98 · Параметры удалённого доступа раскрыты в файле SRV-TS01.rdp - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.002 · Gather Victim Network Information: DNS
 
@@ -2103,7 +2049,7 @@ gateway: rdgw.contoso.example
 
 *Происхождение: Правило remote-file; Документы: SRV-TS01.rdp*
 
-### F-102 · OpenOffice.org 3.2 (EOL) у 1 документа - Низкий
+### F-99 · OpenOffice.org 3.2 (EOL) у 1 документа - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** sw · **MITRE ATT&CK v20:** T1203 · Exploitation for Client Execution
 
@@ -2123,7 +2069,7 @@ gateway: rdgw.contoso.example
 
 *Происхождение: Правило eol-software; Документы: exiftool-OpenDoc.ods*
 
-### F-103 · Параметры удалённого доступа раскрыты в файле buh.ica - Низкий
+### F-100 · Параметры удалённого доступа раскрыты в файле buh.ica - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.002 · Gather Victim Network Information: DNS
 
@@ -2143,7 +2089,7 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило remote-file; Документы: buh.ica*
 
-### F-104 · Внутренние адреса и имена хостов в документе (1) · network.vsdx - Низкий
+### F-101 · Внутренние адреса и имена хостов в документе (1) · network.vsdx - Низкий
 
 **Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1590.005 · Gather Victim Network Information: IP Addresses
 
@@ -2161,7 +2107,7 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило internal-addresses; Документы: network.vsdx*
 
-### F-105 · Определён шаблон корпоративных e-mail: {f}.{last}@contoso.example - Инфо
+### F-102 · Определён шаблон корпоративных e-mail: {f}.{last}@contoso.example - Инфо
 
 **Статус:** Новая · **Хост:** contoso.example · **Категория:** people · **MITRE ATT&CK v20:** T1589.002 · Gather Victim Identity Information: Email Addresses
 
@@ -2177,28 +2123,61 @@ gateway: ctx.contoso.example:8080
 
 *Происхождение: Правило email-pattern*
 
-### F-106 · Ссылки на облачные пространства и URL с токенами в meeting.ics - Инфо
+### F-103 · Скан без текстового слоя: exiftool-PDF.pdf - Инфо
 
-**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs · **MITRE ATT&CK v20:** T1213.003 · Data from Information Repositories: Code Repositories
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
 
-**Описание.** Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).
+**Описание.** Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.
 
 **Доказательство:**
 
 ```text
-Онлайн-встреча: https://example.zoom.us/j/1234567890?pwd=EXAMPLE
-Онлайн-встреча: https://teams.microsoft.com/l/meetup-join/
-Онлайн-встреча: https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0?context=%7b%7d
-Онлайн-встреча: https://teams.microsoft.com/l/meetup-join/19%3ameeting_EXAMPLE%40thread.v2/0
+exiftool-PDF.pdf
 ```
 
-**URL:** https://files.contoso.example/corpus/pim/meeting.ics
+**URL:** https://files.contoso.example/corpus/real/exiftool-PDF.pdf
 
-**Рекомендация.** Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам.
+**Рекомендация.** Проверить скан вручную; не публиковать сканы личных документов.
 
-*Происхождение: Правило doc.links; Документы: meeting.ics*
+*Происхождение: Правило doc.scan\_without\_text; Документы: exiftool-PDF.pdf*
 
-### F-107 · Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name - Инфо
+### F-104 · Скан без текстового слоя: scan.pdf - Инфо
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
+
+**Описание.** Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.
+
+**Доказательство:**
+
+```text
+scan.pdf
+```
+
+**URL:** https://files.contoso.example/corpus/forensics/scan.pdf
+
+**Рекомендация.** Проверить скан вручную; не публиковать сканы личных документов.
+
+*Происхождение: Правило doc.scan\_without\_text; Документы: scan.pdf*
+
+### F-105 · Скан без текстового слоя: exiftool-PDF2.pdf - Инфо
+
+**Статус:** Новая · **Хост:** files.contoso.example · **Категория:** docs
+
+**Описание.** Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.
+
+**Доказательство:**
+
+```text
+exiftool-PDF2.pdf
+```
+
+**URL:** https://files.contoso.example/corpus/real/exiftool-PDF2.pdf
+
+**Рекомендация.** Проверить скан вручную; не публиковать сканы личных документов.
+
+*Происхождение: Правило doc.scan\_without\_text; Документы: exiftool-PDF2.pdf*
+
+### F-106 · Служебные учётные записи в метаданных: Administrator, admin, author, scan, user name - Инфо
 
 **Статус:** Новая · **Хост:** \- · **Категория:** people · **MITRE ATT&CK v20:** T1087 · Account Discovery
 
@@ -2222,7 +2201,7 @@ user name · документов: 1
 
 | ID | Важность | Находка | Хост | Исправлено в скане |
 | --- | --- | --- | --- | --- |
-| F-108 | Высокий | Внутренние почтовые серверы и адреса в заголовках письма (budget.eml) | files.contoso.example | \- |
+| F-107 | Высокий | Внутренние почтовые серверы и адреса в заголовках письма (budget.eml) | files.contoso.example | \- |
 
 ## Люди
 
@@ -2495,19 +2474,18 @@ user name · документов: 1
 | signed\_modified.pdf | Удалённый текст восстанавливается из старых ревизий PDF (signed\_modified.pdf) | Высокий |
 | hidden.xlsx | Скрытый текст и скрытые строки/столбцы в hidden.xlsx | Высокий |
 | signed\_hidden.docx | Скрытый текст и скрытые строки/столбцы в signed\_hidden.docx | Высокий |
-| exiftool-PDF.pdf | Скан без текстового слоя: exiftool-PDF.pdf | Средний |
-| scan.pdf | Скан без текстового слоя: scan.pdf | Средний |
-| exiftool-PDF2.pdf | Скан без текстового слоя: exiftool-PDF2.pdf | Средний |
 | signed\_modified.pdf | Разные авторы или программы в ревизиях PDF (signed\_modified.pdf) | Средний |
 | report.pdf | Разные авторы или программы в ревизиях PDF (report.pdf) | Средний |
 | revisions.pdf | Разные авторы или программы в ревизиях PDF (revisions.pdf) | Средний |
+| exiftool-PDF.pdf | Скан без текстового слоя: exiftool-PDF.pdf | Инфо |
+| scan.pdf | Скан без текстового слоя: scan.pdf | Инфо |
+| exiftool-PDF2.pdf | Скан без текстового слоя: exiftool-PDF2.pdf | Инфо |
 
 #### Ссылки на облачные пространства и токены
 
 | Документ | Находка | Критичность |
 | --- | --- | --- |
 | personal.docx | Ссылки на облачные пространства и URL с токенами в personal.docx | Критический |
-| meeting.ics | Ссылки на облачные пространства и URL с токенами в meeting.ics | Инфо |
 
 #### Персональные данные (сводка)
 

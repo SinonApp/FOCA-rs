@@ -8,6 +8,7 @@ use foca_core::{FindingStatus, Severity};
 use serde::{Deserialize, Serialize};
 
 use crate::assess::draft::Draft;
+pub use crate::assess::draft::{band_cvss, cvss_band};
 use crate::{DocFacts, OsInfo, PrevState};
 
 /// A secret together with the context used as evidence.
@@ -905,14 +906,42 @@ pub struct Risk {
 /// address). Such findings are environment context: shown, but not counted in the risk score.
 pub const OUT_OF_SCOPE_TAG: &str = "out_of_scope";
 
-/// Computes `100·(1 − Π(1 − wᵢ))` over active findings (false positives, fixed ones and findings
-/// tagged [`OUT_OF_SCOPE_TAG`] are excluded) with weights crit .25, high .12, warn .05, low .02, info 0. Levels: ≥ 90
-/// critical, ≥ 70 high, ≥ 40 medium, otherwise low; `has_data = false` yields "no data".
+/// Categories of document and metadata exposure (no live service of the target involved).
+pub const EXPOSURE_CATEGORIES: &[&str] = &["docs", "people", "sw"];
+
+/// Highest score without any critical finding.
+pub const RISK_CAP_NO_CRITICAL: u8 = 89;
+/// Highest score when every counted finding is document or metadata exposure.
+pub const RISK_CAP_EXPOSURE_ONLY: u8 = 75;
+
+fn sev_weight(s: Severity) -> f64 {
+    match s {
+        Severity::Critical => 0.25,
+        Severity::High => 0.12,
+        Severity::Medium => 0.05,
+        Severity::Low => 0.02,
+        Severity::Info => 0.0,
+    }
+}
+
+/// Project risk score (`docs/user/risk-score.md`; same rule as `FOCA_RULES.riskScore` in
+/// `ui/js/sel.js` and `rules::risk_score` of the engine):
+///
+/// * counted: live findings (not false positives, not fixed) without [`OUT_OF_SCOPE_TAG`];
+/// * weights: critical .25, high .12, medium .05, low .02, info 0;
+/// * within one category the k-th non-critical finding (strongest first) counts `w / k`, so
+///   many findings of one kind saturate slowly; critical findings always count in full;
+/// * `score = round(100·(1 − Π(1 − wᵢ)))`, capped at [`RISK_CAP_NO_CRITICAL`] without a
+///   critical finding, at [`RISK_CAP_EXPOSURE_ONLY`] when moreover every counted finding is
+///   document or metadata exposure ([`EXPOSURE_CATEGORIES`], software without the
+///   `site`/`server` tag);
+/// * levels: ≥ 90 critical, ≥ 70 high, ≥ 40 medium, otherwise low; `has_data = false` yields
+///   "no data".
 pub fn risk(findings: &[Finding], has_data: bool) -> Risk {
     if !has_data {
         return Risk::default();
     }
-    let p: f64 = findings
+    let items: Vec<RiskItem> = findings
         .iter()
         .filter(|f| {
             !matches!(
@@ -920,15 +949,13 @@ pub fn risk(findings: &[Finding], has_data: bool) -> Risk {
                 FindingStatus::FalsePositive | FindingStatus::Fixed
             ) && !f.tags.iter().any(|t| t == OUT_OF_SCOPE_TAG)
         })
-        .map(|f| match f.sev {
-            Severity::Critical => 0.25,
-            Severity::High => 0.12,
-            Severity::Medium => 0.05,
-            Severity::Low => 0.02,
-            Severity::Info => 0.0,
+        .map(|f| RiskItem {
+            sev: f.sev,
+            category: f.category.clone(),
+            exposure: is_exposure(&f.category, &f.tags),
         })
-        .fold(1.0, |acc, w| acc * (1.0 - w));
-    let score = (100.0 * (1.0 - p)).round().clamp(0.0, 100.0) as u8;
+        .collect();
+    let score = risk_score_of(&items);
     let level = match score {
         90..=100 => RiskLevel::Critical,
         70..=89 => RiskLevel::High,
@@ -939,6 +966,55 @@ pub fn risk(findings: &[Finding], has_data: bool) -> Risk {
         score: Some(score),
         level,
     }
+}
+
+/// Whether a finding is document or metadata exposure (see [`risk`]).
+pub fn is_exposure(category: &str, tags: &[String]) -> bool {
+    EXPOSURE_CATEGORIES.contains(&category)
+        && !(category == "sw" && tags.iter().any(|t| t == "site" || t == "server"))
+}
+
+/// One counted finding of the risk score.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RiskItem {
+    pub sev: Severity,
+    pub category: String,
+    pub exposure: bool,
+}
+
+/// The score of counted findings (see [`risk`]).
+pub fn risk_score_of(items: &[RiskItem]) -> u8 {
+    let mut sorted: Vec<&RiskItem> = items.iter().collect();
+    sorted.sort_by(|a, b| sev_weight(b.sev).total_cmp(&sev_weight(a.sev)));
+    let mut seen: std::collections::HashMap<&str, u32> = std::collections::HashMap::new();
+    let mut p = 1.0f64;
+    for it in &sorted {
+        let w = sev_weight(it.sev);
+        if w == 0.0 {
+            continue;
+        }
+        let w = if it.sev == Severity::Critical {
+            w
+        } else {
+            let k = seen.entry(it.category.as_str()).or_insert(0);
+            *k += 1;
+            w / f64::from(*k)
+        };
+        p *= 1.0 - w;
+    }
+    let mut score = (100.0 * (1.0 - p)).round().clamp(0.0, 100.0) as u8;
+    if !sorted.iter().any(|i| i.sev == Severity::Critical) {
+        let exposure_only = sorted
+            .iter()
+            .filter(|i| sev_weight(i.sev) > 0.0)
+            .all(|i| i.exposure);
+        score = score.min(if exposure_only {
+            RISK_CAP_EXPOSURE_ONLY
+        } else {
+            RISK_CAP_NO_CRITICAL
+        });
+    }
+    score
 }
 
 #[cfg(test)]
@@ -1006,6 +1082,48 @@ mod tests {
             .map(|_| f(Severity::Critical, FindingStatus::Confirmed))
             .collect();
         assert_eq!(risk(&many, true).level, RiskLevel::Critical);
+        // Metadata-only exposure never reaches the top: the beta.4 phone report (39 high,
+        // 56 medium, 59 low and 191 info findings in document categories).
+        let mut meta: Vec<Finding> = Vec::new();
+        for (n, sev, cat) in [
+            (20, Severity::High, "docs"),
+            (12, Severity::High, "people"),
+            (7, Severity::High, "sw"),
+            (30, Severity::Medium, "docs"),
+            (26, Severity::Medium, "sw"),
+            (59, Severity::Low, "docs"),
+            (191, Severity::Info, "docs"),
+        ] {
+            for _ in 0..n {
+                let mut x = f(sev, FindingStatus::New);
+                x.category = cat.into();
+                meta.push(x);
+            }
+        }
+        // 100 with the plain product formula; 72 (High) now, under the exposure cap.
+        assert_eq!(risk(&meta, true).score, Some(72));
+        let mut more = meta.clone();
+        more.extend(meta.iter().filter(|f| f.category == "people").cloned());
+        more.extend((0..40).map(|_| {
+            let mut x = f(Severity::High, FindingStatus::New);
+            x.category = "people".into();
+            x
+        }));
+        assert_eq!(risk(&more, true).score, Some(RISK_CAP_EXPOSURE_ONLY));
+        // The same plus one web finding: no longer exposure-only, still no critical.
+        let mut web = f(Severity::High, FindingStatus::New);
+        web.category = "web".into();
+        meta.push(web);
+        let r = risk(&meta, true).score.unwrap();
+        assert!(
+            r > RISK_CAP_EXPOSURE_ONLY && r <= RISK_CAP_NO_CRITICAL,
+            "{r}"
+        );
+        // Repeats of one kind saturate slowly: 30 high docs findings stay medium.
+        let docs: Vec<Finding> = (0..30)
+            .map(|_| f(Severity::High, FindingStatus::New))
+            .collect();
+        assert!(risk(&docs, true).score.unwrap() < 50);
         let some: Vec<Finding> = (0..4)
             .map(|_| f(Severity::Critical, FindingStatus::New))
             .collect();

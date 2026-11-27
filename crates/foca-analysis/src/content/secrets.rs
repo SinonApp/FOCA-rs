@@ -227,7 +227,9 @@ impl Rules {
                     continue;
                 }
                 let ok = match r.def.validate.as_deref() {
-                    Some("password") => valid_password(&value),
+                    Some("password") => {
+                        valid_password(&value) && !meeting_context(text, m.start(), m.end())
+                    }
                     Some("private_ip") => valid_private_ip(text, m.start(), m.end(), &value),
                     Some("internal_host") => valid_internal_host(text, m.end()),
                     Some("key") => valid_key(&value),
@@ -409,6 +411,31 @@ const NOT_PASSWORDS: &[&str] = &[
     "n/a",
     "changeit",
 ];
+
+/// Words around a meeting passcode ("Zoom … Код доступу: 482913"): that value has its own
+/// rule (meeting link with embedded passcode) and is not a password of the organisation.
+const MEETING_WORDS: &[&str] = &[
+    "zoom",
+    "teams",
+    "meet.google",
+    "webex",
+    "passcode",
+    "meeting id",
+    "код доступ",
+    "ідентифікатор конференції",
+    "идентификатор конференции",
+    "conference id",
+];
+
+fn meeting_context(text: &str, start: usize, end: usize) -> bool {
+    let mut a = start.saturating_sub(160);
+    while !text.is_char_boundary(a) {
+        a -= 1;
+    }
+    let le = text[end..].find('\n').map_or(text.len(), |i| end + i);
+    let w = text[a..le].to_lowercase();
+    MEETING_WORDS.iter().any(|k| w.contains(k))
+}
 
 fn valid_password(v: &str) -> bool {
     let n = v.chars().count();
@@ -617,6 +644,15 @@ mod tests {
             rules("sk_live_51Hx7Kq2mN8pR4sT6vW1yZ5b"),
             vec!["stripe-key"]
         );
+    }
+
+    #[test]
+    fn meeting_passcodes_are_not_passwords() {
+        assert!(
+            rules("Підключитися до Zoom: ідентифікатор 812 3456 7890\nПароль: Kx7q2Lm9").is_empty()
+        );
+        assert!(rules("Zoom meeting, password: Qw3rty!9").is_empty());
+        assert_eq!(rules("Пароль від порталу: KYI-2024!q"), vec!["password"]);
     }
 
     #[test]

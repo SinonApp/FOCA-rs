@@ -216,14 +216,32 @@
   // Same rule as foca_analysis::findings::risk: findings the core tagged `out_of_scope` (e.g. a Shodan
   // banner of an address outside the scope) are shown but never raise the risk score.
   const outOfScope = f => Array.isArray(f.tags) && f.tags.includes("out_of_scope");
-  const riskScore = list =>
-    Math.round(
-      100 *
-        (1 -
-          (list || [])
-            .filter(f => isLive(f) && !outOfScope(f))
-            .reduce((a, f) => a * (1 - (SEV_WEIGHT[f.sev] || 0)), 1)),
-    );
+  // Document and metadata exposure: no live service of the target involved.
+  const EXPOSURE_CATS = ["docs", "people", "sw"];
+  const isExposure = f =>
+    EXPOSURE_CATS.includes(f.category) &&
+    !(f.category === "sw" && Array.isArray(f.tags) && (f.tags.includes("site") || f.tags.includes("server")));
+  // Project risk (docs/user/risk-score.md): 100·(1 − Π(1 − wᵢ)); within a category the k-th
+  // non-critical finding counts w/k; capped at 89 without a critical finding, at 75 when
+  // moreover every counted finding is document or metadata exposure.
+  const riskScore = list => {
+    const counted = (list || [])
+      .filter(f => isLive(f) && !outOfScope(f) && (SEV_WEIGHT[f.sev] || 0) > 0)
+      .sort((a, b) => SEV_WEIGHT[b.sev] - SEV_WEIGHT[a.sev]);
+    const seen = {};
+    let p = 1;
+    for (const f of counted) {
+      let w = SEV_WEIGHT[f.sev];
+      if (f.sev !== "crit") {
+        const k = (seen[f.category] = (seen[f.category] || 0) + 1);
+        w /= k;
+      }
+      p *= 1 - w;
+    }
+    let score = Math.round(100 * (1 - p));
+    if (!counted.some(f => f.sev === "crit")) score = Math.min(score, counted.every(isExposure) ? 75 : 89);
+    return score;
+  };
   // Findings are counted once a scan has finished, or has been stopped after the Analysis stage.
   const analyzedScans = scans =>
     (scans || []).some(

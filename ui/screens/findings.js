@@ -628,6 +628,9 @@
     eol: "EOL",
     reopened: F.t("findings.tagc_reopened", "вернулась"),
     out_of_scope: F.t("findings.tagc_out_of_scope", "вне скоупа"),
+    context: F.t("findings.tagc_context", "контекст"),
+    workstation: F.t("findings.tagc_workstation", "рабочие станции"),
+    credential: F.t("findings.tagc_credential", "учётные данные"),
     archive: F.t("findings.tagc_archive", "архив"),
   });
   const tagLabel = t => {

@@ -31,6 +31,9 @@ Patch release after a phone test of 2.0.0-beta.4 on a real university site.
 - PDF text from Word: page text is decoded through each font's ToUnicode map and encoding (two-byte Identity-H fonts, `/Differences` glyph names including Cyrillic, WinAnsi, MacRoman and Standard encodings), with word gaps and line breaks from text positions and text inside form XObjects. Cyrillic PDFs saved from Word used to give unreadable text, so e-mails, phone numbers, personal data, secrets and bad redactions in their text were missed.
 - Word 97-2003 text is read from the piece table, without the binary bytes that used to precede it.
 - `foca analyze` on local files no longer lists the file names as web servers.
+- Severity calibration: Zoom/Teams/Meet links with a passcode get their own finding per document (Low in public announcements, else Medium) and no longer count as passwords or cloud tokens; a scan without a text layer is Info (Low when the file name names a personal document); a card number needs card context, the 4x4 grouping or several numbers; IBAN and RNOKPP are Medium (High next to a person's name or with several values, an organisation's own account Low).
+- Workstation software from document metadata is Medium at most, also for old KEV entries, with one finding per product (KEV, end of life and CVE data together); Microsoft Office versions become one "outdated Microsoft Office" finding with document counts, last-seen dates and CVEs per edition counted once. Server-side generators are High only when their documents came from hosts in the scope. Findings about hosts outside the scope are Info and tagged as context.
+- Risk score: within a category the k-th non-critical finding counts w/k, at most 89 without a critical finding and 75 when only documents and metadata are exposed (docs/user/risk-score.md); a replica of the beta.4 phone report (39 High, 56 Medium, 59 Low, 191 Info from documents) now scores 72 instead of 100.
 
 ### Changed
 

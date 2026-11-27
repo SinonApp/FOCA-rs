@@ -171,7 +171,8 @@ async fn offline_zip_import_without_network() {
     assert!(!find("doc.hidden_content").is_empty());
     assert!(!find("doc.pdf_removed_text").is_empty());
     let scan = find("doc.scan_without_text");
-    assert!(scan.iter().any(|x| x["sev"] == "high"), "{scan:?}");
+    // Image-only scan named after a passport: low (info without a personal file name).
+    assert!(scan.iter().any(|x| x["sev"] == "low"), "{scan:?}");
     assert!(!find("zip.path_traversal").is_empty());
     let pii = find("pii");
     for kind in ["РНОКПП", "карты", "IBAN"] {

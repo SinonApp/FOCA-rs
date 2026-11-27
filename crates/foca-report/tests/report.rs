@@ -342,29 +342,24 @@ fn riskbox_critical_level() {
 fn out_of_scope_critical_does_not_raise_the_level() {
     let mut s = fixture().snap.clone();
     let tpl = s.findings[0].clone();
-    s.findings = (0..20u64)
+    // Eight critical web findings: 1 - 0.75^8 = 90 when all count, 87 with one out of scope.
+    s.findings = (0..8u64)
         .map(|i| {
             let mut f = tpl.clone();
             f.id = 9000 + i;
             f.status = FindingStatus::New;
             f.tags.clear();
-            f.sev = if i == 19 {
-                Severity::Critical
-            } else {
-                Severity::High
-            };
+            f.category = "web".into();
+            f.sev = Severity::Critical;
             f
         })
         .collect();
-    s.findings[19].tags.push("out_of_scope".into());
+    s.findings[7].tags.push("out_of_scope".into());
     let a = build(&s, &opts(ReportFormat::Html));
-    assert!(
-        a.results_snapshot.risk.unwrap_or(0) >= 90,
-        "19 high findings"
-    );
+    assert_eq!(a.results_snapshot.risk, Some(87), "seven critical findings");
     assert_eq!(a.results_snapshot.risk_level, "high");
     // control: the same critical finding in scope makes the level critical
-    s.findings[19].tags.clear();
+    s.findings[7].tags.clear();
     let a = build(&s, &opts(ReportFormat::Html));
     assert_eq!(a.results_snapshot.risk_level, "crit");
 }

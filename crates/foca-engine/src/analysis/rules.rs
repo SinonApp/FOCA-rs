@@ -362,15 +362,42 @@ pub fn is_live_status(s: &str) -> bool {
     s != "false" && s != "fixed"
 }
 
-/// `FOCA_RULES.riskScore` over a list of findings (JSON `{sev, status}`).
+/// `FOCA_RULES.riskScore` over a list of findings (JSON `{sev, status, category, tags}`), the
+/// rule of `foca_analysis::findings::risk`.
 pub fn risk_score<'a>(list: impl IntoIterator<Item = &'a Value>) -> u8 {
-    let mut p = 1.0f64;
-    for f in list {
-        if is_live_status(f["status"].as_str().unwrap_or("new")) {
-            p *= 1.0 - sev_weight(f["sev"].as_str().unwrap_or("info"));
-        }
-    }
-    (100.0 * (1.0 - p)).round() as u8
+    use foca_core::Severity;
+    let items: Vec<foca_analysis::findings::RiskItem> = list
+        .into_iter()
+        .filter(|f| is_live_status(f["status"].as_str().unwrap_or("new")))
+        .filter_map(|f| {
+            let tags: Vec<String> = f["tags"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(|t| t.as_str().map(str::to_string))
+                .collect();
+            if tags
+                .iter()
+                .any(|t| t == foca_analysis::findings::OUT_OF_SCOPE_TAG)
+            {
+                return None;
+            }
+            let sev = match f["sev"].as_str().unwrap_or("info") {
+                "crit" => Severity::Critical,
+                "high" => Severity::High,
+                "warn" => Severity::Medium,
+                "low" => Severity::Low,
+                _ => Severity::Info,
+            };
+            let category = f["category"].as_str().unwrap_or("").to_string();
+            Some(foca_analysis::findings::RiskItem {
+                sev,
+                exposure: foca_analysis::findings::is_exposure(&category, &tags),
+                category,
+            })
+        })
+        .collect();
+    foca_analysis::findings::risk_score_of(&items)
 }
 
 /// Returns the risk level using the UI rule: 90 or more with critical findings is critical, 70 or more high, 40 or more medium.
@@ -461,6 +488,16 @@ mod tests {
             serde_json::json!({"sev": "high", "status": "false"}),
         ];
         assert_eq!(risk_score(&l), 25);
+        // Same numbers as `FOCA_RULES.riskScore` (qa/data-invariants.mjs).
+        let docs: Vec<Value> = (0..3)
+            .map(|_| serde_json::json!({"sev": "high", "status": "new", "category": "docs"}))
+            .collect();
+        // 1 − (1 − .12)(1 − .06)(1 − .04) = 20.6
+        assert_eq!(risk_score(&docs), 21);
+        let mut mixed = docs.clone();
+        mixed.push(serde_json::json!({"sev": "high", "status": "new", "category": "web"}));
+        mixed.push(serde_json::json!({"sev": "crit", "status": "new", "category": "web", "tags": ["out_of_scope"]}));
+        assert_eq!(risk_score(&mixed), 30);
         assert_eq!(risk_level(Some(93), false), "high");
         assert_eq!(risk_level(Some(93), true), "crit");
         assert_eq!(risk_level(Some(40), true), "mid");

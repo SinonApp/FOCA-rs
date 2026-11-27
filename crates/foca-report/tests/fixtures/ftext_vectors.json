@@ -2072,8 +2072,8 @@
  {
   "lang": "en",
   "rule": "doc.scan_without_text",
-  "text": "Документ состоит только из изображений страниц, а имя файла указывает на личный или служебный документ (паспорт, договор, приказ): содержимое не проверяется поиском и DLP.",
-  "out": "The document consists of page images only and the file name points to a personal or official document (passport, contract, order): search and DLP cannot check its content."
+  "text": "Документ состоит только из изображений страниц, а имя файла указывает на личный документ (паспорт, ID-карта, договор с именем человека): содержимое не проверяется поиском и DLP.",
+  "out": "The document consists only of page images, and the file name points to a personal document (passport, ID card, a contract with a person's name): its content is not checked by search or DLP."
  },
  {
   "lang": "en",
@@ -4000,6 +4000,108 @@
   "rule": "sw.cve",
   "text": "Ещё CVE, опубликованных после этого документа: X1 (не учтены: ПО могли обновить).",
   "out": "More CVEs published after this document: X1 (not counted: the software may have been updated)."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.meeting_passcode",
+  "text": "Ссылка на онлайн-встречу со встроенным паролем (X1)",
+  "out": "Online meeting link with an embedded passcode (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.meeting_passcode",
+  "text": "Публичное объявление содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): войти может любой читатель. Для открытого мероприятия это ожидаемо, но пароль ничего не защищает.",
+  "out": "A public announcement contains Zoom/Teams/Meet join links with the passcode in the link itself (pwd=): any reader can join. Expected for a public event, but the passcode protects nothing."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.meeting_passcode",
+  "text": "Документ содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): посторонний может войти на встречу.",
+  "out": "The document contains Zoom/Teams/Meet join links with the passcode in the link itself (pwd=): an outsider can join the meeting."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.meeting_passcode",
+  "text": "Для открытых мероприятий включить регистрацию или зал ожидания; для закрытых встреч не публиковать ссылку с паролем.",
+  "out": "For public events turn on registration or a waiting room; for private meetings do not publish the link with the passcode."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.links",
+  "text": "Документ ссылается на публичное облачное хранилище (X1)",
+  "out": "Document links to public cloud storage (X1)"
+ },
+ {
+  "lang": "en",
+  "rule": "doc.links",
+  "text": "Документ ссылается на файлы и пространства в облачных сервисах по публичным ссылкам без токенов доступа: это контекст, а не утечка учётных данных.",
+  "out": "The document links to files and spaces in cloud services by public links without access tokens: this is context, not a credential leak."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.links",
+  "text": "Проверить, что по публичным ссылкам доступны только материалы, предназначенные для публикации.",
+  "out": "Check that the public links open only material meant for publication."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "Устаревший Microsoft Office на рабочих станциях: версий X1",
+  "out": "Outdated Microsoft Office on workstations: X1 versions"
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "Документы организации созданы в версиях Microsoft Office без поддержки или с известными уязвимостями: это разведданные о рабочих станциях авторов (фишинг с вредоносными вложениями), а не уязвимость сайта.",
+  "out": "The organisation's documents were made in Microsoft Office versions without support or with known vulnerabilities: reconnaissance about the authors' workstations (phishing with malicious attachments), not a site vulnerability."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "X1: документов X2, последний X3.",
+  "out": "X1: X2 documents, last X3."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "X1: документов X2, последний X3, поддержка завершена X4.",
+  "out": "X1: X2 documents, last X3, поддержка завершена X4."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "X1: документов X2, последний X3, снято с поддержки.",
+  "out": "X1: X2 documents, last X3, снято с поддержки."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "Microsoft Office X1: известных CVE для этой версии в NVD: X2 (критических: X3, высоких: X4), из них в CISA KEV: X5.",
+  "out": "Microsoft Office X1: known CVEs for this version in NVD: X2 (critical: X3, high: X4), in CISA KEV: X5."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "Каталог CISA KEV называет эксплуатируемые уязвимости этих продуктов: X1.",
+  "out": "The CISA KEV catalog lists exploited vulnerabilities of these products: X1."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.office_outdated",
+  "text": "Обновить Microsoft Office до поддерживаемой версии и включить централизованное обновление; учитывать при оценке фишинговых рисков.",
+  "out": "Update Microsoft Office to a supported version and turn on central updates; take it into account when assessing phishing risks."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Документы с этой версией получены не с хостов в скоупе (X1): генератор может принадлежать не организации.",
+  "out": "Documents with this version did not come from hosts in the scope (X1): the generator may not belong to the organisation."
+ },
+ {
+  "lang": "en",
+  "rule": "sw.cve",
+  "text": "Документы отданы хостами в скоупе: X1.",
+  "out": "Documents were served by hosts in the scope: X1."
  },
  {
   "lang": "en",
@@ -6086,8 +6188,8 @@
  {
   "lang": "uk",
   "rule": "doc.scan_without_text",
-  "text": "Документ состоит только из изображений страниц, а имя файла указывает на личный или служебный документ (паспорт, договор, приказ): содержимое не проверяется поиском и DLP.",
-  "out": "Документ складається лише із зображень сторінок, а ім'я файлу вказує на особистий або службовий документ (паспорт, договір, наказ): вміст не перевіряється пошуком і DLP."
+  "text": "Документ состоит только из изображений страниц, а имя файла указывает на личный документ (паспорт, ID-карта, договор с именем человека): содержимое не проверяется поиском и DLP.",
+  "out": "Документ складається лише із зображень сторінок, а ім'я файлу вказує на особистий документ (паспорт, ID-картка, договір з іменем людини): вміст не перевіряється пошуком і DLP."
  },
  {
   "lang": "uk",
@@ -8014,6 +8116,108 @@
   "rule": "sw.cve",
   "text": "Ещё CVE, опубликованных после этого документа: X1 (не учтены: ПО могли обновить).",
   "out": "Ще CVE, опублікованих після цього документа: X1 (не враховано: ПЗ могли оновити)."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.meeting_passcode",
+  "text": "Ссылка на онлайн-встречу со встроенным паролем (X1)",
+  "out": "Посилання на онлайн-зустріч із вбудованим паролем (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.meeting_passcode",
+  "text": "Публичное объявление содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): войти может любой читатель. Для открытого мероприятия это ожидаемо, но пароль ничего не защищает.",
+  "out": "Публічне оголошення містить посилання підключення до Zoom/Teams/Meet з паролем прямо в посиланні (pwd=): увійти може будь-який читач. Для відкритого заходу це очікувано, але пароль нічого не захищає."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.meeting_passcode",
+  "text": "Документ содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): посторонний может войти на встречу.",
+  "out": "Документ містить посилання підключення до Zoom/Teams/Meet з паролем прямо в посиланні (pwd=): стороння людина може увійти на зустріч."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.meeting_passcode",
+  "text": "Для открытых мероприятий включить регистрацию или зал ожидания; для закрытых встреч не публиковать ссылку с паролем.",
+  "out": "Для відкритих заходів увімкнути реєстрацію або зал очікування; для закритих зустрічей не публікувати посилання з паролем."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.links",
+  "text": "Документ ссылается на публичное облачное хранилище (X1)",
+  "out": "Документ посилається на публічне хмарне сховище (X1)"
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.links",
+  "text": "Документ ссылается на файлы и пространства в облачных сервисах по публичным ссылкам без токенов доступа: это контекст, а не утечка учётных данных.",
+  "out": "Документ посилається на файли та простори в хмарних сервісах за публічними посиланнями без токенів доступу: це контекст, а не витік облікових даних."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.links",
+  "text": "Проверить, что по публичным ссылкам доступны только материалы, предназначенные для публикации.",
+  "out": "Перевірити, що за публічними посиланнями доступні лише матеріали, призначені для публікації."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "Устаревший Microsoft Office на рабочих станциях: версий X1",
+  "out": "Застарілий Microsoft Office на робочих станціях: версій X1"
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "Документы организации созданы в версиях Microsoft Office без поддержки или с известными уязвимостями: это разведданные о рабочих станциях авторов (фишинг с вредоносными вложениями), а не уязвимость сайта.",
+  "out": "Документи організації створено у версіях Microsoft Office без підтримки або з відомими вразливостями: це розвіддані про робочі станції авторів (фішинг зі шкідливими вкладеннями), а не вразливість сайту."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "X1: документов X2, последний X3.",
+  "out": "X1: документів X2, останній X3."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "X1: документов X2, последний X3, поддержка завершена X4.",
+  "out": "X1: документів X2, останній X3, поддержка завершена X4."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "X1: документов X2, последний X3, снято с поддержки.",
+  "out": "X1: документів X2, останній X3, снято с поддержки."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "Microsoft Office X1: известных CVE для этой версии в NVD: X2 (критических: X3, высоких: X4), из них в CISA KEV: X5.",
+  "out": "Microsoft Office X1: відомих CVE для цієї версії в NVD: X2 (критичних: X3, високих: X4), з них у CISA KEV: X5."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "Каталог CISA KEV называет эксплуатируемые уязвимости этих продуктов: X1.",
+  "out": "Каталог CISA KEV називає вразливості цих продуктів, що експлуатуються: X1."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.office_outdated",
+  "text": "Обновить Microsoft Office до поддерживаемой версии и включить централизованное обновление; учитывать при оценке фишинговых рисков.",
+  "out": "Оновити Microsoft Office до підтримуваної версії та увімкнути централізоване оновлення; враховувати під час оцінки фішингових ризиків."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Документы с этой версией получены не с хостов в скоупе (X1): генератор может принадлежать не организации.",
+  "out": "Документи з цією версією отримано не з хостів у скоупі (X1): генератор може належати не організації."
+ },
+ {
+  "lang": "uk",
+  "rule": "sw.cve",
+  "text": "Документы отданы хостами в скоупе: X1.",
+  "out": "Документи віддали хости в скоупі: X1."
  },
  {
   "lang": "uk",

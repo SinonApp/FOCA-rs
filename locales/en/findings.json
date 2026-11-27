@@ -314,73 +314,73 @@
     },
     {
       "id": "f053",
-      "rules": "eol-software",
+      "rules": "eol-software,sw.cve,sw.kev,eol-os",
       "pattern": "{} (EOL) у {n} {w}",
       "text": "{0} (EOL) in {1:document|documents|documents}"
     },
     {
       "id": "f054",
-      "rules": "eol-software",
+      "rules": "eol-software,sw.cve,sw.kev,eol-os",
       "pattern": "{n} {w} {w} в {}, поддержка завершена {}. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
       "text": "{0:document was|documents were|documents were} created in {1}; support ended {2}. This points to workstations with vulnerable software, suitable for phishing with malicious attachments."
     },
     {
       "id": "f055",
-      "rules": "eol-software",
+      "rules": "eol-software,sw.cve,sw.kev,eol-os",
       "pattern": "{n} {w} {w} в {}, снято с поддержки. Это указывает на рабочие места с уязвимым ПО, пригодные для фишинга с вредоносными вложениями.",
       "text": "{0:document was|documents were|documents were} created in {1}, which is no longer supported. This points to workstations with vulnerable software, suitable for phishing with malicious attachments."
     },
     {
       "id": "f056",
-      "rules": "eol-software",
+      "rules": "eol-software,sw.cve,sw.kev,eol-os",
       "pattern": "Обновить ПО до поддерживаемой версии и централизованно контролировать версии офисного ПО.",
       "text": "Update the software to a supported version and centrally control office software versions."
     },
     {
       "id": "f057",
-      "rules": "eol-software",
+      "rules": "eol-software,sw.cve,sw.kev,eol-os",
       "pattern": "Сигнатура: {}",
       "text": "Signature: {0}"
     },
     {
       "id": "f058",
-      "rules": "eol-software,eol-os",
+      "rules": "eol-software,eol-os,sw.cve,sw.kev",
       "pattern": "Документов: {}",
       "text": "Documents: {0}"
     },
     {
       "id": "f059",
-      "rules": "eol-software,eol-os",
+      "rules": "eol-software,eol-os,sw.cve,sw.kev",
       "pattern": "Исторические данные ({}): документы из веб-архива или старше {} лет, важность понижена",
       "text": "Historical data ({0}): documents from a web archive or older than {1} years, severity lowered"
     },
     {
       "id": "f060",
-      "rules": "eol-os",
+      "rules": "eol-os,sw.cve,sw.kev,eol-software",
       "pattern": "Устаревшая ОС {} у {n} {w}",
       "text": "Outdated OS {0} in {1:document|documents|documents}"
     },
     {
       "id": "f061",
-      "rules": "eol-os",
+      "rules": "eol-os,sw.cve,sw.kev,eol-software",
       "pattern": "Метаданные {n} {w} указывают, что он создан в {}: ОС без обновлений безопасности.",
       "text": "Metadata of {0:document|documents|documents} shows it was created in {1}, an OS without security updates."
     },
     {
       "id": "f062",
-      "rules": "eol-os",
+      "rules": "eol-os,sw.cve,sw.kev,eol-software",
       "pattern": "Метаданные {n} {w} указывают, что они созданы в {}: ОС без обновлений безопасности.",
       "text": "Metadata of {0:document|documents|documents} shows they were created in {1}, an OS without security updates."
     },
     {
       "id": "f063",
-      "rules": "eol-os",
+      "rules": "eol-os,sw.cve,sw.kev,eol-software",
       "pattern": "Вывести из эксплуатации или изолировать рабочие места с неподдерживаемой ОС.",
       "text": "Decommission or isolate workstations running an unsupported OS."
     },
     {
       "id": "f064",
-      "rules": "eol-os",
+      "rules": "eol-os,sw.cve,sw.kev,eol-software",
       "pattern": "ОС: {}",
       "text": "OS: {0}"
     },
@@ -2073,8 +2073,8 @@
     {
       "id": "f338",
       "rules": "doc.scan_without_text",
-      "pattern": "Документ состоит только из изображений страниц, а имя файла указывает на личный или служебный документ (паспорт, договор, приказ): содержимое не проверяется поиском и DLP.",
-      "text": "The document consists of page images only and the file name points to a personal or official document (passport, contract, order): search and DLP cannot check its content."
+      "pattern": "Документ состоит только из изображений страниц, а имя файла указывает на личный документ (паспорт, ID-карта, договор с именем человека): содержимое не проверяется поиском и DLP.",
+      "text": "The document consists only of page images, and the file name points to a personal document (passport, ID card, a contract with a person's name): its content is not checked by search or DLP."
     },
     {
       "id": "f339",
@@ -2594,79 +2594,79 @@
     },
     {
       "id": "f425",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Вероятно уязвимое ПО (CISA KEV): {}",
       "text": "Likely vulnerable software (CISA KEV): {0}"
     },
     {
       "id": "f426",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Возможно уязвимое ПО (CISA KEV): {}, сверьте версию",
       "text": "Possibly vulnerable software (CISA KEV): {0}, verify the version"
     },
     {
       "id": "f427",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Технология обнаружена на хосте организации.",
       "text": "The technology was detected on a host of the organization."
     },
     {
       "id": "f428",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "ПО найдено в метаданных документов: оно стоит на рабочих станциях авторов.",
       "text": "The software was found in document metadata: it is installed on the authors' workstations."
     },
     {
       "id": "f429",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Эксплуатируемых уязвимостей в каталоге CISA KEV для продукта «{}»: {n}.",
       "text": "Exploited vulnerabilities in the CISA KEV catalog for «{0}»: {1}."
     },
     {
       "id": "f430",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Из них в кампаниях вымогателей: {n}.",
       "text": "Used in ransomware campaigns: {0}."
     },
     {
       "id": "f546",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Затронутые хосты ({n}): {}.",
       "text": "Affected hosts ({0}): {1}."
     },
     {
       "id": "f431",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Версия снята с поддержки ({}): исправления больше не выходят.",
       "text": "The version is out of support ({0}): no more fixes are released."
     },
     {
       "id": "f432",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Версия снята с поддержки: исправления больше не выходят.",
       "text": "The version is out of support: no more fixes are released."
     },
     {
       "id": "f433",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Добавлено в KEV после окончания поддержки: {n}.",
       "text": "Added to KEV after the end of support: {0}."
     },
     {
       "id": "f434",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "KEV не указывает уязвимые версии: сверьте версию {} с бюллетенями производителя.",
       "text": "KEV does not list vulnerable versions: verify version {0} against the vendor advisories."
     },
     {
       "id": "f547",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Если патч-уровень ОС/дистрибутива не определён автоматически, сверьте версию {} с бюллетенями производителя.",
       "text": "If the OS/distribution patch level was not detected automatically, check version {0} against the vendor bulletins."
     },
     {
       "id": "f435",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Сверить установленную версию с бюллетенями производителя; обновить или вывести ПО из эксплуатации. Каталог KEV не содержит диапазонов версий, поэтому совпадение: повод для проверки, а не подтверждённая уязвимость.",
       "text": "Verify the installed version against the vendor advisories; update or retire the software. The KEV catalog has no version ranges, so a match is a reason to check, not a confirmed vulnerability."
     },
@@ -3710,7 +3710,7 @@
     },
     {
       "id": "f618",
-      "rules": "sw.kev",
+      "rules": "sw.kev,sw.cve,eol-software,eol-os",
       "pattern": "Приоритет по EPSS (FIRST): наибольшая вероятность эксплуатации {}, CVSS до {}.",
       "text": "EPSS priority (FIRST): highest exploitation probability {0}, CVSS up to {1}."
     },
@@ -4001,6 +4001,108 @@
       "rules": "sw.cve,sw.kev,eol-software,eol-os",
       "pattern": "Ещё CVE, опубликованных после этого документа: {} (не учтены: ПО могли обновить).",
       "text": "More CVEs published after this document: {0} (not counted: the software may have been updated)."
+    },
+    {
+      "id": "f668",
+      "rules": "doc.meeting_passcode",
+      "pattern": "Ссылка на онлайн-встречу со встроенным паролем ({})",
+      "text": "Online meeting link with an embedded passcode ({0})"
+    },
+    {
+      "id": "f669",
+      "rules": "doc.meeting_passcode",
+      "pattern": "Публичное объявление содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): войти может любой читатель. Для открытого мероприятия это ожидаемо, но пароль ничего не защищает.",
+      "text": "A public announcement contains Zoom/Teams/Meet join links with the passcode in the link itself (pwd=): any reader can join. Expected for a public event, but the passcode protects nothing."
+    },
+    {
+      "id": "f670",
+      "rules": "doc.meeting_passcode",
+      "pattern": "Документ содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): посторонний может войти на встречу.",
+      "text": "The document contains Zoom/Teams/Meet join links with the passcode in the link itself (pwd=): an outsider can join the meeting."
+    },
+    {
+      "id": "f671",
+      "rules": "doc.meeting_passcode",
+      "pattern": "Для открытых мероприятий включить регистрацию или зал ожидания; для закрытых встреч не публиковать ссылку с паролем.",
+      "text": "For public events turn on registration or a waiting room; for private meetings do not publish the link with the passcode."
+    },
+    {
+      "id": "f672",
+      "rules": "doc.links",
+      "pattern": "Документ ссылается на публичное облачное хранилище ({})",
+      "text": "Document links to public cloud storage ({0})"
+    },
+    {
+      "id": "f673",
+      "rules": "doc.links",
+      "pattern": "Документ ссылается на файлы и пространства в облачных сервисах по публичным ссылкам без токенов доступа: это контекст, а не утечка учётных данных.",
+      "text": "The document links to files and spaces in cloud services by public links without access tokens: this is context, not a credential leak."
+    },
+    {
+      "id": "f674",
+      "rules": "doc.links",
+      "pattern": "Проверить, что по публичным ссылкам доступны только материалы, предназначенные для публикации.",
+      "text": "Check that the public links open only material meant for publication."
+    },
+    {
+      "id": "f675",
+      "rules": "sw.office_outdated",
+      "pattern": "Устаревший Microsoft Office на рабочих станциях: версий {}",
+      "text": "Outdated Microsoft Office on workstations: {0} versions"
+    },
+    {
+      "id": "f676",
+      "rules": "sw.office_outdated",
+      "pattern": "Документы организации созданы в версиях Microsoft Office без поддержки или с известными уязвимостями: это разведданные о рабочих станциях авторов (фишинг с вредоносными вложениями), а не уязвимость сайта.",
+      "text": "The organisation's documents were made in Microsoft Office versions without support or with known vulnerabilities: reconnaissance about the authors' workstations (phishing with malicious attachments), not a site vulnerability."
+    },
+    {
+      "id": "f677",
+      "rules": "sw.office_outdated",
+      "pattern": "{}: документов {}, последний {}.",
+      "text": "{0}: {1} documents, last {2}."
+    },
+    {
+      "id": "f678",
+      "rules": "sw.office_outdated",
+      "pattern": "{}: документов {}, последний {}, поддержка завершена {}.",
+      "text": "{0}: {1} documents, last {2}, support ended {3}."
+    },
+    {
+      "id": "f679",
+      "rules": "sw.office_outdated",
+      "pattern": "{}: документов {}, последний {}, снято с поддержки.",
+      "text": "{0}: {1} documents, last {2}, no longer supported."
+    },
+    {
+      "id": "f680",
+      "rules": "sw.office_outdated",
+      "pattern": "Microsoft Office {}: известных CVE для этой версии в NVD: {} (критических: {}, высоких: {}), из них в CISA KEV: {}.",
+      "text": "Microsoft Office {0}: known CVEs for this version in NVD: {1} (critical: {2}, high: {3}), in CISA KEV: {4}."
+    },
+    {
+      "id": "f681",
+      "rules": "sw.office_outdated",
+      "pattern": "Каталог CISA KEV называет эксплуатируемые уязвимости этих продуктов: {}.",
+      "text": "The CISA KEV catalog lists exploited vulnerabilities of these products: {0}."
+    },
+    {
+      "id": "f682",
+      "rules": "sw.office_outdated",
+      "pattern": "Обновить Microsoft Office до поддерживаемой версии и включить централизованное обновление; учитывать при оценке фишинговых рисков.",
+      "text": "Update Microsoft Office to a supported version and turn on central updates; take it into account when assessing phishing risks."
+    },
+    {
+      "id": "f683",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Документы с этой версией получены не с хостов в скоупе ({}): генератор может принадлежать не организации.",
+      "text": "Documents with this version did not come from hosts in the scope ({0}): the generator may not belong to the organisation."
+    },
+    {
+      "id": "f684",
+      "rules": "sw.cve,sw.kev,eol-software,eol-os",
+      "pattern": "Документы отданы хостами в скоупе: {}.",
+      "text": "Documents were served by hosts in the scope: {0}."
     }
   ],
   "tech_cats": {

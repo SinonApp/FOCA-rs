@@ -5,8 +5,8 @@ client: "ТОВ «Контосо Енерджі»"
 date: 2026-11-20
 template: executive
 lang: en
-risk: 100
-findings: 107
+risk: 88
+findings: 106
 ---
 
 # Executive one-pager
@@ -15,9 +15,9 @@ contoso.example · ТОВ «Контосо Енерджі» · 20 Nov 2026
 
 *A short summary of the open-source check: how serious the problems are, what was found and what to do first.*
 
-**Overall risk level: 100/100 - Critical**
+**Overall risk level: 88/100 - High**
 
-Findings in total: 107; 4 critical and 25 high.
+Findings in total: 106; 4 critical and 25 high.
 
 ## Key findings
 

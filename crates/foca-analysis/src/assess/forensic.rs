@@ -85,6 +85,8 @@ pub struct Fx {
     pub sourcemap: Vec<String>,
     pub pii: Vec<PiiFound>,
     pub links: Vec<LinkHit>,
+    /// The document reads like a public announcement (event, webinar, schedule).
+    pub announcement: bool,
     pub rules: Vec<RuleFacts>,
 }
 
@@ -99,31 +101,137 @@ impl Fx {
     }
 }
 
-/// File names that make an image-only scan sensitive.
-const SENSITIVE_SCAN_NAMES: &[&str] = &[
+/// File-name stems of identity documents: an image-only scan with one of them is personal.
+const IDENTITY_SCAN_NAMES: &[&str] = &[
     "паспорт",
     "passport",
-    "договір",
-    "договор",
-    "контракт",
-    "contract",
-    "наказ",
-    "приказ",
     "посвідч",
     "свідоцтв",
     "свидетельств",
     "id-card",
     "id_card",
     "idcard",
-    "диплом",
-    "заява",
-    "заявлен",
-    "довіреніст",
-    "доверенност",
+    "id картк",
     "рнокпп",
     "іпн",
     "инн",
 ];
+
+/// File-name stems of personal papers that are personal only together with a person's name
+/// (`Договір_Петренко.pdf`, not `Договір_оренди.pdf`).
+const PERSONAL_WITH_NAME: &[&str] = &[
+    "договір",
+    "договор",
+    "контракт",
+    "contract",
+    "заява",
+    "заявлен",
+    "довіреніст",
+    "доверенност",
+    "диплом",
+];
+
+/// Capitalised words of file names that are not a person's name.
+const NOT_A_NAME: &[&str] = &[
+    "скан",
+    "scan",
+    "копія",
+    "копия",
+    "copy",
+    "додаток",
+    "приложение",
+    "наказ",
+    "приказ",
+    "про",
+    "оренди",
+    "аренды",
+    "поставки",
+    "підряду",
+    "договір",
+    "договор",
+    "заява",
+    "контракт",
+    "contract",
+    "диплом",
+    "типовий",
+    "типовой",
+    "зразок",
+    "образец",
+    "проект",
+    "проєкт",
+    "final",
+];
+
+/// Whether an image-only scan's file name points to a person's own document.
+fn personal_scan_name(name: &str) -> bool {
+    let n = name.to_lowercase();
+    if IDENTITY_SCAN_NAMES.iter().any(|w| n.contains(w)) {
+        return true;
+    }
+    if !PERSONAL_WITH_NAME.iter().any(|w| n.contains(w)) {
+        return false;
+    }
+    let stem = name.rsplit_once('.').map_or(name, |x| x.0);
+    stem.split(|c: char| !c.is_alphabetic() && c != '\'')
+        .any(|t| {
+            let mut ch = t.chars();
+            let first_upper = ch.next().is_some_and(char::is_uppercase);
+            first_upper
+                && t.chars().count() >= 3
+                && t.chars().skip(1).all(char::is_lowercase)
+                && !NOT_A_NAME.contains(&t.to_lowercase().as_str())
+                && !PERSONAL_WITH_NAME
+                    .iter()
+                    .any(|w| t.to_lowercase().starts_with(w))
+        })
+}
+
+/// Words of public announcements (events, webinars, schedules): a meeting link with its
+/// passcode there is meant to be public.
+const ANNOUNCEMENT_WORDS: &[&str] = &[
+    "оголошен",
+    "объявлен",
+    "запрошуємо",
+    "приглашаем",
+    "запрошення",
+    "приглашение",
+    "вебінар",
+    "вебинар",
+    "webinar",
+    "конференці",
+    "конференци",
+    "conference",
+    "семінар",
+    "семинар",
+    "seminar",
+    "лекці",
+    "лекци",
+    "lecture",
+    "засідан",
+    "заседан",
+    "розклад",
+    "расписание",
+    "schedule",
+    "agenda",
+    "announcement",
+    "invitation",
+    "долучайтес",
+    "присоединяйтес",
+    "join us",
+    "захист",
+    "защита",
+    "олімпіад",
+    "олимпиад",
+];
+
+fn announcement_like(name: &str, text: Option<&str>) -> bool {
+    let mut t = name.to_lowercase();
+    if let Some(x) = text {
+        t.push(' ');
+        t.push_str(&x.chars().take(20_000).collect::<String>().to_lowercase());
+    }
+    ANNOUNCEMENT_WORDS.iter().any(|w| t.contains(w))
+}
 
 fn split_list(v: &str) -> impl Iterator<Item = String> + '_ {
     v.split([',', ';', ' ', '\n'])
@@ -518,8 +626,7 @@ pub fn facts(m: &Metadata, name: &str, text: Option<&str>, rules: Option<&RuleSe
     let mut fx = Fx::default();
     collect(m, &mut fx, "", 0);
     if fx.scan_without_text {
-        let n = name.to_lowercase();
-        fx.scan_suspicious_name = SENSITIVE_SCAN_NAMES.iter().any(|w| n.contains(w));
+        fx.scan_suspicious_name = personal_scan_name(name);
     }
     // Personal data: the summary from storage, or (documents analysed straight from bytes,
     // e.g. the CLI) a scan of the text and metadata now.
@@ -543,6 +650,9 @@ pub fn facts(m: &Metadata, name: &str, text: Option<&str>, rules: Option<&RuleSe
     // internal hosts findings.
     lk.retain(|h| h.service.is_some() || !h.tokens.is_empty());
     lk.truncate(50);
+    if lk.iter().any(LinkHit::meeting_passcode) {
+        fx.announcement = announcement_like(name, text);
+    }
     fx.links = lk;
     // User rules.
     if let (Some(rs), Some(t)) = (rules.filter(|r| !r.is_empty()), text) {
@@ -842,13 +952,13 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 d,
                 format!("Скан без текстового слоя: {}", d.name),
                 if x.scan_suspicious_name {
-                    Severity::High
+                    Severity::Low
                 } else {
-                    Severity::Medium
+                    Severity::Info
                 },
             );
             f.description = if x.scan_suspicious_name {
-                "Документ состоит только из изображений страниц, а имя файла указывает на личный или служебный документ (паспорт, договор, приказ): содержимое не проверяется поиском и DLP.".into()
+                "Документ состоит только из изображений страниц, а имя файла указывает на личный документ (паспорт, ID-карта, договор с именем человека): содержимое не проверяется поиском и DLP.".into()
             } else {
                 "Документ состоит только из изображений страниц: его содержимое не проверяется поиском, DLP и этим анализом.".into()
             };
@@ -1214,22 +1324,80 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
             f.tags = vec!["pii"];
             out.push(f);
         }
-        if !x.links.is_empty() {
-            let sev = x.links.iter().map(|l| l.sev).min().unwrap_or(Severity::Low);
+        let (meet, links): (Vec<&LinkHit>, Vec<&LinkHit>) =
+            x.links.iter().partition(|l| l.meeting_passcode());
+        // Meeting links without a passcode are not storage or credentials.
+        let links: Vec<&LinkHit> = links
+            .into_iter()
+            .filter(|l| l.service != Some(links::Service::Meeting) || l.has_credential())
+            .collect();
+        if !meet.is_empty() {
             let mut f = base(
-                "doc.links",
+                "doc.meeting_passcode",
                 d,
                 format!(
-                    "Ссылки на облачные пространства и URL с токенами в {}",
+                    "Ссылка на онлайн-встречу со встроенным паролем ({})",
                     d.name
                 ),
-                sev,
+                if x.announcement {
+                    Severity::Low
+                } else {
+                    Severity::Medium
+                },
             );
+            f.mitre = "T1213 · Data from Information Repositories";
+            f.description = if x.announcement {
+                "Публичное объявление содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): войти может любой читатель. Для открытого мероприятия это ожидаемо, но пароль ничего не защищает.".into()
+            } else {
+                "Документ содержит ссылки подключения к Zoom/Teams/Meet с паролем прямо в ссылке (pwd=): посторонний может войти на встречу.".into()
+            };
+            f.recommendation = "Для открытых мероприятий включить регистрацию или зал ожидания; для закрытых встреч не публиковать ссылку с паролем.";
+            f.evidence = meet
+                .iter()
+                .take(20)
+                .map(|l| l.url.clone())
+                .collect::<Vec<_>>()
+                .join("\n");
+            f.fields = vec!["links".into()];
+            out.push(f);
+        }
+        if !links.is_empty() {
+            let creds = links.iter().any(|l| l.has_credential());
+            let (title, sev) = if creds {
+                (
+                    format!(
+                        "Ссылки на облачные пространства и URL с токенами в {}",
+                        d.name
+                    ),
+                    links
+                        .iter()
+                        .filter(|l| l.has_credential())
+                        .map(|l| l.sev)
+                        .min()
+                        .unwrap_or(Severity::Medium),
+                )
+            } else {
+                (
+                    format!(
+                        "Документ ссылается на публичное облачное хранилище ({})",
+                        d.name
+                    ),
+                    Severity::Info,
+                )
+            };
+            let mut f = base("doc.links", d, title, sev);
             f.mitre = "T1213.003 · Data from Information Repositories: Code Repositories";
-            f.description = "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).".into();
-            f.recommendation = "Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам.";
-            f.evidence = x
-                .links
+            f.description = if creds {
+                "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).".into()
+            } else {
+                "Документ ссылается на файлы и пространства в облачных сервисах по публичным ссылкам без токенов доступа: это контекст, а не утечка учётных данных.".into()
+            };
+            f.recommendation = if creds {
+                "Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам."
+            } else {
+                "Проверить, что по публичным ссылкам доступны только материалы, предназначенные для публикации."
+            };
+            f.evidence = links
                 .iter()
                 .take(8)
                 .map(|l| match l.service {
@@ -1239,6 +1407,9 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 .collect::<Vec<_>>()
                 .join("\n");
             f.fields = vec!["links".into()];
+            if creds {
+                f.tags = vec!["credential"];
+            }
             out.push(f);
         }
         for r in &x.rules {
