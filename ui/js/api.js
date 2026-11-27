@@ -493,6 +493,7 @@
       uaCustom: "ua_custom",
       threads: "threads",
       rps: "rps",
+      hostsParallel: "hosts_parallel",
       timeout: "timeout",
       retries: "retries",
       kill: "kill_switch",

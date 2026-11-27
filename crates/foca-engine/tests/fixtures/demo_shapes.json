@@ -2120,6 +2120,11 @@
          "t": [
           "string"
          ]
+        },
+        "hosts_parallel": {
+         "t": [
+          "number"
+         ]
         }
        }
       },
@@ -5751,6 +5756,11 @@
         "dns_custom": {
          "t": [
           "string"
+         ]
+        },
+        "hosts_parallel": {
+         "t": [
+          "number"
          ]
         }
        }
@@ -12425,6 +12435,11 @@
        "t": [
         "string"
        ]
+      },
+      "hosts_parallel": {
+       "t": [
+        "number"
+       ]
       }
      }
     },
@@ -13080,6 +13095,11 @@
       "dns_custom": {
        "t": [
         "string"
+       ]
+      },
+      "hosts_parallel": {
+       "t": [
+        "number"
        ]
       }
      }

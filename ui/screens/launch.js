@@ -706,7 +706,7 @@
       help,
       whyMax,
       whyMin,
-      get: () => +(NETS()[key] || (key === "threads" ? 4 : 5)),
+      get: () => +(NETS()[key] || { threads: 4, hosts_parallel: 4 }[key] || 5),
       set: v => {
         F.api.settings_set({ net: { [key]: v } });
       },
@@ -782,8 +782,8 @@
         attrs: 'data-key="ua"',
         options: Object.entries(UAS).map(([k, v]) => ({ v: k, t: v })),
       })}
-      <div class="card nfs la-nfs la-steps2">${nfNet("threads", tx("launch.nf_threads", "Потоков"), "", 1, 64, [4, 8], tx("launch.nf_threads_note", "больше: риск бана"), "set-threads", tx("launch.nf_threads_max", "телефон и сеть больше не вытянут"), tx("launch.nf_threads_min", "нужен хотя бы один поток"))}${nfNet("rps", tx("launch.nf_rps", "Запросов в сек."), tx("launch.nf_per_s", "/с"), 1, 100, [5, 10], tx("launch.nf_rps_note", "на один хост"), "set-rps", tx("launch.nf_rps_max", "так быстро сайт почти наверняка заблокирует"), tx("launch.nf_rps_min", "меньше одного запроса в секунду ядро не поддерживает"))}</div>
-      <p class="fhint">${esc(tx("launch.net_shared", "Потоки и запросы в секунду. Общие с «Настройки → Сеть». Скан не превысит лимит запросов к одному хосту, даже при большом числе потоков."))}</p>`;
+      <div class="card nfs la-nfs la-steps2">${nfNet("threads", tx("launch.nf_threads", "Потоков"), "", 1, 64, [4, 8], tx("launch.nf_threads_note", "больше: риск бана"), "set-threads", tx("launch.nf_threads_max", "телефон и сеть больше не вытянут"), tx("launch.nf_threads_min", "нужен хотя бы один поток"))}${nfNet("rps", tx("launch.nf_rps", "Запросов в сек."), tx("launch.nf_per_s", "/с"), 1, 100, [5, 10], tx("launch.nf_rps_note", "на один хост"), "set-rps", tx("launch.nf_rps_max", "так быстро сайт почти наверняка заблокирует"), tx("launch.nf_rps_min", "меньше одного запроса в секунду ядро не поддерживает"))}${nfNet("hosts_parallel", tx("launch.nf_hosts_parallel", "Хостов одновременно"), "", 1, 8, [2, 4], tx("launch.nf_hosts_parallel_note", "1: по очереди"), "set-hosts-parallel", tx("launch.nf_hosts_parallel_max", "больше 8 хостов сразу телефон не потянет"), tx("launch.nf_hosts_parallel_min", "нужен хотя бы один хост"))}</div>
+      <p class="fhint">${esc(tx("launch.net_shared", "Потоки, запросы в секунду и хосты одновременно. Общие с «Настройки → Сеть». Скан не превысит лимит запросов к одному хосту, даже при большом числе потоков."))}</p>`;
   }
 
   // The core sends the RU note with a message code (`note_msg`); the text is the fallback.

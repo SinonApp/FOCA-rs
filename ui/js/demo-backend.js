@@ -4610,6 +4610,7 @@
         retries: 2,
         dns: "system",
         dns_custom: "9.9.9.9",
+        hosts_parallel: 4,
       },
       keys: {
         brave: { status: "ok", mask: "BSAq…ab12", used: 1840, limit: 2000 },
@@ -6693,6 +6694,7 @@
     emit({ type: "progress", scan_id: RUN.id, progress: RUN.progress, stage: STAGES[RUN.stage].id });
     if (STAGES[RUN.stage].id === "network") subTick();
     if (STAGES[RUN.stage].id === "fuzz") fuzzTick();
+    if (HOST_STAGES.includes(STAGES[RUN.stage].id)) hostsTick(STAGES[RUN.stage].id);
     if (RUN.progress >= 100) {
       finishScan();
       return false;
@@ -6836,6 +6838,35 @@
   function subDone() {
     const cur = RUN && RUN.substep;
     if (cur) subEmit(cur.id, "done", SUB_PLAN[cur.id]);
+  }
+  // Hosts worked on at once in the ports, recon and site discovery stages (like the core's `hosts`
+  // sub-step): up to settings.net.hosts_parallel names run together, the rest wait.
+  const HOST_STAGES = ["ports", "recon", "fuzz"];
+  function stageHosts(sid) {
+    const names = ((RUN.final && RUN.final.hosts) || []).map(h => h.name).filter(Boolean);
+    return names.slice(0, sid === "ports" ? 7 : 3);
+  }
+  function hostsEmit(sid, state, done, running) {
+    const total = stageHosts(sid).length;
+    const x = { stage: sid, id: "hosts", state, done, total, eta_s: null, slow: false, running };
+    RUN.substep = state === "running" ? x : null;
+    emit({ type: "substep", scan_id: RUN.id, ...x });
+  }
+  function hostsTick(sid) {
+    const names = stageHosts(sid);
+    if (!names.length || RUN.level !== "active") return;
+    const i = STAGES.findIndex(x => x.id === sid),
+      per = RUN.sel ? 100 / RUN.sel.length : 100 / STAGES.length,
+      at = RUN.sel ? RUN.sel.indexOf(i) : i;
+    if (at < 0) return;
+    const frac = Math.max(0, Math.min(0.999, (RUN.progress - at * per) / per));
+    const par = Math.max(1, Math.min(8, +((load().settings.net || {}).hosts_parallel || 4)));
+    const done = Math.min(names.length, Math.floor(frac * names.length));
+    hostsEmit(sid, "running", done, names.slice(done, done + par));
+  }
+  function hostsDone(sid) {
+    const cur = RUN && RUN.substep;
+    if (cur && cur.id === "hosts" && cur.stage === sid) hostsEmit(sid, "done", cur.total, []);
   }
   // Site file search in the demo: fuzzing counters grow during the fuzz stage (like the core's fuzz source
   // events).
@@ -7082,6 +7113,7 @@
       }
     }
     if (sid === "fuzz" && !quiet && RUN.fuzz) fuzzDone();
+    if (HOST_STAGES.includes(sid) && !quiet) hostsDone(sid);
     if (!quiet) {
       persistRun();
       emit({ type: "db", scan_id: RUN.id, project: RUN.project, kind: sid });

@@ -319,6 +319,12 @@ html[data-theme="dark"] .scn-ah > svg.i {
   width: 13px;
   height: 13px;
 }
+.scn-subhosts {
+  margin: 2px 0 0 19px;
+  color: var(--text-2);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
 .scn-subhint {
   margin: 2px 0 0 19px;
   color: var(--text-2);

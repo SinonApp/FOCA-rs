@@ -824,15 +824,9 @@
       case "ports": {
         const portsSrc = scan.sources.find(x => x.id === "ports");
         if (!portsSrc || portsSrc.status === "off") return [F.t("scan.not_in_scan", "не входит в этот скан")];
-        if (portsSrc.status === "running" && portsSrc.host)
-          return [
-            F.t(
-              "scan.ctr_host_of",
-              { i: num((portsSrc.host_index || 0) + 1), n: num(portsSrc.hosts || 1), host: portsSrc.host },
-              "хост {i} из {n}: {host}",
-            ),
-            portsSrc.n ? F.t("scan.ctr_open", { n: num(portsSrc.n) }, "открыто {n}") : "",
-          ];
+        // the running hosts are shown by the `hosts` sub-step line
+        if (portsSrc.status === "running")
+          return [portsSrc.n ? F.t("scan.ctr_open", { n: num(portsSrc.n) }, "открыто {n}") : ""];
         return [
           portsSrc.n != null ? F.t("scan.ctr_open_ports", { n: num(portsSrc.n) }, "открыто портов: {n}") : "",
           portsSrc.error || "",
@@ -881,6 +875,8 @@
     total: x.total || 0,
     etaS: x.eta_s != null ? +x.eta_s : null,
     slow: !!x.slow,
+    // hosts worked on at once (the `hosts` sub-step of ports, recon and site discovery)
+    running: Array.isArray(x.running) ? x.running.map(String) : null,
   });
   const SUB_LABEL = {
     dns: () => F.t("scan.sub_dns", "DNS-записи доменов"),
@@ -892,6 +888,7 @@
     liveness: () => F.t("scan.sub_liveness", "Проверка живости"),
     tls: () => F.t("scan.sub_tls", "Сертификаты TLS"),
     queue: () => F.t("scan.sub_queue", "Очередь загрузки"),
+    hosts: () => F.t("scan.sub_hosts", "Хосты"),
   };
   const subLabel = id => (SUB_LABEL[id] ? SUB_LABEL[id]() : id);
   // ---------- per-item controls (scan_control): stage, source, sub-step ----------
@@ -1024,9 +1021,21 @@
       { min: Math.max(1, Math.ceil((x.etaS || 60) / 60)) },
       "DNS медленный (VPN?): перебор займёт ~{min} мин",
     );
+  // Hosts of the stage worked on at once: "Hosts: 3 running, 2 done of 7" and the running names.
+  function hostsHTML(x) {
+    const run = (x.running || []).length;
+    const line = F.t(
+      "scan.sub_hosts_line",
+      { run: num(run), done: num(Math.min(x.done, x.total)), total: num(x.total) },
+      "Хосты: {run} в работе, {done} готово из {total}",
+    );
+    const names = run ? `<div class="scn-subhosts mono">${esc(x.running.join(", "))}</div>` : "";
+    return `<div class="scn-sub" id="scn-sub-hosts">${ic("spin", "spin")}<span>${esc(line)}</span></div>${names}`;
+  }
   function subHTML(def) {
     const x = F.scan.substep;
     if (!x || (x.stage && x.stage !== def.id)) return "";
+    if (x.id === "hosts") return hostsHTML(x);
     const cnt = x.total ? ` ${num(Math.min(x.done, x.total))}/${num(x.total)}` : "";
     const slow =
       x.slow && RESOLVER_STEPS.includes(x.id)

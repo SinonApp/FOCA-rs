@@ -74,6 +74,7 @@
       uaCustom: "",
       threads: 8,
       rps: 10,
+      hostsParallel: 4,
       timeout: 15,
       retries: 2,
       kill: true,
@@ -960,6 +961,7 @@
       <div class="card nfs st-nfs">
         ${nf("net.threads", F.t("settings.threads", "Потоков"), "", 1, 64, [4, 8], F.t("settings.threads_note", "больше: риск бана"), "set-threads", F.t("settings.threads_max", "телефон и сеть больше не вытянут"), F.t("settings.threads_min", "нужен хотя бы один поток"))}
         ${nf("net.rps", F.t("settings.rps", "Запросов в сек."), F.t("settings.unit_per_s", "/с"), 1, 100, [5, 10], F.t("settings.rps_note", "общий предел на все источники"), "set-rps", F.t("settings.rps_max", "так быстро сайт почти наверняка заблокирует"), F.t("settings.rps_min", "меньше одного запроса в секунду ядро не поддерживает"))}
+        ${nf("net.hostsParallel", F.t("settings.hosts_parallel", "Хостов одновременно"), "", 1, 8, [2, 4], F.t("settings.hosts_parallel_note", "1: по очереди"), "set-hosts-parallel", F.t("settings.hosts_parallel_max", "больше 8 хостов сразу телефон не потянет"), F.t("settings.hosts_parallel_min", "нужен хотя бы один хост"))}
         ${nf("net.timeout", F.t("settings.timeout", "Таймаут"), F.t("settings.unit_s", "с"), 5, 120, [15, 30], F.t("settings.timeout_note", "для Tor: 60"), "set-timeout", F.t("settings.timeout_max", "дольше ждать ответа бессмысленно. Источник отключится по общему таймауту"), F.t("settings.timeout_min", "за меньшее время многие серверы не успевают ответить"))}
         ${nf("net.retries", F.t("settings.retries", "Повторов"), "", 0, 5, [1, 3], F.t("settings.retries_note", "при обрыве"), "set-retries", F.t("settings.retries_max", "больше повторов только нагружают сервер и затягивают скан"), "")}
       </div>

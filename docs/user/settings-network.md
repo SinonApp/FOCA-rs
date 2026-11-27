@@ -54,6 +54,8 @@
 
 Valid bounds: concurrency `1-64`, RPS `1-100`, request timeout `5-120 s`, retries `0-5`, per-source search timeout `10-600 s` (default `90 s`). Forgotten file discovery (`foca-fuzz`) uses its own conservative limits under Wordlists (defaults: `5 req/s`, `4` threads, `3,000` request budget, `20 min` cap).
 
+**Hosts at once** (`1-8`, default `4`, also in the launch wizard) sets how many hosts of one scan are worked on at the same time: subdomains and hosts found during the scan, or several targets of a project. It applies to liveness and TLS checks, the port scan, website reconnaissance and site discovery. `1` goes one host after another, as before; over Tor or mobile data `1-2` is kinder to the connection. It does not raise any limit: the global RPS and concurrency above still cap the whole scan, site discovery keeps its rate per host, and its request budget and time are shared by all hosts. If one host answers 429 or shows a bot challenge, only that host stops. Pause, Stop and Skip reach every running host at once, and the scan screen shows *"Hosts: 3 running, 2 done of 7"* with the names of the hosts in progress.
+
 ## Subdomain Enumeration & Network Limits
 
 Subdomain brute-force (Standard / Full) runs on an adaptive pace (switching to a conservative DoH preset behind proxies) capped by your global RPS when set below 5. If your ISP or network throttles DNS, FOCA-rs backs off automatically and marks Data → Hosts with *"network throttled DNS"*. If DNS hijacking is detected by the network canary (`dns_hijack`), brute-forcing is skipped automatically (status Skipped) to avoid false hosts. Choose the wordlist in the launch wizard (`off` / `top-1500` / `top-5000` / `custom`; defaults live in `settings.subdomains`).
