@@ -18,7 +18,9 @@ pub use archive::{
     copy_url, mime_regex, page_plan, parse_cc_ndjson, parse_cdx_json, CdxRow, CommonCrawl, CrtSh,
     Wayback, WAYBACK_FL,
 };
-pub use crawler::{CrawlStats, Crawler};
+pub use crawler::{
+    CrawlOutput, CrawlStats, CrawlStop, Crawler, Frontier, LinkedStorage, ProgressHook,
+};
 pub use engines::{
     parse_brave, parse_github_code, parse_searx, parse_securitytrails, parse_vt, Brave, GitHubCode,
     Searx, SecurityTrails, VirusTotal,

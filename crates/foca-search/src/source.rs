@@ -181,6 +181,10 @@ pub trait DocumentSource: Send + Sync {
     fn budget(&self) -> u32 {
         1
     }
+    /// A source with its own wall-time limit (the crawler) replaces the overall timeout with it.
+    fn own_timeout(&self) -> Option<Duration> {
+        None
+    }
     fn find<'a>(
         &'a self,
         ctx: &'a SearchCtx,
@@ -296,7 +300,8 @@ struct OneRun {
 
 /// Returns the hard deadline of a source: the overall timeout times `budget` (three times longer for slow archives).
 pub fn source_timeout(s: &dyn DocumentSource, ctl: &SourceCtl) -> Duration {
-    ctl.timeout * s.budget().max(1)
+    s.own_timeout()
+        .unwrap_or_else(|| ctl.timeout * s.budget().max(1))
 }
 
 async fn run_one(

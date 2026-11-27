@@ -13,6 +13,7 @@
 //!
 //! All network calls go through [`foca_net::NetClient`]: scope, request log, limits, cancellation.
 
+pub mod crawl;
 mod dorkboard;
 pub mod download;
 pub mod filter;
@@ -20,6 +21,7 @@ pub mod html;
 pub mod render;
 pub mod source;
 pub mod sources;
+pub mod storage;
 #[cfg(feature = "store")]
 pub mod store;
 pub mod urlinfo;

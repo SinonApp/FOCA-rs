@@ -79,15 +79,104 @@ fn parse_attrs(tag: &str) -> Vec<(String, String)> {
     out
 }
 
-/// Returns the page's links (absolute, without fragments), honoring `<base href>`. The contents
-/// of `<script>` and `<style>` and HTML comments are skipped.
-pub fn extract_links(html: &str, page: &Url) -> Vec<Url> {
+/// A link found on a page.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PageLink {
+    pub url: Url,
+    /// Tag the link came from (`a`, `img`, `iframe`, ...).
+    pub tag: String,
+    /// `rel="nofollow"` on the link, or `<meta name="robots" content="nofollow">` on the page.
+    pub nofollow: bool,
+    /// Declared `width`/`height` of an `<img>`.
+    pub w: Option<u32>,
+    pub h: Option<u32>,
+}
+
+/// What a page contains, for the crawler: links, script files and app shell signs.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PageScan {
+    pub links: Vec<PageLink>,
+    /// External script files (`<script src>`).
+    pub scripts: Vec<Url>,
+    /// Number of `<script>` tags, inline ones included.
+    pub script_tags: usize,
+    /// Visible text length outside tags, scripts and styles (whitespace not counted).
+    pub text_len: usize,
+    /// A JavaScript app mount point (`id="root"`, `id="app"`, `<app-root>`, Flutter loader).
+    pub app_root: bool,
+}
+
+/// Ids and markers of client-side app mount points.
+const APP_ROOT_IDS: &[&str] = &[
+    "root",
+    "app",
+    "__next",
+    "__nuxt",
+    "___gatsby",
+    "q-app",
+    "main-app",
+];
+
+impl PageScan {
+    /// Links of `<a>`/`<area>` tags (navigation, as opposed to embedded resources).
+    pub fn nav_links(&self) -> usize {
+        self.links
+            .iter()
+            .filter(|l| l.tag == "a" || l.tag == "area")
+            .count()
+    }
+
+    /// The page looks like a JavaScript app shell: scripts, almost no text and almost no
+    /// navigation links, usually with an app mount point. Its links appear only after rendering.
+    pub fn looks_like_app_shell(&self) -> bool {
+        self.script_tags > 0
+            && self.text_len < 400
+            && self.nav_links() <= 2
+            && (self.app_root || self.text_len < 80)
+    }
+}
+
+fn first_src_of_srcset(v: &str) -> Option<&str> {
+    v.split(',').next()?.split_whitespace().next()
+}
+
+/// Scans a page: links (absolute, without fragments, honoring `<base href>`), script files and
+/// app shell signs. The contents of `<script>` and `<style>` and HTML comments are skipped.
+pub fn scan_page(html: &str, page: &Url) -> PageScan {
     let mut base = page.clone();
-    let mut out = Vec::new();
+    let mut out = PageScan::default();
+    let mut page_nofollow = false;
     let lower = html.to_ascii_lowercase();
+    if lower.contains("flutter_bootstrap.js")
+        || lower.contains("main.dart.js")
+        || lower.contains("<app-root")
+        || lower.contains("ng-version=")
+    {
+        out.app_root = true;
+    }
+    let join = |base: &Url, v: &str| -> Option<Url> {
+        let lv = v.to_ascii_lowercase();
+        if lv.starts_with("javascript:")
+            || lv.starts_with("mailto:")
+            || lv.starts_with("data:")
+            || lv.starts_with("tel:")
+        {
+            return None;
+        }
+        let mut u = base.join(v).ok()?;
+        if !matches!(u.scheme(), "http" | "https") {
+            return None;
+        }
+        u.set_fragment(None);
+        Some(u)
+    };
     let mut i = 0;
     while let Some(p) = lower[i..].find('<') {
         let start = i + p;
+        out.text_len += html[i..start]
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .count();
         if lower[start..].starts_with("<!--") {
             i = lower[start..]
                 .find("-->")
@@ -96,6 +185,7 @@ pub fn extract_links(html: &str, page: &Url) -> Vec<Url> {
             continue;
         }
         let Some(e) = lower[start..].find('>') else {
+            i = lower.len();
             break;
         };
         let end = start + e;
@@ -105,7 +195,16 @@ pub fn extract_links(html: &str, page: &Url) -> Vec<Url> {
             .unwrap_or(inner.len());
         let name = inner[..name_end].to_ascii_lowercase();
         i = end + 1;
+        let attrs = || parse_attrs(&inner[name_end..]);
         if name == "script" || name == "style" {
+            if name == "script" {
+                out.script_tags += 1;
+                if let Some((_, v)) = attrs().into_iter().find(|(k, _)| k == "src") {
+                    if let Some(u) = join(&base, &v) {
+                        out.scripts.push(u);
+                    }
+                }
+            }
             let close = format!("</{name}");
             i = lower[i..]
                 .find(&close)
@@ -114,39 +213,99 @@ pub fn extract_links(html: &str, page: &Url) -> Vec<Url> {
             continue;
         }
         if name == "base" {
-            if let Some((_, v)) = parse_attrs(&inner[name_end..])
-                .into_iter()
-                .find(|(k, _)| k == "href")
-            {
+            if let Some((_, v)) = attrs().into_iter().find(|(k, _)| k == "href") {
                 if let Ok(b) = page.join(&v) {
                     base = b;
                 }
             }
             continue;
         }
+        if name == "meta" {
+            let a = attrs();
+            let is_robots = a
+                .iter()
+                .any(|(k, v)| k == "name" && v.eq_ignore_ascii_case("robots"));
+            if is_robots
+                && a.iter()
+                    .any(|(k, v)| k == "content" && v.to_ascii_lowercase().contains("nofollow"))
+            {
+                page_nofollow = true;
+            }
+            continue;
+        }
+        if !out.app_root && matches!(name.as_str(), "div" | "main" | "body" | "section") {
+            if let Some((_, v)) = attrs().into_iter().find(|(k, _)| k == "id") {
+                out.app_root = APP_ROOT_IDS.contains(&v.as_str());
+            }
+        }
         let Some((_, attr)) = LINK_ATTRS.iter().find(|(t, _)| *t == name) else {
             continue;
         };
-        for (k, v) in parse_attrs(&inner[name_end..]) {
-            if k == *attr && !v.is_empty() {
-                let lv = v.to_ascii_lowercase();
-                if lv.starts_with("javascript:")
-                    || lv.starts_with("mailto:")
-                    || lv.starts_with("data:")
-                    || lv.starts_with("tel:")
-                {
-                    continue;
+        let a = attrs();
+        let num = |key: &str| {
+            a.iter()
+                .find(|(k, _)| k == key)
+                .and_then(|(_, v)| v.trim_end_matches("px").trim().parse::<u32>().ok())
+        };
+        let nofollow = a.iter().any(|(k, v)| {
+            k == "rel"
+                && v.split_ascii_whitespace()
+                    .any(|r| r.eq_ignore_ascii_case("nofollow"))
+        });
+        let (w, h) = if name == "img" {
+            (num("width"), num("height"))
+        } else {
+            (None, None)
+        };
+        let mut push = |v: &str| {
+            if let Some(u) = join(&base, v) {
+                if !out.links.iter().any(|l| l.url == u && l.tag == name) {
+                    out.links.push(PageLink {
+                        url: u,
+                        tag: name.clone(),
+                        nofollow,
+                        w,
+                        h,
+                    });
                 }
-                if let Ok(mut u) = base.join(&v) {
-                    if matches!(u.scheme(), "http" | "https") {
-                        u.set_fragment(None);
-                        out.push(u);
-                    }
+            }
+        };
+        for (k, v) in &a {
+            if v.is_empty() {
+                continue;
+            }
+            if k == attr {
+                push(v);
+            } else if name == "img" && (k == "data-src" || k == "data-original") {
+                // lazy loading keeps the real image here
+                push(v);
+            } else if (name == "img" || name == "source") && (k == "srcset" || k == "data-srcset") {
+                if let Some(s) = first_src_of_srcset(v) {
+                    push(s);
                 }
             }
         }
     }
+    out.text_len += html[i.min(html.len())..]
+        .chars()
+        .filter(|c| !c.is_whitespace() && *c != '>')
+        .count();
+    if page_nofollow {
+        for l in &mut out.links {
+            l.nofollow = true;
+        }
+    }
     out
+}
+
+/// Returns the page's links (absolute, without fragments), honoring `<base href>`. The contents
+/// of `<script>` and `<style>` and HTML comments are skipped.
+pub fn extract_links(html: &str, page: &Url) -> Vec<Url> {
+    scan_page(html, page)
+        .links
+        .into_iter()
+        .map(|l| l.url)
+        .collect()
 }
 
 /// A robots.txt group: user agents, rules (allow, pattern) and crawl delay.
@@ -302,6 +461,24 @@ pub fn parse_sitemap(xml: &str) -> (Vec<String>, bool) {
     (out, is_index)
 }
 
+/// Largest decompressed sitemap accepted (the sitemaps.org limit is 50 MB).
+const MAX_SITEMAP: u64 = 50 * 1024 * 1024;
+
+/// Decodes a fetched sitemap body: gzip (`sitemap.xml.gz`, detected by its magic bytes) or plain
+/// text. Returns `None` for a broken archive.
+pub fn sitemap_text(body: &[u8]) -> Option<String> {
+    use std::io::Read;
+    if body.starts_with(&[0x1f, 0x8b]) {
+        let mut out = Vec::new();
+        flate2::read::GzDecoder::new(body)
+            .take(MAX_SITEMAP)
+            .read_to_end(&mut out)
+            .ok()?;
+        return Some(String::from_utf8_lossy(&out).into_owned());
+    }
+    Some(String::from_utf8_lossy(body).into_owned())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -357,5 +534,58 @@ mod tests {
         );
         assert!(idx);
         assert_eq!(v.len(), 1);
+    }
+
+    #[test]
+    fn scan_page_reports_shell_nofollow_and_images() {
+        let page = Url::parse("https://site.example/").unwrap();
+        let shell = r#"<!doctype html><html><head><title>App</title>
+            <script type="module" src="/assets/index-4f2a.js"></script></head>
+            <body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>"#;
+        let s = scan_page(shell, &page);
+        assert!(s.looks_like_app_shell());
+        assert_eq!(
+            s.scripts[0].as_str(),
+            "https://site.example/assets/index-4f2a.js"
+        );
+        let flutter =
+            r#"<html><body><script src="flutter_bootstrap.js" async></script></body></html>"#;
+        assert!(scan_page(flutter, &page).looks_like_app_shell());
+        let normal = r#"<html><body><h1>Welcome to the faculty</h1><p>News, staff and timetable for all students and visitors of the site.</p>
+            <a href="/news">News</a><a href="/staff">Staff</a><a href="/files/plan.pdf" rel="nofollow noopener">Plan</a>
+            <img src="/i/hall.jpg" width="1600" height="900"><img data-src="/i/lazy.jpg" src="/i/blank.gif">
+            <picture><source srcset="/i/a-800.jpg 800w, /i/a-400.jpg 400w"></picture><script>var x=1;</script></body></html>"#;
+        let s = scan_page(normal, &page);
+        assert!(!s.looks_like_app_shell());
+        assert_eq!(s.nav_links(), 3);
+        let plan = s
+            .links
+            .iter()
+            .find(|l| l.url.path() == "/files/plan.pdf")
+            .unwrap();
+        assert!(plan.nofollow);
+        let hall = s
+            .links
+            .iter()
+            .find(|l| l.url.path() == "/i/hall.jpg")
+            .unwrap();
+        assert_eq!((hall.w, hall.h), (Some(1600), Some(900)));
+        assert!(s.links.iter().any(|l| l.url.path() == "/i/lazy.jpg"));
+        assert!(s.links.iter().any(|l| l.url.path() == "/i/a-800.jpg"));
+        assert_eq!(s.script_tags, 1);
+        let meta = r#"<meta name="robots" content="noindex, nofollow"><a href="/x">x</a>"#;
+        assert!(scan_page(meta, &page).links[0].nofollow);
+    }
+
+    #[test]
+    fn sitemap_gzip_is_decoded() {
+        use std::io::Write;
+        let xml = "<urlset><url><loc>https://site.example/a</loc></url></urlset>";
+        let mut enc = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        enc.write_all(xml.as_bytes()).unwrap();
+        let gz = enc.finish().unwrap();
+        assert_eq!(sitemap_text(&gz).as_deref(), Some(xml));
+        assert_eq!(sitemap_text(xml.as_bytes()).as_deref(), Some(xml));
+        assert_eq!(sitemap_text(&[0x1f, 0x8b, 1, 2, 3]), None);
     }
 }

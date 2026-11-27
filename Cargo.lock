@@ -1323,6 +1323,7 @@ dependencies = [
 name = "foca-search"
 version = "2.0.0-beta.3"
 dependencies = [
+ "flate2",
  "foca-core",
  "foca-net",
  "foca-store",
