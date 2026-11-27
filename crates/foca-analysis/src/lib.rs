@@ -444,10 +444,13 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
             let d = inp.doc;
             let meta = d.metadata.as_ref();
             let analyzed = !inp.deleted && d.status == DocStatus::Analyzed && meta.is_some();
+            // A storage provider (Google Drive, OneDrive, Dropbox...) is never a target host: a file
+            // whose linking site is unknown gets no host rather than the provider's.
             let host = d
                 .host
                 .clone()
                 .or_else(|| d.url.as_deref().and_then(util::url_host))
+                .filter(|h| !util::is_storage_provider(h))
                 .unwrap_or_default();
             let mut p = Pre {
                 inp,

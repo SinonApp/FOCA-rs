@@ -1843,3 +1843,39 @@ fn request_log_clear_filters_by_scan_age_and_kept_scan() {
     assert_eq!(db.request_log_clear(&all, false).unwrap(), 6);
     assert!(db.requests(None, false).unwrap().is_empty());
 }
+
+#[test]
+fn storage_documents_belong_to_the_linking_site() {
+    let dir = tempfile::tempdir().unwrap();
+    let s = store(dir.path());
+    let p = new_project(&s);
+    let db = s.open_project(&p.id).unwrap();
+    let url = "https://drive.google.com/uc?id=AbC&export=download";
+    let d = db
+        .add_document(&AddDoc {
+            url: Some(url.into()),
+            name: "plan.docx".into(),
+            source: "storage".into(),
+            first_scan: Some("s1".into()),
+            status: DocStatus::Downloaded,
+            size: 4096,
+            sha256: Some(format!("{:064x}", 77)),
+            ..Default::default()
+        })
+        .unwrap();
+    db.set_analyzed(d.id, &meta("Ivan Petrenko", "Microsoft Office Word"), None)
+        .unwrap();
+    db.set_setting(
+        PROVENANCE_KEY,
+        &serde_json::json!({ url: { "kind": "page", "from": "https://www.contoso.example/files", "storage": "gdrive" } }),
+    )
+    .unwrap();
+    let docs = db.analysis_documents().unwrap();
+    assert_eq!(docs[0].doc.host.as_deref(), Some("www.contoso.example"));
+    let a = db.run_analysis(None).unwrap();
+    let names: Vec<&str> = a.hosts.iter().map(|h| h.name.as_str()).collect();
+    assert!(!names.iter().any(|n| n.contains("google")), "{names:?}");
+    assert!(names.contains(&"www.contoso.example"), "{names:?}");
+    let ui = db.ui_docs().unwrap();
+    assert_eq!(ui[0].host, "www.contoso.example");
+}

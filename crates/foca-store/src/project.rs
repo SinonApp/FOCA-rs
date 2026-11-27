@@ -103,6 +103,14 @@ pub struct FindingPatch {
 /// (`BTreeMap<String, DocProvenance>`), written by the scan engine and read into `Doc.provenance`.
 pub const PROVENANCE_KEY: &str = "docs.provenance";
 
+/// Host of a page URL (`https://Site.example:8443/a` → `site.example`); `None` without a host.
+fn page_host(url: &str) -> Option<String> {
+    let rest = url.split_once("://")?.1;
+    let auth = rest.split(['/', '?', '#']).next()?;
+    let host = auth.rsplit('@').next()?.split(':').next()?.trim();
+    (!host.is_empty()).then(|| host.to_ascii_lowercase())
+}
+
 /// An entry of the outgoing request log.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
@@ -948,9 +956,46 @@ impl ProjectDb {
         })
     }
 
+    /// Documents as the analysis sees them: a file downloaded from external storage (Google
+    /// Drive, OneDrive, Dropbox...) belongs to the in-scope site that linked it, so its host is the
+    /// linking page's host (or the host of the document that linked it), never the provider's.
+    /// Every re-analysis applies it, so older projects lose the provider "host" too.
+    pub fn analysis_documents(&self) -> Result<Vec<StoredDoc>> {
+        let mut docs = self.documents(true)?;
+        let prov: BTreeMap<String, DocProvenance> = self
+            .setting(PROVENANCE_KEY)?
+            .and_then(|v| serde_json::from_value(v).ok())
+            .unwrap_or_default();
+        if prov.is_empty() {
+            return Ok(docs);
+        }
+        let host_by_id: BTreeMap<u64, Option<String>> = docs
+            .iter()
+            .map(|d| (d.doc.id, d.doc.host.clone()))
+            .collect();
+        for d in &mut docs {
+            let Some(p) = d.doc.url.as_ref().and_then(|u| prov.get(u)) else {
+                continue;
+            };
+            if p.storage.is_none() {
+                continue;
+            }
+            let site = match p.kind.as_str() {
+                "doc" => p
+                    .from_doc
+                    .and_then(|i| host_by_id.get(&i).cloned().flatten()),
+                _ => page_host(&p.from),
+            };
+            if let Some(h) = site {
+                d.doc.host = Some(h);
+            }
+        }
+        Ok(docs)
+    }
+
     /// Runs a full analysis of the project documents and stores the result.
     pub fn run_analysis(&self, scan_id: Option<&str>) -> Result<Analysis> {
-        let docs = self.documents(true)?;
+        let docs = self.analysis_documents()?;
         let prev = self.prev_state(scan_id)?;
         let inputs: Vec<DocInput> = docs
             .iter()
@@ -1843,7 +1888,7 @@ impl ProjectDb {
             .and_then(|v| serde_json::from_value(v).ok())
             .unwrap_or_default();
         let mut out = Vec::new();
-        for d in self.documents(true)? {
+        for d in self.analysis_documents()? {
             let st = ui_status(d.doc.status);
             let mut x = match by_id.get(&d.doc.id) {
                 Some(a) if a.status == st => a.clone(),

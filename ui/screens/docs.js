@@ -8,7 +8,16 @@
   const CHUNK = 40;
 
   // ================= state =================
-  const blank = () => ({ ext: [], author: [], sw: [], year: [], host: [], status: [], withF: false });
+  const blank = () => ({
+    ext: [],
+    author: [],
+    sw: [],
+    year: [],
+    host: [],
+    status: [],
+    store: [],
+    withF: false,
+  });
   const state = (F.state.dataDocs = F.state.dataDocs || {
     sort: "date",
     f: blank(),
@@ -110,7 +119,10 @@
     f.year.length +
     f.host.length +
     f.status.length +
+    (f.store || []).length +
     (f.withF ? 1 : 0);
+  // External storage a document came from (provenance.storage), "" for files from the site itself.
+  const storeKey = d => (d.provenance && d.provenance.storage) || "";
   const applyF = (f, list = live()) =>
     list.filter(
       d =>
@@ -120,6 +132,7 @@
         (!f.year.length || f.year.includes(String(d.year))) &&
         (!f.host.length || f.host.includes(d.host)) &&
         (!f.status.length || f.status.includes(d.status_code)) &&
+        (!(f.store || []).length || f.store.includes(storeKey(d))) &&
         (!f.withF || d.findings.length),
     );
   /** Comparators for the document sort sheet; anything else sorts by date, newest first. */
@@ -236,6 +249,7 @@
     f.year.forEach(v => out.push([`year:${v}`, F.t("docs.year_chip", { y: v }, "{y} г.")]));
     f.host.forEach(v => out.push([`host:${v}`, v]));
     f.status.forEach(v => out.push([`status:${v}`, statusLabel(v)]));
+    (f.store || []).forEach(v => out.push([`store:${v}`, STORAGE_NAME[v] || v]));
     if (f.withF) out.push(["withF:", F.t("docs.with_findings", "С находками")]);
     if (!out.length) return "";
     return `<div class="factive dt-active"
@@ -472,7 +486,7 @@
     });
   }
   function filterSheet() {
-    const draft = JSON.parse(JSON.stringify(state.f));
+    const draft = { ...blank(), ...JSON.parse(JSON.stringify(state.f)) };
     const liveDocs = live();
     const cnt = fn => {
       const m = new Map();
@@ -522,6 +536,16 @@
           .sort((a, b) => b[1] - a[1])
           .map(([k, n]) => [k, k, n]),
       )}
+      ${(() => {
+        // Storage providers are not hosts: files from them are grouped here, attributed to the linking site.
+        const st = cnt(storeKey).filter(([k]) => k);
+        return st.length
+          ? `<div class="flabel">${esc(F.t("docs.f_storage", "Внешние хранилища"))}</div>${group(
+              "store",
+              st.sort((a, b) => b[1] - a[1]).map(([k, n]) => [k, STORAGE_NAME[k] || k, n]),
+            )}`
+          : "";
+      })()}
       <div class="flabel">${esc(F.t("docs.f_status", "Статус загрузки"))}</div>${group(
         "status",
         STATUS_CODES.map(c => [c, statusLabel(c), liveDocs.filter(x => x.status_code === c).length]),

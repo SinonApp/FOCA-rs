@@ -106,7 +106,7 @@ pub(crate) fn build_insights(
 
 /// Recomputes the analysis and the insights from the project (read only).
 pub fn compute(db: &ProjectDb, now: OffsetDateTime) -> Result<Computed, CmdError> {
-    let docs = db.documents(true)?;
+    let docs = db.analysis_documents()?;
     let mut prev = db.prev_state(None)?;
     apply_bundle_rules(db, &mut prev);
     prev.now = prev.now.or(Some(now));
@@ -127,7 +127,7 @@ pub fn compute(db: &ProjectDb, now: OffsetDateTime) -> Result<Computed, CmdError
 /// Analyzes the project documents, merges network facts and stores the result with triage
 /// preserved. Returns the ids of findings that did not exist before (for `finding` events).
 pub fn reanalyze(db: &ProjectDb, scan_id: Option<&str>) -> Result<Vec<u64>, CmdError> {
-    let docs = db.documents(true)?;
+    let docs = db.analysis_documents()?;
     let mut prev = db.prev_state(scan_id)?;
     apply_bundle_rules(db, &mut prev);
     let known: BTreeSet<u64> = prev.findings.keys().copied().collect();

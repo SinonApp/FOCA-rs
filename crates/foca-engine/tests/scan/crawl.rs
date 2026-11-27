@@ -272,6 +272,8 @@ async fn crawl_finds_deep_sitemap_storage_and_doc_link_documents() {
     );
     let plan = doc(&s, "Plan 2026.pdf").unwrap();
     assert_eq!(plan["provenance"]["storage"], "gdrive");
+    // a storage file belongs to the site page that linked it, not to the provider host
+    assert_eq!(plan["host"], deep["host"], "{plan}");
     assert!(plan["provenance"]["from"]
         .as_str()
         .unwrap()

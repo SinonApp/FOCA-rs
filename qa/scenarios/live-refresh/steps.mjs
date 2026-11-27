@@ -349,6 +349,25 @@ export default async (page, { out, W, fsc, theme }) => {
       rowText.slice(0, 200),
     );
     await ev(() => FOCA.actions["dd-sort"]("date"));
+    // External storage files are grouped in the filters (not as hosts).
+    await ev(() =>
+      FOCA.db.docs
+        .slice(0, 3)
+        .forEach(
+          d => (d.provenance = { kind: "page", from: "https://contoso.example/files", storage: "gdrive" }),
+        ),
+    );
+    await ev(() => FOCA.actions["dd-filters"]());
+    await wait(400);
+    const chip = await ev(
+      () => (document.querySelector('.sheet.show [data-g="store"] .chip') || {}).textContent || "",
+    );
+    ok(
+      "filters: external storage group lists Google Drive with its count",
+      /Google Drive\s*\d+/.test(chip) && +chip.replace(/\D/g, "") >= 3,
+      chip,
+    );
+    await ev(() => FOCA.closeSheet());
     await ev(() => FOCA.api.scan_stop({ reason: "user" }));
   } catch (e) {
     fails++;

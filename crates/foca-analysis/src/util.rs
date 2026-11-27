@@ -96,6 +96,27 @@ pub fn tz_label(min: i32) -> String {
 
 /// Returns the host of a URL (lowercase, no port or userinfo). A Wayback wrapper
 /// (`web.archive.org/web/<ts>/<url>`) is unwrapped to the original host.
+/// Hosts of public file storage services: documents downloaded from them belong to the site that
+/// linked them, not to the provider.
+pub fn is_storage_provider(host: &str) -> bool {
+    let h = host.trim_end_matches('.').to_ascii_lowercase();
+    let ends = |d: &str| h == d || h.ends_with(&format!(".{d}"));
+    [
+        "drive.google.com",
+        "docs.google.com",
+        "drive.usercontent.google.com",
+        "googleusercontent.com",
+        "onedrive.live.com",
+        "1drv.ms",
+        "sharepoint.com",
+        "dropbox.com",
+        "dropboxusercontent.com",
+        "dropbox.dev",
+    ]
+    .iter()
+    .any(|d| ends(d))
+}
+
 pub fn url_host(url: &str) -> Option<String> {
     let u = url.trim();
     let lower = u.to_ascii_lowercase();
@@ -311,6 +332,26 @@ mod tests {
         assert_eq!(tz_label(120), "UTC+2");
         assert_eq!(tz_label(-240), "UTC-4");
         assert_eq!(weekday(2026, 11, 20), 4); // Friday
+    }
+
+    #[test]
+    fn storage_providers_are_not_hosts() {
+        for h in [
+            "drive.google.com",
+            "docs.google.com",
+            "contoso.sharepoint.com",
+            "1drv.ms",
+            "www.dropbox.com",
+        ] {
+            assert!(is_storage_provider(h), "{h}");
+        }
+        for h in [
+            "kyiv.example",
+            "google.com.example",
+            "mydrive.google.example",
+        ] {
+            assert!(!is_storage_provider(h), "{h}");
+        }
     }
 
     #[test]

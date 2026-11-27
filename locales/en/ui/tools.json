@@ -411,6 +411,7 @@
   "docs.f_sw": "Software",
   "docs.f_year": "Year created",
   "docs.f_host": "Host",
+  "docs.f_storage": "External storage",
   "docs.f_status": "Download status",
   "docs.only_findings": "Only with findings",
   "docs.only_findings_sub": "Secrets, GPS, paths, tracked changes, forensics, personal data, outdated software",
