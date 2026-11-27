@@ -576,9 +576,10 @@ pub fn dedupe(items: Vec<FoundUrl>) -> Vec<FoundUrl> {
     out
 }
 
-/// Takes documents (up to `limit`), then images (up to `images`, their own budget); order
-/// within each group is preserved.
-pub fn take_balanced(items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<FoundUrl> {
+/// Takes documents (up to `limit`), then images (up to `images`, their own budget), each group in
+/// download priority order (`priority::sort_found`).
+pub fn take_balanced(mut items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<FoundUrl> {
+    crate::priority::sort_found(&mut items);
     let (mut docs, imgs): (Vec<FoundUrl>, Vec<FoundUrl>) =
         items.into_iter().partition(|u| !found_is_image(u));
     docs.truncate(limit);
@@ -595,7 +596,7 @@ fn found_is_image(u: &FoundUrl) -> bool {
 
 /// Picks downloads fairly: documents round-robin across sources (so Wayback cannot eat the whole
 /// limit before the crawler or CC), then images round-robin within their own budget `images`
-/// (they never take room from the documents).
+/// (they never take room from the documents). Each source's finds go in download priority order.
 pub fn pick_fair(items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<FoundUrl> {
     use std::collections::VecDeque;
     fn groups(v: Vec<FoundUrl>) -> Vec<VecDeque<FoundUrl>> {
@@ -622,6 +623,9 @@ pub fn pick_fair(items: Vec<FoundUrl>, limit: usize, images: usize) -> Vec<Found
             }
         }
     }
+    // Priority order inside each source (the stable sort keeps it through the grouping).
+    let mut items = items;
+    crate::priority::sort_found(&mut items);
     let (docs, imgs): (Vec<FoundUrl>, Vec<FoundUrl>) =
         items.into_iter().partition(|u| !found_is_image(u));
     let mut out = Vec::new();

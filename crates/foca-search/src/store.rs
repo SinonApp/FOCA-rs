@@ -60,7 +60,7 @@ impl TaskQueue for StoreQueue {
 
     fn claim(&self, limit: usize) -> Result<Vec<QueuedTask>, String> {
         Ok(lock(&self.db)
-            .task_claim(&self.kind, limit)
+            .task_claim_ranked(&self.kind, limit, crate::priority::rank)
             .map_err(|e| e.to_string())?
             .into_iter()
             .map(|t| QueuedTask {

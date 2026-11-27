@@ -348,6 +348,73 @@ mod store {
             .all(|r| r.module == "download" && r.host == "127.0.0.1"));
         assert!(log.iter().any(|r| r.status == Some(404)));
     }
+
+    /// The download stage claims rich documents first and site graphics last, whatever the order
+    /// the finds were queued in; with a document limit the cut keeps the office/PDF files.
+    #[tokio::test]
+    async fn queue_claims_documents_before_site_graphics() {
+        let tmp = tempfile::tempdir().unwrap();
+        let store = Store::open(tmp.path()).unwrap();
+        let p = store
+            .create_project(&NewProject {
+                name: "t".into(),
+                targets: vec!["a.example".into()],
+                ..Default::default()
+            })
+            .unwrap();
+        let db = Arc::new(Mutex::new(store.open_project(&p.id).unwrap()));
+        let q = StoreQueue::new(db.clone(), Some("s1".into()));
+        let names = [
+            "fontello.svg",
+            "about.png",
+            "favicon.png",
+            "prices.doc",
+            "koledzh.docx",
+            "report.pdf",
+            "photo.jpg",
+            "app.exe",
+        ];
+        let urls: Vec<FoundUrl> = names
+            .iter()
+            .map(|n| FoundUrl::new(&format!("https://a.example/f/{n}"), "crawler"))
+            .collect();
+        assert_eq!(q.enqueue(&urls).unwrap(), names.len());
+        let mut order = Vec::new();
+        loop {
+            let b = q.claim(1).unwrap();
+            let Some(t) = b.first() else { break };
+            order.push(t.url.rsplit('/').next().unwrap().to_string());
+        }
+        assert_eq!(
+            order,
+            [
+                "prices.doc",
+                "koledzh.docx",
+                "report.pdf",
+                "app.exe",
+                "photo.jpg",
+                "fontello.svg",
+                "about.png",
+                "favicon.png"
+            ]
+        );
+        // A document limit of 3 keeps the three office/PDF files, never the program or images.
+        let picked = foca_search::source::pick_fair(urls.clone(), 3, 0);
+        let picked: Vec<&str> = picked
+            .iter()
+            .map(|u| u.url.rsplit('/').next().unwrap())
+            .collect();
+        assert_eq!(picked, ["prices.doc", "koledzh.docx", "report.pdf"]);
+        let balanced = foca_search::source::take_balanced(urls, 3, 1);
+        let balanced: Vec<&str> = balanced
+            .iter()
+            .map(|u| u.url.rsplit('/').next().unwrap())
+            .collect();
+        assert_eq!(
+            balanced,
+            ["prices.doc", "koledzh.docx", "report.pdf", "photo.jpg"]
+        );
+    }
 }
 
 /// A large MOV with `moov` after the media data: only the metadata boxes are fetched with

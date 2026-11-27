@@ -1518,17 +1518,36 @@ impl ProjectDb {
     const TASK_COLS: &'static str =
         "id, kind, url, scan_id, source, state, attempts, last_error, doc_id";
 
-    /// Claims up to `limit` queued tasks: `queued` becomes `downloading` and the attempt counter is incremented.
+    /// Claims up to `limit` queued tasks in queue order: `queued` becomes `downloading` and the
+    /// attempt counter is incremented.
     pub fn task_claim(&self, kind: &str, limit: usize) -> Result<Vec<Task>> {
+        self.task_claim_ranked(kind, limit, |_, _| ())
+    }
+
+    /// Like [`Self::task_claim`], but picks the queued tasks with the lowest `rank(url, source)`
+    /// first (ties in queue order): the download stage uses it for its priority ladder.
+    pub fn task_claim_ranked<K: Ord>(
+        &self,
+        kind: &str,
+        limit: usize,
+        rank: impl Fn(&str, &str) -> K,
+    ) -> Result<Vec<Task>> {
         let tx = self.conn.unchecked_transaction()?;
         let ids: Vec<i64> = {
             let mut st = tx.prepare(
-                "SELECT id FROM tasks WHERE kind = ?1 AND state = 'queued' ORDER BY id LIMIT ?2",
+                "SELECT id, url, source FROM tasks WHERE kind = ?1 AND state = 'queued' ORDER BY id",
             )?;
-            let v = st
-                .query_map(params![kind, limit as i64], |r| r.get(0))?
-                .collect::<rusqlite::Result<Vec<i64>>>()?;
-            v
+            let mut v = st
+                .query_map(params![kind], |r| {
+                    Ok((
+                        r.get::<_, i64>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, String>(2)?,
+                    ))
+                })?
+                .collect::<rusqlite::Result<Vec<_>>>()?;
+            v.sort_by_cached_key(|(id, url, source)| (rank(url, source), *id));
+            v.into_iter().take(limit).map(|(id, _, _)| id).collect()
         };
         let now = self.now();
         for id in &ids {
