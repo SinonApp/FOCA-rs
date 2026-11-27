@@ -177,6 +177,56 @@ pub struct Analysis {
     pub facts: Vec<DocFacts>,
 }
 
+/// `true` if an older PDF revision differs from a later one: removed or added page text, or a
+/// non-empty Info value (author, creator, producer, modification date; title, subject,
+/// keywords of the old Info dictionaries) that changed. Revisions without their own Info or
+/// with empty values (an LTV increment writes `/Producer ()`) do not count.
+pub fn revisions_differ(m: &foca_core::Metadata) -> bool {
+    let revs = &m.pdf_revisions;
+    if revs
+        .iter()
+        .any(|r| !r.removed_text.is_empty() || !r.added_text.is_empty())
+    {
+        return true;
+    }
+    let mut last: [Option<&str>; 4] = [None; 4];
+    for r in revs {
+        let vals = [&r.author, &r.creator, &r.producer, &r.modified];
+        for (slot, v) in last.iter_mut().zip(vals) {
+            let Some(v) = v.as_deref().map(str::trim).filter(|v| !v.is_empty()) else {
+                continue;
+            };
+            if slot.is_some_and(|p| p != v) {
+                return true;
+            }
+            *slot = Some(v);
+        }
+    }
+    let current = [
+        ("Title", m.title.as_deref()),
+        ("Subject", m.subject.as_deref()),
+        ("Keywords", m.keywords.as_deref()),
+        ("Author", m.author.as_deref()),
+    ];
+    for (k, now) in current {
+        let mut prev: Option<&str> = None;
+        let olds = m
+            .old_versions
+            .iter()
+            .map(|o| o.fields.get(k).map(String::as_str));
+        for v in olds.chain(std::iter::once(now)) {
+            let Some(v) = v.map(str::trim).filter(|v| !v.is_empty()) else {
+                continue;
+            };
+            if prev.is_some_and(|p| p != v) {
+                return true;
+            }
+            prev = Some(v);
+        }
+    }
+    false
+}
+
 /// Per-document facts shared by the finding rules, the timeline and the graph.
 #[derive(Debug, Clone, Default)]
 pub struct DocFacts {
@@ -208,6 +258,9 @@ pub struct DocFacts {
     pub revision_people: Vec<String>,
     pub old_versions: Vec<String>,
     pub incremental: u32,
+    /// An older PDF revision really differs from the next one (Info values or page text):
+    /// Word and online converters write empty or identical increments, a fact, not a finding.
+    pub revisions_differ: bool,
     pub is_pdf: bool,
     pub gps: Option<(f64, f64)>,
     pub camera: Option<String>,
@@ -1146,6 +1199,7 @@ pub fn analyze(inputs: &[DocInput], scope: &Scope, prev: &PrevState) -> Analysis
                 })
                 .collect();
             f.incremental = m.incremental_updates.unwrap_or(0);
+            f.revisions_differ = revisions_differ(m);
             f.is_pdf = m.format == DocFormat::Pdf;
             f.gps = m.gps.map(|g| (g.lat, g.lon));
             f.camera = out.camera.clone();

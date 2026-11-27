@@ -80,3 +80,46 @@ fn forensic_findings_from_fixtures() {
         "raw РНОКПП leaked"
     );
 }
+
+/// `pdf-revisions` is a finding only when an older revision really differs: empty Word
+/// increments and LTV data are a fact; changed Info values or page text are a finding.
+#[test]
+fn pdf_revisions_differ_only_on_real_changes() {
+    use foca_core::{Metadata, OldVersion, PdfRevision};
+    let rev = |n: u32, objects: u32, producer: Option<&str>| PdfRevision {
+        revision: n,
+        objects,
+        producer: producer.map(str::to_string),
+        author: Some("Olena".into()).filter(|_| objects > 0),
+        ..Default::default()
+    };
+    let mut m = Metadata {
+        title: Some("Order 12".into()),
+        ..Default::default()
+    };
+    // Word hybrid xref: a second revision with no objects; an LTV increment with /Producer ()
+    m.pdf_revisions = vec![
+        rev(1, 40, Some("Microsoft Word 2016")),
+        rev(2, 0, None),
+        rev(3, 12, Some("")),
+    ];
+    m.old_versions = vec![OldVersion {
+        revision: 1,
+        fields: [("Title".to_string(), "Order 12".to_string())].into(),
+    }];
+    assert!(!foca_analysis::revisions_differ(&m));
+    // an older title
+    let mut t = m.clone();
+    t.old_versions[0]
+        .fields
+        .insert("Title".into(), "Draft order".into());
+    assert!(foca_analysis::revisions_differ(&t));
+    // another producer saved over the original
+    let mut p = m.clone();
+    p.pdf_revisions[2].producer = Some("iLovePDF".into());
+    assert!(foca_analysis::revisions_differ(&p));
+    // removed text
+    let mut x = m.clone();
+    x.pdf_revisions[1].removed_text = vec!["salary 1000".into()];
+    assert!(foca_analysis::revisions_differ(&x));
+}

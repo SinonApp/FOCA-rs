@@ -531,7 +531,9 @@ pub fn build(ctx: &Ctx) -> Vec<Finding> {
             f.fields = vec!["revisions".into(), "comments".into()];
             drafts.push(f);
         }
-        if d.incremental > 0 || !d.old_versions.is_empty() {
+        // a PDF whose older revisions hold nothing different (empty Word increments,
+        // converters, LTV data) keeps the revision count as a document fact only
+        if (d.incremental > 0 || !d.old_versions.is_empty()) && (!d.is_pdf || d.revisions_differ) {
             let sev = if d.old_versions.is_empty() {
                 Severity::Info
             } else {
