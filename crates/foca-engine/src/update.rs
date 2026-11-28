@@ -60,6 +60,8 @@ impl Engine {
             "auto": u["auto"].as_bool().unwrap_or(true),
             "wifi_only": u["wifi_only"].as_bool().unwrap_or(true),
             "prerelease": u["prerelease"].as_bool().unwrap_or(true),
+            "prompt": u["prompt"].as_bool().unwrap_or(true),
+            "prompted": u["prompted"].as_str().unwrap_or_default(),
         })
     }
 
@@ -105,15 +107,23 @@ impl Engine {
         let backoff = (st.backoff_until > self.epoch()).then_some(st.backoff_until);
         let cand = self.cached_candidate(st, flavor, include_pre);
         let progress = lock(&self.inner.update_job).progress.clone();
+        let set = self.update_settings();
+        let prompt = su::should_prompt(
+            set["prompt"] != false,
+            set["auto"] != false,
+            set["prompted"].as_str().unwrap_or_default(),
+            cand.as_ref().map(|c| c.release.version.as_str()),
+        );
         json!({
             "current": su::current_version(),
             "flavor": flavor,
-            "settings": self.update_settings(),
+            "settings": set,
             "checked_at": st.checked_at,
             "backoff_until": backoff,
             "error": st.last_error,
             "update": cand.as_ref().map(Self::candidate_json),
             "download": if progress.is_null() { json!({ "phase": "idle" }) } else { progress },
+            "prompt": prompt,
         })
     }
 
@@ -150,7 +160,9 @@ impl Engine {
 
     /// `update_check { flavor, prerelease?, auto? }` → asks GitHub for releases. `auto: true` is
     /// the daily background check: it is skipped when disabled, on mobile data with Wi-Fi only,
-    /// or when the last check is younger than a day. Failures (network, rate limit) come back as
+    /// or when the last check is younger than a day. Every answer carries `prompt`: the start-up
+    /// dialog may offer the found update (setting `update.prompt`, not asked for this version
+    /// yet, see `update.prompted`). Failures (network, rate limit) come back as
     /// `outcome: "error"` with `error { code, message, retry_at? }`.
     pub(crate) async fn update_check(&self, a: &Value) -> CmdResult {
         let flavor = flavor_arg(a)?;

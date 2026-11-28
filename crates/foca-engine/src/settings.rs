@@ -128,7 +128,8 @@ impl Core {
                 "redact": { "secrets": true, "pii": true, "client": true, "evid": false }
             },
             "sec": { "pin_set": false },
-            "update": { "auto": true, "wifi_only": true, "prerelease": true },
+            "update": { "auto": true, "wifi_only": true, "prerelease": true, "prompt": true, "prompted": "" },
+            "signatures": { "auto": "daily", "wifi_only": true },
         });
         let saved = self.store().settings_get()?;
         foca_store::settings::merge(&mut s, &saved);

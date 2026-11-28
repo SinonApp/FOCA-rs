@@ -503,6 +503,14 @@ pub fn write_state(data_dir: &Path, st: &State) -> Result<(), CmdError> {
 }
 
 /// Whether an automatic check is due (`interval` seconds since the last one).
+/// Whether the start-up dialog may offer the update `version`: the setting "Ask on start" and
+/// the automatic check are on, an update exists, and the user has not been asked about this
+/// version yet (`prompted` holds the last version the dialog showed; any answer, including
+/// "Later", stores it).
+pub fn should_prompt(ask: bool, auto: bool, prompted: &str, version: Option<&str>) -> bool {
+    ask && auto && version.is_some_and(|v| !v.is_empty() && v != prompted.trim())
+}
+
 pub fn auto_due(st: &State, now_epoch: i64) -> bool {
     st.checked_epoch <= 0 || now_epoch - st.checked_epoch >= AUTO_INTERVAL_SECS
 }
@@ -885,5 +893,25 @@ mod tests {
             Some("FOCA-rs-2.0.0-beta.6-play-arm64.apk"),
         );
         assert_eq!(left(), ["FOCA-rs-2.0.0-beta.6-play-arm64.apk.part"]);
+    }
+
+    #[test]
+    fn start_prompt_is_shown_once_per_version() {
+        let v = Some("2.0.0-beta.5");
+        assert!(should_prompt(true, true, "", v));
+        // "Later" (or any answer) stores the version: not asked again for it.
+        assert!(!should_prompt(true, true, "2.0.0-beta.5", v));
+        // A newer release asks again.
+        assert!(should_prompt(
+            true,
+            true,
+            "2.0.0-beta.5",
+            Some("2.0.0-beta.6")
+        ));
+        // Setting off, automatic checks off, or no update: never.
+        assert!(!should_prompt(false, true, "", v));
+        assert!(!should_prompt(true, false, "", v));
+        assert!(!should_prompt(true, true, "", None));
+        assert!(!should_prompt(true, true, "", Some("")));
     }
 }

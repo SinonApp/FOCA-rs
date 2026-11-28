@@ -282,11 +282,32 @@ async fn automatic_check_respects_settings_and_interval() {
         .call("update_check", json!({ "flavor": "foss", "auto": true }))
         .await;
     assert_eq!(v["outcome"], "available", "{v}");
+    let found = v["update"]["version"].as_str().unwrap().to_string();
+    assert_eq!(v["prompt"], true, "start-up dialog for a new version");
     let v = g
         .call("update_check", json!({ "flavor": "foss", "auto": true }))
         .await;
     assert_eq!(v["skipped"], "not_due");
     assert_eq!(g.list_hits(), 1);
+    // The cached answer still offers the dialog until the user answered it once ("Later").
+    assert_eq!(v["prompt"], true);
+    g.call(
+        "settings_set",
+        json!({ "patch": { "update": { "prompted": found } } }),
+    )
+    .await;
+    let v = g.call("update_status", json!({ "flavor": "foss" })).await;
+    assert_eq!(v["prompt"], false, "asked once per version");
+    assert_eq!(v["settings"]["prompted"], found.as_str());
+    // "Ask on start" off: never.
+    g.call(
+        "settings_set",
+        json!({ "patch": { "update": { "prompted": "", "prompt": false } } }),
+    )
+    .await;
+    let v = g.call("update_status", json!({ "flavor": "foss" })).await;
+    assert_eq!(v["prompt"], false);
+    assert_eq!(v["settings"]["prompt"], false);
 }
 
 async fn download(g: &Gh) -> Value {
