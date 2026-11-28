@@ -36,4 +36,10 @@
     <string name="scan_tip_battery_unrestricted">Щоб цього не було: Налаштування → Батарея → «Без обмежень» і ввімкніть автозапуск.</string>
     <string name="scan_hidden_hint">FOCA-rs приховано з «Нещодавніх», поки триває скан. Натисніть, щоб відкрити</string>
     <string name="scan_action_continue">Продовжити</string>
+    <string name="update_channel_name">Оновлення застосунку</string>
+    <string name="update_channel_description">Перебіг завантаження оновлення FOCA-rs</string>
+    <string name="update_title">FOCA-rs %1$s</string>
+    <string name="update_downloading">Завантаження оновлення: %1$d%%</string>
+    <string name="update_verifying">Перевірка підпису та контрольної суми</string>
+    <string name="update_ready">Перевірено. Натисніть, щоб встановити</string>
 </resources>

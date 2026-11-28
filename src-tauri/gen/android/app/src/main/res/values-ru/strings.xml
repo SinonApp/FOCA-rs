@@ -36,4 +36,10 @@
     <string name="scan_tip_battery_unrestricted">Чтобы этого не было: Настройки → Батарея → «Без ограничений» и включите автозапуск.</string>
     <string name="scan_hidden_hint">FOCA-rs скрыт из «Недавних», пока идёт скан. Нажмите, чтобы открыть</string>
     <string name="scan_action_continue">Продолжить</string>
+    <string name="update_channel_name">Обновления приложения</string>
+    <string name="update_channel_description">Ход загрузки обновления FOCA-rs</string>
+    <string name="update_title">FOCA-rs %1$s</string>
+    <string name="update_downloading">Загрузка обновления: %1$d%%</string>
+    <string name="update_verifying">Проверка подписи и контрольной суммы</string>
+    <string name="update_ready">Проверено. Нажмите, чтобы установить</string>
 </resources>

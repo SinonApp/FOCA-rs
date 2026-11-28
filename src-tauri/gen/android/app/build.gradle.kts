@@ -27,13 +27,17 @@ android {
     }
     flavorDimensions += "distribution"
     productFlavors {
+        // SELF_UPDATE: in-app update from GitHub Releases (both flavors ship there); a store
+        // build sets it to false and the install commands refuse.
         create("foss") {
             dimension = "distribution"
             buildConfigField("boolean", "HAS_MLKIT_OCR", "false")
+            buildConfigField("boolean", "SELF_UPDATE", "true")
         }
         create("play") {
             dimension = "distribution"
             buildConfigField("boolean", "HAS_MLKIT_OCR", "true")
+            buildConfigField("boolean", "SELF_UPDATE", "true")
         }
     }
     buildTypes {

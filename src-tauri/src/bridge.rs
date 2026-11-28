@@ -465,6 +465,10 @@ impl Bridge {
         // Exports and reports stay in the private directory; they leave it only via share or save
         // to files.
         cfg.export_dir = data_dir.join("exports");
+        // Update APKs go to the platform cache (Android `getCacheDir`), which the system may clear.
+        if let Ok(cache) = self.app.path().app_cache_dir() {
+            cfg.cache_dir = cache;
+        }
         // `time` cannot determine the local zone on Android (current_local_offset → Err), so ask the
         // system.
         if let Ok(info) = self.native.call("device_info", json!({})) {
@@ -823,6 +827,22 @@ impl Bridge {
                 json!({ "what": a.get("what").and_then(Value::as_str).unwrap_or("battery") }),
             ),
             "notifications" | "request_notifications" => n("request_notifications", json!({})),
+            // In-app update: install permission status (`open: true` opens "Install unknown apps")
+            // and the PackageInstaller session for an APK the core downloaded and verified.
+            "update_permission" => n(
+                "update_permission",
+                json!({ "open": a.get("open").and_then(Value::as_bool).unwrap_or(false) }),
+            ),
+            "update_install" => {
+                let engine = self.engine()?;
+                let path = update_apk_path(
+                    &engine.config().cache_dir,
+                    a.get("path").and_then(Value::as_str).unwrap_or(""),
+                )
+                .map_err(|e| err("bad_args", e))?;
+                alog!("обновление: установка {}", path.display());
+                n("update_install", json!({ "path": path.to_string_lossy() }))
+            }
             "permissions_status" => n("permissions_status", json!({})),
             // Settings › Background: hide-from-Recents toggle, OEM autostart and battery status.
             "bg_status" => n("bg_status", json!({})),
@@ -1045,6 +1065,19 @@ impl Bridge {
                     self.service_update();
                 }
             }
+            // In-app update download: progress, ready and failure in the notification shade.
+            "update" => {
+                let phase = ev["phase"].as_str().unwrap_or("");
+                if phase != "download" {
+                    alog!(
+                        "обновление {}: {phase}",
+                        ev["version"].as_str().unwrap_or("?")
+                    );
+                }
+                if let Err(e) = self.native.call("update_notify", ev.clone()) {
+                    adbg!("update_notify: {e}");
+                }
+            }
             "done" | "stopped" => {
                 alog!(
                     "скан {}: {} {}",
@@ -1078,6 +1111,16 @@ impl Bridge {
                 alog!("share: файлов {}", ev["n"]);
                 if let Err(e) = self.app.emit("shared", ev.clone()) {
                     awarn!("emit shared: {e}");
+                }
+                return;
+            }
+            // PackageInstaller refused or the user cancelled the confirmation.
+            "update_install" => {
+                alog!("обновление: установка не удалась: {ev}");
+                let out = json!({ "type": "update", "phase": "install_failed",
+                    "error": { "code": ev["code"], "message": ev["message"] } });
+                if let Err(e) = self.app.emit("scan://event", out) {
+                    awarn!("emit update: {e}");
                 }
                 return;
             }
@@ -1508,6 +1551,22 @@ mod service_tests {
         s.running = false;
         assert!(s.claim_start("b".into()));
     }
+}
+
+/// The update APK for `platform_update_install`: a `.apk` file directly inside `<cache>/update`.
+fn update_apk_path(cache_dir: &std::path::Path, raw: &str) -> Result<PathBuf, String> {
+    let dir = cache_dir
+        .join("update")
+        .canonicalize()
+        .map_err(|_| "нет загруженного обновления".to_string())?;
+    let p = std::path::Path::new(raw)
+        .canonicalize()
+        .map_err(|_| "файл обновления не найден".to_string())?;
+    let is_apk = p.extension().and_then(|e| e.to_str()) == Some("apk");
+    if p.parent() != Some(dir.as_path()) || !is_apk || !p.is_file() {
+        return Err("файл обновления должен лежать в кэше приложения".into());
+    }
+    Ok(p)
 }
 
 /// Validates a link for `platform_open_url`: absolute `http`/`https` URL with a host, no

@@ -181,6 +181,7 @@ class FocaPlugin(private val created: Activity) : Plugin(created) {
       .put("abi", Build.SUPPORTED_ABIS.joinToString(", "))
       .put("app_version", try { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName } catch (_: Throwable) { "" })
       .put("flavor", app.sinon.focars.BuildConfig.FLAVOR.ifEmpty { "foss" })
+      .put("self_update", SelfUpdate.enabled())
       .put("mem_total_mb", memInfo().first)
       .put("mem_avail_mb", memInfo().second)
       .put("disk_free_mb", try { android.os.StatFs(ctx.filesDir.path).availableBytes / 1048576 } catch (_: Throwable) { -1L })
@@ -189,6 +190,34 @@ class FocaPlugin(private val created: Activity) : Plugin(created) {
       .put("battery_ignoring", ignoring())
       .put("notifications", notifGranted())
       .put("rom", Oem.rom(sysProp("ro.mi.os.version.name"), sysProp("ro.miui.ui.version.name"))))
+  }
+
+  /** In-app update: `{ enabled, can_install, sdk, opened }`; `open: true` first opens the system
+   *  "Install unknown apps" screen for this app (the UI rechecks when it becomes visible again). */
+  @Command
+  fun update_permission(invoke: Invoke) {
+    val open = invoke.getArgs().optBoolean("open", false)
+    val opened = open && SelfUpdate.enabled() && SelfUpdate.openPermission(activity)
+    invoke.resolve(SelfUpdate.status(ctx).put("opened", opened))
+  }
+
+  /** Installs a verified update APK from `<cache>/update` (certificate, package and versionCode are
+   *  checked again here). The copy into the session runs off the main thread; the reply is
+   *  `{ ok, code, package, version_code, installed_version_code, cert_match }`. */
+  @Command
+  fun update_install(invoke: Invoke) {
+    val path = invoke.getArgs().getString("path", null) ?: ""
+    if (!UpdateLogic.pathAllowed(ctx.cacheDir, path)) {
+      invoke.reject("update APK must be a file in the app cache", "bad_args"); return
+    }
+    Thread {
+      try {
+        invoke.resolve(SelfUpdate.install(ctx, File(path)))
+      } catch (e: Throwable) {
+        FLog.e("update_install", e)
+        invoke.reject(e.message ?: e.toString(), "platform")
+      }
+    }.start()
   }
 
   private fun memInfo(): Pair<Long, Long> = try {

@@ -38,4 +38,10 @@
     <string name="scan_tip_battery_unrestricted">To prevent this: Settings → Battery → “No restrictions”, and turn on autostart.</string>
     <string name="scan_hidden_hint">FOCA-rs is hidden from Recents while the scan runs. Tap to open</string>
     <string name="scan_action_continue">Continue</string>
+    <string name="update_channel_name">App updates</string>
+    <string name="update_channel_description">Download progress of a FOCA-rs update</string>
+    <string name="update_title">FOCA-rs %1$s</string>
+    <string name="update_downloading">Downloading update: %1$d%%</string>
+    <string name="update_verifying">Checking the signature and checksum</string>
+    <string name="update_ready">Verified. Tap to install</string>
 </resources>
