@@ -6,10 +6,14 @@
 //!
 //! `GET /__delay?ms=N[&cdx=M]` changes the document (and web archive) response delay on the
 //! fly.
+//!
+//! The in-app update check reads `GET /gh/repos/<repo>/releases`: an empty list by default, one
+//! newer release after `GET /__releases?newer=1` (`newer=0` switches back). The signature feeds
+//! (`/sig-feed/...`) answer 404, so a check reports `no_update`.
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -205,6 +209,30 @@ fn collect(dir: &std::path::Path, out: &mut BTreeMap<String, PathBuf>) -> std::i
     Ok(())
 }
 
+/// GitHub releases list of the harness: empty, or one release newer than this build (assets
+/// are listed but not served, so a download fails at the signature step).
+fn releases(newer: bool) -> String {
+    if !newer {
+        return "[]".into();
+    }
+    let v = "99.0.0";
+    let asset = |name: String, size: u64| {
+        json!({ "name": name, "size": size,
+            "browser_download_url": format!("https://github.com/SinonApp/FOCA-rs/releases/download/v{v}/x") })
+    };
+    let apk = |f: &str| foca_engine::selfupdate::apk_asset_name(v, f);
+    json!([{
+        "tag_name": format!("v{v}"), "prerelease": true, "draft": false,
+        "published_at": "2026-12-05T10:00:00Z",
+        "html_url": format!("https://github.com/SinonApp/FOCA-rs/releases/tag/v{v}"),
+        "body": "## Added\n- Harness release one\n- Harness release two\n- Harness release three",
+        "assets": [asset(apk("foss"), 47_000_000), asset(apk("play"), 58_000_000),
+                   asset(foca_engine::selfupdate::SUMS_ASSET.into(), 200),
+                   asset(foca_engine::selfupdate::SIG_ASSET.into(), 128)]
+    }])
+    .to_string()
+}
+
 pub fn zone(domain: &str) -> String {
     format!(
         "{d} A 127.0.0.1
@@ -243,6 +271,7 @@ pub fn run(o: TestNetOpts) -> Result<bool> {
         let cdx_delay = Arc::new(AtomicU64::new(0));
         let d = o.domain.clone();
         let (dl, dc, cdl) = (delay.clone(), docs.clone(), cdx_delay.clone());
+        let newer = Arc::new(AtomicBool::new(false));
         let site_root = o.fuzz_site.join("www");
         let site_on = site_root.is_dir();
         let www = format!("www.{}", o.domain);
@@ -265,6 +294,15 @@ pub fn run(o: TestNetOpts) -> Result<bool> {
                 let cdx = r.query("cdx").and_then(|v| v.parse().ok()).unwrap_or(0);
                 cdl.store(cdx, Ordering::SeqCst);
                 return TestResponse::ok(format!("{{\"delay_ms\":{ms},\"cdx_ms\":{cdx}}}"));
+            }
+            if p == "/__releases" {
+                let on = r.query("newer").as_deref() == Some("1");
+                newer.store(on, Ordering::SeqCst);
+                return TestResponse::ok(format!("{{\"newer\":{on}}}"));
+            }
+            if p == format!("/gh/repos/{}/releases", foca_engine::selfupdate::REPO) {
+                return TestResponse::ok(releases(newer.load(Ordering::SeqCst)))
+                    .header("Content-Type", "application/json");
             }
             if host == d {
                 if let Some(resp) = live_site(&d, &r.method, &p) {

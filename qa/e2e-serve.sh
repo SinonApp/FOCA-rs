@@ -25,6 +25,7 @@ case "$1" in
   kill) p=$(pidof_file serve); [ -n "$p" ] && kill -9 "$p" 2>/dev/null; sleep 0.3; rm -f "$E2E_DIR/serve.pid" ;;
   restart) "$0" kill; "$0" start ;;
   delay) curl -s "http://127.0.0.1:$NET_PORT/__delay?ms=${2:-0}&cdx=${3:-0}"; echo ;;
+  releases) curl -s "http://127.0.0.1:$NET_PORT/__releases?newer=${2:-0}"; echo ;;
   status) curl -s -X POST "http://127.0.0.1:$PORT/invoke" -d '{"cmd":"scan_status"}'; echo ;;
-  *) echo "usage: $0 start|stop|kill|restart|net-start|net-stop|delay <ms> [cdx-ms]|status"; exit 2 ;;
+  *) echo "usage: $0 start|stop|kill|restart|net-start|net-stop|delay <ms> [cdx-ms]|releases 0|1|status"; exit 2 ;;
 esac

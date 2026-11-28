@@ -97,6 +97,12 @@ pub fn apply_test_net(cfg: &mut EngineConfig, t: &Value) -> Result<()> {
     cfg.endpoints.ip_echo = format!("{base}/ip");
     cfg.endpoints.sources.insert("grepapp".into(), base.clone());
     cfg.endpoints.ip_geo = format!("{base}/geo/{{ip}}");
+    // In-app update and signature database checks (manual and automatic) ask the harness:
+    // `testnet` serves a releases list (empty, or one newer release after
+    // `GET /__releases?newer=1`) and answers 404 for the signature feeds (`no_update`).
+    cfg.endpoints.github_api = format!("{base}/gh");
+    cfg.endpoints.sig_feed = format!("{base}/sig-feed/signatures-v3.bundle");
+    cfg.endpoints.sig_feed_fallback = format!("{base}/sig-feed/signatures.bundle");
     // Every other public source is pointed at the harness too (testnet does not know their
     // paths, so they get a fast 404 / source error): e2e neither depends on nor touches the
     // real internet.
