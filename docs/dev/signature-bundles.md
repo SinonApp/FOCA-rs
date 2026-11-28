@@ -267,8 +267,9 @@ hex characters (mode 600).
    `cargo test -p foca-engine --lib sigbundle`, `qa/gen-licenses.py --check`. The changed files go
    to the next jobs as a patch artifact. A source whose code-like pin should move is bumped by hand
    in a pull request (edit `COMMIT`/`TAG`, run the script with `--repin`, commit the outputs).
-2. **sign** (environment `signing`, `contents: write`; skipped by a manual run with
-   `publish: false`): applies the patch, writes the secret `SIG_SEED` to a temporary file with
+2. **sign** (environment `signing`, `contents: write`; runs only when the repository variable
+   `SIGNING_ENABLED` is `true`, and is skipped by a manual run with `publish: false`): applies the
+   patch, writes the secret `SIG_SEED` to a temporary file with
    mode 600 (deleted on exit, never printed), runs
    `scripts/build-sig-bundle.sh <seed> signatures-v3.bundle --schema both --version <YYYY.MM.DD> --released <YYYY-MM-DD>`,
    verifies both bundles against the key built into the app and their schemas (no `nvd_cve` in the
@@ -294,6 +295,10 @@ One-time setup by a maintainer with admin rights:
    `make_latest: false`).
 4. Settings → Actions → General → Workflow permissions: allow GitHub Actions to create pull
    requests, or the last job fails.
+5. Settings → Secrets and variables → Actions → Variables: add `SIGNING_ENABLED` = `true`. Until it
+   is set, the scheduled run only refreshes and tests the data and opens the pull request; the
+   bundles are then signed and uploaded locally with `scripts/build-sig-bundle.sh` and
+   `gh release upload --clobber`.
 
 ### New signing key
 

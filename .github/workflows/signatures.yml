@@ -100,7 +100,10 @@ jobs:
   sign:
     name: Sign and publish bundles
     needs: refresh
-    if: github.event_name == 'schedule' || inputs.publish
+    # Publishing from CI is opt-in: set the repository variable SIGNING_ENABLED=true after adding
+    # SIG_SEED to the "signing" environment. Without it the refresh and the pull request still run and
+    # the maintainer signs and uploads the bundles locally (scripts/build-sig-bundle.sh).
+    if: vars.SIGNING_ENABLED == 'true' && (github.event_name == 'schedule' || inputs.publish)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: signing
