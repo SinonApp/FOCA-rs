@@ -15,3 +15,4 @@ mod reports;
 mod scans;
 mod security;
 pub(crate) mod toolbox;
+pub(crate) mod update;

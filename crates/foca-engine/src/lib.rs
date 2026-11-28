@@ -55,7 +55,7 @@ pub use debug::TERMS_VERSION;
 pub use foca_recon::screenshot::{ScreenshotRaw, ScreenshotRequest, WebScreenshotter};
 pub use scan::sources::{DOC_SOURCE_IDS, HOST_SOURCE_IDS, INFRA_SOURCE_IDS};
 pub use services::ocr::{OcrProvider, OcrRequest, OcrResult};
-pub use services::{i18n, licenses, logs, ocr, plugins, resume, sigbundle};
+pub use services::{i18n, licenses, logs, ocr, plugins, resume, selfupdate, sigbundle};
 
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -305,6 +305,8 @@ pub struct Endpoints {
     /// Public external storage providers (Drive, Docs, OneDrive): download, export and folder
     /// listing bases.
     pub storage: foca_search::storage::StorageEndpoints,
+    /// GitHub REST API base of the in-app update check (`/repos/{repo}/releases`).
+    pub github_api: String,
 }
 
 impl Default for Endpoints {
@@ -332,6 +334,7 @@ impl Default for Endpoints {
             ip_geo: "https://ipinfo.io/{ip}/json".into(),
             sources: HashMap::new(),
             storage: Default::default(),
+            github_api: "https://api.github.com".into(),
         }
     }
 }
@@ -341,6 +344,11 @@ impl Default for Endpoints {
 pub struct EngineConfig {
     /// App data directory: `projects.db`, project files and downloaded documents.
     pub data_dir: PathBuf,
+    /// Cache directory (downloaded update APKs); the platform may clear it at any time.
+    pub cache_dir: PathBuf,
+    /// Ed25519 public key that must have signed a release's `SHA256SUMS.txt` (the official
+    /// signing key by default; tests use their own).
+    pub release_pubkey: [u8; 32],
     /// Export directory (`Download/FOCA-rs` on Android).
     pub export_dir: PathBuf,
     /// Local time offset of the device (dates in responses are local, without an offset).
@@ -405,6 +413,8 @@ impl EngineConfig {
         let data_dir = data_dir.into();
         EngineConfig {
             export_dir: data_dir.join("Download").join("FOCA-rs"),
+            cache_dir: data_dir.join("cache"),
+            release_pubkey: crate::sigbundle::official_pubkey_bytes(),
             data_dir,
             utc_offset: time::UtcOffset::UTC,
             clock: Arc::new(foca_core::SystemClock),

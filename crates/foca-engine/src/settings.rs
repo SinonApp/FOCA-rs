@@ -128,6 +128,7 @@ impl Core {
                 "redact": { "secrets": true, "pii": true, "client": true, "evid": false }
             },
             "sec": { "pin_set": false },
+            "update": { "auto": true, "wifi_only": true, "prerelease": true },
         });
         let saved = self.store().settings_get()?;
         foca_store::settings::merge(&mut s, &saved);

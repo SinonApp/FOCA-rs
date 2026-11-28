@@ -6,4 +6,5 @@ mod ops {
     mod monitor;
     mod queue;
     mod signatures;
+    mod update;
 }

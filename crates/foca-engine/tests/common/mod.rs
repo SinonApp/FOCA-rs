@@ -362,6 +362,8 @@ pub fn config(dir: &Path, base: &str) -> EngineConfig {
         .ai
         .insert("openrouter".into(), format!("{base}/ai/openrouter"));
     cfg.endpoints.ip_echo = format!("{base}/ip");
+    // the update check asks the local server (404 there), never api.github.com
+    cfg.endpoints.github_api = format!("{base}/gh");
     cfg.endpoints.ip_geo = format!("{base}/geo/{{ip}}");
     // keyless sources point only at the local server (tests make no internet requests)
     for id in foca_engine::HOST_SOURCE_IDS

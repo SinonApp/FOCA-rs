@@ -88,6 +88,7 @@ impl Engine {
                 ai_jobs: Mutex::new(HashMap::new()),
                 reextract_jobs: Mutex::new(HashMap::new()),
                 dork_jobs: Mutex::new(HashMap::new()),
+                update_job: Mutex::new(Default::default()),
             }),
         };
         if let Ok(s) = e.store().settings_get() {
@@ -235,6 +236,10 @@ impl Engine {
             "signatures_import" => self.signatures_import(&a),
             "signatures_update" => self.signatures_update(&a).await,
             "signatures_rollback" => self.signatures_rollback(),
+            "update_status" => self.update_status(&a),
+            "update_check" => self.update_check(&a).await,
+            "update_download" => self.update_download(&a).await,
+            "update_cancel" => self.update_cancel(),
             "plugins_list" => self.plugins_list(),
             "plugin_install" => self.plugin_install(&a),
             "plugin_toggle" => self.plugin_toggle(&a),
