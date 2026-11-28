@@ -16,6 +16,39 @@ pub(crate) const TAG_INTERNAL_IP: &str = "INTERNAL-IP";
 pub(crate) const MARK_KEYS: [&str; 5] =
     [TAG_SECRET, TAG_EMAIL, TAG_NAME, TAG_CLIENT, TAG_INTERNAL_IP];
 
+/// Masks the values detected in free text of the AI payload: personal values (phones, IBAN,
+/// tax numbers, cards, passports) become their mask with `pii`, secrets become `[SECRET]`
+/// with `secrets` (counted in `marks`). Stored data holds full values, so this pass keeps them
+/// from reaching an external provider unless the user turned the redaction off.
+pub(crate) fn mask_free_text(
+    text: &str,
+    pii: bool,
+    secrets: bool,
+    marks: &mut std::collections::BTreeMap<&str, u32>,
+) -> String {
+    if !pii && !secrets {
+        return text.to_string();
+    }
+    let mut out = String::with_capacity(text.len());
+    let mut at = 0;
+    for s in foca_analysis::pii::sensitive_spans(text) {
+        let secret = s.label.starts_with("secret:");
+        if (secret && !secrets) || (!secret && !pii) || s.start < at {
+            continue;
+        }
+        out.push_str(&text[at..s.start]);
+        if secret {
+            *marks.entry(TAG_SECRET).or_insert(0) += 1;
+            out.push_str(&format!("[{TAG_SECRET}]"));
+        } else {
+            out.push_str(&foca_core::api::mask(&text[s.start..s.end]));
+        }
+        at = s.end;
+    }
+    out.push_str(&text[at..]);
+    out
+}
+
 /// Placeholders written up to 2.0.0-beta.2 (Russian words), kept for reversal of
 /// summaries stored by them.
 const LEGACY_CLIENT: &str = "[КЛИЕНТ]";

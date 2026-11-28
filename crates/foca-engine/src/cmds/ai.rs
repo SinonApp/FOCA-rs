@@ -450,9 +450,13 @@ impl Engine {
                 }
             }
         }
-        lines.push(String::new());
-        lines.push(pt.task.into());
-        let text = lines.join("\n");
+        let body = crate::services::ai_text::mask_free_text(
+            &lines.join("\n"),
+            rb("pii"),
+            rb("secrets"),
+            &mut marks,
+        );
+        let text = format!("{body}\n\n{}", pt.task);
         let prov_raw = o["provider"]
             .as_str()
             .or_else(|| ai["provider"].as_str())
