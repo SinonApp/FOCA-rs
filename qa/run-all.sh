@@ -113,6 +113,7 @@ if [ "$WHAT" = all ] || [ "$WHAT" = steps ]; then
               report-preview-scroll/steps report-preview-scroll/steps@--w_360_--theme_light_--fs_2 \
               reextract/steps reextract/steps@--w_360_--theme_light_--fs_2 \
               self-update/steps self-update/steps@--w_360_--theme_light_--fs_2 \
+              update-prompt/steps update-prompt/steps@--w_360_--theme_light_--fs_2 \
               $I18N_STEPS; do
     s=${item%%@*}; cfg=""; [ "$item" != "$s" ] && cfg=$(echo "${item#*@}" | tr _ ' ')
     f="$ROOT/qa/scenarios/$s.mjs"; log="$OUT/logs/$(echo $item | tr '/@ ' '___').log"
