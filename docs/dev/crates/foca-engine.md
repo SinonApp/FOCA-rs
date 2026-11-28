@@ -42,6 +42,9 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
   - Updates CISA KEV entries and secret patterns without rebuilding the APK via `foca-sig-bundle/v2` (v1 still read): KEV entries, secret patterns and whole data tables (technology, end-of-life, Retire.js, Recog, PSL, takeover, EPSS); CPE prefixes are stored but not used for matching.
   - Verifies both `SHA-256` and `Ed25519` (`ring::signature::ED25519`) before atomically installing `<data_dir>/signatures/current.json`, retaining `previous.json` for instant rollback (`signatures_status`, `signatures_import`, `signatures_rollback`).
   - `signatures_update` checks the official feed (rolling GitHub release `signatures`): 404 = `no_update`, not newer = `up_to_date`, newer = installed, failures are recorded and returned as coded errors; every check lands in `last_check.json`. Status counts come from the loaded tables. Details and the maintainer tool (`examples/sig_bundle.rs`, `scripts/build-sig-bundle.sh`): [signature bundles](../signature-bundles.md).
+- **In-app update (`update.rs`, `services/selfupdate.rs`)**:
+  - `update_status`, `update_check`, `update_download`, `update_cancel` ([API](../../API.md)): GitHub releases list through the engine `NetClient` (honest UA, ETag, rate limit backoff in `<data>/update/state.json`), semver order with pre-releases (`beta.4 < beta.4.1 < beta.5 < 2.0.0`), flavor asset `FOCA-rs-<ver>-<flavor>-arm64.apk`.
+  - The download verifies `SHA256SUMS.txt.sig` (Ed25519 over `FOCA-rs release SHA256SUMS v1\n` + the file, key `EngineConfig::release_pubkey`, the bundle key by default) before the APK is fetched into `EngineConfig::cache_dir/update` with `Range` resume, then the APK SHA-256. Installing is the platform's part (`platform_update_install`). Release step: [build](../build.md#signed-release-checksums).
 - **Cloud-Only AI with Live Models & Thinking Controls (`cmds/ai.rs`, `services/ai.rs`)**:
   - **No local/on-device AI**: all local AI code has been removed; AI summarization operates strictly over cloud APIs with explicit user review of redacted prompts (`ai_preview` → `ai_summarize`).
   - Supported providers: `openai`, `anthropic`, `gemini`, `deepseek`, `xai`, `mistral`, `groq`, `together`, `openrouter`, and `custom` (user-supplied HTTPS OpenAI-compatible base URL). Keys live in `KeyVault("ai")` and are never written to `request_log`; requests use `Access::Passive` through `NetClient`.
@@ -62,6 +65,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `src/debug.rs` | 499 | Debug tab: core and Android logs, crashes, request log, build info, `TERMS_VERSION` |
 | `src/dto.rs` | 588 | Contract-shaped JSON: snapshot, project summary, out-of-scope candidates, `Finding.standards` |
 | `src/util.rs` | 262 | Argument extraction, masks, hashes, time |
+| `src/update.rs` | 549 | In-app update commands: releases check, signed download with resume, cancel |
 | **`src/scan/`** | | Scan pipeline |
 | `scan/mod.rs` | 742 | Run context shared by the stages, stage order, stage helpers |
 | `scan/sources.rs` | 287 | Catalog: `STAGES`, source ids grouped by stage, profiles and modules |
@@ -106,6 +110,7 @@ Path: `crates/foca-engine/` · `src/` lines: 25,704 · tests: 164 · depends on:
 | `services/logs.rs` | 306 | `tracing` subscriber: ring buffer and rotating `<data>/logs/foca.log` |
 | `services/plugins.rs` | 1,978 | Declarative and WASM plugin runtime |
 | `services/sigbundle.rs` | 1174 | Ed25519 + SHA-256 signed signature bundles with rollback |
+| `services/selfupdate.rs` | 889 | In-app update logic: versions, release selection, `SHA256SUMS` parsing and signature, rate limits, state |
 | `services/ai.rs` | 617 | AI provider protocol: request bodies, headers, response parsing, model lists |
 | `services/ocr.rs` | 248 | Optional on-device OCR pipeline (off by default) |
 | `services/resume.rs` | 172 | Auto-resume state (`engine_run.json`) after the OS kills the process |
@@ -123,7 +128,7 @@ Re-exports in `src/lib.rs`:
 - `foca_recon::screenshot::{ScreenshotRaw, ScreenshotRequest, WebScreenshotter}`
 - `services::ocr::{OcrProvider, OcrRequest, OcrResult}`
 - `services::report::FocaReport` *(feature `report`)*
-- Public modules: `intel`, `redact`, `rules` (from `analysis`); `i18n`, `licenses`, `logs`, `ocr`, `plugins`, `resume`, `sigbundle` (from `services`)
+- Public modules: `intel`, `redact`, `rules` (from `analysis`); `i18n`, `licenses`, `logs`, `ocr`, `plugins`, `resume`, `selfupdate`, `sigbundle` (from `services`)
 
 Command catalog: [docs/API.md](../../API.md). Full API docs: `cargo doc -p foca-engine --no-deps --open`.
 
