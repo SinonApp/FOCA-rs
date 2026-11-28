@@ -708,7 +708,7 @@
       p(c.low, "mute", "data.cve_low_n", "низких: {n}") +
       (c.kev ? `<span class="pill crit">KEV ${c.kev}</span>` : "") +
       (c.max_epss != null
-        ? `<span class="chip" title="${esc(F.t("data.epss_hint", "вероятность эксплуатации в ближайшие 30 дней (макс. среди CVE)"))}">EPSS ${epssPct(c.max_epss)}</span>`
+        ? `<span class="pill mute" title="${esc(F.t("data.epss_hint", "вероятность эксплуатации в ближайшие 30 дней (макс. среди CVE)"))}">EPSS ${epssPct(c.max_epss)}</span>`
         : "")
     );
   }

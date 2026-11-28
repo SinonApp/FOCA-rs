@@ -28,6 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - SVG `data:image` pictures are parsed as embedded images; SVG comments are scanned for paths and e-mails.
 
 ### Fixed
+- **Site technologies**: CVE badges on a technology no longer sit in a grey system button box; the EPSS badge matches the others.
 
 - **Document card**: the Fonts and form-field sections list every name again; rows without a value were hidden, so the section opened empty.
 - Word, Excel and PowerPoint files saved by LibreOffice no longer show the operating system as Windows 1.0.
