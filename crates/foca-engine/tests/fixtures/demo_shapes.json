@@ -1143,6 +1143,11 @@
          "string"
         ]
        },
+       "value": {
+        "t": [
+         "string"
+        ]
+       },
        "doc": {
         "t": [
          "number"
@@ -1154,11 +1159,6 @@
         ]
        },
        "sev": {
-        "t": [
-         "string"
-        ]
-       },
-       "mask": {
         "t": [
          "string"
         ]
@@ -1388,16 +1388,6 @@
            ]
           }
          }
-        }
-       },
-       "secret_refs": {
-        "t": [
-         "array"
-        ],
-        "items": {
-         "t": [
-          "string"
-         ]
         }
        },
        "standards": {
@@ -4969,6 +4959,11 @@
          "string"
         ]
        },
+       "value": {
+        "t": [
+         "string"
+        ]
+       },
        "doc": {
         "t": [
          "number"
@@ -4980,11 +4975,6 @@
         ]
        },
        "sev": {
-        "t": [
-         "string"
-        ]
-       },
-       "mask": {
         "t": [
          "string"
         ]
@@ -5214,16 +5204,6 @@
            ]
           }
          }
-        }
-       },
-       "secret_refs": {
-        "t": [
-         "array"
-        ],
-        "items": {
-         "t": [
-          "string"
-         ]
         }
        },
        "standards": {

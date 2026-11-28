@@ -74,10 +74,9 @@ async fn file_tool_parses_without_a_project_or_network() {
     assert_eq!(v["name"], "contract.docx");
     assert_eq!(v["ext"], "docx");
     assert!(v["clean_with"].is_null());
-    // secrets only as masks
+    // secrets in full (the toolbox shows what the file holds)
     for s in v["secrets"].as_array().unwrap() {
-        assert!(s.get("value").is_none());
-        assert!(s["mask"].is_string());
+        assert!(s["value"].is_string() && s.get("mask").is_none());
     }
 
     // nothing was created: same project list, no project files, empty request journal

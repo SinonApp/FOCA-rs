@@ -1,6 +1,7 @@
 //! Offline import of a ZIP with 20 corpus documents: no network
-//! request at all, the expected forensic findings, full-text search with masked snippets, and
-//! full personal data values never reaching the project database, reports or logs.
+//! request at all, the expected forensic findings, full-text search with full values, and
+//! personal data shown in full in the app and the default report but masked in logs and in a
+//! report built with the masking option.
 
 use crate::common::*;
 use serde_json::{json, Value};
@@ -161,8 +162,10 @@ async fn offline_zip_import_without_network() {
     assert!(!br.is_empty() && br[0]["sev"] == "crit", "{br:?}");
     let kep = find("doc.signer_identity");
     assert!(
-        kep.iter()
-            .any(|x| x["evidence"].as_str().unwrap().contains("РНОКПП: ********")),
+        kep.iter().any(|x| x["evidence"]
+            .as_str()
+            .unwrap()
+            .contains("РНОКПП: 1234567899")),
         "{kep:?}"
     );
     assert!(!find("doc.modified_after_signing").is_empty());
@@ -195,14 +198,14 @@ async fn offline_zip_import_without_network() {
     );
     assert!(!e.dir.path().join("evil.txt").exists());
 
-    // Full-text search finds the phrase, the snippet hides the values.
+    // Full-text search finds the phrase, the snippet shows and labels the values.
     let q = e
         .call("docs_search", json!({ "project": id, "q": "Отримувач" }))
         .await;
     assert!(q["total"].as_u64().unwrap() >= 1, "{q}");
     let snip = q["hits"][0]["snippet"].as_str().unwrap();
     assert!(snip.contains("{{h:"), "{snip}");
-    assert!(!snip.contains("3012345670"), "{snip}");
+    assert!(snip.contains("{{s:3012345670}}"), "{snip}");
 
     // Forensic details of one document.
     let doc = s["docs"]
@@ -214,13 +217,7 @@ async fn offline_zip_import_without_network() {
         .clone();
     let g = e.call("doc_get", json!({ "project": id, "id": doc })).await;
     let sig = &g["forensics"]["signatures"][0]["signer"];
-    assert!(
-        sig["rnokpp_masked"]
-            .as_str()
-            .unwrap()
-            .starts_with("********"),
-        "{g}"
-    );
+    assert_eq!(sig["rnokpp"], "1234567899", "{g}");
 
     // Report (RU, HTML) is built offline.
     let rep = e
@@ -231,10 +228,26 @@ async fn offline_zip_import_without_network() {
         .await;
     let html = std::fs::read_to_string(rep["path"].as_str().unwrap()).unwrap();
     assert!(html.contains("Форензика документов"));
+    assert!(
+        html.contains("3012345670"),
+        "the default report shows full values"
+    );
     assert!(e.server.requests().is_empty());
+    // The same report with the masking option holds no full value.
+    let masked = e
+        .call(
+            "report_build",
+            json!({ "project": id, "opts": { "tpl_id": "full", "fmt": "html", "lang": "RU", "min_sev": "info", "mask": true } }),
+        )
+        .await;
+    let masked_path = masked["path"].as_str().unwrap().to_string();
+    let mhtml = std::fs::read_to_string(&masked_path).unwrap();
+    for v in RAW_PII {
+        assert!(!mhtml.contains(v), "{v} in the masked report");
+    }
 
-    // No full personal data value in the project database, reports or logs (the stored
-    // original documents under files/ are the evidence itself and are excluded).
+    // Logs and the request journal never hold a full value (the project, its documents and
+    // the default report do, by design).
     let mut all = Vec::new();
     walk(e.dir.path(), &mut all);
     for p in all {
@@ -243,7 +256,8 @@ async fn offline_zip_import_without_network() {
             .unwrap()
             .to_string_lossy()
             .to_string();
-        if rel.starts_with("files") || rel.ends_with(".zip") || rel == "engine.lock" {
+        let low = rel.to_lowercase();
+        if !(low.contains("log") || low.contains("crash") || low.ends_with(".txt")) {
             continue;
         }
         let b = std::fs::read(&p).unwrap();
@@ -253,6 +267,113 @@ async fn offline_zip_import_without_network() {
                 !b.windows(needle.len()).any(|w| w == needle),
                 "{v} leaked into {rel}"
             );
+        }
+    }
+}
+
+/// Synthetic values of every kind the app detects (fake: test card, IBAN of a non-existent
+/// bank with a valid checksum, a 555 phone, an RNOKPP with a valid check digit).
+const REVEAL_LINES: &[&str] = &[
+    "Довідка для Олени Тестової",
+    "Телефон: +38 067 555 01 14",
+    "IBAN UA213999990000026000000000417",
+    "РНОКПП 2103167657",
+    "E-mail: o.testova@contoso.example",
+    "Картка 4111 1111 1111 1111",
+    "password = Kv7#pLm2xQ9!zT",
+];
+const REVEAL_VALUES: &[&str] = &[
+    "+38 067 555 01 14",
+    "UA213999990000026000000000417",
+    "2103167657",
+    "4111 1111 1111 1111",
+    "Kv7#pLm2xQ9!zT",
+];
+
+/// A minimal Word document with one paragraph per line (the OOXML text path).
+fn reveal_docx() -> Vec<u8> {
+    let body: String = REVEAL_LINES
+        .iter()
+        .map(|l| format!("<w:p><w:r><w:t xml:space=\"preserve\">{l}</w:t></w:r></w:p>"))
+        .collect();
+    zip(&[
+        (
+            "[Content_Types].xml".into(),
+            br#"<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>"#.to_vec(),
+        ),
+        (
+            "_rels/.rels".into(),
+            br#"<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>"#.to_vec(),
+        ),
+        (
+            "word/document.xml".into(),
+            format!(r#"<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>{body}</w:body></w:document>"#).into_bytes(),
+        ),
+    ])
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn full_values_in_app_masked_in_logs_ai_and_report_option() {
+    let e = env(0).await;
+    let id = e.project("example.test").await;
+    e.call(
+        "import_offline",
+        json!({ "project": id, "files": [{ "name": "dovidka.docx", "data": foca_core::b64::encode(&reveal_docx()) }] }),
+    )
+    .await;
+    // The snapshot (what the UI reads) carries every value in full.
+    let s = e.snap(&id).await;
+    let js = s.to_string();
+    for v in &REVEAL_VALUES[1..] {
+        assert!(
+            js.contains(v),
+            "{v} missing from the snapshot: {}",
+            s["findings"]
+        );
+    }
+    // The phone is listed normalized (`phones[]`) and in its document line.
+    assert!(
+        js.contains("+380675550114") || js.contains("067 555 01 14"),
+        "phone missing from the snapshot"
+    );
+    assert!(js.contains("o.testova@contoso.example"));
+    assert!(!js.contains("••••••"), "no storage masks left");
+    // Logs and their export stay masked.
+    let logs = e.call("logs_get", json!({})).await.to_string();
+    let reqs = e
+        .call("request_log_get", json!({ "project": id, "limit": 100 }))
+        .await
+        .to_string();
+    for v in REVEAL_VALUES {
+        assert!(!logs.contains(v), "{v} in the core log");
+        assert!(!reqs.contains(v), "{v} in the request journal");
+    }
+    // The AI payload is masked by default.
+    let ai = e
+        .call(
+            "ai_preview",
+            json!({ "project": id, "opts": { "redact": { "evid": true } } }),
+        )
+        .await;
+    let text = ai["text"].as_str().unwrap();
+    for v in REVEAL_VALUES {
+        assert!(!text.contains(v), "{v} in the AI payload: {text}");
+    }
+    // Reports: full by default, masked with the option.
+    for (mask, full) in [(false, true), (true, false)] {
+        let r = e
+            .call(
+                "report_build",
+                json!({ "project": id, "opts": { "tpl_id": "full", "fmt": "html", "lang": "EN", "min_sev": "info", "mask": mask } }),
+            )
+            .await;
+        let html = std::fs::read_to_string(r["path"].as_str().unwrap()).unwrap();
+        for v in [
+            "UA213999990000026000000000417",
+            "2103167657",
+            "4111 1111 1111 1111",
+        ] {
+            assert_eq!(html.contains(v), full, "{v} with mask={mask}");
         }
     }
 }
@@ -331,7 +452,7 @@ impl foca_engine::OcrProvider for MockIpnOcr {
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-async fn offline_ocr_disabled_by_default_and_detects_masked_ipn_without_network() {
+async fn offline_ocr_disabled_by_default_and_detects_ipn_without_network() {
     let dir = tempfile::tempdir().unwrap();
     let srv = server(0).await;
     let keys = std::sync::Arc::new(foca_engine::MemoryKeys::new());
@@ -366,7 +487,7 @@ async fn offline_ocr_disabled_by_default_and_detects_masked_ipn_without_network(
         .iter()
         .all(|f| f["provenance"]["rule"] != "pii"));
 
-    // 2. Enable offline OCR via settings_set -> scan.pdf is recognized, indexed in FTS5 and masked for PII.
+    // 2. Enable offline OCR via settings_set -> scan.pdf is recognized, indexed in FTS5 and scanned for PII.
     engine
         .invoke(
             "settings_set",
@@ -392,7 +513,7 @@ async fn offline_ocr_disabled_by_default_and_detects_masked_ipn_without_network(
         .unwrap();
     assert_eq!(req_log.as_array().unwrap().len(), 0);
 
-    // FTS5 finds the OCR keyword, and PII snippet is masked.
+    // FTS5 finds the OCR keyword, the PII value is shown and labelled.
     let fts = engine
         .invoke(
             "docs_search",
@@ -403,11 +524,11 @@ async fn offline_ocr_disabled_by_default_and_detects_masked_ipn_without_network(
     assert_eq!(fts["total"], 1, "{fts}");
     let fts_str = serde_json::to_string(&fts).unwrap();
     assert!(
-        !fts_str.contains("3012345670"),
-        "raw IPN leaked in FTS: {fts_str}"
+        fts_str.contains("{{s:3012345670}}") && fts_str.contains("pii:rnokpp"),
+        "IPN shown and labelled in FTS: {fts_str}"
     );
 
-    // PII finding for Ukrainian IPN (РНОКПП) is emitted and raw 3012345670 is masked everywhere.
+    // PII finding for Ukrainian IPN (РНОКПП) is emitted with the full value.
     let snap_on = engine
         .invoke("project_snapshot", json!({ "id": p_on }))
         .await
@@ -418,8 +539,8 @@ async fn offline_ocr_disabled_by_default_and_detects_masked_ipn_without_network(
     assert!(has_ipn_finding, "expected РНОКПП PII finding from OCR text");
     let snap_str = serde_json::to_string(&snap_on).unwrap();
     assert!(
-        !snap_str.contains("3012345670"),
-        "raw IPN leaked in project snapshot"
+        snap_str.contains("3012345670"),
+        "IPN shown in full in the project snapshot"
     );
 }
 

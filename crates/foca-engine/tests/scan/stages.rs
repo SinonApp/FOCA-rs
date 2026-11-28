@@ -96,39 +96,23 @@ async fn passive_scan_full_pipeline_and_event_order() {
     let list = e.call("project_list", json!({})).await;
     assert!(list[0]["risk"].is_number());
     assert_eq!(list[0]["scans"], 1);
-    // secrets only as masks
-    let js = serde_json::to_string(&s).unwrap();
-    assert!(s["secrets"]
-        .as_array()
-        .unwrap()
+    // secrets in full: the snapshot carries the value, evidence keeps it in a `{{s:…}}` marker
+    let secs = s["secrets"].as_array().unwrap();
+    assert!(!secs.is_empty());
+    assert!(secs
         .iter()
-        .all(|x| x.get("value").is_none() && x["mask"].is_string()));
-    assert!(!s["secrets"].as_array().unwrap().is_empty());
+        .all(|x| x["value"].as_str().is_some_and(|v| !v.is_empty()) && x.get("mask").is_none()));
     let sec = &s["secrets"][0];
     let rv = e
         .call("secret_reveal", json!({ "project": id, "id": sec["id"] }))
         .await;
-    let val = rv["value"].as_str().unwrap();
-    assert!(
-        !val.is_empty() && !js.contains(val),
-        "plain value in the snapshot"
-    );
-    // link to the evidence fragment
-    let fr = s["findings"]
+    assert_eq!(rv["value"], sec["value"]);
+    assert!(s["findings"]
         .as_array()
         .unwrap()
         .iter()
-        .find_map(|f| {
-            f["secret_refs"]
-                .as_array()
-                .filter(|r| !r.is_empty())
-                .map(|r| r[0].clone())
-        })
-        .expect("no secret_refs");
-    let rv = e
-        .call("secret_reveal", json!({ "project": id, "id": fr }))
-        .await;
-    assert!(!rv["value"].as_str().unwrap().is_empty());
+        .all(|f| f.get("secret_refs").is_none()));
+
     // finding ids are short numbers
     assert!(s["findings"]
         .as_array()

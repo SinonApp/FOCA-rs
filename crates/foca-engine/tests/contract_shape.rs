@@ -307,12 +307,8 @@ async fn contract_shape_matches_demo_backend_inner() {
         .as_array()
         .unwrap()
         .iter()
-        .find_map(|f| {
-            f["secret_refs"]
-                .as_array()
-                .filter(|r| !r.is_empty())
-                .map(|r| r[0].clone())
-        })
+        .find(|f| f["evidence"].as_str().is_some_and(|e| e.contains("{{s:")))
+        .map(|f| json!(format!("f{}:0", f["id"])))
         .unwrap();
     c!(
         "secret_reveal_ref",
