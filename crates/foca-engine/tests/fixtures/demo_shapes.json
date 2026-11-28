@@ -15286,7 +15286,11 @@
        "t": [
         "array"
        ],
-       "items": null
+       "items": {
+        "t": [
+         "string"
+        ]
+       }
       },
       "form_fields": {
        "t": [
