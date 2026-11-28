@@ -4,7 +4,7 @@ English | [Русский](../ru/user/README.md)
 
 ↑ [Documentation](../README.md) · [Repository root](../../README.md)
 
-FOCA-rs 2.0.0-beta.4.1 is an Android application (Tauri 2 + pure-Rust core) for open-source intelligence (OSINT), document metadata forensics, and attack-surface analysis: a mobile reimagining of FOCA (ElevenPaths).
+FOCA-rs 2.0.0-beta.4.1.1 is an Android application (Tauri 2 + pure-Rust core) for open-source intelligence (OSINT), document metadata forensics, and attack-surface analysis: a mobile reimagining of FOCA (ElevenPaths).
 
 > ⚠️ Test only infrastructure you own or are explicitly authorized in writing to assess.
 > See [Legal boundaries](getting-started.md#legal-boundaries).

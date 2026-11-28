@@ -2,7 +2,7 @@
 
 **English | [Русский](ru/README.md)** · ↑ [Repository Root](../README.md)
 
-FOCA-rs 2.0.0-beta.4.1 is an Android application (Tauri v2 + Rust core) for authorized OSINT, document metadata forensics, attack-path analysis, and compliance reporting. All documentation uses relative links, so it reads the same on GitHub and in Obsidian; Russian user documentation is maintained separately in [docs/ru/README.md](ru/README.md).
+FOCA-rs 2.0.0-beta.4.1.1 is an Android application (Tauri v2 + Rust core) for authorized OSINT, document metadata forensics, attack-path analysis, and compliance reporting. All documentation uses relative links, so it reads the same on GitHub and in Obsidian; Russian user documentation is maintained separately in [docs/ru/README.md](ru/README.md).
 
 ## User Documentation
 

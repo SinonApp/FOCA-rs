@@ -14,8 +14,8 @@ body:
     id: version
     attributes:
       label: App version
-      description: Settings › About shows it, e.g. `2.0.0-beta.4.1 FOSS`.
-      placeholder: 2.0.0-beta.4.1 FOSS
+      description: Settings › About shows it, e.g. `2.0.0-beta.4.1.1 FOSS`.
+      placeholder: 2.0.0-beta.4.1.1 FOSS
     validations:
       required: true
   - type: input

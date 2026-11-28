@@ -395,6 +395,8 @@
   "settings.dens_compact": "Compact",
   "settings.dens_normal": "Normal",
   "settings.dens_airy": "Spacious",
+  "settings.chg_2_0_0_beta_4_1_1_0": "Re-analyse documents removes findings the current parsers no longer produce",
+  "settings.chg_2_0_0_beta_4_1_1_1": "Run Re-analyse documents again in projects you re-analysed with 2.0.0-beta.4.1",
   "settings.chg_2_0_0_beta_4_1_0": "People, positions and contacts from document text in 22 languages, new Phones section",
   "settings.chg_2_0_0_beta_4_1_1": "Calibrated finding severities and risk score: fewer false criticals, markings only as stamps",
   "settings.chg_2_0_0_beta_4_1_2": "Full CVE list per product with CVSS, KEV, EPSS and the version to update to",

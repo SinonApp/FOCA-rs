@@ -142,7 +142,7 @@ Signing with a different certificate prevents in-place upgrades over previous in
 
 Update all copies in a single commit:
 
-- `src-tauri/tauri.conf.json` → `version`. `versionCode` is derived as `major·1000000 + minor·1000 + patch` (`2.0.0` → `2000000`) and ignores the pre-release part, so a pre-release sets `bundle.android.versionCode` explicitly (`2.0.0-beta.1` → `2000001`, `2.0.0-beta.2` → `2000002`, `2.0.0-beta.3` → `2000005` because unreleased dev builds used 2000003 and 2000004, `2.0.0-beta.4` → `2000006`, `2.0.0-beta.4.1` → `2000007`; `qa/android-build.sh` honours it). It must grow with every build that users install;
+- `src-tauri/tauri.conf.json` → `version`. `versionCode` is derived as `major·1000000 + minor·1000 + patch` (`2.0.0` → `2000000`) and ignores the pre-release part, so a pre-release sets `bundle.android.versionCode` explicitly (`2.0.0-beta.1` → `2000001`, `2.0.0-beta.2` → `2000002`, `2.0.0-beta.3` → `2000005` because unreleased dev builds used 2000003 and 2000004, `2.0.0-beta.4` → `2000006`, `2.0.0-beta.4.1` → `2000007`, `2.0.0-beta.4.1.1` → `2000008`; `qa/android-build.sh` honours it). It must grow with every build that users install;
 - Root `Cargo.toml` (`workspace.package.version`), `src-tauri/Cargo.toml`, `package.json` and `package-lock.json` (then `cargo update -w` for `Cargo.lock`);
 - Fallback version string in `CrashLog.kt`, the version fallbacks and the first `CHANGES` entry in `ui/screens/settings.js`, and `app_version` in `ui/js/demo-backend.js`;
 - `generator: "FOCA-rs <ver>"` in `crates/foca-report/tests/golden/*` and `examples/out/*` (`UPDATE_GOLDEN=1 cargo test -p foca-report --test report`).
@@ -159,11 +159,11 @@ Release gate:
 
 ## Release Process
 
-2.0 ships as a beta first. The steps for `v2.0.0-beta.4.1`:
+2.0 ships as a beta first. The steps for `v2.0.0-beta.4.1.1`:
 
 1. Finish on `main`: version bump (above), `CHANGELOG.md` section with the date, release gate green.
 2. Build both flavors (`bash qa/android-build.sh apk`), align and sign them (see [APK Signing](#apk-signing)), name them `FOCA-rs-<ver>-foss-arm64.apk` and `FOCA-rs-<ver>-play-arm64.apk`.
-3. Tag the release commit on `main`: `git tag -a v2.0.0-beta.4.1 -m "FOCA-rs 2.0.0-beta.4.1"`, then push the tag.
+3. Tag the release commit on `main`: `git tag -a v2.0.0-beta.4.1.1 -m "FOCA-rs 2.0.0-beta.4.1.1"`, then push the tag.
 4. Create a GitHub release from the tag and mark it Pre-release. Attach both APKs and their SHA-256 sums; paste the changelog section, the certificate SHA-256 and the install note (beta.1 needed an uninstall because of the new key; later betas install over it).
 5. Link `/releases`, not `/releases/latest`, for betas: GitHub's "latest" skips pre-releases.
 

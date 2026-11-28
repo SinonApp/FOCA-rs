@@ -7,6 +7,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 ## 2.0.0-beta.4.1.1: 2026-11-28
 
+Hotfix for stale findings after Re-analyse documents in 2.0.0-beta.4.1.
+
+> **Installs over 2.0.0-beta.4.1, 2.0.0-beta.4, 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects** (same signing key, Android versionCode 2000008). After the update, run Re-analyse documents again in each project you re-analysed with 2.0.0-beta.4.1, so the stale findings leave the list.
+
 ### Fixed
 
 - Re-analyse documents: findings the current parsers no longer produce (for example a bad redaction on white table cells, a signature "modified" only by an LTV increment, a meeting link passcode reported as a password) leave the findings list, the overview counts and reports instead of staying as New with their old host. Their triage is kept and comes back if the same finding appears again; a later scan does not list them as fixed.
