@@ -3,6 +3,7 @@
 # See docs/dev/build.md, "Release Process".
 #
 #   scripts/sign-release.sh sign   [dist dir]   # SHA256SUMS.txt + SHA256SUMS.txt.sig for dist/*.apk
+#   scripts/sign-release.sh sign-existing [dir] # signs an existing SHA256SUMS.txt as is (older releases)
 #   scripts/sign-release.sh verify [dist dir]   # checks the APK sums and the signature
 #
 # The signature is Ed25519 over b"FOCA-rs release SHA256SUMS v1\n" followed by the exact bytes of
@@ -25,7 +26,7 @@ die() {
 }
 
 usage() {
-  echo "usage: $0 sign|verify [dist dir]" >&2
+  echo "usage: $0 sign|sign-existing|verify [dist dir]" >&2
   exit 2
 }
 
@@ -60,23 +61,27 @@ pub_der() {
 }
 
 case $mode in
-  sign)
+  sign | sign-existing)
     [ -r "$seed_file" ] || die "seed file $seed_file is not readable (set FOCA_SIG_SEED)"
     seed=$(tr -d ' \n\r' <"$seed_file")
     [[ $seed =~ ^[0-9a-fA-F]{64}$ ]] || die "$seed_file must hold 64 hex characters"
-    shopt -s nullglob
-    apks=("$dist"/*.apk)
-    [ ${#apks[@]} -gt 0 ] || die "no APK in $dist"
     (umask 077 && hex_to_bin "302e020100300506032b657004220420$seed" >"$work/key.der")
     unset seed
     # The key must be the one the app trusts, or every phone would refuse the update.
     got=$(openssl pkey -inform DER -in "$work/key.der" -pubout -outform DER | tail -c 32 | od -An -tx1 | tr -d ' \n')
     [ "$got" = "$(embedded_pubkey)" ] || die "the seed does not match the public key built into the app"
-    (cd "$dist" && sha256sum -- *.apk) >"$dist/SHA256SUMS.txt"
+    if [ "$mode" = sign ]; then
+      shopt -s nullglob
+      apks=("$dist"/*.apk)
+      [ ${#apks[@]} -gt 0 ] || die "no APK in $dist"
+      (cd "$dist" && sha256sum -- *.apk) >"$dist/SHA256SUMS.txt"
+    else
+      [ -f "$dist/SHA256SUMS.txt" ] || die "$dist/SHA256SUMS.txt not found"
+    fi
     message
     openssl pkeyutl -sign -rawin -inkey "$work/key.der" -keyform DER -in "$work/msg" -out "$work/sig.bin"
     printf '%s\n' "$(od -An -tx1 "$work/sig.bin" | tr -d ' \n')" >"$dist/SHA256SUMS.txt.sig"
-    echo "wrote $dist/SHA256SUMS.txt (${#apks[@]} APK) and $dist/SHA256SUMS.txt.sig"
+    echo "wrote $dist/SHA256SUMS.txt.sig for $dist/SHA256SUMS.txt"
     "$0" verify "$dist"
     ;;
   verify)
