@@ -155,10 +155,17 @@ export default async (page, { out, W, prep }) => {
   await click('[data-act="st-mob-unlim:power.wifiOnly"]');
   await page.waitForTimeout(200); await page.reload(); await page.waitForTimeout(500); await prep();
   ok("UX16/logic #24: toggle by row tap survives reload", (await ev(() => FOCA.db.settings.power.wifi_only)) === false);
-  // Detected steps (autostart, battery) have no manual Done: mark the first step that is checked by hand.
+  // Detected steps (autostart, battery, lock screen) have no manual Done: pick the first firmware
+  // whose guide has a step checked by hand (the default may have none), then mark that step.
   await go("/settings/battery");
-  const manualIdx = await ev(() => { const b = document.querySelector('[data-act^="st-bdone:"]'); return b ? +b.dataset.act.split(":")[1] : -1; });
-  await click(`[data-act="st-bdone:${manualIdx}"]`);
+  const findManual = () => ev(() => { const b = document.querySelector('[data-act^="st-bdone:"]'); return b ? +b.dataset.act.split(":")[1] : -1; });
+  let manualIdx = await findManual();
+  for (const act of manualIdx >= 0 ? [] : await ev(() => [...document.querySelectorAll('[data-act^="st-set:battery.oem:"]')].map(b => b.dataset.act))) {
+    await click(`[data-act="${act}"]`);
+    manualIdx = await findManual();
+    if (manualIdx >= 0) break;
+  }
+  if (manualIdx >= 0) await click(`[data-act="st-bdone:${manualIdx}"]`);
   await page.reload(); await page.waitForTimeout(500); await prep();
   ok("Settings: UI sections (settings.ui) survive reload", manualIdx >= 0 && await ev(i => !!(FOCA.state.settings.battery.done[FOCA.state.settings.battery.oem] || {})[i], manualIdx));
   await go("/settings/network"); await click('.st-tr[data-act="st-t:net.kill"] .body');

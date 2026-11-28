@@ -16,8 +16,9 @@ export default async (page, { out, prep }) => {
   await page.waitForTimeout(400);
   const y1 = await page.evaluate((fid) => { const p = document.querySelector('.page'); const el = p.querySelector('[data-fid="' + fid + '"]'); return [p.scrollTop, el ? el.getBoundingClientRect().top : 'gone']; }, y0[3]);
   log.push(['scroll', y0, y1]);
-  // Pause from the mini panel on the overview.
+  // Pause from the mini panel on the overview (it shows once the overview scan card scrolls away).
   await page.evaluate(() => FOCA.go('/p/overview')); await page.waitForTimeout(400);
+  await page.evaluate(() => { const p = document.querySelector('.page'); p.scrollTop = p.scrollHeight; FOCA.syncMini(); }); await page.waitForTimeout(200);
   await page.click('#mi-pp'); await page.waitForTimeout(300);
   log.push(['mini paused', await page.evaluate(() => [FOCA.scan.paused, document.querySelector('#mi-t').textContent])]);
   await page.click('#mini .mi-txt'); await page.waitForTimeout(500);

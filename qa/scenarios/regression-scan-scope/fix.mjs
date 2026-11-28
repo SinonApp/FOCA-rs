@@ -14,8 +14,14 @@ export default async (page, { out, W, prep }) => {
     ok('UX6 FAB "Новый скан" before scan', await ev(() => document.querySelector('#fab').classList.contains('show')));
     await ev(() => FOCA.actions['scan-start']({ profile: 'passive' }));
     await wait(150);
-    const p1 = await ev(() => ({ running: FOCA.scan.running, fab: document.querySelector('#fab').classList.contains('show'), card: document.querySelector('.page .pbar i')?.style.width, mini: document.querySelector('#mini').classList.contains('show') }));
-    ok('UX6 Overview immediately shows the running scan (without leaving the tab)', p1.running && !p1.fab && p1.mini, p1);
+    const p1 = await ev(() => ({ running: FOCA.scan.running, fab: document.querySelector('#fab').classList.contains('show'), card: document.querySelector('.page .pbar i')?.style.width, ovScan: !!document.querySelector('.page #ov-scan'), mini: document.querySelector('#mini').classList.contains('show') }));
+    // The overview scan card shows the run; the floating bar joins only after the card scrolls away.
+    ok('UX6 Overview immediately shows the running scan (without leaving the tab)', p1.running && !p1.fab && p1.ovScan && p1.card != null && !p1.mini, p1);
+    await ev(() => { const p = document.querySelector('.page'); p.scrollTop = p.scrollHeight; FOCA.syncMini(); });
+    await wait(150);
+    const pm = await ev(() => ({ mini: document.querySelector('#mini').classList.contains('show'), top: document.querySelector('.page #ov-scan').getBoundingClientRect().bottom <= document.querySelector('.page').getBoundingClientRect().top }));
+    ok('UX6 floating scan bar shows exactly when the overview scan card is scrolled away', pm.mini === pm.top, pm);
+    await ev(() => { document.querySelector('.page').scrollTop = 0; FOCA.syncMini(); });
     await wait(1500);
     const p2 = await ev(() => document.querySelector('.page .pbar i')?.style.width);
     ok('UX6 Overview progress grows without navigation', p2 && p2 !== p1.card, { before: p1.card, after: p2 });
