@@ -1144,6 +1144,22 @@
       "body": "<p class=\"hl-lead\">The AI assistant generates a structured project summary via your chosen cloud API provider.</p><h3>Live model list</h3><p>FOCA-rs does not hardcode stale models: the app fetches the up-to-date list of available models directly from the provider's API using your key (or accepts any custom model ID manually).</p><h3>Reasoning settings (Thinking)</h3><p>Supports official provider reasoning controls (Anthropic adaptive/manual thinking, Gemini <code>thinkingLevel</code>/<code>thinkingBudget</code>, OpenAI/xAI/Groq/Mistral/OpenRouter <code>reasoning_effort</code>, DeepSeek <code>thinking</code>), token budgets, temperature, and optional display of the reasoning trace.</p><h3>Data protection</h3><p>Before sending, secrets, PII, e-mail addresses and the client's name are replaced with the <code>[SECRET]</code>, <code>[NAME]</code>, <code>[EMAIL]</code>, <code>[CLIENT]</code> and <code>[CLIENT-DOMAIN]</code> placeholders. They are the same in every language, so the model keeps them intact. You can check the full request text in the preview.</p><h3>Summary language</h3><p>The request and the answer use the interface language: with “System” selected, that is the device language.</p><h3>One request at a time</h3><p>After you tap “Send”, the button stays locked until the provider answers, so a second tap never starts a second paid request. While the request runs you can stop it with “Cancel request”.</p><h3>Where the summary goes</h3><p>Open a project, then “AI summary”. Every summary is saved with the project (encrypted, like the rest of its data): next time the screen shows the latest one, with the history below (date, model, language). Open a summary from the history to copy it, delete it or pick it for the report with “To report”. The text is AI-generated, so check the facts before sending it to a client. It goes into a report as the “Executive summary (AI-assisted)” section when that section is on in the report builder; there <code>[CLIENT]</code> and <code>[CLIENT-DOMAIN]</code> become the client's name and domain.</p>"
     },
     {
+      "id": "app-update",
+      "sec": "set",
+      "icon": "download",
+      "t": "App updates",
+      "sub": "check, verify, install from GitHub",
+      "go": [
+        "Updates",
+        "/settings/update"
+      ],
+      "rel": [
+        "kev",
+        "legal"
+      ],
+      "body": "\n      <p>FOCA-rs updates itself from the official GitHub releases. “Settings → Updates” (also under “About”) shows the installed version, the last check and the newest version for your build (FOSS or Play), with its date, size and release notes.</p>\n      <ul><li><b>Check:</b> “Check for updates” asks the GitHub API once. The automatic check runs at most once a day at start, by default only on Wi-Fi; turn it off with “Check automatically”. “Include beta versions” is on while the app is in beta. When GitHub limits requests, the screen says when the next check is allowed and does not retry before then.</li>\n      <li><b>Verify:</b> the APK is downloaded into the app cache (an interrupted download continues). Before anything is installed, the release file <code>SHA256SUMS.txt</code> must carry a valid Ed25519 signature of the FOCA-rs key built into the app, and the APK must match its SHA-256. Then Android checks that the APK is signed with the same certificate as the installed app, has the same package name and a higher version code. Any mismatch stops the update with the reason, and a bad file is deleted.</li>\n      <li><b>Install:</b> the first time, Android asks to allow “Install unknown apps” for FOCA-rs; turn it on and come back. Android then shows its own confirmation. Your projects stay in place.</li>\n      <li><b>Database changes:</b> when a release migrates projects to a new database schema, the screen warns first: the previous version cannot open migrated projects, so export important projects before installing.</li></ul>\n      <p><b>Privacy:</b> the check contacts api.github.com and github.com (files come from GitHub's download servers) through your network and proxy settings. Only the app version is sent, in the User-Agent; no account, identifier or statistics.</p>"
+    },
+    {
       "id": "encrypted-bundle",
       "sec": "docs",
       "icon": "lock",

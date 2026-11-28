@@ -6665,6 +6665,55 @@
     if (m) o[`${k}_msg`] = m;
   }
 
+  // ================= in-app update (demo) =================
+  const DEMO_UPD = { timer: null, progress: null, allowed: false };
+  const DEMO_UPD_VERSION = "2.0.0-beta.5";
+  const DEMO_UPD_NOTES = [
+    "## Added",
+    "- In-app update from GitHub Releases with signature and checksum verification",
+    "- **Faster** document parsing on large PDFs",
+    "",
+    "## Fixed",
+    "- Scan progress survives app restarts",
+  ].join("\n");
+  function demoIso() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  function demoUpdSettings() {
+    const u = load().settings.update || {};
+    return { auto: u.auto !== false, wifi_only: u.wifi_only !== false, prerelease: u.prerelease !== false };
+  }
+  function demoUpdView(flavor, outcome) {
+    const u = load()._upd || {};
+    const avail = u.state === "available" || u.state === "verify_failed";
+    const asset = `FOCA-rs-${DEMO_UPD_VERSION}-${flavor === "play" ? "play" : "foss"}-arm64.apk`;
+    return {
+      current: "2.0.0-beta.4.1",
+      flavor,
+      settings: demoUpdSettings(),
+      checked_at: u.checked_at || "",
+      backoff_until: u.backoff_until && u.backoff_until > Date.now() / 1000 ? u.backoff_until : null,
+      error: u.error || null,
+      update: avail
+        ? {
+            version: DEMO_UPD_VERSION,
+            tag: `v${DEMO_UPD_VERSION}`,
+            prerelease: true,
+            published_at: "2026-12-05T10:00:00Z",
+            html_url: `https://github.com/SinonApp/FOCA-rs/releases/tag/v${DEMO_UPD_VERSION}`,
+            notes: DEMO_UPD_NOTES,
+            asset,
+            size: flavor === "play" ? 58600000 : 45400000,
+            version_code: 2000008,
+            schema: { current: 11, release: 12, migrates: true },
+          }
+        : null,
+      download: DEMO_UPD.progress || { phase: "idle" },
+      outcome,
+    };
+  }
+
   // ================= scan events (emitter; under Tauri: listen("scan://event")) =================
   // Semantics (docs/API.md, "Scan: retry, resume, restart"): scans are INCREMENTAL, stages add and refine
   // data but
@@ -11494,6 +11543,95 @@
       };
       save();
       return demoSigStatus();
+    },
+    // In-app update (docs/API.md "In-app update"). No network in the demo: the check answers from a
+    // canned state; QA scenarios pick it with `demo_state` (up_to_date | available | rate_limited |
+    // verify_failed). verify_failed lets the download run and refuses it at the signature check.
+    update_status: ({ flavor = "foss" } = {}) => demoUpdView(flavor, "status"),
+    update_check: ({ flavor = "foss", demo_state, auto } = {}) => {
+      const db = load();
+      const u = (db._upd = db._upd || {});
+      if (["up_to_date", "available", "rate_limited", "verify_failed"].includes(demo_state))
+        u.state = demo_state;
+      const s = demoUpdSettings();
+      if (auto && !s.auto) return Object.assign(demoUpdView(flavor, "skipped"), { skipped: "disabled" });
+      u.checked_at = demoIso();
+      const state = u.state || "up_to_date";
+      if (state === "rate_limited") {
+        u.backoff_until = Math.floor(Date.now() / 1000) + 600;
+        u.error = {
+          code: "update_rate_limited",
+          message: "GitHub временно ограничил запросы, повторите позже",
+          retry_at: u.backoff_until,
+        };
+      } else {
+        u.backoff_until = null;
+        u.error = null;
+      }
+      save();
+      return demoUpdView(
+        flavor,
+        state === "rate_limited" ? "error" : state === "up_to_date" ? "up_to_date" : "available",
+      );
+    },
+    update_download: ({ flavor = "foss" } = {}) => {
+      const view = demoUpdView(flavor, "status");
+      if (!view.update) throw apiErr("update_none", "нет доступного обновления, проверьте ещё раз");
+      if (DEMO_UPD.timer) throw apiErr("busy", "обновление уже загружается");
+      const total = view.update.size;
+      const version = view.update.version;
+      const fail = (load()._upd || {}).state === "verify_failed";
+      let received = 0;
+      const step = () => {
+        received = Math.min(total, received + Math.ceil(total / 5));
+        if (received < total) {
+          DEMO_UPD.progress = { phase: "download", version, received, total };
+          emit({ type: "update", ...DEMO_UPD.progress });
+          DEMO_UPD.timer = setTimeout(step, 150);
+          return;
+        }
+        DEMO_UPD.timer = null;
+        DEMO_UPD.progress = fail
+          ? {
+              phase: "failed",
+              version,
+              error: {
+                code: "update_sig_mismatch",
+                message: "Подпись SHA256SUMS.txt не прошла проверку ключом приложения",
+              },
+            }
+          : {
+              phase: "ready",
+              version,
+              received: total,
+              total,
+              path: `/cache/update/${view.update.asset}`,
+              asset: view.update.asset,
+            };
+        emit({ type: "update", ...DEMO_UPD.progress });
+      };
+      DEMO_UPD.progress = { phase: "download", version, received: 0, total };
+      DEMO_UPD.timer = setTimeout(step, 150);
+      return { started: true };
+    },
+    update_cancel: () => {
+      if (DEMO_UPD.timer) {
+        clearTimeout(DEMO_UPD.timer);
+        DEMO_UPD.timer = null;
+        emit({ type: "update", phase: "cancelled", version: (DEMO_UPD.progress || {}).version || "" });
+      }
+      DEMO_UPD.progress = null;
+      return { ok: true, running: false };
+    },
+    // The install permission flow and PackageInstaller exist only on Android: the demo grants the
+    // permission after the first "open" and reports a started session.
+    platform_update_permission: ({ open } = {}) => {
+      if (open) DEMO_UPD.allowed = true;
+      return { enabled: true, can_install: !!DEMO_UPD.allowed, opened: !!open, sdk: 36 };
+    },
+    platform_update_install: ({ path } = {}) => {
+      if (!DEMO_UPD.allowed) return { ok: false, code: "update_permission" };
+      return { ok: true, code: "ok", session: 1, path, cert_match: true };
     },
     signatures_rollback: () => {
       const db = load();

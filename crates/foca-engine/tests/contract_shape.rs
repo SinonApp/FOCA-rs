@@ -424,6 +424,19 @@ async fn contract_shape_matches_demo_backend_inner() {
         json!({ "url": format!("{}/sig-feed/signatures.bundle", e.server.url()) })
     );
     c!("signatures_rollback", "signatures_rollback", json!({}));
+    // the update check reaches the local server (404): outcome "error", same keys as the demo
+    c!(
+        "update_status",
+        "update_status",
+        json!({ "flavor": "foss" })
+    );
+    c!("update_check", "update_check", json!({ "flavor": "foss" }));
+    c!(
+        "update_status",
+        "update_status",
+        json!({ "flavor": "foss" })
+    );
+    c!("update_cancel", "update_cancel", json!({}));
     c!("plugins_list", "plugins_list", json!({}));
     c!(
         "plugin_install",

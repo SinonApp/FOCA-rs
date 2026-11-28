@@ -3840,6 +3840,8 @@
     },
   });
   let aiPollT = null;
+  // Escape-first Markdown subset (headings, lists, bold), shared with other screens for remote text.
+  F.safeMd = t => md(t);
   function md(t) {
     const lines = esc(t).split("\n");
     let out = "",

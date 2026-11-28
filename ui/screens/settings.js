@@ -436,6 +436,7 @@
       <div class="list">
         ${item("lock", "var(--ok)", F.t("settings.security", "Безопасность"), `${sec.pin ? "PIN" : F.t("settings.no_pin", "Без PIN")}${sec.bio ? " + " + F.t("settings.fingerprint_l", "отпечаток") : ""} · ${sec.autolock === "0" ? F.t("settings.autolock_now", "автоблокировка сразу") : F.t("settings.autolock_min", { n: sec.autolock }, "автоблокировка через {n} мин")}`, "/settings/security")}
         ${item("theme", "", F.t("settings.appearance", "Внешний вид"), F.t("settings.appearance_sub", { theme: THEME_L()[state.look.theme] || state.look.theme, lang: LANG_L()[langLook()] || langLook(), fs: Math.round(curFs() * 100) }), "/settings/appearance")}
+        ${item("download", "var(--accent)", F.t("update.title", "Обновления"), F.t("update.row_sub", "Проверка и установка новых версий с GitHub"), "/settings/update")}
         ${item("bug", "", F.t("settings.debug", "Отладка"), F.t("settings.debug_sub", "Журналы, запросы, сбои, устройство"), "/settings/debug")}
         ${item("info", "var(--accent)", F.t("settings.help", "Помощь"), F.t("settings.help_sub", "Офлайн-справка и глоссарий"), "/help")}
         ${item("info", "", F.t("settings.about", "О программе"), `FOCA-rs ${aboutMeta.version || "2.0.0-beta.4.1"} · GPL-3.0`, "/settings/about", F.betaChip ? F.betaChip() : "")}
@@ -2692,6 +2693,7 @@
       </div>
       <div class="banner warn">${ic("alert")}<div><b>${esc(F.t("settings.legal_b", "Используйте только с разрешения владельца системы."))}</b> ${esc(F.t("settings.legal_text", "Разведка и сканирование без письменного согласия могут нарушать закон (ст. 361 УК Украины и аналоги в других странах)."))}</div></div>
       <div class="list">
+        ${ui.row({ lead: ui.leadIcon("download", "var(--accent)"), title: F.t("update.title", "Обновления"), sub: F.t("update.row_sub", "Проверка и установка новых версий с GitHub"), act: "go:/settings/update" })}
         ${ui.row({ lead: ui.leadIcon("history"), title: F.t("settings.changelog", "Журнал изменений"), sub: `${CHANGES[0][0]} (${CHANGES[0][1]})`, act: "st-changes" })}
         ${ui.row({ lead: ui.leadIcon("contract"), title: F.t("settings.terms", "Условия использования"), sub: F.t("settings.terms_sub", "Отказ от ответственности · только чтение"), act: "go:/settings/terms" })}
         ${ui.row({ lead: ui.leadIcon("contract", "var(--accent)"), title: F.t("about.licenses_row", "Лицензии и сторонние компоненты"), sub: F.t("about.licenses_sub", "Rust-крейты, Android-библиотеки, базы данных и полные тексты лицензий"), act: "go:/settings/licenses" })}

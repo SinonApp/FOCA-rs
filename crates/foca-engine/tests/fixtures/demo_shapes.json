@@ -17788,6 +17788,175 @@
     }
    }
   },
+  "update_status": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "current": {
+     "t": [
+      "string"
+     ]
+    },
+    "flavor": {
+     "t": [
+      "string"
+     ]
+    },
+    "settings": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "auto": {
+       "t": [
+        "bool"
+       ]
+      },
+      "wifi_only": {
+       "t": [
+        "bool"
+       ]
+      },
+      "prerelease": {
+       "t": [
+        "bool"
+       ]
+      }
+     }
+    },
+    "checked_at": {
+     "t": [
+      "string"
+     ]
+    },
+    "backoff_until": {
+     "t": [
+      "null"
+     ]
+    },
+    "error": {
+     "t": [
+      "null"
+     ]
+    },
+    "update": {
+     "t": [
+      "null"
+     ]
+    },
+    "download": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "phase": {
+       "t": [
+        "string"
+       ]
+      }
+     }
+    },
+    "outcome": {
+     "t": [
+      "string"
+     ]
+    }
+   }
+  },
+  "update_check": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "current": {
+     "t": [
+      "string"
+     ]
+    },
+    "flavor": {
+     "t": [
+      "string"
+     ]
+    },
+    "settings": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "auto": {
+       "t": [
+        "bool"
+       ]
+      },
+      "wifi_only": {
+       "t": [
+        "bool"
+       ]
+      },
+      "prerelease": {
+       "t": [
+        "bool"
+       ]
+      }
+     }
+    },
+    "checked_at": {
+     "t": [
+      "string"
+     ]
+    },
+    "backoff_until": {
+     "t": [
+      "null"
+     ]
+    },
+    "error": {
+     "t": [
+      "null"
+     ]
+    },
+    "update": {
+     "t": [
+      "null"
+     ]
+    },
+    "download": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "phase": {
+       "t": [
+        "string"
+       ]
+      }
+     }
+    },
+    "outcome": {
+     "t": [
+      "string"
+     ]
+    }
+   }
+  },
+  "update_cancel": {
+   "t": [
+    "object"
+   ],
+   "keys": {
+    "ok": {
+     "t": [
+      "bool"
+     ]
+    },
+    "running": {
+     "t": [
+      "bool"
+     ]
+    }
+   }
+  },
   "plugins_list": {
    "t": [
     "object"

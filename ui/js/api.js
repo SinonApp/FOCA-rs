@@ -876,6 +876,11 @@
     signatures_import: bundle_json => run("signatures_import", { bundle_json }),
     signatures_update: url => run("signatures_update", url ? { url } : {}),
     signatures_rollback: () => run("signatures_rollback", {}),
+    // In-app update (progress arrives as `update` events via F.on("scan")).
+    update_status: flavor => run("update_status", { flavor }),
+    update_check: (o = {}) => run("update_check", o),
+    update_download: flavor => run("update_download", { flavor }),
+    update_cancel: () => run("update_cancel", {}),
     // --- export, AI, PIN, full wipe ---
     export_build: (kind, fmt, opts = {}) => run("export_build", { project: cur(), kind, fmt, opts }),
     ai_models_list: (provider, base_url, refresh = false, show_all = false) =>
@@ -988,6 +993,10 @@
     platform_request_notifications: () => run("platform_request_notifications", {}),
     platform_exit: () => run("platform_exit", {}),
     platform_device_info: () => run("platform_device_info", {}),
+    // In-app update install (Android): { enabled, can_install, opened } and the PackageInstaller
+    // session for a verified APK in the app cache: { ok, code, cert_match, version_code, ... }.
+    platform_update_permission: (o = {}) => run("platform_update_permission", o),
+    platform_update_install: o => run("platform_update_install", o || {}),
     // Native clipboard (the Android WebView cannot read it): { ok, text, available, error? },
     // { ok, scheduled }, { ok, cleared }; desktop and the demo answer { unsupported: true }.
     platform_clipboard_read: () => run("platform_clipboard_read", {}),

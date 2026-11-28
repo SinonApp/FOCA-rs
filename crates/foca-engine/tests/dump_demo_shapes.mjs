@@ -155,6 +155,11 @@ const sigUpd = call("signatures_update", {});
 put("signatures_update", sigUpd);
 put("signatures_status", call("signatures_status", {}));
 put("signatures_rollback", call("signatures_rollback", {}));
+// In-app update (no network: the demo check answers up_to_date)
+put("update_status", call("update_status", { flavor: "foss" }));
+put("update_check", call("update_check", { flavor: "foss" }));
+put("update_status", call("update_status", { flavor: "foss" }));
+put("update_cancel", call("update_cancel", {}));
 // Sandboxed plugins catalog & execution
 put("plugins_list", call("plugins_list", {}));
 put("plugin_install", call("plugin_install", { manifest: { id: "demo-check", name: "Demo Check", version: "1.0.0", author: "QA", kind: "analyzer", runtime: "declarative", permissions: ["meta:read"], declarative: { extract_kind: "meta_pattern", pattern: "TEST-[0-9]+" } } }));
