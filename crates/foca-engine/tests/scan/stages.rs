@@ -55,6 +55,26 @@ async fn passive_scan_full_pipeline_and_event_order() {
         scans[0]["snapshot"]["findings"].as_object().unwrap().len()
     );
     assert_eq!(scans[0]["new_findings"], scans[0]["added"]["findings"]);
+    // The project list risk is the overview risk (`FOCA_RULES.riskScore` over the snapshot findings,
+    // mirrored by `rules::risk_score`): categories and tags must reach the list summary too.
+    let findings = s["findings"].as_array().unwrap();
+    let cats: std::collections::BTreeSet<&str> = findings
+        .iter()
+        .filter_map(|f| f["category"].as_str())
+        .collect();
+    assert!(cats.len() >= 2, "mixed categories expected: {cats:?}");
+    let list = e.call("project_list", json!({})).await;
+    let card = list
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|p| p["id"] == id)
+        .unwrap();
+    assert_eq!(
+        card["risk"],
+        json!(foca_engine::rules::risk_score(findings)),
+        "{cats:?}"
+    );
     // passive: not a single request to the target
     let st = e.call("scan_status", json!({})).await;
     assert_eq!(st["running"], false);

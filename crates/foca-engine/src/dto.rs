@@ -194,7 +194,11 @@ impl Core {
         let findings: Vec<Value> = db
             .findings()?
             .iter()
-            .map(|f| json!({ "sev": f.sev, "status": f.status }))
+            // category and tags feed the per-category damping, the exposure cap and the
+            // out-of-scope exclusion: without them the list risk differs from the overview
+            .map(|f| {
+                json!({ "sev": f.sev, "status": f.status, "category": f.category, "tags": f.tags })
+            })
             .collect();
         s.scans = scans.len() as u32;
         s.last_scan_at = scans.last().and_then(|x| {

@@ -503,4 +503,22 @@ mod tests {
         assert_eq!(risk_level(Some(40), true), "mid");
         assert_eq!(risk_level(None, true), "none");
     }
+
+    /// The shared contract fixture: `qa/data-invariants.mjs` checks `FOCA_RULES.riskScore` on the
+    /// same cases, so the UI and the core cannot drift apart.
+    #[test]
+    fn risk_contract_fixture() {
+        let fx: Value =
+            serde_json::from_str(include_str!("../../../../tests/fixtures/risk/mixed.json"))
+                .unwrap();
+        for c in fx["cases"].as_array().unwrap() {
+            let list = c["findings"].as_array().unwrap();
+            assert_eq!(
+                u64::from(risk_score(list)),
+                c["score"].as_u64().unwrap(),
+                "{}",
+                c["name"]
+            );
+        }
+    }
 }

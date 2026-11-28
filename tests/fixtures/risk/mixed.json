@@ -1,0 +1,81 @@
+{
+  "about": "Risk score contract: FOCA_RULES.riskScore (qa/data-invariants.mjs), rules::risk_score and project_list must give these scores (docs/user/risk-score.md).",
+  "cases": [
+    {
+      "name": "mixed categories, no critical",
+      "score": 52,
+      "findings": [
+        {"sev": "high", "status": "new", "category": "docs", "tags": []},
+        {"sev": "high", "status": "new", "category": "docs", "tags": ["secret"]},
+        {"sev": "high", "status": "new", "category": "docs", "tags": []},
+        {"sev": "warn", "status": "new", "category": "docs", "tags": []},
+        {"sev": "low", "status": "new", "category": "docs", "tags": ["forensics"]},
+        {"sev": "info", "status": "new", "category": "docs", "tags": []},
+        {"sev": "high", "status": "new", "category": "people", "tags": ["pii"]},
+        {"sev": "warn", "status": "new", "category": "people", "tags": ["qes"]},
+        {"sev": "info", "status": "new", "category": "people", "tags": []},
+        {"sev": "high", "status": "new", "category": "sw", "tags": ["nvd", "site"]},
+        {"sev": "warn", "status": "new", "category": "sw", "tags": ["kev", "possible", "nvd", "server"]},
+        {"sev": "warn", "status": "new", "category": "sw", "tags": ["outdated", "workstation"]},
+        {"sev": "low", "status": "new", "category": "sw", "tags": ["kev", "possible"]},
+        {"sev": "warn", "status": "new", "category": "web", "tags": ["recon"]},
+        {"sev": "low", "status": "new", "category": "web", "tags": ["recon", "csp", "archive"]},
+        {"sev": "info", "status": "new", "category": "cloud", "tags": ["recon"]},
+        {"sev": "warn", "status": "new", "category": "mail", "tags": []},
+        {"sev": "low", "status": "new", "category": "mail", "tags": []},
+        {"sev": "low", "status": "new", "category": "tls", "tags": []},
+        {"sev": "low", "status": "new", "category": "hosts", "tags": []},
+        {"sev": "crit", "status": "new", "category": "web", "tags": ["out_of_scope"]},
+        {"sev": "crit", "status": "false", "category": "dns", "tags": []},
+        {"sev": "high", "status": "fixed", "category": "web", "tags": []}
+      ]
+    },
+    {
+      "name": "mixed categories with a critical",
+      "score": 64,
+      "findings": [
+        {"sev": "high", "status": "new", "category": "docs", "tags": []},
+        {"sev": "high", "status": "new", "category": "docs", "tags": ["secret"]},
+        {"sev": "high", "status": "new", "category": "docs", "tags": []},
+        {"sev": "warn", "status": "new", "category": "docs", "tags": []},
+        {"sev": "low", "status": "new", "category": "docs", "tags": ["forensics"]},
+        {"sev": "info", "status": "new", "category": "docs", "tags": []},
+        {"sev": "high", "status": "new", "category": "people", "tags": ["pii"]},
+        {"sev": "warn", "status": "new", "category": "people", "tags": ["qes"]},
+        {"sev": "info", "status": "new", "category": "people", "tags": []},
+        {"sev": "high", "status": "new", "category": "sw", "tags": ["nvd", "site"]},
+        {"sev": "warn", "status": "new", "category": "sw", "tags": ["kev", "possible", "nvd", "server"]},
+        {"sev": "warn", "status": "new", "category": "sw", "tags": ["outdated", "workstation"]},
+        {"sev": "low", "status": "new", "category": "sw", "tags": ["kev", "possible"]},
+        {"sev": "warn", "status": "new", "category": "web", "tags": ["recon"]},
+        {"sev": "low", "status": "new", "category": "web", "tags": ["recon", "csp", "archive"]},
+        {"sev": "info", "status": "new", "category": "cloud", "tags": ["recon"]},
+        {"sev": "warn", "status": "new", "category": "mail", "tags": []},
+        {"sev": "low", "status": "new", "category": "mail", "tags": []},
+        {"sev": "low", "status": "new", "category": "tls", "tags": []},
+        {"sev": "low", "status": "new", "category": "hosts", "tags": []},
+        {"sev": "crit", "status": "new", "category": "web", "tags": ["out_of_scope"]},
+        {"sev": "crit", "status": "false", "category": "dns", "tags": []},
+        {"sev": "high", "status": "fixed", "category": "web", "tags": []},
+        {"sev": "crit", "status": "new", "category": "docs", "tags": ["credential"]}
+      ]
+    },
+    {
+      "name": "document and metadata exposure only",
+      "score": 37,
+      "findings": [
+        {"sev": "high", "status": "new", "category": "docs", "tags": []},
+        {"sev": "high", "status": "new", "category": "docs", "tags": ["secret"]},
+        {"sev": "high", "status": "new", "category": "docs", "tags": []},
+        {"sev": "warn", "status": "new", "category": "docs", "tags": []},
+        {"sev": "low", "status": "new", "category": "docs", "tags": ["forensics"]},
+        {"sev": "info", "status": "new", "category": "docs", "tags": []},
+        {"sev": "high", "status": "new", "category": "people", "tags": ["pii"]},
+        {"sev": "warn", "status": "new", "category": "people", "tags": ["qes"]},
+        {"sev": "info", "status": "new", "category": "people", "tags": []},
+        {"sev": "warn", "status": "new", "category": "sw", "tags": ["outdated", "workstation"]},
+        {"sev": "low", "status": "new", "category": "sw", "tags": ["kev", "possible"]}
+      ]
+    }
+  ]
+}

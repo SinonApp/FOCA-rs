@@ -1031,6 +1031,11 @@ for (const id of S.order) {
       R.riskScore(net) === 89,
     [R.riskScore(hd), R.riskScore(meta), R.riskScore(net)],
   );
+  // Shared contract fixture with the core (`rules::tests::risk_contract_fixture`, project_list):
+  // mixed categories, software site/server tags, out-of-scope, false positive, fixed and info findings.
+  const fx = JSON.parse(fs.readFileSync(new URL("../tests/fixtures/risk/mixed.json", import.meta.url), "utf8"));
+  const got = fx.cases.map(c => [c.name, R.riskScore(c.findings), c.score]);
+  ok("risk contract fixture: UI score = core score", got.every(([, a, b]) => a === b), got);
   B.invokeSync("demo_reset");
   await F.api.project_list();
   await F.api.project_open("contoso");
