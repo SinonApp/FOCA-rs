@@ -8,7 +8,6 @@ use foca_store::FindingPatch;
 use serde_json::{json, Value};
 
 use crate::analysis::facts::{self, FidMap};
-use crate::dto::mask_evidence;
 use crate::engine::lock;
 use crate::util::{self, arg_str, req_str};
 use crate::{CmdError, CmdResult, Engine};
@@ -54,9 +53,7 @@ impl Engine {
         let id = map.get(f.id);
         v["id"] = json!(id);
         let ev = crate::dto::protect_evidence(&f.evidence, &crate::settings::secret_values(db));
-        let (ev, refs) = mask_evidence(&ev, id);
         v["evidence"] = json!(ev);
-        v["secret_refs"] = json!(refs);
         v["standards"] = crate::dto::standards_json(&f.provenance.rule);
         Ok(v)
     }

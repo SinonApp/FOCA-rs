@@ -481,7 +481,7 @@ pub(crate) fn rules_set(core: &Core, a: &Value) -> CmdResult {
 }
 
 /// `rules_test { pattern, case_insensitive?, text }` → `{ count, hits: [{ start, end, value }] }`
-/// (values masked; offsets let the UI highlight the caller's own text).
+/// (full values; offsets let the UI highlight the caller's own text).
 pub(crate) fn rules_test(a: &Value) -> CmdResult {
     let pattern = arg_str(a, "pattern").unwrap_or("");
     let text = arg_str(a, "text").unwrap_or("");
@@ -517,7 +517,7 @@ pub(crate) fn rules_test(a: &Value) -> CmdResult {
         .iter()
         .map(|h| {
             json!({ "start": h.start, "end": h.end,
-                    "value": foca_analysis::pii::pii_mask(h.value.expose()) })
+                    "value": h.value.expose() })
         })
         .collect();
     Ok(json!({ "count": hits.len(), "hits": hits }))
@@ -525,8 +525,7 @@ pub(crate) fn rules_test(a: &Value) -> CmdResult {
 
 /// `doc_get { project, id }` → `{ doc, format, forensics }`: the document card plus the 1.3
 /// forensic details (signatures and qualified certificates, redactions, hidden content,
-/// revisions, XMP history, PII summary, links, format fields). Secrets and personal values
-/// are masked (`{{s:…}}`).
+/// revisions, XMP history, PII summary, links, format fields), values in full.
 pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
     let id = core.project_arg(a)?;
     let doc_id = a
@@ -541,7 +540,6 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
     let Some(m) = stored.doc.metadata.as_ref() else {
         return Ok(json!({ "doc": card, "format": Value::Null, "forensics": Value::Null }));
     };
-    let red = |s: &str| foca_analysis::pii::redact(s).0;
     let fields: serde_json::Map<String, Value> = m
         .fields
         .iter()
@@ -566,7 +564,7 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
             .any(|p| k.starts_with(p))
         })
         .take(300)
-        .map(|(k, v)| (k.clone(), json!(red(v))))
+        .map(|(k, v)| (k.clone(), json!(v)))
         .collect();
     let mut fx = serde_json::Map::new();
     fx.insert("signatures".into(), serde_json::to_value(&m.signatures)?);
@@ -575,9 +573,7 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
         json!(m
             .bad_redactions
             .iter()
-            .map(
-                |r| json!({ "page": r.page, "fill": r.fill, "rect": r.rect, "text": red(&r.text) })
-            )
+            .map(|r| json!({ "page": r.page, "fill": r.fill, "rect": r.rect, "text": r.text }))
             .collect::<Vec<_>>()),
     );
     fx.insert(
@@ -585,7 +581,7 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
         json!(m
             .hidden_content
             .iter()
-            .map(|h| json!({ "kind": h.kind, "location": h.location, "text": red(&h.text) }))
+            .map(|h| json!({ "kind": h.kind, "location": h.location, "text": h.text }))
             .collect::<Vec<_>>()),
     );
     fx.insert(
@@ -593,17 +589,7 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
         json!(m
             .pdf_revisions
             .iter()
-            .map(|r| {
-                let mut v = serde_json::to_value(r).unwrap_or(Value::Null);
-                for k in ["removed_text", "added_text"] {
-                    if let Some(a) = v[k].as_array_mut() {
-                        for x in a.iter_mut() {
-                            *x = json!(red(x.as_str().unwrap_or("")));
-                        }
-                    }
-                }
-                v
-            })
+            .map(|r| serde_json::to_value(r).unwrap_or(Value::Null))
             .collect::<Vec<_>>()),
     );
     fx.insert("scan_without_text".into(), json!(m.scan_without_text));
@@ -637,13 +623,12 @@ pub(crate) fn doc_get(core: &Core, a: &Value) -> CmdResult {
     fx.insert("connections".into(), serde_json::to_value(&m.connections)?);
     fx.insert("mail_hops".into(), serde_json::to_value(&m.mail_hops)?);
     fx.insert("fonts".into(), serde_json::to_value(&m.fonts)?);
-    // form values can hold personal data: masked like the other document texts
     fx.insert(
         "form_fields".into(),
         json!(m
             .form_fields
             .iter()
-            .map(|f| json!({ "name": red(&f.name), "value": f.value.as_deref().map(red) }))
+            .map(|f| json!({ "name": f.name, "value": f.value }))
             .collect::<Vec<_>>()),
     );
     let mut links: Vec<Value> = Vec::new();

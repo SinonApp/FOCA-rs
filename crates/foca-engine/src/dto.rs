@@ -9,34 +9,10 @@ use serde_json::{json, Value};
 use crate::analysis::facts::{self, FidMap, NetFacts};
 use crate::analysis::rules::{self, KnownHost};
 use crate::engine::{lock, Core};
-use crate::util::{base36, fnv, mask};
+use crate::util::{base36, fnv};
 use crate::{CmdError, CmdResult, Engine};
 
 pub const KEY_SERVICES: &[&str] = foca_store::settings::KEY_SERVICES;
-
-/// Masks `{{s:value}}` markers; returns the masked text and the `f<id>:<k>` references.
-pub fn mask_evidence(ev: &str, fid: u64) -> (String, Vec<String>) {
-    let mut out = String::new();
-    let mut refs = Vec::new();
-    let mut rest = ev;
-    while let Some(i) = rest.find("{{s:") {
-        out.push_str(&rest[..i]);
-        let after = &rest[i + 4..];
-        match after.find("}}") {
-            Some(j) => {
-                out.push_str(&format!("{{{{s:{}}}}}", mask(&after[..j])));
-                refs.push(format!("f{fid}:{}", refs.len()));
-                rest = &after[j + 2..];
-            }
-            None => {
-                out.push_str(&rest[i..]);
-                rest = "";
-            }
-        }
-    }
-    out.push_str(rest);
-    (out, refs)
-}
 
 /// Wraps secret values that appear in evidence outside `{{s:...}}` in a marker (the analysis
 /// sometimes leaves a connection string password in clear text next to a marker).
@@ -315,14 +291,6 @@ impl Engine {
                 }
             }
         }
-        if let Some(arr) = v["secrets"].as_array_mut() {
-            for x in arr {
-                let m = mask(x["value"].as_str().unwrap_or(""));
-                let o = x.as_object_mut().expect("secret");
-                o.remove("value");
-                o.insert("mask".into(), json!(m));
-            }
-        }
         // a finding without a host shows the first scope target (or n/a); software findings
         // of older analyses wrote the category `software`, the UI and reports use `sw`
         let target = v["scope"]["targets"]
@@ -343,10 +311,6 @@ impl Engine {
                 if f["category"] == "software" {
                     f["category"] = json!("sw");
                 }
-                let id = f["id"].as_u64().unwrap_or(0);
-                let (ev, refs) = mask_evidence(f["evidence"].as_str().unwrap_or(""), id);
-                f["evidence"] = json!(ev);
-                f["secret_refs"] = json!(refs);
                 f["standards"] = standards_json(f["provenance"]["rule"].as_str().unwrap_or(""));
                 if let Some(q) = cve_query(f) {
                     f["cve_query"] = q;
@@ -611,10 +575,7 @@ mod tests {
     }
 
     #[test]
-    fn evidence_masking() {
-        let (m, r) = mask_evidence("a {{s:Kont0so#2024!}} b {{s:x}}", 7);
-        assert_eq!(m, "a {{s:Kon••••••••4!}} b {{s:••••••••}}");
-        assert_eq!(r, vec!["f7:0", "f7:1"]);
+    fn evidence_markers() {
         assert_eq!(evidence_secrets("{{s:a}}{{s:b}}"), vec!["a", "b"]);
         assert_eq!(ui_pattern("{f}.{last}"), "{и}.{фамилия}");
     }

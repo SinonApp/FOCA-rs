@@ -1,7 +1,7 @@
 //! Quick tools (Toolbox): one-shot checks that need no project and write nothing to
 //! the project store.
 //!
-//! * `tool_file`: metadata, forensics, personal data (masked), bad redactions, secrets and the
+//! * `tool_file`: metadata, forensics, personal data, bad redactions, secrets and the
 //!   hygiene grade of one local file; no network at all. Cleaning stays with `doc_clean { path }`.
 //! * `tool_mail_domain`: SPF / DMARC / DKIM (common selectors) / BIMI / MTA-STS / TLS-RPT / CAA /
 //!   DNSSEC of a domain over DNS, plus the MTA-STS policy file, and a spoofing risk verdict.
@@ -363,8 +363,8 @@ fn analyze_file(
     ) {
         text = Some(ot);
     }
-    // personal values are masked before anything else sees them, as on import
-    let (meta, text) = foca_analysis::pii::sanitize(&raw, text.as_deref());
+    // personal data summary, as on import
+    let meta = foca_analysis::pii::annotate(&raw, text.as_deref());
     let grade = foca_meta::grade_document(&meta);
     let doc = foca_core::Document {
         id: 1,
@@ -397,10 +397,8 @@ fn analyze_file(
     let findings: Vec<Value> = an
         .findings
         .iter()
-        .enumerate()
-        .map(|(i, f)| {
+        .map(|f| {
             let ev = crate::dto::protect_evidence(&f.evidence, &values);
-            let (ev, _) = crate::dto::mask_evidence(&ev, i as u64 + 1);
             json!({ "rule": f.provenance.rule, "title": f.title, "sev": f.sev,
                 "category": f.category, "description": f.description,
                 "recommendation": f.recommendation, "evidence": ev })
@@ -410,7 +408,7 @@ fn analyze_file(
         .secrets
         .iter()
         .map(|s| {
-            json!({ "type": s.kind, "mask": s.value.masked(), "where": s.location,
+            json!({ "type": s.kind, "value": s.value.expose(), "where": s.location,
             "sev": s.sev, "rule": s.rule })
         })
         .collect();
