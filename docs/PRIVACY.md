@@ -23,8 +23,8 @@ data the app handles, where it goes and what stays on your device. It applies to
 - **Settings and keys**: settings are stored in the app's private storage. API keys, bot tokens
   and webhook URLs are encrypted with the Android Keystore and never written to settings files,
   exports or logs.
-- **Logs**: the debug log and the request journal stay on the device. They leave it only when you
-  share them yourself (Settings > About > Report a problem creates a ZIP in `Download/FOCA-rs`).
+- **Logs**: the debug log and the request journal stay on the device, with personal values and
+  secrets masked. They leave it only when you share them yourself (Settings > About > Report a problem creates a ZIP in `Download/FOCA-rs`).
 
 You can delete any project in the app. Uninstalling the app removes all of its private data.
 
@@ -58,8 +58,11 @@ not include ML Kit.
 ## Personal data of third parties
 
 Documents you analyse can contain names, e-mail addresses, phone numbers and identifiers of other
-people. The app processes them only on your device and masks identifiers in the interface and
-reports. You are responsible for having a lawful basis for the checks you run and for handling
+people. The app processes them only on your device. The values are shown in full in the app and
+stored in the project on the device; logs, crash reports and the Debug log export mask them,
+reports and exports contain them unless you turn on "Mask personal data and secrets" in the
+report builder, and the AI summary masks them before sending unless you turn that filter off in
+Settings > AI. You are responsible for having a lawful basis for the checks you run and for handling
 the results according to the data protection laws that apply to you.
 
 ## Children

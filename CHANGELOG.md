@@ -29,6 +29,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - In-app update from GitHub Releases in both builds (Settings → Updates, also under About): manual check and an optional daily check (Wi-Fi only by default, can be turned off), beta channel toggle, release notes, size and date, download with resume and a progress notification.
 - Updates install only after three checks: `SHA256SUMS.txt` carries a valid Ed25519 signature of the app's key (domain-separated from signature bundles), the APK matches its SHA-256, and Android confirms the same signing certificate, package name and a higher versionCode. A release that migrates the project database shows a warning to export projects first (`<!-- foca:schema N -->` in the release notes).
 - `scripts/sign-release.sh` writes and verifies `SHA256SUMS.txt` and `SHA256SUMS.txt.sig` for release APKs.
+- **Reports and exports**: one switch, "Mask personal data and secrets" (off by default), masks phones, IBAN, tax numbers, cards, passports, e-mails, names and secrets in every format and in the preview.
+
+### Changed
+
+- **Full values everywhere in the app**: phones, IBAN, RNOKPP, cards, passports, e-mails, secrets, link tokens, rule matches and artifact credentials are stored in the project and shown in full in lists, cards, findings, document search and previews. The eye toggles and fingerprint prompts for document secrets are gone; copy buttons stay. Logs, crash reports, the request journal and the Debug log export stay masked; the AI summary masks the values before sending while its filter is on (Settings > AI).
+- Projects analysed by an earlier version hold masks: the update banner offers "Re-analyse documents", which restores the full values from the downloaded files. The report option replaces the old three-way secrets choice; the export switches for secrets and PII are merged into it.
 
 ### Fixed
 - **Site technologies**: CVE badges on a technology no longer sit in a grey system button box; the EPSS badge matches the others.

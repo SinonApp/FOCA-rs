@@ -44,7 +44,7 @@ FOCA-rs is an Android app for OSINT and document metadata reconnaissance. You gi
 - Project data stays on the device. Nothing is uploaded unless you configure it (API sources, alerts, or the optional cloud AI summary, which shows a redaction preview first).
 - API keys are kept in the Android Keystore. App lock with PIN or fingerprint.
 - Encrypted project export (`.foca.enc`).
-- Personal data found in documents is masked before it is stored.
+- Personal data and secrets found in documents are shown in full in the app; logs mask them and reports can mask them on request.
 
 ## Screenshots
 

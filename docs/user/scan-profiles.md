@@ -92,7 +92,7 @@ Available in the launch wizard (`MODS` in `ui/screens/launch.js`):
 | 1 | `search` | Search | Parallel URL & subdomain collection across enabled sources (shared dork queue with CAPTCHA failover) |
 | 2 | `download` | Download | Document downloads (or Wayback snapshots in Passive), size/count limits, SHA-256 hashing, deduplication |
 | 3 | `meta` | Metadata extraction | `foca-meta` parsing (plus optional on-device ML Kit OCR in `play` builds when enabled) |
-| 4 | `analysis` | Analysis | People, e-mail patterns, workstations, software/EOL/KEV+CPE ranges, secrets, masked PII, findings, attack paths, risk score |
+| 4 | `analysis` | Analysis | People, e-mail patterns, workstations, software/EOL/KEV+CPE ranges, secrets, PII, findings, attack paths, risk score |
 | 5 | `network` | Network & DNS | DNS summary, CT subdomains, direct IP/CIDR seeding, RDAP, InternetDB, TCP liveness, AXFR, SaaS/M365, mail policies, CDN, CT history, brute-force/permutations/PTR/NSEC, TLS inspection, host roles |
 | 6 | `ports` | Ports | TCP connect scan + active TLS audit (legacy protocols, STARTTLS, direct-IP without SNI): Full only |
 | 7 | `recon` | Site recon | Technologies, favicon hash, JS endpoints/secrets, web audit, robots/sitemap/security.txt, cloud buckets, grep.app, optional WebView screenshots (`pHash`); Full adds ports `8080/8443/3000/9000/5601/9200` |

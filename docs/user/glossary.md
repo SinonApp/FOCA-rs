@@ -48,16 +48,16 @@ Core security, OSINT, and FOCA-rs terminology: synchronized with the in-app offl
 | **Passive mode** | Zero requests sent to target hosts: strictly queries third-party open sources and web archives ([ADR-0009](../adr/0009-passive-never-touches-target.md)). |
 | **Path fuzzing** | Probing common URL paths (backups, `.env`, `.git`, listings) from a wordlist: called Forgotten file discovery in the app. |
 | **pHash** | Perceptual hash (64-bit `dHash`/`pHash`) used to cluster visually identical web-service screenshots by Hamming distance. |
-| **PII** | Personally Identifiable Information (RNOKPP, IBAN, payment cards, passports, phones). Always masked before storage in FOCA-rs. |
+| **PII** | Personally Identifiable Information (RNOKPP, IBAN, payment cards, passports, phones). Shown in full in the app; masked in logs and, on request, in reports. |
 | **Playbook** | Context-aware, step-by-step remediation plan on a finding card with effort estimates, owner roles, safe commands, and verification checklist. |
 | **Proxy** | Network intermediary forwarding your traffic so targets see the proxy's address instead of yours (e.g., Orbot/Tor or v2rayNG). |
-| **QES (КЕП)** | Qualified Electronic Signature (Ukraine): certificate carries signer's name, title, organization, EDRPOU, and RNOKPP (stored masked). See [Documents](documents.md#forensics-in-the-document-card). |
+| **QES (КЕП)** | Qualified Electronic Signature (Ukraine): certificate carries signer's name, title, organization, EDRPOU, and RNOKPP. See [Documents](documents.md#forensics-in-the-document-card). |
 | **RDAP** | Registration Data Access Protocol: modern JSON successor to WHOIS showing IP netblock and domain ownership. |
-| **RNOKPP (РНОКПП)** | 10-digit Ukrainian Individual Taxpayer Registration Number (ІПН). Always stored masked only. |
+| **RNOKPP (РНОКПП)** | 10-digit Ukrainian Individual Taxpayer Registration Number (ІПН). Shown in full when the document holds it. |
 | **SAN** | Subject Alternative Name: list of hostnames covered by a TLS certificate. Out-of-scope SANs become candidates on `/p/out-of-scope`. |
 | **Sandbox (Plugins)** | Isolated pure-Rust runtime (declarative JSON/TOML or memory/fuel-capped WASM) for FOCA-rs plugins with zero filesystem, raw-socket, or `KeyVault` access. |
 | **Scope** | The authorized set of network targets that may be assessed and exclusions that must never be touched. |
-| **Secret** | Password, API key, token, or webhook discovered inside a document or script. Hidden behind biometric/PIN confirmation. |
+| **Secret** | Password, API key, token, or webhook discovered inside a document or script. Shown in full in the app, masked in logs. |
 | **Severity** | `Critical`, `High`, `Medium`, `Low`, `Info`: indicates remediation urgency. |
 | **Soft 404** | A server returning HTTP `200 OK` with a custom error page for missing URLs; baseline calibration filters these out during fuzzing. |
 | **Software fingerprint** | Identified application name and version extracted from documents, banners, or web headers. |
