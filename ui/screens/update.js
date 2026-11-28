@@ -184,7 +184,7 @@
     load();
     const v = U.view;
     const st = statusLine(v);
-    const s = (v && v.settings) || { auto: true, wifi_only: true, prerelease: true };
+    const s = (v && v.settings) || { auto: true, wifi_only: true, prerelease: true, prompt: true };
     const u = v && v.update;
     const tg = (key, title, sub) =>
       `<div class="row tap st-tr" data-act="upd-set:${key}"><div class="body"><div class="t">${esc(title)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div><div class="tail">${ui.toggle(!!s[key], "upd-set:" + key, `aria-label="${esc(title)}"`)}</div></div>`;
@@ -215,6 +215,7 @@
         ${tg("auto", F.t("update.auto", "Проверять автоматически"), F.t("update.auto_sub", "Раз в сутки при запуске"))}
         ${tg("wifi_only", F.t("update.wifi", "Только по Wi-Fi"), F.t("update.wifi_sub", "Автопроверка не тратит мобильный трафик"))}
         ${tg("prerelease", F.t("update.pre", "Включать бета-версии"), F.t("update.pre_sub", "Пока приложение в бете, новые версии выходят как пре-релизы"))}
+        ${tg("prompt", F.t("update.prompt_set", "Спрашивать при запуске, если есть обновление"), F.t("update.prompt_set_sub", "Один раз для каждой новой версии"))}
       </div>
       <p class="fhint st-hint">${esc(F.t("update.privacy", "Проверка обращается к api.github.com и github.com через ваши настройки сети и прокси. Отправляется только версия приложения в User-Agent."))}</p>`;
   }
@@ -254,7 +255,7 @@
   Object.assign(F.actions, {
     "upd-check": () => check(),
     "upd-set": (key, el) => {
-      if (!["auto", "wifi_only", "prerelease"].includes(key) || !U.view) return;
+      if (!["auto", "wifi_only", "prerelease", "prompt"].includes(key) || !U.view) return;
       const next = !U.view.settings[key];
       U.view.settings = { ...U.view.settings, [key]: next };
       const tgl = el && (el.classList.contains("toggle") ? el : el.querySelector(".toggle"));
@@ -344,26 +345,147 @@
     if (document.visibilityState === "visible" && onUpdateRoute()) perm().then(rerender);
   });
 
+  // Plain text of the first release note lines for the start-up dialog: Markdown markers, links
+  // and images dropped, headings skipped, at most `max` lines. The result is escaped by the caller.
+  function noteLines(md, max = 5) {
+    return String(md || "")
+      .split("\n")
+      .map(l => l.trim())
+      .filter(l => l && !/^#{1,6}\s/.test(l) && !/^!\[[^\]]*\]\([^)]*\)$/.test(l))
+      .map(l =>
+        l
+          .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+          .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+          .replace(/^[-*+]\s+/, "")
+          .replace(/[*_`]+/g, "")
+          .replace(/<[^>]*>/g, "")
+          .trim(),
+      )
+      .filter(Boolean)
+      .slice(0, max);
+  }
+
+  // Start-up dialog for a new release. The version is stored as answered as soon as the dialog
+  // shows, so it appears at most once per version whatever the answer (Later, Settings or a swipe).
+  function prompt(v) {
+    const u = v && v.update;
+    if (!u || !v.prompt) return false;
+    F.api.settings_set({ update: { prompted: u.version } }).catch(() => {});
+    if (v.settings) v.settings.prompted = u.version;
+    v.prompt = false;
+    const lines = noteLines(u.notes);
+    F.sheet({
+      title: F.t("update.prompt_title", { v: u.version }, "Доступна версия {v}"),
+      html: `<div class="upd-prompt" id="upd-prompt">
+          <div class="upd-chips"><span class="pill info">${esc(F.fmt.dmy(u.published_at))}</span><span class="pill">${esc(mb(u.size))}</span>${u.prerelease ? `<span class="pill warn">${esc(F.t("beta.chip", "Бета"))}</span>` : ""}</div>
+          ${lines.length ? `<ul class="upd-plines">${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
+          <p class="fhint">${esc(F.t("update.prompt_hint", "Файл будет проверен по подписи релиза перед установкой."))}</p>
+        </div>`,
+      footer: `<button class="btn" data-act="upd-later">${esc(F.t("update.later", "Позже"))}</button><button class="btn" data-act="upd-prompt-settings">${esc(F.t("update.settings_btn", "Настройки"))}</button><button class="btn primary" data-act="upd-prompt-go">${ic("download")}${esc(F.t("update.update_btn", "Обновить"))}</button>`,
+    });
+    return true;
+  }
+
+  Object.assign(F.actions, {
+    "upd-later": () => F.closeSheet && F.closeSheet(),
+    "upd-prompt-settings": () => {
+      F.closeSheet && F.closeSheet();
+      F.go("/settings/update");
+    },
+    // Into the regular flow: the screen downloads, verifies the signed checksums and installs.
+    "upd-prompt-go": () => {
+      F.closeSheet && F.closeSheet();
+      F.go("/settings/update");
+      F.actions["upd-download"]();
+    },
+  });
+
+  // The app is past onboarding: terms accepted, welcome done, not on the lock screen.
+  const ONBOARDING = ["/welcome", "/terms", "/permissions", "/lock"];
+  function uiReady() {
+    let welcomed = false;
+    try {
+      welcomed = !!localStorage.getItem("foca-welcomed");
+    } catch (e) {}
+    return welcomed && F.cur && !ONBOARDING.includes(F.cur.path) && !(F.isLocked && F.isLocked());
+  }
+  // Runs `fn` once the UI is ready (polls every 2 s; gives up after 10 min).
+  function whenReady(fn) {
+    let n = 0;
+    const tick = () => {
+      if (uiReady()) return fn();
+      if (++n < 300) setTimeout(tick, 2000);
+    };
+    tick();
+  }
+
   // Daily automatic check, once per app start; the core skips it when disabled, on mobile data with
-  // Wi-Fi only, or when the last check is younger than a day.
-  F.updateAutoCheck = () => {
-    if (U.autoDone || !F.api.update_check) return;
+  // Wi-Fi only, or when the last check is younger than a day (the cached answer still comes back).
+  // A new version opens the start-up dialog once per version (setting "Ask on start").
+  F.updateAutoCheck = force => {
+    if ((U.autoDone && !force) || !F.api.update_check) return Promise.resolve(null);
     U.autoDone = true;
-    meta()
+    return meta()
       .then(() => (selfUpdate() ? F.api.update_check({ flavor: flavor(), auto: true }) : null))
       .then(v => {
-        if (!v) return;
+        if (!v) return null;
         U.view = v;
-        if (v.outcome === "available" && v.update)
+        if (prompt(v)) return v;
+        const ask = !v.settings || v.settings.prompt !== false;
+        if (!ask && v.outcome === "available" && v.update)
           F.snack(F.t("update.available", { v: v.update.version }, "Доступна версия {v}"), {
             label: F.t("update.open", "Открыть"),
             action: () => F.go("/settings/update"),
             ms: 10000,
           });
+        return v;
       })
-      .catch(() => {});
+      .catch(() => null);
   };
-  if (F.isTauri) setTimeout(() => F.updateAutoCheck(), 15000);
+
+  // Automatic signature database check at start and when the app returns to the foreground; the
+  // core decides whether one is due (settings.signatures: off/daily/weekly, Wi-Fi only, not
+  // during a scan, backoff after failures). A verified newer bundle is installed silently with a
+  // short notice.
+  let sigLast = 0;
+  F.sigAutoCheck = force => {
+    if (!F.api.signatures_update || (!force && Date.now() - sigLast < 10 * 60 * 1000))
+      return Promise.resolve(null);
+    sigLast = Date.now();
+    return F.api
+      .signatures_update({ auto: true })
+      .then(d => {
+        if (!d) return null;
+        if (F.state.sigBundle) F.state.sigBundle.data = d;
+        if (d.outcome === "installed")
+          F.snack(
+            F.t(
+              "settings.sig_auto_installed",
+              { v: d.version || "" },
+              "База сигнатур обновлена до версии {v}",
+            ),
+          );
+        if (F.cur && F.cur.path === "/settings/signatures" && F.render) F.render(true);
+        return d;
+      })
+      .catch(() => null);
+  };
+
+  // Under Tauri the checks start 15 s after launch; the browser demo shows the start-up dialog once
+  // a few seconds in (never in automated runs, which call F.updateAutoCheck themselves).
+  const automated = typeof navigator !== "undefined" && navigator.webdriver;
+  if (F.isTauri || !automated)
+    setTimeout(
+      () =>
+        whenReady(() => {
+          F.updateAutoCheck();
+          F.sigAutoCheck();
+        }),
+      F.isTauri ? 15000 : 3000,
+    );
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && sigLast && uiReady()) F.sigAutoCheck();
+  });
 
   F.route("/settings/update", {
     title: () => F.t("update.title", "Обновления"),

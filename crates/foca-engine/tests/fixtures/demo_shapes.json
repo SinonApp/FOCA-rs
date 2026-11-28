@@ -17069,6 +17069,11 @@
      ],
      "items": null
     },
+    "ignored_bundle": {
+     "t": [
+      "null"
+     ]
+    },
     "feed_url": {
      "t": [
       "string"
@@ -17108,6 +17113,34 @@
       "error_code": {
        "t": [
         "null"
+       ]
+      }
+     }
+    },
+    "auto": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "mode": {
+       "t": [
+        "string"
+       ]
+      },
+      "wifi_only": {
+       "t": [
+        "bool"
+       ]
+      },
+      "checked_at": {
+       "t": [
+        "null",
+        "number"
+       ]
+      },
+      "next_at": {
+       "t": [
+        "number"
        ]
       }
      }
@@ -17399,6 +17432,11 @@
      ],
      "items": null
     },
+    "ignored_bundle": {
+     "t": [
+      "null"
+     ]
+    },
     "feed_url": {
      "t": [
       "string"
@@ -17440,6 +17478,38 @@
        ]
       }
      }
+    },
+    "auto": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "mode": {
+       "t": [
+        "string"
+       ]
+      },
+      "wifi_only": {
+       "t": [
+        "bool"
+       ]
+      },
+      "checked_at": {
+       "t": [
+        "number"
+       ]
+      },
+      "next_at": {
+       "t": [
+        "number"
+       ]
+      }
+     }
+    },
+    "outcome": {
+     "t": [
+      "string"
+     ]
     }
    }
   },
@@ -17728,6 +17798,11 @@
      ],
      "items": null
     },
+    "ignored_bundle": {
+     "t": [
+      "null"
+     ]
+    },
     "feed_url": {
      "t": [
       "string"
@@ -17769,6 +17844,33 @@
        ]
       }
      }
+    },
+    "auto": {
+     "t": [
+      "object"
+     ],
+     "keys": {
+      "mode": {
+       "t": [
+        "string"
+       ]
+      },
+      "wifi_only": {
+       "t": [
+        "bool"
+       ]
+      },
+      "checked_at": {
+       "t": [
+        "number"
+       ]
+      },
+      "next_at": {
+       "t": [
+        "number"
+       ]
+      }
+     }
     }
    }
   },
@@ -17806,6 +17908,16 @@
        "t": [
         "bool"
        ]
+      },
+      "prompt": {
+       "t": [
+        "bool"
+       ]
+      },
+      "prompted": {
+       "t": [
+        "string"
+       ]
       }
      }
     },
@@ -17840,6 +17952,11 @@
        ]
       }
      }
+    },
+    "prompt": {
+     "t": [
+      "bool"
+     ]
     },
     "outcome": {
      "t": [
@@ -17882,6 +17999,16 @@
        "t": [
         "bool"
        ]
+      },
+      "prompt": {
+       "t": [
+        "bool"
+       ]
+      },
+      "prompted": {
+       "t": [
+        "string"
+       ]
       }
      }
     },
@@ -17916,6 +18043,11 @@
        ]
       }
      }
+    },
+    "prompt": {
+     "t": [
+      "bool"
+     ]
     },
     "outcome": {
      "t": [

@@ -6682,12 +6682,19 @@
   }
   function demoUpdSettings() {
     const u = load().settings.update || {};
-    return { auto: u.auto !== false, wifi_only: u.wifi_only !== false, prerelease: u.prerelease !== false };
+    return {
+      auto: u.auto !== false,
+      wifi_only: u.wifi_only !== false,
+      prerelease: u.prerelease !== false,
+      prompt: u.prompt !== false,
+      prompted: u.prompted || "",
+    };
   }
   function demoUpdView(flavor, outcome) {
     const u = load()._upd || {};
     const avail = u.state === "available" || u.state === "verify_failed";
     const asset = `FOCA-rs-${DEMO_UPD_VERSION}-${flavor === "play" ? "play" : "foss"}-arm64.apk`;
+    const s = demoUpdSettings();
     return {
       current: "2.0.0-beta.4.1",
       flavor,
@@ -6710,6 +6717,8 @@
           }
         : null,
       download: DEMO_UPD.progress || { phase: "idle" },
+      // Start-up dialog: same rule as the core (selfupdate::should_prompt).
+      prompt: avail && s.prompt && s.auto && s.prompted !== DEMO_UPD_VERSION,
       outcome,
     };
   }
@@ -11513,8 +11522,16 @@
     },
     // No network in the demo and nothing is published at the official feed yet: the check honestly
     // ends with `no_update` (like the core on HTTP 404) and is recorded as the last check.
-    signatures_update: ({ url } = {}) => {
+    signatures_update: ({ url, auto } = {}) => {
       const db = load();
+      const now = Math.floor(Date.now() / 1000);
+      const sa = demoSigAuto();
+      const sched = (db._sigAuto = db._sigAuto || { checked_epoch: 0, retry_at: 0 });
+      if (auto) {
+        const next = demoSigNext(sa, sched);
+        const skipped = next == null ? "disabled" : now < next ? "not_due" : null;
+        if (skipped) return Object.assign(demoSigStatus(), { outcome: "skipped", skipped });
+      }
       const d = new Date();
       const at = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
       db._sigCheck = {
@@ -11525,8 +11542,10 @@
         error: null,
         error_code: null,
       };
+      sched.checked_epoch = now;
+      sched.retry_at = 0;
       save();
-      return demoSigStatus();
+      return Object.assign(demoSigStatus(), { outcome: "no_update" });
     },
     // In-app update (docs/API.md "In-app update"). No network in the demo: the check answers from a
     // canned state; QA scenarios pick it with `demo_state` (up_to_date | available | rate_limited |
@@ -11539,6 +11558,9 @@
         u.state = demo_state;
       const s = demoUpdSettings();
       if (auto && !s.auto) return Object.assign(demoUpdView(flavor, "skipped"), { skipped: "disabled" });
+      // The first automatic check of a demo finds the canned release, so the start-up dialog shows
+      // once (until it is answered).
+      if (auto && !u.state) u.state = "available";
       u.checked_at = demoIso();
       const state = u.state || "up_to_date";
       if (state === "rate_limited") {
@@ -12893,6 +12915,16 @@
     ["privacy", "2297-VI"],
     ["kszi", "НД ТЗІ 2.5-004-99, 3.7-003-05", true],
   ];
+  // Automatic signature check settings (settings.signatures) and schedule, as the core reports them.
+  function demoSigAuto() {
+    const a = load().settings.signatures || {};
+    return { mode: ["off", "weekly"].includes(a.auto) ? a.auto : "daily", wifi_only: a.wifi_only !== false };
+  }
+  function demoSigNext(sa, sched) {
+    if (sa.mode === "off") return null;
+    if (sched.retry_at) return sched.retry_at;
+    return sched.checked_epoch ? sched.checked_epoch + (sa.mode === "weekly" ? 7 : 1) * 86400 : 0;
+  }
   function demoSigStatus() {
     const db = load();
     const cur = db._sigBundle || null;
@@ -12946,8 +12978,20 @@
       })),
       nvd: clone(DEMO_SIG_NVD),
       skipped_tables: [],
+      ignored_bundle: null,
       feed_url: DEMO_SIG_FEED,
       last_check: db._sigCheck ? clone(db._sigCheck) : null,
+      auto: (() => {
+        const sa = demoSigAuto();
+        const sched = db._sigAuto || { checked_epoch: 0, retry_at: 0 };
+        const next = demoSigNext(sa, sched);
+        return {
+          mode: sa.mode,
+          wifi_only: sa.wifi_only,
+          checked_at: sched.checked_epoch || null,
+          next_at: next == null ? null : Math.max(next, Math.floor(Date.now() / 1000)),
+        };
+      })(),
     };
   }
   function demoSha256(str) {

@@ -791,7 +791,8 @@
     licenses_get: () => run("licenses_get", {}),
     signatures_status: () => run("signatures_status", {}),
     signatures_import: bundle_json => run("signatures_import", { bundle_json }),
-    signatures_update: url => run("signatures_update", url ? { url } : {}),
+    // `signatures_update(url)` checks one feed; `signatures_update({ auto: true })` is the scheduled check.
+    signatures_update: o => run("signatures_update", o && typeof o === "object" ? o : o ? { url: o } : {}),
     signatures_rollback: () => run("signatures_rollback", {}),
     // In-app update (progress arrives as `update` events via F.on("scan")).
     update_status: flavor => run("update_status", { flavor }),

@@ -876,3 +876,22 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* Start-up update dialog and the automatic signature update card. */
+.upd-prompt .upd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.upd-plines {
+  margin: 0 0 10px;
+  padding-left: 1.2em;
+}
+.upd-plines li {
+  margin: 2px 0;
+  overflow-wrap: anywhere;
+}
+.st-sigauto .seg {
+  margin-bottom: 8px;
+}

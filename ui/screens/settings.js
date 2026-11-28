@@ -2977,6 +2977,42 @@
             : F.t("settings.sig_out_failed", { e: F.coreMsg(c.error || "", c.error_msg) }, "ошибка: {e}");
     return `<span class="st-nw">${esc(at)}&nbsp;·</span> ${esc(what)}`;
   }
+  // Automatic updates of the database: how often (off/daily/weekly), Wi-Fi only, next check.
+  function sigAutoBlock(d) {
+    const a = d.auto || { mode: "daily", wifi_only: true, next_at: null };
+    const modes = [
+      ["off", F.t("settings.sig_auto_off", "Выкл.")],
+      ["daily", F.t("settings.sig_auto_daily", "Ежедневно")],
+      ["weekly", F.t("settings.sig_auto_weekly", "Еженедельно")],
+    ];
+    const label = F.t("settings.sig_auto_h", "Автообновление базы");
+    const next =
+      a.mode === "off" || a.next_at == null
+        ? F.t("settings.sig_next_off", "автопроверка выключена")
+        : (t => {
+            const p = F.fmt.pad;
+            return F.fmt.dmyhm(
+              `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}T${p(t.getHours())}:${p(t.getMinutes())}:00`,
+            );
+          })(new Date(a.next_at * 1000)) || "-";
+    const wifiT = F.t("settings.sig_auto_wifi", "Только по Wi-Fi");
+    return `${ui.secH(label)}
+      <div class="card pad st-sigauto" id="st-sigauto">
+        <div class="seg st-seg" role="radiogroup" aria-label="${esc(label)}">${modes
+          .map(
+            ([v, l]) =>
+              `<button class="${a.mode === v ? "on" : ""}" role="radio" aria-checked="${a.mode === v}" data-act="st-sigauto:${v}">${esc(l)}</button>`,
+          )
+          .join("")}</div>
+        <div class="kv st-sigkv">
+          <div class="kvr"><div class="k">${esc(F.t("settings.sig_source", "Источник"))}</div><div class="v">${esc(d.source === "bundle" ? F.t("settings.signed_bundle", "Подписанный пакет") : F.t("settings.builtin_db", "Встроенная база"))}</div></div>
+          <div class="kvr"><div class="k">${esc(F.t("settings.sig_next", "Следующая проверка"))}</div><div class="v" id="st-signext">${esc(next)}</div></div>
+        </div>
+      </div>
+      <div class="list">
+        <div class="row tap st-tr" data-act="st-sigwifi"><div class="body"><div class="t">${esc(wifiT)}</div><div class="s">${esc(F.t("settings.sig_auto_wifi_sub", "Не тратит мобильный трафик; не во время скана; через ваши настройки сети и прокси"))}</div></div><div class="tail">${ui.toggle(a.wifi_only !== false, "st-sigwifi", `aria-label="${esc(wifiT)}"`)}</div></div>
+      </div>`;
+  }
   function renderSig() {
     loadAboutMeta();
     const d = sigState.data;
@@ -3156,6 +3192,17 @@
               )}</div></div>`
             : ""
         }
+        ${
+          d.ignored_bundle
+            ? `<div class="banner info" id="st-sigignored">${ic("info")}<div>${esc(
+                F.t(
+                  "settings.sig_ignored",
+                  { v: d.ignored_bundle },
+                  "Загруженный пакет {v} старее базы, встроенной в эту версию приложения, и не используется.",
+                ),
+              )}</div></div>`
+            : ""
+        }
         <div class="kv st-sigkv">
           <div class="kvr"><div class="k">${esc(F.t("settings.sig_last_check", "Последняя проверка"))}</div><div class="v" id="st-siglast">${sigLastCheck(d.last_check)}</div></div>
           <div class="kvr"><div class="k">SHA-256</div><div class="v mono">${esc(shortHex(d.sha256))}</div></div>
@@ -3167,6 +3214,7 @@
           ${d.can_rollback ? `<button class="btn" data-act="st-sigrb" ${sigState.busy ? "disabled" : ""}>${ic("history")}${esc(F.t("signatures.rollback", "Откатить"))}</button>` : ""}
         </div>
       </div>
+      ${sigAutoBlock(d)}
       ${ui.secH(F.t("settings.db_contents", "Содержимое базы"), rows.length)}
       <div class="list st-siglist">${rows.map(([i, t, sub]) => ui.row({ lead: ui.leadIcon(i), title: t, sub })).join("")}</div>
 
@@ -3225,6 +3273,27 @@
   Object.assign(F.actions, {
     "st-sigref": () => {
       loadSigStatus(true);
+    },
+    "st-sigauto": mode => {
+      if (!["off", "daily", "weekly"].includes(mode) || !F.api.settings_set) return;
+      if (sigState.data) sigState.data.auto = { ...(sigState.data.auto || {}), mode };
+      F.render(true);
+      F.api
+        .settings_set({ signatures: { auto: mode } })
+        .then(() => loadSigStatus(true))
+        .catch(() => {});
+    },
+    "st-sigwifi": (_, el) => {
+      if (!sigState.data || !F.api.settings_set) return;
+      const a = sigState.data.auto || {};
+      const next = a.wifi_only === false;
+      sigState.data.auto = { ...a, wifi_only: next };
+      const tgl = el && (el.classList.contains("toggle") ? el : el.querySelector(".toggle"));
+      if (tgl) F.actions.toggle(null, tgl);
+      F.api
+        .settings_set({ signatures: { wifi_only: next } })
+        .then(() => loadSigStatus(true))
+        .catch(() => {});
     },
     "st-sigupd": () => {
       if (!F.api || !F.api.signatures_update || sigState.busy) return;
