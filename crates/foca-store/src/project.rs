@@ -970,10 +970,12 @@ impl ProjectDb {
     }
 
     /// Stores an analysis result: entities are replaced, findings are upserted with their triage
-    /// preserved. Findings that disappear during a scan (`scan_id`) become `fixed` with `fixed_scan`.
+    /// preserved. Findings that disappear during a scan (`scan_id`) become `fixed` with `fixed_scan`;
+    /// outside a scan they are retired (hidden, triage kept). A retired finding never becomes fixed.
     pub fn apply_analysis(&self, a: &Analysis, scan_id: Option<&str>) -> Result<()> {
         let now = self.now();
         let tx = self.conn.unchecked_transaction()?;
+        let was_live = crate::revisions::live_finding_ids(&tx)?;
         let v = serde_json::to_value(a)?;
         for k in ENTITY_KINDS {
             if let Some(x) = v.get(*k) {
@@ -1090,7 +1092,8 @@ impl ProjectDb {
             // A document deleted by the user is not the same as an issue fixed by the client: a finding
             // backed by a deleted document must not become fixed.
             let by_deleted = self.findings_of_deleted_docs()?;
-            for id in a.resolved.iter().filter(|id| !by_deleted.contains(id)) {
+            let gone = a.resolved.iter().filter(|id| was_live.contains(id));
+            for id in gone.filter(|id| !by_deleted.contains(id)) {
                 tx.execute(
                     "UPDATE findings SET status = 'fixed', fixed_scan = ?2, updated_at = ?3
                      WHERE id = ?1 AND status NOT IN ('false', 'fixed')",
@@ -1187,12 +1190,15 @@ impl ProjectDb {
         Ok(n)
     }
 
-    /// Returns all findings with triage state, ordered by severity. Findings backed only by deleted documents are hidden.
+    /// Returns all findings with triage state, ordered by severity. Findings backed only by deleted
+    /// documents and retired ones (`revisions::RETIRED`) are hidden.
     pub fn findings(&self) -> Result<Vec<Finding>> {
         let hidden = self.findings_of_deleted_docs()?;
-        let mut st = self
-            .conn
-            .prepare(&format!("SELECT {} FROM findings", Self::FINDING_COLS))?;
+        let mut st = self.conn.prepare(&format!(
+            "SELECT {} FROM findings WHERE NOT ({})",
+            Self::FINDING_COLS,
+            crate::revisions::RETIRED
+        ))?;
         let rows = st.query_map([], Self::row_finding)?;
         let mut out = Vec::new();
         for r in rows {

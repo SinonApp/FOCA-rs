@@ -106,7 +106,7 @@ New versions read more from the same files (better PDF text, people and contacts
 2. Tap Start. Progress shows the current file; Stop ends the run after the current file, and the next start continues from there (also after the app was closed or killed).
 3. The result compares before and after: documents with text, people, e-mails, phones and findings by severity, with a link to new findings.
 
-Finding statuses, notes, deleted documents and document ids stay. Findings the new analysis no longer produces stay in the list with their status. A running scan has priority: re-analysis cannot start during a scan and pauses when one starts.
+Finding statuses, notes, deleted documents and document ids stay. Findings the new analysis no longer produces leave the findings list, the counts and reports (a later scan does not list them as fixed); their status and notes come back if the same finding appears again. A running scan has priority: re-analysis cannot start during a scan and pauses when one starts.
 
 After an update the overview shows a banner when documents were analysed by an older version ("The new version extracts more data from documents"). Not now hides it for this project until the next parser change.
 

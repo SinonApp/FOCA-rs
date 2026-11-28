@@ -31,6 +31,140 @@ fn revs(dir: &std::path::Path, project: &str) -> Vec<(i64, Option<i64>)> {
         .collect()
 }
 
+/// Title prefix of the bad redaction finding (`doc.bad_redaction`).
+const BAD_REDACTION: &str = "Плохое замазывание";
+
+fn finding_ids(s: &Value) -> Vec<Value> {
+    s["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| f["id"].clone())
+        .collect()
+}
+
+async fn report_md(e: &Env, id: &str) -> String {
+    let rep = e
+        .call(
+            "report_build",
+            json!({ "project": id, "opts": { "fmt": "md", "lang": "RU", "min_sev": "all",
+                "confirmed": false } }),
+        )
+        .await;
+    std::fs::read_to_string(rep["path"].as_str().unwrap()).unwrap()
+}
+
+/// A finding an older parser produced and the current one does not (a bad redaction stored by an
+/// older version) leaves the project after a re-analysis: the list, the counts, the summary and
+/// the report. Findings that still exist keep their triage, and a later scan neither brings the
+/// retired finding back nor marks it fixed.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn reextract_retires_findings_the_current_parsers_no_longer_produce() {
+    let e = env(0).await;
+    let id = e.project("example.test").await;
+    let files: Vec<String> = ["pdf/report.pdf", "ooxml/contract.docx"]
+        .iter()
+        .map(|f| corpus_dir().join(f).to_string_lossy().into_owned())
+        .collect();
+    e.call("doc_import", json!({ "project": id, "paths": files }))
+        .await;
+    let c = sql(e.dir.path(), &id);
+    let pdf: i64 = c
+        .query_row(
+            "SELECT id FROM documents WHERE name = 'report.pdf'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    // What an older parser stored for the PDF: a fragment under a filled rectangle.
+    let old = json!([{ "page": 1, "text": "Total 42", "fill": "black", "rect": [10.0, 10.0, 90.0, 20.0] }]);
+    c.execute(
+        "UPDATE documents SET metadata_json = json_set(metadata_json, '$.bad_redactions', json(?2))
+         WHERE id = ?1",
+        rusqlite::params![pdf, old.to_string()],
+    )
+    .unwrap();
+    drop(c);
+    age_documents(e.dir.path(), &id);
+    // The older version analysed that data (a delete and a restore run the analysis).
+    let other = if pdf == 1 { 2 } else { 1 };
+    e.call("doc_delete", json!({ "project": id, "ids": [other] }))
+        .await;
+    e.call("doc_restore", json!({ "project": id, "ids": [other] }))
+        .await;
+    let s = e.snap(&id).await;
+    let all = s["findings"].as_array().unwrap();
+    let stale = all
+        .iter()
+        .find(|f| f["title"].as_str().unwrap_or("").starts_with(BAD_REDACTION))
+        .unwrap_or_else(|| panic!("the old data gives the finding: {all:?}"))["id"]
+        .clone();
+    let kept = all
+        .iter()
+        .find(|f| f["id"] != stale)
+        .expect("another finding")["id"]
+        .clone();
+    e.call(
+        "finding_update",
+        json!({ "project": id, "id": kept, "patch": { "status": "confirmed",
+            "notes": [{ "text": "seen", "who": "qa", "time": "2026-11-20T10:00:00Z" }] } }),
+    )
+    .await;
+    assert!(
+        report_md(&e, &id).await.contains(BAD_REDACTION),
+        "the old report has it"
+    );
+
+    let r = e
+        .call(
+            "project_reextract",
+            json!({ "project": id, "mode": "stored", "wait": true }),
+        )
+        .await;
+    let sm = &r["summary"];
+    assert_eq!(sm["reparsed"], 2, "{sm}");
+    assert!(sm["removed_findings"].as_u64().unwrap() >= 1, "{sm}");
+
+    let s2 = e.snap(&id).await;
+    let ids = finding_ids(&s2);
+    assert!(
+        !ids.contains(&stale),
+        "the finding the current parser does not produce is gone: {:?}",
+        s2["findings"]
+    );
+    let f = s2["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|f| f["id"] == kept)
+        .expect("a finding that still exists stays");
+    assert_eq!(f["status"], "confirmed");
+    assert_eq!(f["notes"][0]["text"], "seen");
+    // the summary counts what the lists show
+    let live = s2["findings"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|f| f["status"] != "false")
+        .count();
+    assert_eq!(sm["after"]["findings_total"], live, "{sm}");
+    // the report has no retired finding
+    let md = report_md(&e, &id).await;
+    assert!(
+        !md.contains(BAD_REDACTION),
+        "report keeps a retired finding"
+    );
+
+    // A scan afterwards neither brings it back nor lists it as fixed.
+    e.passive_scan(&id).await;
+    let s3 = e.snap(&id).await;
+    assert!(
+        !finding_ids(&s3).contains(&stale),
+        "a retired finding stays retired after a scan: {:?}",
+        s3["findings"]
+    );
+}
+
 async fn wait_done(e: &Env, project: &str) -> Value {
     for _ in 0..2000 {
         if let Some(ev) = e

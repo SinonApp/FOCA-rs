@@ -785,6 +785,9 @@ Finding  { id, title, sev: "crit"|"high"|"warn"|"low"|"info", status, host /* or
            // cwe_top25 = the cwe ids that are in the 2025 CWE Top 25
            // post-rescan status: vanished finding → "fixed" (+fixed_scan), EXCEPT findings from user-deleted
            // documents: those are hidden (not "fixed") and reappear if the document is restored;
+           // outside a scan (re-analysis of documents, scope or rule change, scan_delete) a finding the analysis
+           // no longer produces is retired: hidden from project_snapshot, counts and reports, never marked
+           // "fixed" by a later scan; its row and triage stay and come back if the same finding id is produced again;
            // rescan never resets "fixed": archived copies do not alter status, while reappearance on a live site
            // (non-Wayback/CC/Arquivo doc or network finding) keeps the user's status and adds the `reopened` tag
            // engine tags: "out_of_scope": finding about a host outside the project scope (e.g. third-party data on a
@@ -912,7 +915,7 @@ The core emits `app.emit("scan://event", payload)`; `api.js` listens via `window
 | `alert` | `project, scan_id, count, dropped, alerts, deliveries` | event-driven monitoring alerts (host/port/doc diffs, TLS/CNAME/risk trend) and Telegram/Webhook delivery outcomes |
 | `stopped` | `scan_id, project, reason` | navigates to the stop-reason screen |
 | `queue` | `QueueView` (see `queue_list`) | scan queue state: active project, `index`/`total`, `percent`, pause flag and reason |
-| `reextract` | `project, stage, done, total, name`, `summary` on `done`, `error, code` on `error` | re-analysis of stored documents (`project_reextract`): `stage` = `start` \| `file` (parsing `name`) \| `download` (fetching `name`) \| `analysis` \| `done` \| `cancelled` \| `yielded` (a scan started) \| `error`. `summary`: `{ mode, ids, started, finished, format_rev, version, total, processed, reparsed, downloaded, no_file, failed, net_blocked, before, after, new_findings, new_ids, removed_findings, new_events }`, where `before`/`after` = `{ docs, text, people, emails, phones, findings: { crit, high, warn, low, info }, findings_total }` over live findings (present in the latest analysis, not false positives); `new_ids` are UI finding ids; `removed_findings` counts findings the new analysis no longer produces (they keep their row and triage). After `done` a `db` event with `kind: "docs"` follows |
+| `reextract` | `project, stage, done, total, name`, `summary` on `done`, `error, code` on `error` | re-analysis of stored documents (`project_reextract`): `stage` = `start` \| `file` (parsing `name`) \| `download` (fetching `name`) \| `analysis` \| `done` \| `cancelled` \| `yielded` (a scan started) \| `error`. `summary`: `{ mode, ids, started, finished, format_rev, version, total, processed, reparsed, downloaded, no_file, failed, net_blocked, before, after, new_findings, new_ids, removed_findings, new_events }`, where `before`/`after` = `{ docs, text, people, emails, phones, findings: { crit, high, warn, low, info }, findings_total }` over live findings (present in the latest analysis, not false positives); `new_ids` are UI finding ids; `removed_findings` counts findings the new analysis no longer produces (retired: gone from the snapshot, counts and reports; their row and triage stay). After `done` a `db` event with `kind: "docs"` follows |
 
 The demo backend populates a project progressively across stages (merging without wiping): Download adds new unparsed
 documents; Metadata Extraction adds metadata, people, software, paths, printers, PCs, GPS, and secrets; Analysis adds

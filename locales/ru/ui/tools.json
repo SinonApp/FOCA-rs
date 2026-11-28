@@ -626,7 +626,7 @@
   "reextract.d_people": "Люди",
   "reextract.d_emails": "E-mail",
   "reextract.d_phones": "Телефоны",
-  "reextract.findings_note": "Новых находок: {added}. Больше не подтверждаются: {removed} (остаются в списке со своим статусом).",
+  "reextract.findings_note": "Новых находок: {added}. Больше не подтверждаются: {removed} (убраны из списка, счётчиков и отчётов; статус и заметки вернутся, если находка появится снова).",
   "reextract.cancel": "Остановить",
   "reextract.open_new": "Новые находки: {n}",
   "reextract.open_findings": "Открыть находки",
