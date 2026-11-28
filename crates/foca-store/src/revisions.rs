@@ -1,10 +1,27 @@
 //! Extraction outcome of stored documents (parse errors, extraction revisions) and the helpers
 //! of document re-analysis (`project_reextract` in the engine).
 
-use rusqlite::params;
+use std::collections::BTreeSet;
+
+use rusqlite::{params, Connection};
 
 use crate::project::{DocErrorKind, ProjectDb, EXTRACTOR};
 use crate::Result;
+
+/// SQL condition of a retired finding: the latest analysis no longer produces it and no scan
+/// marked it fixed (a re-analysis with newer parsers, a scope or rule change, a deleted scan).
+/// Retired findings leave every live list, count and report; their row and triage stay, so the
+/// same finding id produced again comes back with its status and notes.
+pub(crate) const RETIRED: &str = "present = 0 AND status <> 'fixed'";
+
+/// Ids of the findings the latest stored analysis produced.
+pub(crate) fn live_finding_ids(c: &Connection) -> Result<BTreeSet<u64>> {
+    let mut st = c.prepare("SELECT id FROM findings WHERE present = 1")?;
+    let v = st
+        .query_map([], |r| r.get::<_, i64>(0))?
+        .collect::<rusqlite::Result<Vec<_>>>()?;
+    Ok(v.into_iter().map(|i| i as u64).collect())
+}
 
 /// Extraction revision of a stored document (see `foca_core::extractor`).
 #[derive(Debug, Clone, PartialEq, Eq)]

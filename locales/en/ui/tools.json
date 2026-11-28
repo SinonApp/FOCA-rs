@@ -626,7 +626,7 @@
   "reextract.d_people": "People",
   "reextract.d_emails": "E-mail",
   "reextract.d_phones": "Phones",
-  "reextract.findings_note": "New findings: {added}. No longer confirmed: {removed} (they stay in the list with their status).",
+  "reextract.findings_note": "New findings: {added}. No longer confirmed: {removed} (removed from the list, counts and reports; status and notes come back if the finding appears again).",
   "reextract.cancel": "Stop",
   "reextract.open_new": "New findings: {n}",
   "reextract.open_findings": "Open findings",

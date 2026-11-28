@@ -398,6 +398,47 @@ fn finding_triage_survives_reanalysis() {
 }
 
 #[test]
+fn finding_retired_outside_a_scan_is_hidden_and_never_fixed() {
+    let tmp = tempfile::tempdir().unwrap();
+    let s = store(tmp.path());
+    let db = s.open_project(&new_project(&s).id).unwrap();
+    let m = meta("Андрій Бондар", "Microsoft Office Word 15.0000");
+    let doc = add_analyzed(&db, 1, &m, None);
+    db.scan_start("s1", "std", false).unwrap();
+    db.run_analysis(Some("s1")).unwrap();
+    let paths = db
+        .findings()
+        .unwrap()
+        .into_iter()
+        .find(|f| f.provenance.rule == "internal-paths")
+        .unwrap();
+    db.finding_set_status(paths.id, "confirmed").unwrap();
+    // a newer parser reads the document without the template path: the re-analysis retires it
+    let mut newer = m.clone();
+    newer.paths.clear();
+    db.set_analyzed(doc, &newer, None).unwrap();
+    db.run_analysis(None).unwrap();
+    assert!(!db.findings().unwrap().iter().any(|f| f.id == paths.id));
+    assert!(db
+        .finding_states()
+        .unwrap()
+        .iter()
+        .any(|f| f.0 == paths.id && !f.3));
+    // a later scan does not mark it fixed and keeps it hidden
+    db.run_analysis(Some("s2")).unwrap();
+    let f = db.finding(paths.id).unwrap();
+    assert_eq!(f.status, FindingStatus::Confirmed);
+    assert_eq!(f.fixed_scan, None);
+    assert!(!db.findings().unwrap().iter().any(|f| f.id == paths.id));
+    // produced again: back with its triage
+    db.set_analyzed(doc, &m, None).unwrap();
+    db.run_analysis(None).unwrap();
+    let f = db.findings().unwrap();
+    let f = f.iter().find(|f| f.id == paths.id).unwrap();
+    assert_eq!(f.status, FindingStatus::Confirmed);
+}
+
+#[test]
 fn resume_queue_after_crash() {
     let tmp = tempfile::tempdir().unwrap();
     let s = store(tmp.path());
