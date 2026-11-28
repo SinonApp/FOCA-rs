@@ -9,7 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 Patch release after phone testing of 2.0.0-beta.4.
 
-> **Installs over 2.0.0-beta.4, 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects** (same signing key, Android versionCode 2000007).
+> **Installs over 2.0.0-beta.4, 2.0.0-beta.3, 2.0.0-beta.2 and 2.0.0-beta.1 and keeps your projects** (same signing key, Android versionCode 2000007). The project database moves to schema 11 on first start, so 2.0.0-beta.4 cannot open projects after the update; export a project first if you may go back.
 
 ### Fixed
 
