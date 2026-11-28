@@ -28,6 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - SVG `data:image` pictures are parsed as embedded images; SVG comments are scanned for paths and e-mails.
 
 ### Fixed
+- **Document card**: the Fonts and form-field sections list every name again; rows without a value were hidden, so the section opened empty.
 
 - Word, Excel and PowerPoint files saved by LibreOffice no longer show the operating system as Windows 1.0.
 - An embedded document that contains itself is parsed once instead of repeating down to the depth limit.

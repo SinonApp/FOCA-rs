@@ -1184,6 +1184,7 @@
   const CONTOSO_FX = {
     "Договір_постачання_ТЕС-2_v3.docx": fxRec({
       facts: { ...FACTS0, language: "uk-UA", office_release: "2016 or newer", app_version: "16.0000" },
+      fonts: ["Calibri", "Times New Roman", "Segoe UI Symbol"],
       hidden_content: [
         {
           kind: "vanish",

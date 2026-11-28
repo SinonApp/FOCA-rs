@@ -456,7 +456,11 @@
   /** Fonts and form fields: plain lists. */
   function listBlock(items) {
     return items.length
-      ? `<div class="kv fx-kv">${items.map(([k, v]) => kvr(esc(k), v ? mono(v) : "")).join("")}</div>`
+      ? `<div class="kv fx-kv">${items
+          .map(([k, v]) =>
+            v ? kvr(esc(k), mono(v)) : `<div class="kvr fx-only"><div class="v">${mono(k)}</div></div>`,
+          )
+          .join("")}</div>`
       : "";
   }
 

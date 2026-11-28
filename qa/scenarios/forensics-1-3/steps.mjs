@@ -75,6 +75,8 @@ export default async (page, { out, W, fsc, theme }) => {
     t = await txt();
     ok("docx: w:vanish hidden text, IBAN masked, SharePoint link", /Скрытый текст \(w:vanish\)/.test(t) && /Знижка 8%/.test(t) && /••••4417/.test(t) && /SharePoint/.test(t));
     await noOvf("docx hidden text");
+    ok("docx: every font name is listed in the open fonts section", await ev(() => { const d = document.querySelector('[data-fx="fonts"]'); return !!d && d.open && ["Calibri", "Times New Roman", "Segoe UI Symbol"].every(f => d.textContent.includes(f)); }));
+    await scrollTo('[data-fx="fonts"]'); await shot("doc_docx_fonts");
 
     // ---------- format details ----------
     await go(`/p/doc/${await docId("Звіти.lnk")}`); await openAll(); await wait(150);
