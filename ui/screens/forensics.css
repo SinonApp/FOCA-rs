@@ -293,6 +293,7 @@ mark.fx-hl {
 }
 .fx-mask {
   font-family: var(--mono, monospace);
+  overflow-wrap: anywhere;
   background: var(--layer-3);
   border-radius: 3px;
   padding: 0 3px;

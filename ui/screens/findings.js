@@ -795,43 +795,27 @@
     return i < 0 ? { i: -1, n: o.length } : { i, n: o.length, prev: o[i - 1], next: o[i + 1] };
   };
 
-  // A secret in evidence is revealed the same way as in Data → Secrets: after fingerprint confirmation.
-  const revealed = new Set();
+  // Secrets in evidence are shown in full (highlighted), like every other value in the app.
   const hibpRes = {};
-  F.onBioClose(() => revealed.clear()); // Fingerprint session closed (timeout, background, lock, "Close"): secrets are hidden again.
-  // Screenshot blocking (FLAG_SECURE) is the opt-in sec.block_shots setting (missing = off); the legacy sec.hide flag
-  // defaulted to on and no longer drives the window, so it must not be read here.
-  const hideAdvice = () => ((F.db.settings || {}).sec || {}).block_shots === true;
   function evidenceHtml(f) {
     const parts = f.evidence.split(S0);
     let hasSecret = false;
-    const open = revealed.has(f.id);
     const body = parts
       .map((p, i) => {
         if (!i) return esc(p);
         const [sec, rest] = p.split(S1);
         hasSecret = true;
-        return (
-          `<span class="secret ${open ? "" : "masked"}" data-secret="ev${f.id}">${esc(sec)}</span>` +
-          esc(rest || "")
-        );
+        return `<span class="secret" data-secret="ev${f.id}">${esc(sec)}</span>` + esc(rest || "");
       })
       .join("");
-    return `<div class="fd-ev ${open ? "fd-ev-open" : ""}" data-secret-wrap>
+    return `<div class="fd-ev">
       <div class="fd-ev-h"><span>${ic("hash")}${esc(F.t("findings.snippet", "Фрагмент"))}</span>
-        ${
-          hasSecret
-            ? `<button class="ib" data-act="fd-reveal:${f.id}"
-          aria-label="${open ? F.t("findings.hide_secret", "Скрыть секрет") : F.t("findings.show_secret", "Показать секрет")}">${ic(open ? "eye-off" : "eye")}</button>`
-            : ""
-        }
         <button class="ib" data-act="fd-copy-ev:${f.id}"
           aria-label="${esc(F.t("findings.copy_evidence", "Копировать доказательство"))}">${ic("copy")}</button></div>
       <pre class="fd-pre">${body}</pre>
       ${
         hasSecret
-          ? `<div class="fd-ev-f">${ic("lock")}<span>${open ? `${F.bioOpen() ? F.t("findings.secret_shown_bio", "Секрет показан до ухода с карточки или до закрытия доступа к секретам.") : F.t("findings.secret_shown", "Секрет показан до ухода с карточки.")} ${hideAdvice() ? F.t("findings.shots_blocked", "Снимки экрана в приложении запрещены.") : F.t("findings.no_shots", "Не делайте скриншоты экрана с открытым значением.")}` : F.bioOpen() ? F.t("findings.secret_hidden_bio", "Секрет скрыт. Доступ к секретам открыт. Показ без повторного отпечатка, при копировании маскируется.") : F.t("findings.secret_hidden", "Секрет скрыт. Показ: после подтверждения отпечатком, при копировании маскируется.")}</span></div>
-      <div class="btnrow" style="padding:0 12px 10px">
+          ? `      <div class="btnrow" style="padding:0 12px 10px">
         <button class="btn sm tonal" data-act="fd-hibp:${f.id}">${ic("shield")}${esc(F.t("findings.hibp_check", "Проверить секрет в HIBP (префикс SHA-1)"))}</button>
         ${
           hibpRes[f.id]
@@ -1192,7 +1176,6 @@
       if (page.querySelector(".fd-foot")) page.classList.add("no-pb", "fd-dpg");
       if (F.dataTrail) F.dataTrail.mount(page);
     },
-    unmount: () => revealed.clear(),
   });
 
   // ---------- card actions ----------
@@ -1225,21 +1208,6 @@
       const [id, st] = a.split(":");
       const f = byId(id);
       setStatus(+id, f && f.status === st ? "new" : st);
-    },
-    "fd-reveal": id => {
-      id = +id;
-      if (revealed.has(id)) {
-        revealed.delete(id);
-        F.render(true);
-        return;
-      }
-      F.confirmFinger(
-        () => {
-          revealed.add(id);
-          F.render(true);
-        },
-        F.t("common.show_secret", "показать секрет"),
-      );
     },
     "fd-rel": path => {
       if (F.actions["dt-nav"]) F.actions["dt-nav"](path);
@@ -1304,7 +1272,7 @@
       const f = byId(id);
       const txt = f.evidence
         .split(S0)
-        .map((p, i) => (i ? "••••••" + (p.split(S1)[1] || "") : p))
+        .map((p, i) => (i ? p.split(S1).join("") : p))
         .join("");
       F.actions.copy(txt);
     },

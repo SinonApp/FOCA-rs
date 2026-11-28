@@ -212,7 +212,6 @@
     trail: [],
     pending: false,
     replace: false,
-    revealed: new Set(),
     hibpRes: {},
     mailF: "all",
   });
@@ -465,7 +464,6 @@
     const list = F.db.phones || [];
     const owner = l => people.find(u => u.login === l);
     return (
-      `<div class="card pad dt-ok">${ic("lock")}<span>${esc(F.t("data.phones_masked_note", "Номера хранятся в виде масок: полные значения не попадают в базу и отчёты."))}</span></div>` +
       ui.secH(F.t("data.phones", "Телефоны"), list.length) +
       `<div class="list">${list
         .map(x => {
@@ -944,13 +942,9 @@
 
   // ---------- Secrets ----------
   function secretValue(s) {
-    const open = state.revealed.has(s.id);
-    return `<div class="dt-secv" data-secret-wrap>
-      <span class="secret ${open ? "" : "masked"}"
-        ${open ? "" : `aria-label="${esc(F.t("data.value_hidden", "Значение скрыто"))}"`}>${esc(s.value)}</span>
+    return `<div class="dt-secv">
+      <span class="secret">${esc(s.value)}</span>
       <div class="dt-secb">
-        <button class="ib" data-act="dt-sec-${open ? "hide" : "show"}:${s.id}"
-          aria-label="${open ? F.t("data.hide_value", "Скрыть значение") : F.t("data.show_value", "Показать значение")}">${ic(open ? "eye-off" : "eye")}</button>
         <button class="ib" data-act="dt-sec-copy:${s.id}"
           aria-label="${esc(F.t("data.copy_value", "Копировать значение"))}">${ic("copy")}</button>
       </div></div>`;
@@ -958,8 +952,7 @@
   F.dataSecretValue = secretValue;
   function segSecrets() {
     const order = secrets.slice().sort((a, b) => SEVORD[a.sev] - SEVORD[b.sev]);
-    return `<div class="banner info dt-secban"
-      role="note">${ic("lock")}<div><b>${esc(F.t("data.secrets_hidden_default", "Секреты скрыты по умолчанию"))}</b><br>${F.t("data.showing_copying_require", { bioMinutes: F.bioMinutes() > 0 ? `${F.t("data.one_fingerprint_unlocks_all", { bioMinutes: F.bioMinutes() }, "; один отпечаток открывает все секреты на {bioMinutes} мин")}` : "" }, "Показ и копирование: после подтверждения отпечатком{bioMinutes}. Буфер обмена очищается через 30 с.")}</div></div>
+    return `<p class="fhint">${ic("info")} ${esc(F.clipAutoClear() ? F.t("data.secrets_clip_note", "Значения показаны полностью. Скопированный секрет удаляется из буфера обмена через 30 с.") : F.t("data.secrets_full_note", "Значения показаны полностью, как в документах."))}</p>
       <div class="dt-seclist">${order
         .map(s => {
           const d = demo.docs.find(x => x.id === s.doc);
@@ -989,35 +982,17 @@
         })
         .join("")}</div>`;
   }
-  // Fingerprint confirmation uses the shared core mechanism (N-minute session, "Secrets revealed · Close"
-  // indicator).
-  const confirmFinger = (then, what = F.t("core.reveal_secret", "показать секрет"), el) =>
-    F.confirmFinger(then, what, el);
-  F.dataConfirmFinger = confirmFinger;
-  F.onBioClose(() => state.revealed.clear());
+  // Fingerprint confirmation for the user's own key fields (monitor tokens) uses the shared mechanism.
+  F.dataConfirmFinger = (then, what, el) => F.confirmFinger(then, what, el);
   const secById = id => secrets.find(s => s.id === +id);
-  F.actions["dt-sec-show"] = id =>
-    confirmFinger(() => {
-      state.revealed.add(+id);
-      F.render(true);
-    });
-  F.actions["dt-sec-hide"] = id => {
-    state.revealed.delete(+id);
-    F.render(true);
-  };
   F.actions["dt-sec-copy"] = id => {
-    const go = () => {
-      F.clipCopy(secById(id).value, { sensitive: true });
-      F.snack(
-        F.clipAutoClear()
-          ? F.t("data.secret_copied_clipboard_clears", "Секрет скопирован · буфер очистится через 30 с")
-          : F.t("data.secret_copied", "Секрет скопирован"),
-        {
-          ms: 5000,
-        },
-      );
-    };
-    state.revealed.has(+id) ? go() : confirmFinger(go, F.t("data.copy_secret", "скопировать секрет"));
+    F.clipCopy(secById(id).value, { sensitive: true });
+    F.snack(
+      F.clipAutoClear()
+        ? F.t("data.secret_copied_clipboard_clears", "Секрет скопирован · буфер очистится через 30 с")
+        : F.t("data.secret_copied", "Секрет скопирован"),
+      { ms: 5000 },
+    );
   };
   F.actions["dt-sec-hibp"] = id => {
     const sid = +id;
@@ -1873,7 +1848,7 @@
           ui.row({
             lead: ui.leadIcon("phone", "var(--warn)"),
             title: `<span class="mono">${esc(v)}</span>`,
-            sub: esc(F.t("data.phone_masked", "Телефон (маска)")),
+            sub: esc(F.t("data.phone", "Телефон")),
           }),
         )
         .join("")}${ids

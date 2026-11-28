@@ -3546,7 +3546,7 @@
         ${ui.secH(F.t("ai.what_strip_before_sending", "Что вырезать перед отправкой"))}
         <div class="list">
           ${tg("secrets", F.t("app.secrets", "Секреты"), F.t("ai.passwords_keys_tokens_connection", "Пароли, ключи, токены, строки подключения → [SECRET]"))}
-          ${tg("pii", F.t("ai.personal_data", "Персональные данные"), F.t("ai.full_names_e_mails_phones_email", "ФИО, e-mail, телефоны → [NAME], [EMAIL]"))}
+          ${tg("pii", F.t("ai.personal_data", "Персональные данные"), F.t("ai.pii_strip_sub", "ФИО, e-mail → [NAME], [EMAIL]; телефоны, IBAN, РНОКПП, карты → маски"))}
           ${tg("client", F.t("ai.client_name", "Название заказчика"), F.t("ai.organization_domain", "Организация и домен → [CLIENT]"))}
           ${tg("evid", F.t("ai.send_evidence", "Отправлять доказательства"), F.t("ai.excerpts_server_responses", "Фрагменты ответов серверов и документов"))}
         </div>

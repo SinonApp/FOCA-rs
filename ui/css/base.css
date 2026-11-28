@@ -1323,15 +1323,11 @@ button.pick:focus-visible {
   align-self: center;
 }
 
-/* Masked secrets. */
+/* Secret values (shown in full, highlighted). Long values wrap. */
 .secret {
   font-family: var(--mono);
-  letter-spacing: 1px;
   color: var(--text-2);
-}
-.secret.masked {
-  filter: blur(5px);
-  user-select: none;
+  overflow-wrap: anywhere;
 }
 
 /* Banners and hints. */

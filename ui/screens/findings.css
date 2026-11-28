@@ -619,31 +619,7 @@ a.fd-cve {
 }
 .fd-pre .secret {
   color: var(--crit);
-  letter-spacing: 0;
 }
-.fd-ev-f {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 10px 14px;
-  font-size: 0.82rem;
-  color: var(--text-3);
-  border-top: 1px solid var(--stroke);
-}
-.fd-ev-f svg.i {
-  margin-top: 2px;
-}
-.fd-ev-f .fd-ev-o {
-  display: none;
-  color: var(--warn);
-}
-.fd-ev:has(.secret:not(.masked)) .fd-ev-m {
-  display: none;
-}
-.fd-ev:has(.secret:not(.masked)) .fd-ev-o {
-  display: inline;
-}
-
 /* Tags, notes, photos */
 .fd-tags {
   margin-bottom: 0;
@@ -858,9 +834,6 @@ html.fs-lg .fd-foot .fd-foot-row .btn {
 }
 .fd-foot-row .btn.on {
   color: var(--accent-strong);
-}
-.fd-ev-open .fd-ev-f {
-  color: var(--warn);
 }
 .fd-tagw {
   display: inline-flex;

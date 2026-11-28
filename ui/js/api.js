@@ -287,102 +287,24 @@
       rule,
     );
   }
-  // ---- secrets: the snapshot carries only a mask; the plain value comes from secret_reveal and lives in
-  // memory while the confirmation session is open (F.bioOpen from core.js) or a screen revealed it after a
-  // fingerprint ----
-  const REVEALED = new Map();
-  let localUnlock = 0; // Unlock window after confirmation in the legacy fingerprint sheets (F.dataConfirmFinger).
-  const unlocked = () => (F.bioOpen && F.bioOpen()) || Date.now() < localUnlock;
-  const pend = new Set();
-  function revealed(key) {
-    key = String(key);
-    if (REVEALED.has(key)) return REVEALED.get(key);
-    if (!TAURI) {
-      try {
-        const r = demoBackend.invokeSync("secret_reveal", {
-          project: cur(),
-          id: /^\d+$/.test(key) ? +key : key,
-        });
-        REVEALED.set(key, r.value);
-        return r.value;
-      } catch (e) {
-        return null;
-      }
-    }
-    if (!pend.has(key)) {
-      pend.add(key);
-      call("secret_reveal", { project: cur(), id: /^\d+$/.test(key) ? +key : key }).then(
-        r => {
-          REVEALED.set(key, r.value);
-          pend.delete(key);
-          if (F.render) F.render(true);
-        },
-        () => pend.delete(key),
-      );
-    }
-    return null;
-  }
+  // ---- secrets: the snapshot carries full values (shown everywhere in the app; logs and the report
+  // masking option mask them in the core) ----
   function secretView(x) {
     // `where` is a core text ("текст, строка 4", "поле password", …) translated like secret findings.
-    const o = localized({ ...x }, { where: w => FT.field(w, "secret") });
-    delete o.value;
-    const dataOpen = () => {
-      const S = F.state.data;
-      return !!(S && S.revealed && S.revealed.has && S.revealed.has(x.id));
-    }; // data.js revealed the value after a fingerprint.
-    Object.defineProperty(o, "value", {
-      enumerable: true,
-      configurable: true,
-      get: () => (unlocked() || dataOpen() ? (revealed(x.id) ?? x.mask) : x.mask),
-    });
-    return o;
+    return localized({ ...x }, { where: w => FT.field(w, "secret") });
   }
   function evidenceView(f, rule) {
-    let masked = f.evidence || "";
-    const refs = f.secret_refs || [];
+    let ev = f.evidence || "";
     Object.defineProperty(f, "evidence", {
       enumerable: true,
       configurable: true,
-      get: () => {
-        if (!refs.length || !unlocked()) return FT.field(masked, rule || "");
-        let k = 0;
-        // Revealed values are data: translate the masked text first, then put the values in.
-        return FT.field(masked, rule || "").replace(/\{\{s:([\s\S]*?)\}\}/g, (m0, mv) => {
-          const v = revealed(refs[k++]);
-          return `{{s:${v ?? mv}}}`;
-        });
-      },
+      get: () => FT.field(ev, rule || ""),
       set: v => {
-        masked = v || "";
+        ev = v || "";
       },
     });
     return f;
   }
-  if (F.onBioClose)
-    F.onBioClose(() => {
-      REVEALED.clear();
-      localUnlock = 0;
-    });
-  // Legacy fingerprint sheets (data.js / findings.js): open a 2-minute window after confirmation.
-  let dcf = null;
-  Object.defineProperty(F, "dataConfirmFinger", {
-    configurable: true,
-    get: () => dcf,
-    set: fn => {
-      dcf =
-        typeof fn === "function"
-          ? (then, what, el) =>
-              fn(
-                () => {
-                  localUnlock = Date.now() + 120000;
-                  then();
-                },
-                what,
-                el,
-              )
-          : fn;
-    },
-  });
 
   // Settings: the view used by settings.js (legacy field names) on top of F.db.settings: a single source of
   // truth.
@@ -863,11 +785,6 @@
         });
         F.emit("db", { kind: "docs" });
       }),
-    // --- secrets: the snapshot holds only a mask; the value is fetched on demand after confirmation ---
-    secret_reveal: id =>
-      run("secret_reveal", { project: cur(), id }, r => {
-        REVEALED.set(String(r.id), r.value);
-      }),
     // --- settings, i18n, licenses, signatures, keys, network ---
     i18n_bundle: ({ lang, device_locale, include_help = false } = {}) =>
       run("i18n_bundle", { lang, device_locale, include_help: !!include_help }),
@@ -899,7 +816,6 @@
         refreshList()
           .then(() => run("settings_get", {}))
           .then(st => {
-            REVEALED.clear();
             applySnapshot({ settings: st }, "reset");
             return r;
           }),

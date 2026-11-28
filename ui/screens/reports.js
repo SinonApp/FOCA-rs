@@ -317,8 +317,7 @@
     o: null,
     fmt: null,
     sh: null,
-    secrets: false,
-    pii: false,
+    mask: false,
     dict: "users",
     mal: "csv",
     md: "many",
@@ -506,10 +505,8 @@
     }
     const privacy = `<h4 class="sub-h rp-h4">${esc(F.t("reports.privacy", "Конфиденциальность"))}</h4>
       <div class="list rp-opts">
-        ${togRow(exp.secrets, "rp-ex-secrets", F.t("reports.inc_secrets", "Включать секреты"), F.t("reports.inc_secrets_sub", "Пароли, токены, строки подключения"), exp.secrets ? "rp-danger" : "")}
-        ${togRow(exp.pii, "rp-ex-pii", F.t("reports.redact_pii", "Редактировать персональные данные"), F.t("reports.redact_pii_sub", "ФИО, телефоны, e-mail → О. К*********, o.k***@…"))}
-      </div>
-      ${exp.secrets ? `<div class="banner crit rp-secw">${ic("alert")}<div><b>${esc(F.t("reports.secrets_plain_b", "Секреты попадут в файл открытым текстом."))}</b> ${esc(F.t("reports.secrets_plain", "Передавайте его только по защищённому каналу и удалите после передачи заказчику."))}</div></div>` : `<p class="fhint rp-hint">${ic("lock")} ${esc(F.t("reports.secrets_masked", "Секреты будут заменены на «[скрыто]»."))}</p>`}`;
+        ${togRow(exp.mask, "rp-ex-mask", F.t("reports.mask_pd", "Маскировать персональные данные и секреты"), F.t("reports.mask_pd_sub", "Телефоны, IBAN, РНОКПП, карты, e-mail, имена и секреты заменяются масками"))}
+      </div>`;
     const file = `<div class="rp-file">${ic("doc")}<span class="mono">${esc(fileName())}</span><span class="muted">~${estSize()}</span></div>`;
     // The request log can be cleared where it is exported (debug.js F.reqLogClear).
     const clear =
@@ -530,8 +527,7 @@
     Object.assign(exp, {
       o: { kind: "all", ...opts },
       fmt: null,
-      secrets: false,
-      pii: !!kindOf(opts.kind).pii && false,
+      mask: false,
     });
     exp.dict =
       opts.items && opts.kind !== "users" && opts.fmt === "dict" ? "custom" : DICT_OF[opts.kind] || exp.dict;
@@ -607,8 +603,7 @@
       pretty: exp.pretty,
       mal: exp.mal,
       md: exp.md,
-      secrets: exp.secrets,
-      pii: exp.pii,
+      mask: !!exp.mask,
       items:
         exp.fmt === "dict" && exp.dict !== "logins" && exp.dict !== "context"
           ? dictItems(exp.dict)
@@ -672,15 +667,9 @@
       exp.pretty = !exp.pretty;
       F.actions.toggle(null, el);
     },
-    "rp-ex-pii": (_, el) => {
-      exp.pii = !exp.pii;
+    "rp-ex-mask": (_, el) => {
+      exp.mask = !exp.mask;
       F.actions.toggle(null, el);
-    },
-    "rp-ex-secrets": () => {
-      exp.secrets = !exp.secrets;
-      const y = exp.sh.querySelector(".sh-b").scrollTop;
-      redraw2();
-      exp.sh.querySelector(".sh-b").scrollTop = y + (exp.secrets ? 80 : 0);
     },
     // The file is built by the core (export_build): name, size, path; the screen only shows the result.
     "rp-ex-save": () => {
@@ -940,8 +929,8 @@
     logo: true,
     // Executor name: the last one entered (settings.report.company), empty for a fresh install.
     company: defCompany(),
-    // Client reports mask secrets by default; "full" asks for confirmation before building.
-    secrets: "partial",
+    // Full values by default; one switch masks personal data and secrets (applied by the core).
+    mask: false,
     custody: false,
     // Include the project's latest AI summary ("Executive summary (AI-assisted)"); the core adds the section
     // only when a summary was created, so the default is on.
@@ -1159,7 +1148,7 @@
       pickedOnly: !!opts.picked_only,
       picked: opts.picked || null,
       sec: { ...base.sec, ...(opts.sections || {}) },
-      secrets: opts.secrets || base.secrets,
+      mask: !!opts.mask,
       company: opts.company ?? base.company,
       logo: opts.logo ?? base.logo,
       custody: !!(opts.custody || hist.custody),
@@ -1401,15 +1390,14 @@
       role="radio" aria-checked="${cur === v}" data-act="rp-d:${key}:${v}">${l}</button>`,
       )
       .join("")}</div>`;
-  // A secret from finding evidence ({{s:…}}) rendered in the selected display mode.
+  // A secret from finding evidence ({{s:…}}) as the core renders it (masked only with the option on).
   const secretsOf = f =>
     String(f.evidence || "")
       .split("{{s:")
       .slice(1)
       .map(x => x.split("}}")[0]);
-  const maskAs = (v, mode) => {
-    if (mode === "hide") return F.t("reports.hidden", "[скрыто]");
-    if (mode !== "partial") return v;
+  const maskAs = (v, mask) => {
+    if (!mask) return v;
     return v.length > 6 ? v.slice(0, 2) + "••••••" + v.slice(-3) : "••••••";
   };
   const sampleSecret = () => {
@@ -1550,18 +1538,9 @@
       <div class="field">${ic("contract")}<input id="rp-company" value="${esc(draft.company)}"
         placeholder="${esc(F.t("reports.company_ph", "Название компании"))}"></div>
 
-      <h3 class="sub-h rp-h3">${esc(F.t("reports.secrets_h", "Секреты в отчёте"))}</h3>
-      ${segH(
-        "secrets",
-        [
-          ["hide", F.t("reports.sx_hide", "Скрыть")],
-          ["partial", F.t("reports.sx_partial", "Частично")],
-          ["full", F.t("reports.sx_full", "Полностью")],
-        ],
-        draft.secrets,
-      )}
-      ${sx ? `<div class="rp-secx"><span class="muted">${esc(F.t("reports.example", "Пример:"))}</span> <span class="mono">${esc(maskAs(sx, draft.secrets))}</span></div>` : `<p class="fhint rp-hint">${ic("info")} ${esc(F.t("reports.no_secrets", "В находках проекта секретов нет."))}</p>`}
-      ${draft.secrets === "full" ? `<div class="banner crit">${ic("alert")}<div><b>${esc(F.t("reports.full_warn_b", "Пароли и токены будут в отчёте открытым текстом."))}</b> ${esc(F.t("reports.full_warn", "Передавайте его только по защищённому каналу и не храните дольше необходимого."))}</div></div>` : ""}
+      <h3 class="sub-h rp-h3">${esc(F.t("reports.privacy", "Конфиденциальность"))}</h3>
+      <div class="list rp-opts">${ui.check(!!draft.mask, F.t("reports.mask_pd", "Маскировать персональные данные и секреты"), "rp-mask", F.t("reports.mask_pd_sub", "Телефоны, IBAN, РНОКПП, карты, e-mail, имена и секреты заменяются масками"))}</div>
+      ${draft.mask && sx ? `<div class="rp-secx"><span class="muted">${esc(F.t("reports.example", "Пример:"))}</span> <span class="mono">${esc(maskAs(sx, true))}</span></div>` : ""}
 
       <h3 class="sub-h rp-h3">${esc(F.t("reports.custody_h", "Цепочка хранения (Chain of Custody) и подпись"))}</h3>
       <div class="list rp-opts">${ui.check(!!draft.custody, F.t("reports.custody", "Блок Chain of Custody и ЭЦП"), "rp-custody", F.t("reports.custody_sub", "Дайджест входных данных, файл .sha256 и подпись ECDSA P-256 (.sig.json)"))}</div>
@@ -1880,26 +1859,12 @@
       F.render(true);
       F.snack(F.t("reports.reset_done", "Настройки отчёта сброшены"));
     },
-    "rp-build": () => {
-      if (D0().secrets !== "full") return buildSheet();
-      F.sheet({
-        title: F.t("reports.plain_secrets", "Секреты открытым текстом"),
-        cls: "rp-sheet",
-        html: `<div class="banner crit">${ic("alert")}<div><b>${esc(F.t("reports.plain_b", "Пароли, токены и ключи попадут в отчёт без маскирования."))}</b> ${esc(F.t("reports.plain_text", "Такой отчёт нельзя пересылать заказчику по открытым каналам и хранить дольше необходимого."))}</div></div>`,
-        footer: `<button class="btn" data-act="rp-build-masked">${esc(F.t("reports.mask", "Маскировать"))}</button><button class="btn danger"
-          data-act="rp-build-full">${esc(F.t("reports.build_secrets", "Сформировать с секретами"))}</button>`,
-      });
-    },
-    "rp-build-full": () => {
-      F.closeSheet();
-      setTimeout(buildSheet, 250);
-    },
-    "rp-build-masked": () => {
-      D0().secrets = "partial";
+    "rp-build": () => buildSheet(),
+    "rp-mask": () => {
+      const d = D0();
+      d.mask = !d.mask;
       saveDraft();
-      F.closeSheet();
       F.render(true);
-      setTimeout(buildSheet, 250);
     },
   });
 
@@ -1910,11 +1875,9 @@
     const draft = D0();
     const steps = [
       F.t("reports.st_collect", "Сбор находок и данных"),
-      draft.secrets === "hide"
-        ? F.t("reports.st_hide", "Скрытие секретов")
-        : draft.secrets === "partial"
-          ? F.t("reports.st_mask", "Маскирование секретов")
-          : F.t("reports.st_check", "Проверка секретов"),
+      draft.mask
+        ? F.t("reports.st_mask_pd", "Маскирование персональных данных и секретов")
+        : F.t("reports.st_check", "Проверка секретов"),
       F.t("reports.st_layout", "Вёрстка разделов"),
       draft.fmt === "pdf"
         ? F.t("report.pdf.step", "Подготовка PDF")
@@ -1974,7 +1937,7 @@
                   picked_only: draft.pickedOnly,
                   picked: draft.pickedOnly ? F.sel.reportPicked() : [],
                   sections: clone(draft.sec),
-                  secrets: draft.secrets,
+                  mask: !!draft.mask,
                   company: draft.company,
                   logo: draft.logo,
                   custody: !!draft.custody,
@@ -2352,7 +2315,7 @@
     const text = tr.text({ n: list.length, c: cnt("crit"), h: cnt("high"), top, fx: fixed.length });
     const row = (f, i) =>
       `<tr><td>${i + 1}</td><td>${esc(f.title)}${secretsOf(f)
-        .map(v => `<div class="rp-sec">${tr.secret}: ${esc(maskAs(v, draft.secrets))}</div>`)
+        .map(v => `<div class="rp-sec">${tr.secret}: ${esc(maskAs(v, !!draft.mask))}</div>`)
         .join(
           "",
         )}</td><td>${esc(f.host)}</td><td><span class="rp-sev s-${f.sev}">${sl[f.sev] || ""}</span></td></tr>`;

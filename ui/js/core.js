@@ -320,7 +320,7 @@
     check: (on, label, act = "toggle-check", sub = "") =>
       `<div class="checkrow ${on ? "on" : ""}" role="checkbox" aria-checked="${!!on}"
         data-act="${act}"><span class="cb">${ic("check")}</span><span class="lbl">${label}${sub ? `<small>${sub}</small>` : ""}</span></div>`,
-    secret: (val, id) => `<span class="secret masked" data-secret="${id || ""}">${esc(val)}</span>`,
+    secret: (val, id) => `<span class="secret" data-secret="${id || ""}">${esc(val)}</span>`,
     /**
      * Themed replacement of a native <select>: a field-like button that opens F.choose. It keeps the
      * select contract for screen code: `.value` holds the value and a `change` event bubbles on pick.

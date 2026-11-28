@@ -167,7 +167,7 @@
     webhook: "Вебхук",
     query: "Параметр-токен",
   });
-  // Labels of the masked snippet parts (docs_search hits.masked: "pii", "pii:card", "secret:password", …).
+  // Labels of the sensitive snippet parts (docs_search hits.masked: "pii", "pii:card", "secret:password", …).
   const maskedLabel = m => {
     const [k, v] = String(m).split(":");
     if (k === "pii") return v ? PII_SHORT[v] || v : F.t("forensics.pii_lc", "персональные данные");
@@ -190,8 +190,8 @@
 
   // ================= safe snippet rendering =================
   /**
-   * Snippet of the core: plain text with {{h:…}} (match) and {{s:…}} (masked secret/PII) markers. Every part
-   * is escaped; the only markup is the highlight/mask wrapper, so document text never becomes HTML.
+   * Snippet of the core: plain text with {{h:…}} (match) and {{s:…}} (secret/PII value, shown in full) markers.
+   * Every part is escaped; the only markup is the highlight wrapper, so document text never becomes HTML.
    */
   function snippet(s) {
     const str = String(s || "");
@@ -202,7 +202,7 @@
       out +=
         m[1] === "h"
           ? `<mark class="fx-hl">${esc(m[2])}</mark>`
-          : `<span class="fx-mask" title="${esc(F.t("forensics.value_hidden", "Значение скрыто"))}">${esc(m[2])}</span>`;
+          : `<span class="fx-mask">${esc(m[2])}</span>`;
       last = m.index + m[0].length;
     }
     return out + esc(str.slice(last));
@@ -266,13 +266,13 @@
               ? pill("bad", F.t("forensics.hash_bad", "Хеш не совпадает"), "alert")
               : pill("mute", F.t("forensics.hash_na", "Хеш не проверялся"));
         return `<div class="fx-sig">
-          <div class="fx-pills">${pill("info", esc(SIG_KIND[s.kind] || s.kind), "contract")}${s.modified_after_signing ? pill("bad", F.t("forensics.mod_after", "Правки после подписания"), "alert") : pill("ok", F.t("forensics.not_mod", "После подписи не менялся"), "check")}${digest}${c.edrpou || c.rnokpp_masked ? pill("vio", F.t("forensics.kep_ua", "КЕП (Украина)"), "shield") : ""}</div>
+          <div class="fx-pills">${pill("info", esc(SIG_KIND[s.kind] || s.kind), "contract")}${s.modified_after_signing ? pill("bad", F.t("forensics.mod_after", "Правки после подписания"), "alert") : pill("ok", F.t("forensics.not_mod", "После подписи не менялся"), "check")}${digest}${c.edrpou || c.rnokpp || c.rnokpp_masked ? pill("vio", F.t("forensics.kep_ua", "КЕП (Украина)"), "shield") : ""}</div>
           <div class="kv fx-kv">
             ${kvr(F.t("forensics.signer", "Подписант"), esc(c.common_name || s.name || "-"))}
             ${kvr(F.t("forensics.title", "Должность"), esc(c.title || ""))}
             ${kvr(F.t("forensics.org", "Организация"), esc([c.organization, c.org_unit].filter(Boolean).join(" · ")))}
             ${kvr(F.t("forensics.edrpou", "ЄДРПОУ"), c.edrpou ? mono(c.edrpou) : "")}
-            ${kvr(F.t("forensics.rnokpp", "РНОКПП"), c.rnokpp_masked ? `${mono(c.rnokpp_masked)}<div class="fx-sub">${esc(F.t("forensics.mask_only", "только маска"))}${c.rnokpp_valid ? esc(F.t("forensics.checksum_ok", " · контрольная сумма верна")) : ""}</div>` : "")}
+            ${kvr(F.t("forensics.rnokpp", "РНОКПП"), c.rnokpp || c.rnokpp_masked ? `${mono(c.rnokpp || c.rnokpp_masked)}${c.rnokpp_valid ? `<div class="fx-sub">${esc(F.t("forensics.checksum_valid", "Контрольная сумма верна"))}</div>` : ""}` : "")}
             ${kvr("E-mail", c.email ? mono(c.email) : "")}
             ${kvr(F.t("forensics.acsk", "АЦСК"), esc(c.issuer_cn || c.issuer || ""))}
             ${kvr(F.t("forensics.sign_time", "Время подписи"), s.signing_time ? esc(dt(s.signing_time)) : "")}
@@ -892,7 +892,7 @@
       <span class="ext ${esc(d.ext)}">${esc(d.ext)}</span>
       <div class="body"><div class="t fx-break">${esc(h.name)}</div>
         <div class="fx-snip">${snippet(h.snippet)}</div>
-        ${h.in_name || h.deleted || (h.masked || []).length ? `<div class="fx-pills">${h.in_name ? pill("info", F.t("forensics.in_name", "Совпадение в имени")) : ""}${h.deleted ? pill("mute", F.t("forensics.in_trash", "В корзине"), "x") : ""}${(h.masked || []).length ? pill("warn", esc(F.t("forensics.masked_in", { v: [...new Set(h.masked.map(maskedLabel))].join(", ") }, "В фрагменте скрыто: {v}")), "lock") : ""}</div>` : ""}
+        ${h.in_name || h.deleted || (h.masked || []).length ? `<div class="fx-pills">${h.in_name ? pill("info", F.t("forensics.in_name", "Совпадение в имени")) : ""}${h.deleted ? pill("mute", F.t("forensics.in_trash", "В корзине"), "x") : ""}${(h.masked || []).length ? pill("warn", esc(F.t("forensics.masked_in", { v: [...new Set(h.masked.map(maskedLabel))].join(", ") }, "В фрагменте: {v}")), "key") : ""}</div>` : ""}
       </div>${ic("chev", "chev")}</div>`;
   }
   function ftsResults() {
@@ -1416,7 +1416,7 @@
         autocomplete="off" spellcheck="false" aria-describedby="re-${i}"></div>
       <div id="re-${i}" class="fx-err" role="alert">${err ? `${ic("alert")}${esc(err)}` : ""}</div>
       <div class="seg fx-rsev" role="radiogroup" aria-label="${esc(F.t("forensics.rule_sev", "Важность находки"))}">${SEVS.map(([k, l]) => `<button class="${r.sev === k ? "on" : ""}" role="radio" aria-checked="${r.sev === k}" data-act="rule-sev:${esc(r.id)}:${k}">${l}</button>`).join("")}</div>
-      <div class="fx-rchecks">${ui.check(r.case_insensitive !== false, F.t("forensics.ci", "Без учёта регистра"), `rule-ci:${esc(r.id)}`)}${ui.check(r.mask !== false, F.t("forensics.mask", "Маскировать найденное значение"), `rule-mask:${esc(r.id)}`, F.t("forensics.mask_sub", "в находке видны только последние символы"))}</div>
+      <div class="fx-rchecks">${ui.check(r.case_insensitive !== false, F.t("forensics.ci", "Без учёта регистра"), `rule-ci:${esc(r.id)}`)}</div>
       <details class="fx-sec fx-rtest" ${RS.open[r.id] ? "open" : ""} data-rt="${esc(r.id)}"><summary><span class="fx-st">${esc(F.t("forensics.test_on", "Проверить на тексте"))}</span>${ic("chev-down", "fx-chev")}</summary><div class="fx-body">
         <label class="sr-only" for="rx-${i}">${esc(F.t("forensics.sample", "Пример текста"))}</label><textarea id="rx-${i}" class="fx-rta" data-rf="sample" rows="3"
           placeholder="${esc(F.t("forensics.sample_ph", "Вставьте фрагмент документа"))}">${esc(t.sample || "")}</textarea>
@@ -1545,13 +1545,6 @@
       r.case_insensitive = r.case_insensitive === false;
       el.classList.toggle("on", r.case_insensitive);
       el.setAttribute("aria-checked", r.case_insensitive);
-    },
-    "rule-mask": (id, el) => {
-      readRules();
-      const r = ruleOf(id);
-      r.mask = r.mask === false;
-      el.classList.toggle("on", r.mask);
-      el.setAttribute("aria-checked", r.mask);
     },
     "rule-sev": arg => {
       readRules();
