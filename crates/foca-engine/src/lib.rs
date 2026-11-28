@@ -48,6 +48,7 @@ mod run;
 mod scan;
 mod services;
 mod settings;
+mod update;
 mod util;
 
 pub use analysis::{intel, redact, rules};

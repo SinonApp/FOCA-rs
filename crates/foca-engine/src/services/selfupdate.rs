@@ -2,7 +2,7 @@
 //! `SHA256SUMS.txt` parsing and verification of its Ed25519 signature, release note markers and
 //! the persisted check state (ETag cache, rate limit backoff).
 //!
-//! The network side lives in `cmds/update.rs`; everything here is pure and unit-tested.
+//! The network side lives in `update.rs`; everything here is pure and unit-tested.
 //!
 //! Release signature: the maintainer signs `SUMS_DOMAIN || <SHA256SUMS.txt bytes>` with the same
 //! Ed25519 key as the signature bundles ([`crate::sigbundle::official_pubkey_bytes`]). The domain
@@ -444,6 +444,15 @@ pub fn rate_limit_wait(
         .filter(|w| *w > 0)
         .unwrap_or(DEFAULT_BACKOFF_SECS);
     Some(wait.clamp(1, MAX_BACKOFF_SECS))
+}
+
+// ---------------------------------------------------------------- download job
+
+/// The running or last download (`update_status.download`), kept by the engine.
+#[derive(Default)]
+pub(crate) struct UpdateJob {
+    pub cancel: Option<tokio_util::sync::CancellationToken>,
+    pub progress: Value,
 }
 
 // ---------------------------------------------------------------- persisted state

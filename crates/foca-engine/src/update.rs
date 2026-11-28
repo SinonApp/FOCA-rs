@@ -31,13 +31,6 @@ const DOWNLOAD_TIMEOUT: Duration = Duration::from_secs(30 * 60);
 /// Minimum gap between two progress events.
 const PROGRESS_EVERY: Duration = Duration::from_millis(400);
 
-/// The running or last download (`update_status.download`).
-#[derive(Default)]
-pub(crate) struct UpdateJob {
-    pub cancel: Option<CancellationToken>,
-    pub progress: Value,
-}
-
 fn err(code: &str, message: impl Into<String>) -> CmdError {
     CmdError::new(code, message)
 }

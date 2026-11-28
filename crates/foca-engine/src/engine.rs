@@ -76,7 +76,7 @@ pub struct Core {
     /// Waiting in-scan retries of postponed dorks by project (`dorks_retry` wakes them).
     pub(crate) dork_jobs: Mutex<HashMap<String, DorkJob>>,
     /// The in-app update download (`update_download`, `update_cancel`).
-    pub(crate) update_job: Mutex<crate::cmds::update::UpdateJob>,
+    pub(crate) update_job: Mutex<crate::services::selfupdate::UpdateJob>,
 }
 
 /// A running re-analysis of one project.
