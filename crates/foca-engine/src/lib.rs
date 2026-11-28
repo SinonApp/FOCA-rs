@@ -308,6 +308,10 @@ pub struct Endpoints {
     pub storage: foca_search::storage::StorageEndpoints,
     /// GitHub REST API base of the in-app update check (`/repos/{repo}/releases`).
     pub github_api: String,
+    /// Signature database feeds checked by `signatures_update` without a `url`: the v3 feed and
+    /// the v2 compatibility feed used while the v3 one answers HTTP 404.
+    pub sig_feed: String,
+    pub sig_feed_fallback: String,
 }
 
 impl Default for Endpoints {
@@ -336,6 +340,8 @@ impl Default for Endpoints {
             sources: HashMap::new(),
             storage: Default::default(),
             github_api: "https://api.github.com".into(),
+            sig_feed: crate::services::sigbundle::DEFAULT_FEED_URL.into(),
+            sig_feed_fallback: crate::services::sigbundle::FALLBACK_FEED_URL.into(),
         }
     }
 }

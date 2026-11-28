@@ -11,19 +11,36 @@ use crate::util::{arg_str, req_str};
 use crate::{CmdError, CmdResult, Engine};
 
 impl Engine {
-    /// Status JSON with `last_check.error_msg` for the UI language.
-    fn sig_json(st: crate::services::sigbundle::SigStatus) -> CmdResult {
+    /// Status JSON with `last_check.error_msg` for the UI language and `auto`: the automatic
+    /// check settings and schedule (`mode`, `wifi_only`, `checked_at`, `next_at` in epoch
+    /// seconds, `null` when off).
+    fn sig_json(&self, st: crate::services::sigbundle::SigStatus) -> CmdResult {
+        use crate::services::sigauto;
         let mut v = serde_json::to_value(st)?;
         if v["last_check"].is_object() {
             crate::i18n::annotate(&mut v["last_check"], &["error"]);
         }
+        let set = self.sig_auto_settings();
+        let sched = sigauto::read(&self.inner.cfg.data_dir);
+        let next = sigauto::next_check(&set, &sched).map(|t| t.max(self.now().unix_timestamp()));
+        v["auto"] = json!({
+            "mode": set.mode.as_str(),
+            "wifi_only": set.wifi_only,
+            "checked_at": (sched.checked_epoch > 0).then_some(sched.checked_epoch),
+            "next_at": next,
+        });
         Ok(v)
+    }
+
+    fn sig_auto_settings(&self) -> crate::services::sigauto::AutoSettings {
+        let s = self.store().settings_get().unwrap_or_default();
+        crate::services::sigauto::AutoSettings::from_settings(&s)
     }
 
     /// `signatures_status {}` → current verified signature database metadata.
     pub(crate) fn signatures_status(&self) -> CmdResult {
         let today = self.now().date();
-        Self::sig_json(crate::services::sigbundle::status(
+        self.sig_json(crate::services::sigbundle::status(
             &self.inner.cfg.data_dir,
             today,
         ))
@@ -48,17 +65,42 @@ impl Engine {
         };
         let today = self.now().date();
         let st = crate::services::sigbundle::import_bundle(&self.inner.cfg.data_dir, &raw, today)?;
-        Self::sig_json(st)
+        self.sig_json(st)
     }
 
-    /// `signatures_update { url? }` → checks the update feed (the official one when `url` is
-    /// absent): installs a newer verified bundle, reports `no_update` when nothing is published
-    /// (HTTP 404) and `up_to_date` when the feed holds no newer version. The outcome is stored in
-    /// `last_check`; a failed check is stored too and returned as the error.
+    /// `signatures_update { url?, auto? }` → checks the update feed (the official one when `url`
+    /// is absent): installs a newer verified bundle, reports `no_update` when nothing is
+    /// published (HTTP 404) and `up_to_date` when the feed holds no newer version. The outcome is
+    /// stored in `last_check`; a failed check is stored too and returned as the error.
+    ///
+    /// `auto: true` is the scheduled check (app start, back to the foreground): it runs only when
+    /// due by `settings.signatures` (`auto` off/daily/weekly, `wifi_only`), not on a metered
+    /// network with Wi-Fi only, not during a scan and not before a rate limit or failure backoff
+    /// ends; otherwise it answers `outcome: "skipped"` with `skipped` (`disabled`, `not_due`,
+    /// `backoff`, `metered`, `scan`). An automatic check never returns an error: a failure comes
+    /// back as `outcome: "failed"` with the status.
     pub(crate) async fn signatures_update(&self, a: &Value) -> CmdResult {
-        use crate::services::sigbundle;
+        use crate::services::{sigauto, sigbundle};
+        let auto = a["auto"].as_bool().unwrap_or(false);
+        let data_dir = &self.inner.cfg.data_dir;
+        let now = self.now().unix_timestamp();
+        let set = self.sig_auto_settings();
+        let mut sched = sigauto::read(data_dir);
+        if auto {
+            let cond = sigauto::Conditions {
+                metered: self.mobile.metered(),
+                scanning: self.is_scanning(),
+            };
+            if let Some(reason) = sigauto::skip_reason(&set, &sched, now, cond) {
+                let mut v = self.sig_json(sigbundle::status(data_dir, self.now().date()))?;
+                v["outcome"] = json!("skipped");
+                v["skipped"] = json!(reason);
+                return Ok(v);
+            }
+        }
         let explicit = arg_str(a, "url").map(str::trim).filter(|u| !u.is_empty());
-        let url = explicit.unwrap_or(sigbundle::DEFAULT_FEED_URL);
+        let feeds = &self.inner.cfg.endpoints;
+        let url = explicit.unwrap_or(feeds.sig_feed.as_str());
         let mut fetched = self.fetch_sig_feed(url).await;
         if let Err(e) = &fetched {
             if e.code == "bad_args" {
@@ -69,17 +111,38 @@ impl Engine {
         // The official v3 feed falls back to the v2 compatibility feed while nothing is
         // published there.
         if explicit.is_none() && matches!(&fetched, Err(e) if e.code == "not_published") {
-            used = sigbundle::FALLBACK_FEED_URL;
+            used = feeds.sig_feed_fallback.as_str();
             fetched = self.fetch_sig_feed(used).await;
         }
-        let st = sigbundle::apply_feed(
-            &self.inner.cfg.data_dir,
+        let rate_limited = matches!(&fetched, Err(e) if e.code == "rate_limited");
+        let result = sigbundle::apply_feed(
+            data_dir,
             used,
             fetched,
             &sigbundle::official_pubkey_bytes(),
             self.now(),
-        )?;
-        Self::sig_json(st)
+        );
+        let outcome = match &result {
+            Ok(_) => sigauto::Outcome::Done,
+            Err(_) if rate_limited => sigauto::Outcome::RateLimited(None),
+            Err(_) => sigauto::Outcome::Failed,
+        };
+        sigauto::record(&mut sched, &set, now, outcome);
+        sigauto::write(data_dir, &sched);
+        let st = match result {
+            Ok(st) => st,
+            Err(e) if !auto => return Err(e),
+            Err(_) => sigbundle::status(data_dir, self.now().date()),
+        };
+        let installed = st
+            .last_check
+            .as_ref()
+            .map(|c| c.outcome.clone())
+            .unwrap_or_default();
+        tracing::info!(target: "foca::sig", "проверка базы сигнатур (auto={auto}): {installed}");
+        let mut v = self.sig_json(st)?;
+        v["outcome"] = json!(installed);
+        Ok(v)
     }
 
     /// Downloads a signature feed URL (HTTPS, public host; plain HTTP only to loopback).
@@ -109,6 +172,10 @@ impl Engine {
                 Err(foca_net::NetError::Status(s @ (404 | 410))) => {
                     Err(CmdError::new("not_published", format!("HTTP {s}")))
                 }
+                Err(e @ foca_net::NetError::Status(429 | 403)) => Err(CmdError::new(
+                    "rate_limited",
+                    format!("Загрузка пакета сигнатур: {e}"),
+                )),
                 Err(e) => Err(CmdError::new(
                     "net",
                     format!("Загрузка пакета сигнатур: {e}"),
@@ -122,7 +189,7 @@ impl Engine {
     pub(crate) fn signatures_rollback(&self) -> CmdResult {
         let today = self.now().date();
         let st = crate::services::sigbundle::rollback(&self.inner.cfg.data_dir, today)?;
-        Self::sig_json(st)
+        self.sig_json(st)
     }
 
     // ================= Sandboxed plugin engine =================

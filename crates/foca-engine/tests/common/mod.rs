@@ -364,6 +364,9 @@ pub fn config(dir: &Path, base: &str) -> EngineConfig {
     cfg.endpoints.ip_echo = format!("{base}/ip");
     // the update check asks the local server (404 there), never api.github.com
     cfg.endpoints.github_api = format!("{base}/gh");
+    // the signature feeds too (404 there: `no_update`)
+    cfg.endpoints.sig_feed = format!("{base}/sig-feed/signatures-v3.bundle");
+    cfg.endpoints.sig_feed_fallback = format!("{base}/sig-feed/signatures.bundle");
     cfg.endpoints.ip_geo = format!("{base}/geo/{{ip}}");
     // keyless sources point only at the local server (tests make no internet requests)
     for id in foca_engine::HOST_SOURCE_IDS

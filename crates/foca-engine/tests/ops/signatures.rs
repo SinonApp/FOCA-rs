@@ -81,3 +81,53 @@ async fn feed_outcomes_are_reported_honestly() {
     let ser = serde_json::to_value(&err).unwrap();
     assert_eq!(ser["message_msg"]["code"], "sig.bad_url", "{ser}");
 }
+
+/// The scheduled check (`auto: true`): due on first start, then waits for the interval; off,
+/// metered with Wi-Fi only and the schedule show up as `skipped` with a reason, and `auto` in
+/// the status tells the screen when the next check runs. The official feeds point at the local
+/// server here (404: `no_update`).
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn automatic_check_follows_the_schedule() {
+    let e = env(0).await;
+    let st = e.call("signatures_status", json!({})).await;
+    assert_eq!(st["auto"]["mode"], "daily");
+    assert_eq!(st["auto"]["wifi_only"], true);
+    assert!(st["auto"]["checked_at"].is_null(), "{st}");
+    assert!(st["auto"]["next_at"].as_i64().unwrap() > 0);
+
+    // Metered network with Wi-Fi only: skipped, nothing recorded.
+    e.engine.mobile_network(true);
+    let v = e.call("signatures_update", json!({ "auto": true })).await;
+    assert_eq!(v["outcome"], "skipped");
+    assert_eq!(v["skipped"], "metered");
+    assert!(v["last_check"].is_null());
+    e.engine.mobile_network(false);
+
+    // Due: checks both official feeds (404) and records the outcome.
+    let v = e.call("signatures_update", json!({ "auto": true })).await;
+    assert_eq!(v["outcome"], "no_update", "{v}");
+    assert_eq!(v["source"], "builtin");
+    assert!(v["last_check"]["feed_url"]
+        .as_str()
+        .unwrap()
+        .ends_with("/sig-feed/signatures.bundle"));
+    let checked = v["auto"]["checked_at"].as_i64().unwrap();
+    assert!(v["auto"]["next_at"].as_i64().unwrap() >= checked + 24 * 3600);
+
+    // Within the interval: skipped until the next day.
+    let v = e.call("signatures_update", json!({ "auto": true })).await;
+    assert_eq!(v["skipped"], "not_due");
+
+    // Weekly and off come from the settings.
+    e.call(
+        "settings_set",
+        json!({ "patch": { "signatures": { "auto": "off" } } }),
+    )
+    .await;
+    let v = e.call("signatures_update", json!({ "auto": true })).await;
+    assert_eq!(v["skipped"], "disabled");
+    assert!(v["auto"]["next_at"].is_null());
+    // A manual check still works with automatic checks off.
+    let v = e.call("signatures_update", json!({})).await;
+    assert_eq!(v["outcome"], "no_update");
+}
