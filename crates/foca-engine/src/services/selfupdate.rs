@@ -372,7 +372,7 @@ fn signed_message(sums: &[u8]) -> Vec<u8> {
 }
 
 fn hex_decode(s: &str) -> Option<Vec<u8>> {
-    if s.len() % 2 != 0 {
+    if !s.len().is_multiple_of(2) {
         return None;
     }
     (0..s.len())
@@ -503,8 +503,9 @@ pub fn download_dir(cache_dir: &Path) -> PathBuf {
     cache_dir.join("update")
 }
 
-/// Removes downloaded APKs that are not newer than the running version (installed or stale)
-/// and partial files of other versions than `keep`.
+/// Cleans the download directory. With `keep` (a download in progress) every file of another
+/// asset goes; without it only files of versions not newer than the running one (installed or
+/// stale) and unrecognised files, so a partial download of a newer version can still resume.
 pub fn prune_downloads(cache_dir: &Path, current: &str, keep: Option<&str>) {
     let Ok(rd) = std::fs::read_dir(download_dir(cache_dir)) else {
         return;
@@ -512,17 +513,19 @@ pub fn prune_downloads(cache_dir: &Path, current: &str, keep: Option<&str>) {
     let cur = Version::parse(current);
     for e in rd.flatten() {
         let name = e.file_name().to_string_lossy().into_owned();
-        if keep.is_some_and(|k| name.starts_with(k)) {
-            continue;
-        }
-        let ver = name
-            .strip_prefix("FOCA-rs-")
-            .and_then(|r| r.split("-foss-").next())
-            .and_then(|r| r.split("-play-").next())
-            .and_then(Version::parse);
-        let stale = match (&ver, &cur) {
-            (Some(v), Some(c)) => v <= c || name.ends_with(".part") || name.ends_with(".json"),
-            _ => true,
+        let stale = match keep {
+            Some(k) => !name.starts_with(k),
+            None => {
+                let ver = name
+                    .strip_prefix("FOCA-rs-")
+                    .and_then(|r| r.split("-foss-").next())
+                    .and_then(|r| r.split("-play-").next())
+                    .and_then(Version::parse);
+                match (&ver, &cur) {
+                    (Some(v), Some(c)) => v <= c,
+                    _ => true,
+                }
+            }
         };
         if stale {
             let _ = std::fs::remove_file(e.path());
@@ -850,13 +853,28 @@ mod tests {
         ] {
             std::fs::write(d.join(n), b"x").unwrap();
         }
+        let left = || {
+            let mut v: Vec<String> = std::fs::read_dir(&d)
+                .unwrap()
+                .flatten()
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .collect();
+            v.sort();
+            v
+        };
         prune_downloads(dir.path(), "2.0.0-beta.4.1", None);
-        let mut left: Vec<String> = std::fs::read_dir(&d)
-            .unwrap()
-            .flatten()
-            .map(|e| e.file_name().to_string_lossy().into_owned())
-            .collect();
-        left.sort();
-        assert_eq!(left, ["FOCA-rs-2.0.0-beta.5-foss-arm64.apk"]);
+        assert_eq!(
+            left(),
+            [
+                "FOCA-rs-2.0.0-beta.5-foss-arm64.apk",
+                "FOCA-rs-2.0.0-beta.6-play-arm64.apk.part"
+            ]
+        );
+        prune_downloads(
+            dir.path(),
+            "2.0.0-beta.4.1",
+            Some("FOCA-rs-2.0.0-beta.6-play-arm64.apk"),
+        );
+        assert_eq!(left(), ["FOCA-rs-2.0.0-beta.6-play-arm64.apk.part"]);
     }
 }
