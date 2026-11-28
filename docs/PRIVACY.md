@@ -12,7 +12,7 @@ data the app handles, where it goes and what stays on your device. It applies to
   storage (Android app sandbox and device encryption). API keys and tokens are encrypted with the
   Android Keystore.
 - Network requests are made only to run the checks you start, to update the signature database
-  and to use services you configure yourself.
+  and the app (optional) and to use services you configure yourself.
 
 ## Data stored on the device
 
@@ -42,6 +42,7 @@ What each request carries:
 | Breach check of a found password, only when enabled | Pwned Passwords (`api.pwnedpasswords.com`) | The first 5 characters of the SHA-1 hash (k-anonymity); the password and the rest of the hash never leave the device |
 | Alerts, only when configured | Your Telegram bot or webhook | The alert text |
 | Signature database updates | GitHub Releases of SinonApp/FOCA-rs | A plain download request, no identifiers |
+| App update check and download (optional: daily automatic check on Wi-Fi by default, can be turned off in Settings > Updates; manual "Check for updates") | `api.github.com` (releases list of SinonApp/FOCA-rs), `github.com` and GitHub's download hosts (`objects.githubusercontent.com`, `release-assets.githubusercontent.com`) for the APK and its signed checksums | Only a `FOCA-rs/<version>` User-Agent; no account, device identifier or statistics |
 
 All requests honour the app's network settings (proxy, Wi-Fi only, mobile data limit). HTTPS is
 used wherever the remote side supports it.

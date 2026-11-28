@@ -44,6 +44,8 @@ Source roots under `src-tauri/gen/android/app/src/`:
 | `main/.../CrashLog.kt` | 116 | Captures Java/Kotlin uncaught exceptions and Rust panics to files; holds fallback app version string |
 | `main/.../platform/FocaPlugin.kt` | 736 | Tauri plugin `foca-native`: handles `platform_*` commands (`device_info`, share/save/print, biometric, secure screen, battery, permissions, folder/file picker, `verify_search`, shared inbox) |
 | `main/.../platform/FocaDirect.kt` | 153 | Direct JNI entry point from Rust + headless monitor JNI bridge (`scan_service_*`, `scan_done_notify`, `monitor_schedule`, `render_fetch`, `report_sign`/`report_sig_verify`, `ocr_recognize`, `web_screenshot`, `toast`) |
+| `main/.../platform/SelfUpdate.kt` | 230 | In-app update install: `update_permission` ("Install unknown apps"), APK certificate/package/versionCode check, PackageInstaller session, `UpdateReceiver` (confirmation intent, failures to `FocaBus`), download notification (`update_notify`, channel `app_update`); off when `BuildConfig.SELF_UPDATE` is false |
+| `main/.../platform/UpdateLogic.kt` | 60 | Pure update checks: certificate set match, verdict order, cache path confinement, percent (JUnit-tested) |
 | `main/.../platform/FocaBus.kt` | 39 | Device event channel into Rust (`Native::watch`) |
 | `main/.../platform/DeviceMonitor.kt` | 139 | Monitors network (Wi-Fi/mobile/VPN/metered), battery level/charging, and thermal state → `FocaBus` |
 | `main/.../platform/ScanService.kt` | 341 | Foreground service (`dataSync`): persistent scan progress notification with Open/Stop actions, `WAKE_LOCK`, Android 15+ timeout handling |

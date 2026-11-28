@@ -164,10 +164,27 @@ Release gate:
 1. Finish on `main`: version bump (above), `CHANGELOG.md` section with the date, release gate green.
 2. Build both flavors (`bash qa/android-build.sh apk`), align and sign them (see [APK Signing](#apk-signing)), name them `FOCA-rs-<ver>-foss-arm64.apk` and `FOCA-rs-<ver>-play-arm64.apk`.
 3. Tag the release commit on `main`: `git tag -a v2.0.0-beta.4.1 -m "FOCA-rs 2.0.0-beta.4.1"`, then push the tag.
-4. Create a GitHub release from the tag and mark it Pre-release. Attach both APKs and their SHA-256 sums; paste the changelog section, the certificate SHA-256 and the install note (beta.1 needed an uninstall because of the new key; later betas install over it).
-5. Link `/releases`, not `/releases/latest`, for betas: GitHub's "latest" skips pre-releases.
+4. Sign the checksums for the in-app updater (see [Signed release checksums](#signed-release-checksums)): `scripts/sign-release.sh sign dist` writes `dist/SHA256SUMS.txt` and `dist/SHA256SUMS.txt.sig` and verifies them.
+5. Create a GitHub release from the tag and mark it Pre-release. Attach both APKs, `SHA256SUMS.txt` and `SHA256SUMS.txt.sig`; paste the changelog section, the certificate SHA-256 and the install note (beta.1 needed an uninstall because of the new key; later betas install over it). When the release migrates the project database, add the machine-readable line `<!-- foca:schema N -->` (N = `foca_store::schema::PROJECT_MIGRATIONS.len()` of the release) and `<!-- foca:version-code N -->` to the release body; the app warns before installing such an update.
+6. Link `/releases`, not `/releases/latest`, for betas: GitHub's "latest" skips pre-releases.
 
 A final `2.0.0` repeats the same steps without the pre-release suffix, without `bundle.android.versionCode` overrides that would go backwards, and without the Pre-release mark.
+
+### Signed release checksums
+
+The in-app updater (Settings → Updates, `update_*` commands in [API.md](../API.md)) installs nothing unless the release carries:
+
+- `SHA256SUMS.txt`: `sha256sum` lines for the APKs (`FOCA-rs-<ver>-<flavor>-arm64.apk`);
+- `SHA256SUMS.txt.sig`: 128 lowercase hex characters, the Ed25519 signature over `FOCA-rs release SHA256SUMS v1\n` followed by the exact bytes of `SHA256SUMS.txt`.
+
+The key is the signature bundle key (see [signature bundles](signature-bundles.md)); the domain prefix keeps a bundle signature from verifying as a release signature. The app then checks the APK SHA-256 against the signed line, and Android checks that the APK certificate, package name and a higher versionCode match the installed app.
+
+```bash
+scripts/sign-release.sh sign dist      # seed from $FOCA_SIG_SEED (64 hex chars); refuses a seed that does not match the built-in key
+scripts/sign-release.sh verify dist    # signature with the built-in public key + every APK present in dist/
+```
+
+The script needs only OpenSSL 3 and coreutils; the seed is converted to a key file inside a private temporary directory that is removed on exit. To sign an already published release, download its `SHA256SUMS.txt` into an empty directory, run `scripts/sign-release.sh sign-existing <dir>` (signs the file byte for byte, never rewrites it) and upload only `SHA256SUMS.txt.sig`. Builds with `BuildConfig.SELF_UPDATE = false` (a store build) keep the screen but refuse to install.
 
 ## CI
 

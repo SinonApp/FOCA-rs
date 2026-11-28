@@ -89,6 +89,7 @@ Generated from `F.route(...)` calls in the codebase. Bottom navigation tabs: Ove
 | `/lock` | `ui/screens/settings.js` | Lock screen (PIN / biometric) |
 | `/settings/battery` | `ui/screens/settings.js` | Background execution & battery optimization |
 | `/settings/appearance` | `ui/screens/settings.js` | Theme, typography, and live language switcher (`EN` / `RU` / `UA` / `System (auto)`) |
+| `/settings/update` | `ui/screens/update.js` | In-app update: check GitHub releases, notes (escaped, `F.safeMd`), signed download with progress, install permission and PackageInstaller handoff, schema warning, check settings |
 | `/settings/about` | `ui/screens/settings.js` | About FOCA-rs (app version, build flavor `foss`/`play`, changelog, link to licenses) |
 | `/settings/licenses` | `ui/screens/settings.js` | Offline Third-Party Licenses & Components (`licenses_get {}`) |
 | `/settings/signatures` | `ui/screens/settings.js` | Signed signature bundles (`sigbundle`), rollback, and offline ML Kit OCR settings |

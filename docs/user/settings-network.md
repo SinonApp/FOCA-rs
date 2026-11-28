@@ -32,6 +32,7 @@
 | Signature Databases & OCR | `/settings/signatures` | What the analysis matches against (CISA KEV, software and OS signatures, secret rules, standards), catalog age, update check, offline import, rollback + optional on-device ML Kit OCR (`play` flavor only) |
 | Cloud AI | `/settings/ai` | 10 cloud AI providers, live `/models` discovery, Thinking (reasoning) parameters, redaction toggles |
 | Debug & diagnostics | `/settings/debug` | Core log, request log, crash reports, Share logs; Clear app logs (core, Android, crashes) and Clear request log (project: all, older than 7/30/90 days, or one finished scan); Search tab with WebView fingerprint check & per-engine stats |
+| Updates | `/settings/update` | Check for a new version on GitHub (manual, or daily on Wi-Fi), release notes, download with signature and checksum verification, install; beta channel toggle |
 | About, Licenses & Terms | `/settings/about`, `/settings/licenses`, `/settings/terms` | App version & build flavor (`foss`/`play`), auto-generated offline license inventory, Terms of Use |
 
 Drop-down lists across the app (AI provider, model and reasoning level, findings host filter, timeline years, webhook format, plugin settings, User-Agent in the scan wizard) open a panel in the app theme instead of the grey Android dialog.
