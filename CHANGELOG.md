@@ -29,6 +29,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - In-app update from GitHub Releases in both builds (Settings → Updates, also under About): manual check and an optional daily check (Wi-Fi only by default, can be turned off), beta channel toggle, release notes, size and date, download with resume and a progress notification.
 - Updates install only after three checks: `SHA256SUMS.txt` carries a valid Ed25519 signature of the app's key (domain-separated from signature bundles), the APK matches its SHA-256, and Android confirms the same signing certificate, package name and a higher versionCode. A release that migrates the project database shows a warning to export projects first (`<!-- foca:schema N -->` in the release notes).
 - `scripts/sign-release.sh` writes and verifies `SHA256SUMS.txt` and `SHA256SUMS.txt.sig` for release APKs.
+- Start-up update dialog: when a newer release exists, the app asks once per version after start (past the terms and the lock screen) with the version, date, size and a few lines of notes; Update goes into the verified download, Later does not ask again for that version, Settings opens the updates screen. Setting "Ask on start when an update is available" (on by default).
+- Automatic signature database updates (Settings → Signature databases): daily by default, weekly or off, Wi-Fi only by default, never during a scan, at start and when the app returns to the foreground; a verified newer bundle installs silently with a short notice. The screen shows the source in use and the next check; failures retry after 3 hours, rate limits after 12.
+- Weekly GitHub workflow (`.github/workflows/signatures.yml`) refreshes CISA KEV, EPSS and the NVD CVE table, runs the tests, publishes signed bundles to the `signatures` and `signatures-v3` releases and opens a pull request with the data.
 - **Reports and exports**: one switch, "Mask personal data and secrets" (off by default), masks phones, IBAN, tax numbers, cards, passports, e-mails, names and secrets in every format and in the preview.
 
 ### Changed
@@ -37,6 +40,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - Projects analysed by an earlier version hold masks: the update banner offers "Re-analyse documents", which restores the full values from the downloaded files. The report option replaces the old three-way secrets choice; the export switches for secrets and PII are merged into it.
 
 ### Fixed
+- **Signature databases**: after an app update an older downloaded bundle no longer hides the newer built-in data (CVE, KEV and the other tables). The newer of the two is used; the old bundle is ignored, removed and cannot be imported again.
 - **Site technologies**: CVE badges on a technology no longer sit in a grey system button box; the EPSS badge matches the others.
 
 - **Document card**: the Fonts and form-field sections list every name again; rows without a value were hidden, so the section opened empty.

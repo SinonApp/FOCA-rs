@@ -180,7 +180,43 @@ that URL is checked.
 
 Every check is stored in `<data>/signatures/last_check.json` and returned as `last_check` by
 `signatures_status`, so the screen shows when the last check ran and what it found. Versions are
-compared by their numeric parts (`2026.11.27` > `2026.11.20`).
+compared by their numeric parts (`2026.11.27` > `2026.11.20`), the release date breaks a tie.
+
+### Built-in data against an installed bundle
+
+The active database is the newer of the built-in one (version and release date of the KEV snapshot
+compiled into the build) and the installed `current.json`. After an app update the embedded data
+can be newer than a bundle downloaded by the previous version: that bundle is ignored
+(`signatures_status.ignored_bundle` names it, `source` stays `builtin`), deleted at engine start
+(`prune_shadowed`, together with an older `previous.json`), skipped by a rollback, and a manual
+import of a bundle that is not newer fails with `sig_older`. Feed checks compare with the active
+database, so the same old bundle at the feed is `up_to_date`. Tests:
+`app_update_with_newer_builtin_wins_over_an_older_installed_bundle`,
+`newer_bundle_still_wins_over_builtin`, `builtin_and_bundle_order_by_version_then_release_date`,
+`importing_a_bundle_older_than_builtin_is_refused`, `rollback_skips_a_previous_bundle_older_than_builtin`.
+
+### Automatic check in the app
+
+`signatures_update { auto: true }` is the scheduled check. The UI sends it when it is ready (terms
+accepted, past the lock screen; 15 s after start under Tauri) and whenever the app returns to the
+foreground (at most every 10 minutes); the engine decides
+(`crates/foca-engine/src/services/sigauto.rs`):
+
+| Condition | Answer |
+|---|---|
+| `settings.signatures.auto` = `off` | `skipped: disabled` |
+| Before `checked + 1 day` (`daily`, default) or `+ 7 days` (`weekly`) | `skipped: not_due` |
+| Before the retry time after a failure (3 h) or a rate limit (HTTP 403/429 from the download host: 12 h) | `skipped: backoff` |
+| Metered network and `settings.signatures.wifi_only` (default `true`) | `skipped: metered` |
+| A scan is running | `skipped: scan` |
+| Otherwise | the feed check as above, through the engine network client (proxy settings apply) |
+
+A verified newer bundle is installed silently and the UI shows a short notice; a failure is
+recorded in `last_check` and returned as `outcome: "failed"` (no error dialog). Manual checks reset
+the schedule too. The schedule lives in `<data>/signatures/auto.json` (`checked_epoch`,
+`retry_at`); `signatures_status.auto` gives `mode`, `wifi_only`, `checked_at` and `next_at` for the
+screen. Feed URLs come from `Endpoints::sig_feed` / `sig_feed_fallback` (tests point them at the
+local server).
 
 ## Publishing a bundle (maintainers)
 
@@ -213,6 +249,51 @@ hex characters (mode 600).
    `gh release upload signatures-v3 dist/signatures-v3.bundle --clobber` and
    `gh release upload signatures dist/signatures.bundle --clobber`. Never upload a v3 bundle to the
    `signatures` release: beta.3 rejects it.
+
+### Scheduled refresh (GitHub Actions)
+
+`.github/workflows/signatures.yml` runs every Monday at 04:17 UTC and on demand
+(`workflow_dispatch`, inputs `publish` and `pinned`). Jobs:
+
+1. **refresh** (`contents: read`): checks out `main`, sets up Python 3.12 (PyYAML) and stable Rust,
+   then moves the live feed pins with `tools/bump_live_pins.py` (newest published EPSS date in
+   `update_kev_enrich.py` and `update_nvd.py`, today's NVD snapshot and feed year in
+   `update_nvd.py`) and runs, in this order:
+   `update_kev.py` (CISA KEV, not pinned), the pinned sources only with `pinned: true`
+   (`update_webappanalyzer.py`, `update_endoflife.py`, `update_gitleaks.py`, `update_retire.py`,
+   `update_recog.py`, `update_psl.py`, `update_takeover.py`, without `--repin`, so their hashes
+   must still match), `update_kev_enrich.py --repin`, `update_nvd.py --repin`, then
+   `qa/gen-licenses.py`. Tests: `tools/test_update_nvd.py`, `cargo test -p foca-analysis`,
+   `cargo test -p foca-engine --lib sigbundle`, `qa/gen-licenses.py --check`. The changed files go
+   to the next jobs as a patch artifact. A source whose code-like pin should move is bumped by hand
+   in a pull request (edit `COMMIT`/`TAG`, run the script with `--repin`, commit the outputs).
+2. **sign** (environment `signing`, `contents: write`; skipped by a manual run with
+   `publish: false`): applies the patch, writes the secret `SIG_SEED` to a temporary file with
+   mode 600 (deleted on exit, never printed), runs
+   `scripts/build-sig-bundle.sh <seed> signatures-v3.bundle --schema both --version <YYYY.MM.DD> --released <YYYY-MM-DD>`,
+   verifies both bundles against the key built into the app and their schemas (no `nvd_cve` in the
+   v2 bundle), then replaces the assets with `gh release upload signatures-v3 … --clobber` and
+   `gh release upload signatures … --clobber`.
+3. **pull-request** (`contents: write`, `pull-requests: write`): applies the patch and opens or
+   updates the pull request `signatures/data-refresh` with
+   `peter-evans/create-pull-request`. Nothing is pushed to `main`.
+
+All third-party actions are pinned by commit SHA; the workflow has `permissions: {}` at the top
+and a `signature-data` concurrency group (runs queue, never cancel each other).
+
+One-time setup by a maintainer with admin rights:
+
+1. Settings → Environments → New environment `signing`. Under "Deployment branches and tags"
+   choose "Selected branches and tags" and add `main`. Required reviewers are optional: with
+   reviewers, every scheduled run waits for an approval before signing.
+2. In the `signing` environment add the secret `SIG_SEED`: the 64 hex characters of the Ed25519
+   seed file (the same seed `scripts/build-sig-bundle.sh` reads; its public key must equal
+   `OFFICIAL_ED25519_PUBKEY`, the build tool refuses any other). With the GitHub CLI:
+   `gh secret set SIG_SEED --env signing < /path/to/sig-seed.hex`.
+3. The releases `signatures` and `signatures-v3` must exist (created once with
+   `make_latest: false`).
+4. Settings → Actions → General → Workflow permissions: allow GitHub Actions to create pull
+   requests, or the last job fails.
 
 ### New signing key
 
@@ -247,7 +328,12 @@ The tool prints the public key bytes to paste into `OFFICIAL_ED25519_PUBKEY` in
   cycles, startup time), `retire`, `favicon`; `foca-net` `recog`, `psl`, `takeover`, `saas`;
   `foca-analysis` `secrets` (gitleaks rules and allowlists), `kev` (enrichment) and `cve`.
 - `cargo test -p foca-engine --test ops signatures`: the command against a local feed server (404,
-  foreign signature, refused URL) including `message_msg` codes.
+  foreign signature, refused URL) including `message_msg` codes, and the automatic check schedule
+  (metered, due, not due, off).
+- `cargo test -p foca-engine --lib sigauto`: scheduling (due and not due, daily and weekly, off,
+  metered with Wi-Fi only, during a scan, failure retry, rate limit backoff, state file).
 - `crates/foca-engine/tests/contract_shape.rs`: demo backend shapes and the demo copy of the numbers
   (`demo_signature_numbers_match_core_status`).
 - `qa/scenarios/signatures-screen/steps.mjs`: the screen at 393 px and 360 px with font scale 2.
+- `qa/scenarios/update-prompt/steps.mjs`: the automatic update card (off/daily/weekly, Wi-Fi only,
+  next check) and the start-up app update dialog.
