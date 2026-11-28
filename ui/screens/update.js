@@ -472,9 +472,10 @@
   };
 
   // Under Tauri the checks start 15 s after launch; the browser demo shows the start-up dialog once
-  // a few seconds in (never in automated runs, which call F.updateAutoCheck themselves).
+  // a few seconds in. Automated runs (demo and real-core QA) never start them by themselves: their
+  // scenarios call F.updateAutoCheck / F.sigAutoCheck.
   const automated = typeof navigator !== "undefined" && navigator.webdriver;
-  if (F.isTauri || !automated)
+  if (!automated)
     setTimeout(
       () =>
         whenReady(() => {
