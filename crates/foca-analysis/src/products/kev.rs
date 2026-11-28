@@ -612,19 +612,24 @@ mod tests {
     #[test]
     fn enrichment_adds_epss_cvss_and_cwe() {
         let cat = KevCatalog::builtin();
-        assert_eq!(cat.epss_date, "2026-11-26");
+        // The EPSS snapshot moves with every data refresh: compare with the pinned one.
+        let lock: serde_json::Value =
+            serde_json::from_str(include_str!("../../signatures/sources.lock.json")).unwrap();
+        assert_eq!(
+            cat.epss_date,
+            lock["sources"]["epss"]["version"].as_str().unwrap()
+        );
         assert_eq!(cat.enrich.len(), cat.used());
         let log4j = &cat.enrich["CVE-2021-44228"];
         assert!(log4j.epss.unwrap() > 0.9, "{log4j:?}");
         assert_eq!(log4j.cvss, Some(10.0));
         assert!(log4j.cwe.contains(&"CWE-502".to_string()));
         assert_eq!(log4j.ssvc.as_deref(), Some("active/yes/total"));
+        // EPSS scores change daily; log4j stays near the top.
+        let label = log4j.label();
         assert!(
-            log4j
-                .label()
-                .starts_with("EPSS 1.00 (p100) CVSS 10 CWE-502"),
-            "{}",
-            log4j.label()
+            label.starts_with("EPSS ") && label.contains("CVSS 10 CWE-502"),
+            "{label}"
         );
         let m = lookup(
             cat,
