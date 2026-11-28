@@ -162,9 +162,9 @@ export default async (page, { out, prep }) => {
       const ai = await ev(() => ({ t: FOCA.page().innerText, marks: FOCA.page().querySelectorAll("mark.v2ai-r").length }));
       ok("C9/C10: AI preview (ai_preview): secrets replaced with [SECRET], no plain values", ai.marks > 0 && /\[SECRET\]/.test(ai.t) && !/Kont0so|wJx9Fq2/.test(ai.t), ai.marks);
       await shot("D5_ai_preview");
-      // Secrets are masked in the snapshot; revealing goes through secret_reveal after confirmation.
+      // Secrets reach the app in full (masked only in logs, AI payloads and the report option).
       const sec = await ev(() => ({ raw: JSON.stringify(FOCA.db.raw.secrets), v: FOCA.db.secrets[0].value }));
-      ok("C10: secrets masked in snapshot", !/Kont0so#2024/.test(sec.raw) && /•/.test(sec.v), sec.v);
+      ok("C10: secrets shown in full in the snapshot", !/•/.test(sec.raw) && !!sec.v && !/•/.test(sec.v), sec.v);
     }
   } catch (e) { fails++; log.push(["FAIL", "exception", String(e && e.stack || e).slice(0, 500)]); }
   const res = { sec: secArg, sfx, ok: log.length - fails, fail: fails, log };

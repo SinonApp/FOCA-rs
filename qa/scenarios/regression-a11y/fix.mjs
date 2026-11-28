@@ -86,43 +86,22 @@ export default async (page, { out, W, prep }) => {
   ok("N12: card not opened from the list, replaced by the list", (await ev(() => FOCA.stack().join(">"))) === "/projects>/p/overview>/p/findings", await ev(() => FOCA.stack()));
   await ev(() => history.back()); await wait(300);
 
-  // Fingerprint session.
+  // Document secrets are shown in full; the fingerprint session still guards the user's own API keys.
   await go("/p/data/secrets");
+  ok("N11: document secrets shown in full, no reveal buttons", await ev(() => document.querySelectorAll(".dt-sec .secret").length > 0 && !document.querySelector(".dt-sec .secret.masked") && !document.querySelector('[data-act^="dt-sec-show"]')));
+  await click('[data-act="dt-sec-copy:3"]');
+  ok("N11: copying a secret, no fingerprint", await ev(() => !document.querySelector(".sheet.show") && /скопирован/.test(document.querySelector("#snack").textContent)));
   ok("N11: default trust window is 2 min", (await ev(() => FOCA.bioMinutes())) === 2);
-  await click('[data-act="dt-sec-show:1"]');
-  ok("N11: first reveal, fingerprint prompt", await ev(() => !!document.querySelector(".sheet.show .dt-finger")));
-  await click('[data-act="dt-finger-ok"]');
+  await ev(() => FOCA.openKeySheet("shodan")); await wait(400);
+  await click('.sheet.show [data-act="st-keye"]');
+  ok("N11: showing an API key asks for fingerprint", await ev(() => !!document.querySelector(".sheet.show .st-finger")));
+  await click('[data-act="st-finger-ok"]'); await wait(300);
   const ind = await ev(() => ({ show: document.querySelector("#bioind").classList.contains("show"), t: document.querySelector("#bi-t").textContent, open: FOCA.bioOpen() }));
   ok('N11: indicator "Секреты открыты · 2:00 · Закрыть"', ind.show && /Секреты открыты · [12]:\d\d/.test(ind.t) && ind.open, ind);
   await shot("n11_indicator");
-  await click('[data-act="dt-sec-show:2"]');
-  ok("N11: second secret, no repeated fingerprint", await ev(() => !document.querySelector(".sheet.show") && document.querySelectorAll(".dt-sec .secret:not(.masked)").length === 2));
-  await click('[data-act="dt-sec-copy:3"]');
-  ok("N11: copying an unrevealed one, no fingerprint", await ev(() => !document.querySelector(".sheet.show") && /скопирован/.test(document.querySelector("#snack").textContent)));
-  await reset(["/projects", "/p/overview", "/p/finding/4"]);
-  await click('[data-act="fd-reveal:4"]');
-  ok("N11: evidence in a finding, same mechanism, no fingerprint", await ev(() => !document.querySelector(".sheet.show") && !document.querySelector(".fd-ev .secret").classList.contains("masked")));
-  await ev(() => FOCA.openKeySheet("shodan")); await wait(400);
-  await click('.sheet.show [data-act="st-keye"]');
-  ok("N11: API key, same mechanism, no fingerprint", await ev(() => !document.querySelector(".st-finger") && document.querySelector("#st-kv").type === "text"));
-  await ev(() => document.querySelector("#bioind [data-act=bio-close]").click()); await wait(350); // (the sheet is modal; in practice "close" is pressed before or after it)
-  ok('N11: "Закрыть" hides everything and removes the indicator', await ev(() => !FOCA.bioOpen() && !document.querySelector("#bioind").classList.contains("show") && document.querySelector("#st-kv").type === "password" && document.querySelector(".fd-ev .secret").classList.contains("masked")));
-  await click('.sheet.show [data-act="st-keye"]');
-  ok("N11: after closing, fingerprint again (over the key sheet)", await ev(() => !!document.querySelector(".sheet.show .st-finger")));
-  await click('[data-act="st-finger-ok"]'); await ev(() => FOCA.closeSheet()); await wait(300);
-  // Going to the background ends the session.
-  await ev(() => { Object.defineProperty(document, "hidden", { configurable: true, get: () => true }); document.dispatchEvent(new Event("visibilitychange")); delete document.hidden; });
-  ok("N11: app going to background closes the session", await ev(() => !FOCA.bioOpen() && !document.querySelector("#bioind").classList.contains("show")));
-  // Locking ends the session.
-  await go("/p/data/secrets"); await click('[data-act="dt-sec-show:1"]'); await click('[data-act="dt-finger-ok"]');
-  await ev(() => FOCA.go("/lock")); await wait(400);
-  ok("N11: lock screen closes the session", await ev(() => !FOCA.bioOpen()));
-  // "Ask every time".
-  await go("/settings/security");
-  await click('[data-act="st-reveal:0"]');
-  await go("/p/data/secrets"); await click('[data-act="dt-sec-show:1"]'); await click('[data-act="dt-finger-ok"]'); await click('[data-act="dt-sec-show:2"]');
-  ok('N11: "Спрашивать каждый раз": fingerprint per secret, no indicator', await ev(() => !!document.querySelector(".sheet.show .dt-finger") && !document.querySelector("#bioind").classList.contains("show")));
-  await ev(() => FOCA.closeSheet());
+  await ev(() => document.querySelector("#bioind [data-act=bio-close]").click()); await wait(350);
+  ok('N11: "Закрыть" hides the key and removes the indicator', await ev(() => !FOCA.bioOpen() && !document.querySelector("#bioind").classList.contains("show")));
+  await ev(() => FOCA.closeSheet()); await wait(300);
   await go("/settings/security"); await click('[data-act="st-reveal:2"]');
   ok("N11: window setting persists (2 min)", (await ev(() => FOCA.bioMinutes())) === 2);
 

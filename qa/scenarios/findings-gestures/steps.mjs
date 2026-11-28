@@ -54,8 +54,7 @@ export default async (page, { out, W, prep }) => {
   await page.click('#fd-apply'); await shot('07_filtered_list');
   // Card: status, note, photo.
   await open('/p/finding/4');
-  // The secret is revealed after fingerprint confirmation (as in Secrets).
-  await page.click('[data-act="fd-reveal:4"]'); await page.waitForTimeout(300); await page.click('[data-act="dt-finger-ok"]'); await page.waitForTimeout(300);
+  // The secret in evidence is shown in full right away (as in Secrets).
   await page.evaluate(() => document.querySelector('.fd-ev').scrollIntoView({ block: 'center' }));
   await shot('08_detail_revealed');
   await page.click('.fd-status'); await shot('09_status_sheet');

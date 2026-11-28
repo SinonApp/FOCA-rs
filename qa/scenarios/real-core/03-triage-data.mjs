@@ -1,5 +1,5 @@
 // E2E-03: triage on the real core: findings (confirm/false positive → overview numbers and project_list), data (all segments,
-// document/person/host cards, graph, map, timeline), secret (secret_reveal after confirmation), document delete/restore,
+// document/person/host cards, graph, map, timeline), secret (shown in full), document delete/restore,
 // sharing a document and a finding, photo evidence, adding own files, pre-publication check.
 import { harness } from './lib.mjs';
 export default async (page, o) => {
@@ -70,11 +70,9 @@ export default async (page, o) => {
     // Secret.
     await o.go('/p/data/secrets');
     const sec = snap.secrets[0];
-    const before = await ev(() => document.querySelector('.page').innerText);
-    await ev(id => FOCA.actions['dt-sec-show'](String(id)), sec.id); await wait(900);
-    const rv = await api('secret_reveal', { project: pid, id: sec.id });
-    const after = await ev(() => document.querySelector('.page').innerText);
-    ok('secret: masked before confirmation, value from secret_reveal after', !before.includes(rv.value) && after.includes(rv.value), { mask: sec.mask });
+    await wait(300);
+    const shown = await ev(() => document.querySelector('.page').innerText);
+    ok('secret: shown in full without confirmation', !!sec.value && shown.includes(sec.value) && !('mask' in sec), { kind: sec.kind });
     await step('e03_secret');
     // Delete / restore a document.
     const d0 = snap.docs.filter(d => !d.deleted).length;

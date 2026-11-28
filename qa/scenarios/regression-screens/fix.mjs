@@ -24,20 +24,11 @@ export default async (page, { out, W, prep }) => {
   ok("C/logic #12: finding status saved via F.api (after reload)", (await ev(() => FOCA.db.findings.find(f => f.id === 3).status)) === "confirmed");
   await shot("01_triage");
 
-  // A secret in evidence is revealed via fingerprint.
+  // A secret in evidence is shown in full, without a reveal button or fingerprint.
   await go("/p/finding/4");
-  await click('[data-act="fd-reveal:4"]');
-  const masked = await ev(() => document.querySelector(".fd-ev .secret").classList.contains("masked"));
-  const finger = await ev(() => !!document.querySelector(".sheet.show .dt-finger"));
-  ok("UX17: revealing a secret asks for fingerprint, hidden until confirmed", masked && finger);
-  await click('[data-act="dt-finger-ok"]');
-  ok("UX17: secret revealed after confirmation", !(await ev(() => document.querySelector(".fd-ev .secret").classList.contains("masked"))));
-  // Screenshots are allowed by default (sec.block_shots is opt-in), so the advice is shown; once blocked it is gone.
-  ok('logic #36: with screenshots allowed (default) the "не делайте скриншоты" advice is shown', /Не делайте скриншоты/.test(await txt()));
-  await ev(() => { FOCA.db.settings.sec = { ...(FOCA.db.settings.sec || {}), block_shots: true }; FOCA.render(true); });
-  await page.waitForTimeout(250);
-  ok('logic #36: with screenshots blocked there is no "не делайте скриншоты" advice', !/Не делайте скриншоты/.test(await txt()));
-  await ev(() => { FOCA.db.settings.sec = { ...(FOCA.db.settings.sec || {}), block_shots: false }; });
+  const sec = await ev(() => { const s = document.querySelector(".fd-ev .secret"); return s ? { masked: s.classList.contains("masked"), text: s.textContent } : null; });
+  ok("secret in evidence shown in full", !!sec && !sec.masked && !/•/.test(sec.text), JSON.stringify(sec));
+  ok("no reveal button in evidence", !(await ev(() => document.querySelector('[data-act^="fd-reveal"]'))));
   await shot("02_secret");
 
   // "Add to report" keeps the selection and the builder honours it.

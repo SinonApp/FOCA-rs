@@ -1021,21 +1021,38 @@ for (const id of S.order) {
   // Same numbers as the Rust test `rules::tests::risk_rule`: repeats in one category count w/k,
   // metadata-only exposure stops at 75, no critical finding at 89.
   const hd = Array.from({ length: 3 }, () => ({ sev: "high", status: "new", category: "docs", tags: [] }));
-  const meta = Array.from({ length: 300 }, (_, i) => ({ sev: "high", status: "new", category: ["docs", "people", "sw"][i % 3], tags: [] }));
-  const net = Array.from({ length: 300 }, (_, i) => ({ sev: "high", status: "new", category: ["web", "tls", "dns", "mail", "cloud", "hosts"][i % 6], tags: [] }));
+  const meta = Array.from({ length: 300 }, (_, i) => ({
+    sev: "high",
+    status: "new",
+    category: ["docs", "people", "sw"][i % 3],
+    tags: [],
+  }));
+  const net = Array.from({ length: 300 }, (_, i) => ({
+    sev: "high",
+    status: "new",
+    category: ["web", "tls", "dns", "mail", "cloud", "hosts"][i % 6],
+    tags: [],
+  }));
   ok(
     "risk: dampened repeats, exposure and no-critical caps",
     R.riskScore(hd) === 21 &&
-      R.riskScore([...hd, { sev: "high", status: "new", category: "web" }, { ...oosF, category: "web" }]) === 30 &&
+      R.riskScore([...hd, { sev: "high", status: "new", category: "web" }, { ...oosF, category: "web" }]) ===
+        30 &&
       R.riskScore(meta) === 75 &&
       R.riskScore(net) === 89,
     [R.riskScore(hd), R.riskScore(meta), R.riskScore(net)],
   );
   // Shared contract fixture with the core (`rules::tests::risk_contract_fixture`, project_list):
   // mixed categories, software site/server tags, out-of-scope, false positive, fixed and info findings.
-  const fx = JSON.parse(fs.readFileSync(new URL("../tests/fixtures/risk/mixed.json", import.meta.url), "utf8"));
+  const fx = JSON.parse(
+    fs.readFileSync(new URL("../tests/fixtures/risk/mixed.json", import.meta.url), "utf8"),
+  );
   const got = fx.cases.map(c => [c.name, R.riskScore(c.findings), c.score]);
-  ok("risk contract fixture: UI score = core score", got.every(([, a, b]) => a === b), got);
+  ok(
+    "risk contract fixture: UI score = core score",
+    got.every(([, a, b]) => a === b),
+    got,
+  );
   B.invokeSync("demo_reset");
   await F.api.project_list();
   await F.api.project_open("contoso");
@@ -1413,24 +1430,22 @@ for (const id of S.order) {
   const repCsv = await F.api.report_build({ tpl: "Данные", tpl_id: "data", fmt: "csv", lang: "RU" });
   ok("CSV report name has no language", /^Data_/.test(repCsv.name) && repCsv.lang === "-", repCsv.name);
   await F.api.finding_set_status(fid, "new");
-  // Secrets are masked only; the value requires secret_reveal.
+  // Secrets reach the snapshot in full (the user sees every value; logs and the report option mask them).
   const raw = await F.api.project_snapshot("contoso");
   const js = JSON.stringify(raw);
   const plain = B._state().projects.contoso.secrets.map(x => x.value);
   ok(
-    "no clear-text secret values in the snapshot",
-    raw.secrets.every(x => !("value" in x) && x.mask) &&
-      plain.every(v => !js.includes(v)) &&
-      !/Kont0so#2024/.test(js),
-    "plain in snapshot",
+    "secret values are shown in full in the snapshot",
+    raw.secrets.length &&
+      raw.secrets.every((x, i) => x.value === plain[i] && !("mask" in x)) &&
+      !/•/.test(js.replace(/"mask":"[^"]*"/g, "")),
+    "masked in snapshot",
   );
-  const rv = await F.api.secret_reveal(1);
-  ok("secret_reveal returns the value", rv.value === plain[0], "reveal");
-  const fr = (raw.findings.find(x => x.secret_refs && x.secret_refs.length) || {}).secret_refs || [];
   ok(
-    "evidence fragment is revealed by the f<id>:<k> reference",
-    fr.length && !!(await F.api.secret_reveal(fr[0])).value,
-    JSON.stringify(fr),
+    "evidence carries full secret values in {{s:…}} markers",
+    raw.findings.some(x => /\{\{s:[^}•]+\}\}/.test(x.evidence || "")) &&
+      raw.findings.every(x => !("secret_refs" in x)),
+    "evidence",
   );
   ok(
     "service field tech_s1 does not reach the snapshot",
@@ -1521,6 +1536,17 @@ for (const id of S.order) {
     }
     return c === d[7];
   };
+  const ibanOk = raw => {
+    const s = raw.replace(/\s/g, "");
+    const t = (s.slice(4) + s.slice(0, 4)).replace(/[A-Z]/g, ch => String(ch.charCodeAt(0) - 55));
+    return s.length === 29 && [...t].reduce((m, ch) => (m * 10 + +ch) % 97, 0) === 1;
+  };
+  const rnokppOk = s => {
+    if (!/^\d{10}$/.test(s)) return false;
+    const w = [-1, 5, 7, 9, 4, 6, 10, 5, 7];
+    const sum = w.reduce((a, x, i) => a + x * +s[i], 0);
+    return (((sum % 11) + 11) % 11) % 10 === +s[9];
+  };
   const fxOf = id => B.invokeSync("doc_get", { project: "contoso", id }).forensics;
   let withFx = 0;
   for (const d of st.docs.filter(x => x.status === "analyzed")) {
@@ -1560,17 +1586,16 @@ for (const id of S.order) {
       `${P} doc ${d.id}`,
     );
     const js = JSON.stringify(fx);
+    ok("forensics: values are shown in full (no masks)", !/•/.test(js), `${P} doc ${d.id}`);
     ok(
-      "forensics: no full РНОКПП/card/IBAN values (masked)",
-      !/(?<![\d•*])\d{10}(?!\d)|UA\d{27}|(?<!\d)\d{16}(?!\d)/.test(
-        js.replace(/xmp\.[di]id:[^"]*|uuid:[^"]*|"serial":"[^"]*"|"byte_range":\[[^\]]*\]/g, ""),
-      ),
+      "forensics: every IBAN is a synthetic value with a valid checksum",
+      (js.match(/UA\d{2}(?: ?\d){25}/g) || []).every(ibanOk),
       `${P} doc ${d.id}`,
     );
     fx.pii.forEach(p =>
       ok(
-        "forensics: PII samples are masked",
-        p.samples.every(x => /[•*]/.test(x)) && p.count >= p.samples.length,
+        "forensics: PII samples carry full values",
+        p.samples.every(x => !/[•*]/.test(x)) && p.count >= p.samples.length,
         `${P} doc ${d.id} ${p.kind}`,
       ),
     );
@@ -1583,8 +1608,8 @@ for (const id of S.order) {
         `${P} doc ${d.id} ${c.organization} ${c.edrpou}`,
       );
       ok(
-        "forensics: РНОКПП only masked (subject too)",
-        /^\*{8}\d{2}$/.test(c.rnokpp_masked || "") && !/TINUA-\d{10}/.test(c.subject),
+        "forensics: РНОКПП shown in full with a valid check digit",
+        rnokppOk(c.rnokpp || "") && !("rnokpp_masked" in c),
         `${P} doc ${d.id}`,
       );
       ok(
@@ -1690,7 +1715,8 @@ for (const id of S.order) {
       tag,
     );
   }
-  // Full-text search: snippets highlight the query, masked values stay masked, deleted documents are hidden.
+  // Full-text search: snippets highlight the query, sensitive values come in full and labelled, deleted
+  // documents are hidden.
   const r1 = await F.api.docs_search("ТЕС-2");
   ok(
     "docs_search: finds text of mail, PDF and spreadsheets",
@@ -1699,10 +1725,10 @@ for (const id of S.order) {
   );
   const r2 = await F.api.docs_search("IBAN");
   ok(
-    "docs_search: masked values come as {{s:…}} with masked labels",
+    "docs_search: sensitive values come in full as {{s:…}} with labels",
     r2.hits.length &&
-      r2.hits.every(h => !/UA\d{6,}/.test(h.snippet)) &&
-      r2.hits.some(h => /\{\{s:/.test(h.snippet) && h.masked.includes("pii:iban")),
+      r2.hits.every(h => !/•/.test(h.snippet)) &&
+      r2.hits.some(h => /\{\{s:UA\d{2}/.test(h.snippet) && h.masked.includes("pii:iban")),
     JSON.stringify(r2.hits.map(h => h.masked)),
   );
   const tu = st.docs.find(d => d.name === "Технічні_умови_підключення.pdf");
@@ -1718,8 +1744,8 @@ for (const id of S.order) {
   // User rules: byte offsets, validation errors as bad_args.
   const rt = await F.api.rules_test("наказ\\s*№\\s*(?P<v>\\d+)", "Згідно з наказ № 127");
   ok(
-    "rules_test: byte offsets of UTF-8 text, value masked",
-    rt.count === 1 && rt.hits[0].start === 16 && rt.hits[0].value === "••••",
+    "rules_test: byte offsets of UTF-8 text, full value",
+    rt.count === 1 && rt.hits[0].start === 16 && rt.hits[0].value === "127",
     JSON.stringify(rt),
   );
   let bad = null;

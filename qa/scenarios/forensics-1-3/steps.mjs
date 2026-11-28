@@ -50,11 +50,11 @@ export default async (page, { out, W, fsc, theme }) => {
     await scrollTo(".fx-secs"); await shot("doc_pdf_closed"); await noOvf("doc card sections closed");
     await openAll(); await wait(200);
     t = await txt();
-    ok("signature: signer, organization, ЄДРПОУ, РНОКПП mask only, АЦСК, TSA, edits after signing", /Приклад Петро Тестович/.test(t) && /ТОВ «Контосо Енерджі»/.test(t) && /12345678/.test(t) && /\*{8}57/.test(t) && !/TINUA-\d{10}/.test(t) && /КНЕДП - ІДД ДПС/.test(t) && /Метка TSA/.test(t) && /Правки после подписания/.test(t) && /расходится с временем подписи на 3 дня/.test(t), t.slice(0, 400));
+    ok("signature: signer, organization, ЄДРПОУ, full РНОКПП, АЦСК, TSA, edits after signing", /Приклад Петро Тестович/.test(t) && /ТОВ «Контосо Енерджі»/.test(t) && /12345678/.test(t) && /2103167657/.test(t) && !/\*{8}57/.test(t) && /КНЕДП - ІДД ДПС/.test(t) && /Метка TSA/.test(t) && /Правки после подписания/.test(t) && /расходится с временем подписи на 3 дня/.test(t), t.slice(0, 400));
     ok("revisions: timeline with removed (−) and added (+) lines", (await ev(() => document.querySelectorAll(".fx-diff.del").length)) === 2 && (await ev(() => document.querySelectorAll(".fx-diff.ins").length)) === 1 && /Ревизия 3/.test(t));
     ok("bad redaction: page, fill and short fragment", /Стр\. 3/.test(t) && /Чёрная заливка/.test(t) && /Резервна лінія: ПС-35/.test(t));
-    ok("PII: types, counts, masked samples", /Телефон · 3 значения/.test(t) && /РНОКПП \(ІПН\) · 1 значение/.test(t) && /••• •• 14/.test(t));
-    ok("links: service, masked token, SAS pill", /Azure Storage/.test(t) && /SAS-подпись Azure: sig/.test(t) && /sig=••••••••/.test(t));
+    ok("PII: types, counts, full samples", /Телефон · 3 значения/.test(t) && /РНОКПП \(ІПН\) · 1 значение/.test(t) && /\+380 67 555 01 14/.test(t) && !/•/.test(t));
+    ok("links: service, full token, SAS pill", /Azure Storage/.test(t) && /SAS-подпись Azure: sig/.test(t) && /sig=DemoSasSignature0000%3D/.test(t));
     ok("XMP: history events and document id", /Конвертирован/.test(t) && /Acrobat PDFMaker 11/.test(t) && /DocumentID/.test(t));
     await scrollTo('[data-fx="sig"]'); await shot("doc_pdf_sig"); await noOvf("signature section");
     await scrollTo('[data-fx="rev"]'); await shot("doc_pdf_rev");
@@ -73,7 +73,7 @@ export default async (page, { out, W, fsc, theme }) => {
     await scrollTo(".fx-secs"); await shot("doc_xlsx"); await noOvf("xlsx hidden content");
     await go("/p/doc/1"); await openAll(); await wait(150);
     t = await txt();
-    ok("docx: w:vanish hidden text, IBAN masked, SharePoint link", /Скрытый текст \(w:vanish\)/.test(t) && /Знижка 8%/.test(t) && /••••4417/.test(t) && /SharePoint/.test(t));
+    ok("docx: w:vanish hidden text, full IBAN, SharePoint link", /Скрытый текст \(w:vanish\)/.test(t) && /Знижка 8%/.test(t) && /UA793999990000026000000004417/.test(t) && /SharePoint/.test(t));
     await noOvf("docx hidden text");
     ok("docx: every font name is listed in the open fonts section", await ev(() => { const d = document.querySelector('[data-fx="fonts"]'); return !!d && d.open && ["Calibri", "Times New Roman", "Segoe UI Symbol"].every(f => d.textContent.includes(f)); }));
     await scrollTo('[data-fx="fonts"]'); await shot("doc_docx_fonts");
@@ -93,11 +93,11 @@ export default async (page, { out, W, fsc, theme }) => {
     await noOvf("ics details");
     await go(`/p/doc/${await docId("Контакти_відділу_продажів.vcf")}`); await openAll(); await wait(150);
     t = await txt();
-    ok("VCF: contacts with masked phones and birthday", /Контакты/.test(t) && /Сергій Лисенко/.test(t) && /\+380 50 ••• •• 08/.test(t) && /Дата рождения/.test(t));
+    ok("VCF: contacts with full phones and birthday", /Контакты/.test(t) && /Сергій Лисенко/.test(t) && /\+380 50 555 04 08/.test(t) && /Дата рождения/.test(t));
     await noOvf("vcf details");
     await go(`/p/doc/${await docId("IMG_4131.mp4")}`); await openAll(); await wait(150);
     t = await txt();
-    ok("MP4: device, serial, GPS", /Медиафайл/.test(t) && /iPhone 13 Pro/.test(t) && /F2LX••••Q1PK/.test(t) && /Кривий Ріг/.test(t));
+    ok("MP4: device, serial, GPS", /Медиафайл/.test(t) && /iPhone 13 Pro/.test(t) && /F2LXDEMOQ1PK/.test(t) && /Кривий Ріг/.test(t));
     await noOvf("media details");
     await go(`/p/doc/${await docId("Тендер_ТЕС-2_додатки.zip")}`); await openAll(); await wait(150);
     t = await txt();
@@ -117,7 +117,7 @@ export default async (page, { out, W, fsc, theme }) => {
     const codes = await ev(() => [...new Set(FOCA.db.findings.map(x => x.provenance.rule).filter(r => r && !/^infra\./.test(r)))]);
     ok("findings: every forensic code has a note", await ev(cs => cs.every(c => !!FOCA.fx.CODE[c]), codes), codes);
     const pf = await ev(() => FOCA.db.findings.find(x => x.provenance.rule === "pii" && /карты/.test(x.title)));
-    if (pf) { await go(`/p/finding/${pf.id}`); t = await txt(); ok("PII finding: category \"Люди и e-mail\", masked evidence", /Люди и e-mail/.test(t) && /•••• •••• •••• 4471/.test(t) && !/\b\d{16}\b/.test(t)); await noOvf("pii finding"); }
+    if (pf) { await go(`/p/finding/${pf.id}`); t = await txt(); ok("PII finding: category \"Люди и e-mail\", full evidence", /Люди и e-mail/.test(t) && /4111 1111 1111 1111/.test(t) && !/•/.test(t)); await noOvf("pii finding"); }
 
     // ---------- documents list: flags and full-text search ----------
     await go("/p/data/docs");
@@ -131,7 +131,7 @@ export default async (page, { out, W, fsc, theme }) => {
     await shot("fts"); await noOvf("docs search");
     await page.fill("#fts-q", "IBAN"); await wait(500);
     t = await txt();
-    ok("docs search: masked values shown masked with \"В фрагменте скрыто\"", /В фрагменте скрыто: IBAN/.test(t) && (await ev(() => document.querySelectorAll(".fx-hit .fx-mask").length)) > 0 && !/UA\d{6,}/.test(t));
+    ok("docs search: sensitive values shown in full, listed with \"В фрагменте\"", /В фрагменте: IBAN/.test(t) && (await ev(() => document.querySelectorAll(".fx-hit .fx-mask").length)) > 0 && /UA\d{27}/.test(t) && !/•/.test(t));
     // Safe rendering: markup in the document text is shown as text, never executed.
     const xss = await ev(() => { const h = FOCA.fx.snippet('<img src=x onerror="window.__x=1">{{h:<b>x</b>}}{{s:<i>••</i>}}'); const d = document.createElement("div"); d.innerHTML = h; return { img: !!d.querySelector("img"), b: !!d.querySelector("b"), i: !!d.querySelector("i"), mark: d.querySelectorAll("mark").length, mask: d.querySelectorAll(".fx-mask").length }; });
     ok("snippet: only highlight/mask markup, document text escaped", !xss.img && !xss.b && !xss.i && xss.mark === 1 && xss.mask === 1, xss);
@@ -167,7 +167,7 @@ export default async (page, { out, W, fsc, theme }) => {
     const rid = await ev(() => document.querySelector(".fx-rule").dataset.rule);
     await clickAct(`rule-test:${rid}`); await wait(300);
     t = await txt();
-    ok("rules: \"Проверить\" shows matches highlighted and masked values", /Совпадений: 1/.test(t) && (await ev(() => document.querySelector(".fx-tres mark").textContent)) === "договір № 14/03-24" && /••••24/.test(t), t.slice(-400));
+    ok("rules: \"Проверить\" shows matches highlighted with full values", /Совпадений: 1/.test(t) && (await ev(() => document.querySelector(".fx-tres mark").textContent)) === "договір № 14/03-24" && !/••••24/.test(t), t.slice(-400));
     await scrollTo(".fx-rule"); await shot("rules_test"); await noOvf("rules test");
     await page.fill(".fx-rule [data-rf=pattern]", "(договір");
     await clickAct(`rule-test:${rid}`); await wait(300);
@@ -213,7 +213,7 @@ export default async (page, { out, W, fsc, theme }) => {
     await noOvf("imported project overview");
 
     // ---------- help ----------
-    for (const [id, re] of [["forensics-help", /Плохое замазывание/], ["formats-help", /\.eml/], ["kep-help", /РНОКПП показывается только маской/], ["redaction-help", /Redact → Apply/], ["pii-help", /контрольным суммам/], ["fts-help", /64 КБ/], ["rules-help", /\(\?P&lt;v&gt;|\(\?P<v>/], ["offline-help", /не покидают устройство/]]) {
+    for (const [id, re] of [["forensics-help", /Плохое замазывание/], ["formats-help", /\.eml/], ["kep-help", /РНОКПП показывается полностью/], ["redaction-help", /Redact → Apply/], ["pii-help", /контрольным суммам/], ["fts-help", /64 КБ/], ["rules-help", /\(\?P&lt;v&gt;|\(\?P<v>/], ["offline-help", /не покидают устройство/]]) {
       await go(`/help/${id}`);
       ok(`help: ${id}`, re.test(await txt()));
       await noOvf(`help ${id}`);

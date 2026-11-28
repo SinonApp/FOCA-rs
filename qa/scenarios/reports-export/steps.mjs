@@ -26,13 +26,13 @@ export default async (page, { out, W, prep }) => {
     await shot("ex1");
     await page.click('[data-act="rp-ex-fmt:csv"]');
     await shot("ex2_csv");
-    await page.click('[data-act="rp-ex-secrets"]');
+    await page.click('[data-act="rp-ex-mask"]');
     await page.waitForTimeout(200);
     await page.evaluate(() => {
       const b = document.querySelector(".sheet .sh-b");
       b.scrollTop = b.scrollHeight;
     });
-    await shot("ex3_secrets");
+    await shot("ex3_mask");
     await page.click('[data-act="rp-ex-share"]');
     await shot("ex4_share");
     await page.evaluate(() => FOCA.closeSheet());
@@ -44,7 +44,7 @@ export default async (page, { out, W, prep }) => {
     await page.click('[data-act="rp-h-del:3"]');
     await shot("hist_deleted");
     await go("/p/report-new");
-    await page.click('[data-act="rp-d:secrets:full"]');
+    await page.click('[data-act="rp-mask"]');
     await page.waitForTimeout(200);
     await page.evaluate(() => {
       const p = document.querySelector(".page");
@@ -52,13 +52,7 @@ export default async (page, { out, W, prep }) => {
     });
     await shot("new_bottom");
     await page.click('[data-act="rp-build"]');
-    await page.waitForTimeout(300);
-    // Full secrets ask for confirmation first.
-    if (await page.$('[data-act="rp-build-full"]')) {
-      await shot("build_full_secrets_warn");
-      await page.click('[data-act="rp-build-full"]');
-    }
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1200);
     await shot("build_progress");
     await page.waitForTimeout(2600);
     await shot("build_done");

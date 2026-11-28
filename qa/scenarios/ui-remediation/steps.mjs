@@ -710,17 +710,17 @@ sections.devlog = async (page, { go }) => {
   );
 };
 
-// Report builder: no sample executor company by default; full secrets need an explicit confirmation.
+// Report builder: no sample executor company by default; values are full unless the masking switch is on.
 sections.rpdefaults = async (page, { go, shot }) => {
   await fresh(page, go);
   await page.evaluate(() => FOCA.reset(["/projects", "/p/reports", "/p/report-new"]));
   await page.waitForTimeout(400);
   const d = await page.evaluate(() => ({
     company: document.getElementById("rp-company")?.value,
-    secrets: FOCA.state.reports.d.secrets,
+    mask: FOCA.state.reports.d.mask,
   }));
   check("executor company is empty by default", d.company === "", JSON.stringify(d));
-  check("secrets are masked by default", d.secrets === "partial", JSON.stringify(d));
+  check("values are not masked by default", d.mask === false, JSON.stringify(d));
   await page.fill("#rp-company", "ТОВ «Тест Аудит»");
   await page.waitForTimeout(700);
   check(
@@ -729,22 +729,20 @@ sections.rpdefaults = async (page, { go, shot }) => {
       () => FOCA.db.settings.report && FOCA.db.settings.report.company === "ТОВ «Тест Аудит»",
     ),
   );
-  await page.click('[data-act="rp-d:secrets:full"]');
+  await page.click('[data-act="rp-mask"]');
   await page.waitForTimeout(200);
+  check("masking switch turns on", await page.evaluate(() => FOCA.state.reports.d.mask === true));
+  await shot("rp_mask_on");
   const n0 = await page.evaluate(() => FOCA.db.reports.length);
   await page.click('[data-act="rp-build"]');
-  await page.waitForTimeout(400);
-  check("full secrets: warning sheet before building", !!(await page.$('[data-act="rp-build-full"]')));
-  await shot("rp_full_secrets_warn");
-  await page.click('[data-act="rp-build-masked"]');
   await page.waitForTimeout(4500);
   const after = await page.evaluate(() => ({
     n: FOCA.db.reports.length,
-    secrets: FOCA.db.reports[0] && FOCA.db.reports[0].opts && FOCA.db.reports[0].opts.secrets,
+    mask: FOCA.db.reports[0] && FOCA.db.reports[0].opts && FOCA.db.reports[0].opts.mask,
   }));
   check(
-    '"Маскировать" builds the report with masked secrets',
-    after.n === n0 + 1 && after.secrets === "partial",
+    "the report is built with the masking option, no warning sheet",
+    after.n === n0 + 1 && after.mask === true,
     JSON.stringify(after),
   );
   await page.evaluate(() => FOCA.closeSheet());

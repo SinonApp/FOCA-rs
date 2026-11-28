@@ -1,4 +1,4 @@
-// People from document text: Phones segment (masked numbers) and a person card with position, unit,
+// People from document text: Phones segment (full numbers) and a person card with position, unit,
 // signatory mark and contacts written next to the name. Fails on horizontal overflow.
 export default async (page, ctx) => {
   const log = [];
@@ -31,8 +31,8 @@ const run = async (page, { out, W, prep }, log) => {
   await open("/p/data/phones");
   const phones = await ev(() => [...document.querySelectorAll(".list .mono")].map(e => e.textContent));
   check(
-    "phones segment lists masked numbers",
-    phones.length > 0 && phones.every(v => v.includes("•")),
+    "phones segment lists full numbers",
+    phones.length > 0 && phones.every(v => !v.includes("•") && /\d{6,}/.test(v.replace(/\D/g, ""))),
     String(phones.length),
   );
   check("phones segment has no horizontal overflow", (await overflow()) <= 1);
@@ -46,7 +46,7 @@ const run = async (page, { out, W, prep }, log) => {
   check("person card shows the position", txt.includes(t.title));
   check("person card shows the unit", txt.includes(t.unit));
   check(
-    "person card shows a masked phone",
+    "person card shows the full phone",
     (t.phones || []).every(v => txt.includes(v)),
   );
   check("person card has no horizontal overflow", (await overflow()) <= 1);

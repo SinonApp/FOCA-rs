@@ -72,11 +72,9 @@ const run = async (page, { out, W, prep }, log) => {
   log.push({ after_crumb: await ev(() => FOCA.current()) });
   log.push({ crumbs_after: await ev(() => document.querySelectorAll('.dt-crumb').length) });
 
-  // 6) Secrets: fingerprint and reveal.
+  // 6) Secrets: shown in full, copy without confirmation.
   await open('/p/data/secrets');
-  await page.click('[data-act="dt-sec-show:1"]'); await shot('09_finger_sheet');
-  await page.click('[data-act="dt-finger-ok"]'); await page.waitForTimeout(300);
-  await shot('10_secret_revealed');
+  await shot('10_secrets_full');
   await page.click('[data-act="dt-sec-copy:1"]'); await page.waitForTimeout(200);
   log.push({ snack: await ev(() => document.querySelector('#snack').textContent) });
 
