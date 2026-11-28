@@ -582,7 +582,7 @@
   "reextract.kb": "{n} KB",
   "reextract.mb": "{n} MB",
   "reextract.docs_n": "{n} document|{n} documents",
-  "reextract.banner": "The new version extracts more data from documents. Re-analyse {n}?",
+  "reextract.banner": "The new version extracts more data from documents and restores full values instead of masks. Re-analyse {n}?",
   "reextract.btn": "Re-analyse documents",
   "reextract.not_now": "Not now",
   "reextract.running_t": "Re-analysing documents",

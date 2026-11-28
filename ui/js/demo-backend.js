@@ -767,7 +767,7 @@
         ext: "pdf",
         title: "начальник відділу",
         unit: "відділ закупівель",
-        phones: ["+38••••••••41"],
+        phones: ["+380675550141"],
         signatory: true,
         src_line: 12,
       },
@@ -1054,7 +1054,7 @@
   // ---- 1.3: document forensics of the story documents (doc_get.forensics, keyed by document name) ----
   // Every value is fictional and consistent with the organization: the signer Петро Приклад (a text person
   // "Підпис у PDF"), SRV-SQL02 / MAIL01 (extra computers), the Microsoft 365 tenant of contoso.example.
-  // Personal values are stored masked, as the core does (foca_analysis::pii::sanitize).
+  // Personal values are stored in full, as the core does; all of them are synthetic test values.
   const CONTOSO_EDRPOU = "12345678";
   // Documents in the extended formats, added after the generated ones (ids follow ndocs).
   const CONTOSO_FX_DOCS = [
@@ -1191,27 +1191,27 @@
           location: "абзац 18",
           text: "Знижка 8% погоджена усно з ТОВ «Енергобуд», у договір не вносити",
         },
-        { kind: "vanish", location: "абзац 41", text: "Реквізити: IBAN ••••••••••••••••••••••••4417" },
+        { kind: "vanish", location: "абзац 41", text: "Реквізити: IBAN UA793999990000026000000004417" },
       ],
       pii: [
         {
           kind: "iban",
           sev: "high",
           count: 1,
-          samples: ["Реквізити: IBAN ••••••••••••••••••••••••4417"],
+          samples: ["Реквізити: IBAN UA793999990000026000000004417"],
           location: "абзац 41",
         },
         {
           kind: "edrpou",
           sev: "info",
           count: 2,
-          samples: ["ЄДРПОУ ••••••89", "ЄДРПОУ ••••••72"],
+          samples: ["ЄДРПОУ 10048189", "ЄДРПОУ 10049272"],
           location: "абзац 2",
         },
       ],
       links: [
         {
-          url: "https://contosoexample.sharepoint.com/:f:/s/Legal/EhT••••••••Qw?e=••••••",
+          url: "https://contosoexample.sharepoint.com/:f:/s/Legal/EhTDemoShareLinkQw?e=Xy12Ab",
           host: "contosoexample.sharepoint.com",
           service: "share_point",
           shared: true,
@@ -1299,7 +1299,7 @@
           kind: "pdf",
           source: "pdf:obj 41",
           signer: {
-            subject: `CN=Приклад Петро Тестович, SN=Приклад, GN=Петро Тестович, O=ТОВ «Контосо Енерджі», T=Головний енергетик, serialNumber=TINUA-********57, C=UA, L=Київ`,
+            subject: `CN=Приклад Петро Тестович, SN=Приклад, GN=Петро Тестович, O=ТОВ «Контосо Енерджі», T=Головний енергетик, serialNumber=TINUA-2103167657, C=UA, L=Київ`,
             common_name: "Приклад Петро Тестович",
             given_name: "Петро Тестович",
             surname: "Мороз",
@@ -1310,7 +1310,7 @@
             country: "UA",
             email: "d.moroz@contoso.example",
             edrpou: CONTOSO_EDRPOU,
-            rnokpp_masked: "********57",
+            rnokpp: "2103167657",
             rnokpp_valid: true,
             issuer: KEP_ISSUER,
             issuer_cn: "КНЕДП - ІДД ДПС",
@@ -1379,7 +1379,7 @@
           page: 4,
           fill: "white",
           rect: [72, 140.2, 300.5, 154.6],
-          text: "Тел. чергового диспетчера: +380 67 ••• •• 14",
+          text: "Тел. чергового диспетчера: +380 67 555 01 14",
         },
       ],
       xmp_history: [
@@ -1407,14 +1407,14 @@
           kind: "phone",
           sev: "low",
           count: 3,
-          samples: ["Тел. чергового диспетчера: +380 67 ••• •• 14", "тел. +380 44 ••• •• 67"],
+          samples: ["Тел. чергового диспетчера: +380 67 555 01 14", "тел. +380 44 555 02 67"],
           location: "стор. 4",
         },
-        { kind: "rnokpp", sev: "high", count: 1, samples: ["РНОКПП ••••••••57"], location: "підпис" },
+        { kind: "rnokpp", sev: "high", count: 1, samples: ["РНОКПП 2103167657"], location: "підпис" },
       ],
       links: [
         {
-          url: "https://drive.google.com/drive/folders/1Qx••••••••hT?usp=sharing",
+          url: "https://drive.google.com/drive/folders/1QxDemoFolderIdhT?usp=sharing",
           host: "drive.google.com",
           service: "google_drive",
           shared: true,
@@ -1424,7 +1424,7 @@
           sev: "low",
         },
         {
-          url: "https://contosoexample.blob.core.windows.net/scada/tes2-scheme.zip?sv=2021-08-06&sp=r&sig=••••••••",
+          url: "https://contosoexample.blob.core.windows.net/scada/tes2-scheme.zip?sv=2021-08-06&sp=r&sig=DemoSasSignature0000%3D",
           host: "contosoexample.blob.core.windows.net",
           service: "azure_storage",
           shared: false,
@@ -1441,15 +1441,15 @@
           kind: "iban",
           sev: "high",
           count: 12,
-          samples: ["UA •••••••••••••••••••••••••0417", "UA •••••••••••••••••••••••••2290"],
+          samples: ["UA21 3999 9900 0002 6000 0000 0041 7", "UA84 3999 9900 0002 6000 0000 0229 0"],
           location: "Споживачі!F2:F13",
         },
         {
           kind: "card",
           sev: "high",
           count: 2,
-          samples: ["•••• •••• •••• 4471", "•••• •••• •••• 9015"],
-          details: ["Visa ×1", "ПРОСТІР ×1"],
+          samples: ["4111 1111 1111 1111", "5555 5555 5555 4444"],
+          details: ["Visa ×1", "Mastercard ×1"],
           location: "Споживачі!G4",
         },
       ],
@@ -1477,7 +1477,7 @@
       },
       embedded: [{ name: "Кошторис_ТЕС-2_v2.xlsx", format: "xlsx" }],
       pii: [
-        { kind: "phone", sev: "low", count: 1, samples: ["моб. +380 67 ••• •• 31"], location: "тіло листа" },
+        { kind: "phone", sev: "low", count: 1, samples: ["моб. +380 67 555 03 31"], location: "тіло листа" },
       ],
     }),
     "Нарада_ТЕС-2_графік.ics": fxRec({
@@ -1485,7 +1485,8 @@
         "ics:method": "REQUEST",
         "ics:x-wr-timezone": "Europe/Kyiv",
         "ics:uid_domains": "contoso.example",
-        "ics:meeting_links": "https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjA••••••@thread.v2/0",
+        "ics:meeting_links":
+          "https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjADemoMeetingId@thread.v2/0",
         "ics:event.01.summary": "Нарада: графік робіт ТЕС-2",
         "ics:event.01.location": "Microsoft Teams; переговорна 3.12",
         "ics:event.01.organizer": "i.petrenko@contoso.example",
@@ -1493,7 +1494,7 @@
       },
       links: [
         {
-          url: "https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjA••••••@thread.v2/0",
+          url: "https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjADemoMeetingId@thread.v2/0",
           host: "teams.microsoft.com",
           service: "meeting",
           shared: true,
@@ -1509,19 +1510,19 @@
         "vcf:01.fn": "Сергій Лисенко",
         "vcf:01.org": "ТОВ «Контосо Енерджі»",
         "vcf:01.title": "Менеджер з продажів",
-        "vcf:01.tel": "+380 67 ••• •• 31",
+        "vcf:01.tel": "+380 67 555 03 31",
         "vcf:02.fn": "Віктор Ткаченко",
         "vcf:02.org": "ТОВ «Контосо Енерджі»",
-        "vcf:02.tel": "+380 50 ••• •• 08",
-        "vcf:02.bday": "••••-••-14",
-        "vcf:02.adr": "м. Кривий Ріг, вул. ••••••••",
+        "vcf:02.tel": "+380 50 555 04 08",
+        "vcf:02.bday": "1985-03-14",
+        "vcf:02.adr": "м. Кривий Ріг, вул. Прикладна, 7",
       },
       pii: [
         {
           kind: "phone",
           sev: "low",
           count: 2,
-          samples: ["+380 67 ••• •• 31", "+380 50 ••• •• 08"],
+          samples: ["+380 67 555 03 31", "+380 50 555 04 08"],
           location: "vcf",
         },
       ],
@@ -1543,7 +1544,7 @@
         "media:com.apple.quicktime.model": "iPhone 13 Pro",
         "media:com.apple.quicktime.software": "16.6",
         "media:com.apple.quicktime.location.ISO6709": "+47.9214+033.4286+072.312/",
-        "media:camera_serial": "F2LX••••Q1PK",
+        "media:camera_serial": "F2LXDEMOQ1PK",
       },
     }),
     "Тендер_ТЕС-2_додатки.zip": fxRec({
@@ -2061,7 +2062,7 @@
         ...extra,
       });
     });
-    // Phone numbers from document text (masked, like the core's `phones`).
+    // Phone numbers from document text (full values, like the core's `phones`).
     st.phones = st.people
       .filter(p => p.phones && p.phones.length)
       .flatMap(p =>
@@ -3016,7 +3017,7 @@
     const signer =
       "Подписант: Приклад Петро Тестович\nОрганизация: ТОВ «Контосо Енерджі»\nЄДРПОУ: " +
       CONTOSO_EDRPOU +
-      "\nДолжность: Головний енергетик\nE-mail: d.moroz@contoso.example\nРНОКПП: ********57\nАЦСК: КНЕДП - ІДД ДПС\nВремя подписи: 2017-06-16T09:41:12+03:00\nМетка TSA: 2017-06-19T08:02:13Z";
+      "\nДолжность: Головний енергетик\nE-mail: d.moroz@contoso.example\nРНОКПП: 2103167657\nАЦСК: КНЕДП - ІДД ДПС\nВремя подписи: 2017-06-16T09:41:12+03:00\nМетка TSA: 2017-06-19T08:02:13Z";
     const L = [
       base(D.tu, {
         rule: "doc.bad_redaction",
@@ -3029,7 +3030,7 @@
         recommendation:
           "Удалить документ с сайта; замазывать средствами настоящего редактирования (Redact → Apply), затем пересохранять PDF и проверять копированием текста.",
         evidence:
-          "стр. 3 (black): «Резервна лінія: ПС-35 «Західна», вул. Промислова, 12»\nстр. 4 (black): «Тел. чергового диспетчера: +380 67 ••• •• 14»",
+          "стр. 3 (black): «Резервна лінія: ПС-35 «Західна», вул. Промислова, 12»\nстр. 4 (black): «Тел. чергового диспетчера: +380 67 555 01 14»",
       }),
       base(D.tu, {
         rule: "doc.modified_after_signing",
@@ -3050,7 +3051,7 @@
         cat: "people",
         mitre: "T1589.001 · Gather Victim Identity Information: Credentials",
         description:
-          "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+          "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
         recommendation:
           "Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.",
         evidence: signer,
@@ -3095,11 +3096,11 @@
         sev: "crit",
         mitre: "T1213.003 · Data from Information Repositories: Code Repositories",
         description:
-          "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
+          "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.",
         recommendation:
           "Проверить права доступа по ссылкам, отозвать токены и SAS-ссылки, закрыть публичный доступ к рабочим пространствам.",
         evidence:
-          "Google Drive: https://drive.google.com/drive/folders/1Qx••••••••hT?usp=sharing\nAzure Storage: https://contosoexample.blob.core.windows.net/scada/tes2-scheme.zip?sv=2021-08-06&sp=r&sig=••••••••",
+          "Google Drive: https://drive.google.com/drive/folders/1QxDemoFolderIdhT?usp=sharing\nAzure Storage: https://contosoexample.blob.core.windows.net/scada/tes2-scheme.zip?sv=2021-08-06&sp=r&sig=DemoSasSignature0000%3D",
       }),
       base(D.contract, {
         rule: "doc.hidden_content",
@@ -3111,7 +3112,7 @@
         recommendation:
           "Удалять, а не скрывать служебные данные; проверять документ Инспектором документов перед публикацией.",
         evidence:
-          "абзац 18: Знижка 8% погоджена усно з ТОВ «Енергобуд», у договір не вносити\nабзац 41: Реквізити: IBAN ••••••••••••••••••••••••4417",
+          "абзац 18: Знижка 8% погоджена усно з ТОВ «Енергобуд», у договір не вносити\nабзац 41: Реквізити: IBAN UA793999990000026000000004417",
       }),
       base(D.equip, {
         rule: "doc.hidden_content",
@@ -3170,10 +3171,10 @@
         module: "pii",
         mitre: "T1213 · Data from Information Repositories",
         description:
-          "В документе найдено значений: 12. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+          "В документе найдено значений: 12. Значения проверены по контрольным суммам, где это возможно.",
         recommendation:
           "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
-        evidence: "UA •••••••••••••••••••••••••0417\nUA •••••••••••••••••••••••••2290",
+        evidence: "UA21 3999 9900 0002 6000 0000 0041 7\nUA84 3999 9900 0002 6000 0000 0229 0",
         tags: ["pii"],
       }),
       base(D.usage, {
@@ -3185,10 +3186,10 @@
         module: "pii",
         mitre: "T1213 · Data from Information Repositories",
         description:
-          "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+          "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
         recommendation:
           "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
-        evidence: "•••• •••• •••• 4471\n•••• •••• •••• 9015\nVisa ×1, ПРОСТІР ×1",
+        evidence: "4111 1111 1111 1111\n5555 5555 5555 4444\nVisa ×1, Mastercard ×1",
         tags: ["pii"],
       }),
       base(D.eml, {
@@ -3245,17 +3246,16 @@
         description:
           "Приглашение содержит ссылки подключения к Teams/Zoom (иногда с паролем): посторонний может войти на встречу.",
         recommendation: "Не публиковать приглашения; включить зал ожидания и пароли встреч.",
-        evidence: "https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjA••••••@thread.v2/0",
+        evidence: "https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjADemoMeetingId@thread.v2/0",
       }),
       base(D.vcf, {
         rule: "pim.contact_pii",
         title: `Личные контакты в визитных карточках (${N.vcf})`,
         sev: "warn",
         cat: "people",
-        description:
-          "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).",
+        description: "Файл контактов содержит телефоны, адреса и даты рождения.",
         recommendation: "Не публиковать файлы контактов .vcf.",
-        evidence: "Сергій Лисенко: +380 67 ••• •• 31\nВіктор Ткаченко: +380 50 ••• •• 08, ДР ••••-••-14",
+        evidence: "Сергій Лисенко: +380 67 555 03 31\nВіктор Ткаченко: +380 50 555 04 08, ДР 1985-03-14",
         rel: { people: person("s.lysenko").concat(person("v.tkachenko")) },
       }),
       base(D.mp4, {
@@ -3266,7 +3266,7 @@
         description:
           "Видео или фото содержит серийный номер камеры/телефона: по нему связываются другие публикации с того же устройства.",
         recommendation: "Удалять метаданные медиафайлов перед публикацией.",
-        evidence: "Apple iPhone 13 Pro · F2LX••••Q1PK",
+        evidence: "Apple iPhone 13 Pro · F2LXDEMOQ1PK",
       }),
       base(D.zip, {
         rule: "zip.path_traversal",
@@ -7824,12 +7824,6 @@
     o.secrets = o.secrets.filter(x => !del.has(x.doc));
     o.events = o.events.filter(e => !e.ref || e.ref.type !== "doc" || !del.has(e.ref.id));
   }
-  // Document secrets and {{s:…}} fragments in evidence reach the UI only as masks; the value comes from
-  // secret_reveal.
-  const maskOf = v => {
-    v = String(v ?? "");
-    return v.length > 10 ? v.slice(0, 3) + "••••••••" + v.slice(-2) : "••••••••";
-  };
   // Standards of the finding rules used by the demo: a copy of crates/foca-analysis/signatures/standards.toml
   // (fields: MITRE ATT&CK v20 | CWE | OWASP Top 10:2025 | WSTG | ISO/IEC 27001 | NIST SP 800-53 = НД ТЗІ 3.6-006-24 |
   // privacy | НД ТЗІ 2.5-004-99 | НД ТЗІ 3.7-003-05); cwe_top25 = CWE ids in the 2025 CWE Top 25.
@@ -7880,19 +7874,9 @@
     return s;
   };
   const SECRET_RX = /\{\{s:([\s\S]*?)\}\}/g;
-  function maskSecrets(o) {
-    o.secrets.forEach(x => {
-      x.mask = maskOf(x.value);
-      delete x.value;
-    });
+  // Document secrets and {{s:…}} fragments in evidence reach the UI in full, as in the core.
+  function withStandards(o) {
     o.findings.forEach(f => {
-      let k = 0;
-      const refs = [];
-      f.evidence = String(f.evidence || "").replace(SECRET_RX, (_, v) => {
-        refs.push(`f${f.id}:${k++}`);
-        return `{{s:${maskOf(v)}}}`;
-      });
-      f.secret_refs = refs;
       f.standards = standardsOf((f.provenance || {}).rule);
     });
   }
@@ -7918,7 +7902,7 @@
     out.docs.forEach(d => {
       d.cleaned = (st.cleaned || {})[d.id] || null;
     });
-    maskSecrets(out);
+    withStandards(out);
     out.settings = publicSettings();
     out.scan = scanStatus(id);
     out.oos = oosOf(st);
@@ -8311,8 +8295,8 @@
       path: `Download/FOCA-rs/${name}`,
       size: kbStr(n * per * (kind === "log" ? 0.4 : 1) + 2),
       count: n,
-      secrets: fmt === "stix" ? false : !!o.secrets,
-      pii_redacted: fmt === "stix" ? true : !!o.pii,
+      secrets: fmt === "stix" ? false : !o.mask,
+      pii_redacted: fmt === "stix" ? true : !!o.mask,
     };
   }
   // ---- i18n_bundle: synced from locales/{en,ru,uk}/ui.json ----
@@ -10047,11 +10031,11 @@
   // their forensic records. Masked values are written as {{s:…}} like the core's snippets.
   const DEMO_TEXT = {
     "Договір_постачання_ТЕС-2_v3.docx": {
-      text: "ДОГОВІР ПОСТАЧАННЯ № 14/03-24. ТОВ «Контосо Енерджі» (код ЄДРПОУ {{s:••••••89}}) та ТОВ «Енергобуд» уклали цей договір про постачання обладнання для ТЕС-2. Ціна договору становить 16 900 000 грн. Оплата на рахунок IBAN {{s:••••••••••••••••••••••••4417}} протягом 10 банківських днів. Знижка 8% погоджена усно з ТОВ «Енергобуд», у договір не вносити.",
+      text: "ДОГОВІР ПОСТАЧАННЯ № 14/03-24. ТОВ «Контосо Енерджі» (код ЄДРПОУ {{s:10048189}}) та ТОВ «Енергобуд» уклали цей договір про постачання обладнання для ТЕС-2. Ціна договору становить 16 900 000 грн. Оплата на рахунок IBAN {{s:UA793999990000026000000004417}} протягом 10 банківських днів. Знижка 8% погоджена усно з ТОВ «Енергобуд», у договір не вносити.",
       masked: ["pii:edrpou", "pii:iban"],
     },
     "Технічні_умови_підключення.pdf": {
-      text: "ТЕХНІЧНІ УМОВИ на приєднання до електричних мереж ТОВ «Контосо Енерджі». Потужність приєднання: 1,6 МВт. Резервна лінія: ПС-35 «Західна», вул. Промислова, 12. Тел. чергового диспетчера: {{s:+380 67 ••• •• 14}}. Схема підключення: https://contosoexample.blob.core.windows.net/scada/tes2-scheme.zip?sv=2021-08-06&sp=r&sig={{s:••••••••}}. Погоджено: головний енергетик П. Т. Приклад.",
+      text: "ТЕХНІЧНІ УМОВИ на приєднання до електричних мереж ТОВ «Контосо Енерджі». Потужність приєднання: 1,6 МВт. Резервна лінія: ПС-35 «Західна», вул. Промислова, 12. Тел. чергового диспетчера: {{s:+380 67 555 01 14}}. Схема підключення: https://contosoexample.blob.core.windows.net/scada/tes2-scheme.zip?sv=2021-08-06&sp=r&sig={{s:DemoSasSignature0000%3D}}. Погоджено: головний енергетик П. Т. Приклад.",
       masked: ["pii:phone", "secret:azure_sas"],
     },
     "Перелік_обладнання_ТЕС-2.xlsx": {
@@ -10059,15 +10043,15 @@
       masked: [],
     },
     "Звіт_по_споживанню_2019.xlsx": {
-      text: "Звіт по споживанню електроенергії за 2019 рік. Споживач, адреса, лічильник, IBAN {{s:UA •••••••••••••••••••••••••0417}}, картка {{s:•••• •••• •••• 4471}}. Разом спожито 18 422 МВт·год.",
+      text: "Звіт по споживанню електроенергії за 2019 рік. Споживач, адреса, лічильник, IBAN {{s:UA21 3999 9900 0002 6000 0000 0041 7}}, картка {{s:4111 1111 1111 1111}}. Разом спожито 18 422 МВт·год.",
       masked: ["pii:iban", "pii:card"],
     },
     "Re_Тендер_ТЕС-2_уточнення.eml": {
-      text: "Re: Тендер ТЕС-2, уточнення. Доброго дня! Надсилаю оновлений кошторис ТЕС-2, прохання відповідати на особисту пошту. З повагою, Сергій Лисенко, відділ продажів, моб. {{s:+380 67 ••• •• 31}}.",
+      text: "Re: Тендер ТЕС-2, уточнення. Доброго дня! Надсилаю оновлений кошторис ТЕС-2, прохання відповідати на особисту пошту. З повагою, Сергій Лисенко, відділ продажів, моб. {{s:+380 67 555 03 31}}.",
       masked: ["pii:phone"],
     },
     "Нарада_ТЕС-2_графік.ics": {
-      text: "Нарада: графік робіт ТЕС-2. Microsoft Teams; переговорна 3.12. Організатор i.petrenko@contoso.example. Приєднатися: https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjA••••••@thread.v2/0",
+      text: "Нарада: графік робіт ТЕС-2. Microsoft Teams; переговорна 3.12. Організатор i.petrenko@contoso.example. Приєднатися: https://teams.microsoft.com/l/meetup-join/19%3ameeting_NjADemoMeetingId@thread.v2/0",
       masked: [],
     },
   };
@@ -11435,7 +11419,7 @@
               template: o.tpl_id || template || "full",
               format: fmt,
               lang: lang === "-" ? "ru" : lang.toLowerCase(),
-              secrets_mode: o.secrets || "hide",
+              secrets_mode: o.mask ? "partial" : "full",
               scope_targets: ((st.scope && st.scope.targets) || []).map(t => t.v),
               scope_excludes: (st.scope && st.scope.excl) || [],
               findings_total: result.total || 0,
@@ -11837,7 +11821,7 @@
       save();
       return { scope: clone(st.scope), oos: oosOf(st) };
     },
-    // The plain secret value is available only through this command, after biometric confirmation in the UI.
+    // Kept for API compatibility (the snapshot already carries full values).
     // id: a number (secrets[].id) or "f<finding id>:<k>".
     secret_reveal: ({ project, id }) => {
       const st = P(project);
@@ -12685,7 +12669,7 @@
         hits.push({
           start,
           end: start + utf8Len(m[0]),
-          value: v.length > 4 ? "••••" + v.slice(-2) : "••••",
+          value: v,
         });
       }
       return { count: hits.length, hits };

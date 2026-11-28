@@ -1296,5 +1296,9 @@
   "data.id_uk_nino": "NINO (UK)",
   "data.id_es_dni": "DNI/NIE (ES)",
   "data.id_it_cf": "Codice fiscale (IT)",
-  "data.id_fr_nir": "NIR (FR)"
+  "data.id_fr_nir": "NIR (FR)",
+  "data.phone": "Phone",
+  "data.secrets_clip_note": "Values are shown in full. A copied secret is cleared from the clipboard after 30 s.",
+  "data.secrets_full_note": "Values are shown in full, as in the documents.",
+  "ai.pii_strip_sub": "Names, e-mails → [NAME], [EMAIL]; phones, IBAN, tax numbers, cards → masks"
 }

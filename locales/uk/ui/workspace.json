@@ -1296,5 +1296,9 @@
   "data.id_uk_nino": "NINO (UK)",
   "data.id_es_dni": "DNI/NIE (ES)",
   "data.id_it_cf": "Codice fiscale (IT)",
-  "data.id_fr_nir": "NIR (FR)"
+  "data.id_fr_nir": "NIR (FR)",
+  "data.phone": "Телефон",
+  "data.secrets_clip_note": "Значення показано повністю. Скопійований секрет видаляється з буфера обміну через 30 с.",
+  "data.secrets_full_note": "Значення показано повністю, як у документах.",
+  "ai.pii_strip_sub": "ПІБ, e-mail → [NAME], [EMAIL]; телефони, IBAN, РНОКПП, картки → маски"
 }
