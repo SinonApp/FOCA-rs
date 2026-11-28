@@ -867,6 +867,13 @@ pub fn export_with_log(
     fmt: ExportFormat,
     o: &ExportOptions,
 ) -> Artifact {
+    let masked;
+    let snap = if o.redact_pii {
+        masked = crate::mask::mask_snapshot(snap);
+        &masked
+    } else {
+        snap
+    };
     let mode = if o.include_secrets {
         SecretMode::Full
     } else {

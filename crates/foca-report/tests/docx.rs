@@ -84,6 +84,9 @@ fn docx_reports_are_valid_ooxml_with_png_chart_and_redacted_secrets() {
     ] {
         let mut o = tpl_opts(tpl, lang, ReportFormat::Docx);
         o.custody = true;
+        // Values are full by default; the masking option hides secrets in DOCX too.
+        o.mask = true;
+        o.secrets = foca_report::SecretMode::Partial;
         let a = build(snap, &o);
         assert!(a.file_name.ends_with(".docx"), "{}", a.file_name);
         let xml = validate_docx(&a.bytes);

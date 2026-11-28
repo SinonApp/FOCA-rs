@@ -73,6 +73,7 @@ fn full_template_is_unchanged_by_the_template_parameter() {
         let o = ReportOptions {
             sections: Sections::all(),
             company: "ТОВ «Кібер Аудит»".into(),
+            secrets: SecretMode::Hide,
             ..ReportOptions::from_ui(&v)
         };
         assert_eq!(o.tpl, Template::Full);

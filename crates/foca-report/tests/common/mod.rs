@@ -223,6 +223,8 @@ pub fn opts(fmt: ReportFormat) -> ReportOptions {
         fmt,
         sections: Sections::all(),
         company: "ТОВ «Кібер Аудит»".into(),
+        // The goldens were written with hidden secrets; the app default is full values.
+        secrets: SecretMode::Hide,
         ..Default::default()
     }
 }

@@ -249,6 +249,65 @@ fn replace_word(s: &str, from: &str, to: &str) -> String {
     out
 }
 
+/// Keys whose string values are codes, ids or dates, never personal text.
+const CODE_KEYS: &[&str] = &[
+    "id",
+    "sha256",
+    "sha1",
+    "md5",
+    "hash",
+    "sev",
+    "status",
+    "category",
+    "kind",
+    "type",
+    "fmt",
+    "format",
+    "lang",
+    "rule",
+    "module",
+    "thumbnail",
+    "tags",
+    "created_at",
+    "updated_at",
+    "started_at",
+    "finished_at",
+    "at",
+    "date",
+];
+
+fn mask_values(v: &mut serde_json::Value, key: &str, f: &dyn Fn(&str) -> String) {
+    match v {
+        serde_json::Value::String(s) if !CODE_KEYS.contains(&key) => {
+            let m = f(s);
+            if m != *s {
+                *s = m;
+            }
+        }
+        serde_json::Value::Array(a) => a.iter_mut().for_each(|x| mask_values(x, key, f)),
+        serde_json::Value::Object(o) => o.iter_mut().for_each(|(k, x)| mask_values(x, k, f)),
+        _ => {}
+    }
+}
+
+/// The "mask personal data and secrets" report and export option: a copy of the snapshot with
+/// personal values (phones, IBAN, tax numbers, cards, passports) masked by
+/// [`foca_analysis::pii::redact`] and names, logins and e-mail addresses redacted by [`Pii`]
+/// in every text field. Secrets are masked by the [`Redactor`] in [`SecretMode::Partial`].
+pub fn mask_snapshot(snap: &Snapshot) -> Snapshot {
+    let pii = Pii::new(snap);
+    let Ok(mut v) = serde_json::to_value(snap) else {
+        return snap.clone();
+    };
+    mask_values(&mut v, "", &|s| pii.text(&foca_analysis::pii::redact(s).0));
+    serde_json::from_value(v).unwrap_or_else(|_| {
+        // Never fall back to the full values: blank every text field instead.
+        let mut v = serde_json::to_value(snap).unwrap_or_default();
+        mask_values(&mut v, "", &|_| String::new());
+        serde_json::from_value(v).unwrap_or_default()
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -11,7 +11,7 @@
 //!
 //! Security: every string from metadata is hostile input, and renderers emit it only through
 //! [`safe`] (HTML/XML/Markdown/CSV escaping, CSV injection protection, safe file names and
-//! links). Secrets are hidden by default ([`SecretMode::Hide`], `include_secrets = false`).
+//! links). Values are full by default; the `mask` option masks personal data and secrets.
 
 #![recursion_limit = "512"]
 
@@ -592,6 +592,15 @@ pub fn build_report_with_visuals(
     } else {
         snap
     };
+    // The masking option works on the data itself, so every section, format and the preview
+    // render the same masked values.
+    let masked;
+    let snap = if o.mask {
+        masked = mask::mask_snapshot(snap);
+        &masked
+    } else {
+        snap
+    };
     let sel = data::select(snap, o);
     let pages = data::pages_estimate(o, sel.main.len(), sel.fixed.len());
     let res = ResultSnapshot::build(snap, &sel, pages);
@@ -612,7 +621,11 @@ pub fn build_report_with_visuals(
         o.fmt,
         ReportFormat::Html | ReportFormat::Md | ReportFormat::Docx
     ) {
-        vis.map_text(&|s| red.text(s))
+        let pii = o.mask.then(|| mask::Pii::new(snap));
+        vis.map_text(&|s| match &pii {
+            Some(p) => red.text(&p.text(&foca_analysis::pii::redact(s).0)),
+            None => red.text(s),
+        })
     } else {
         Visuals::default()
     };
@@ -697,6 +710,7 @@ pub fn normalized_opts(o: &ReportOptions) -> Value {
         "picked": o.picked,
         "picked_only": o.picked_only,
         "secrets": o.secrets.id(),
+        "mask": o.mask,
         "company": o.company,
         "logo": !matches!(o.logo, Logo::None),
     })

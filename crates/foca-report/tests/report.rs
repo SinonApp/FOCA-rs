@@ -13,6 +13,50 @@ mod common;
 
 use common::*;
 
+/// The "mask personal data and secrets" option masks the values in every text format; without
+/// it (the default) the report holds them in full.
+#[test]
+fn mask_option_masks_personal_data_and_secrets() {
+    let mut snap = fixture().snap.clone();
+    let f = snap.findings.first_mut().unwrap();
+    f.evidence = "Тел. +38 067 555 01 14, IBAN UA213999990000026000000000417, РНОКПП 2103167657, картка 4111 1111 1111 1111, password = {{s:Kv7#pLm2xQ9!zT}}".into();
+    let values = [
+        "+38 067 555 01 14",
+        "UA213999990000026000000000417",
+        "2103167657",
+        "4111 1111 1111 1111",
+        "Kv7#pLm2xQ9!zT",
+    ];
+    for fmt in [
+        ReportFormat::Html,
+        ReportFormat::Md,
+        ReportFormat::Csv,
+        ReportFormat::Json,
+    ] {
+        let full = ReportOptions {
+            fmt,
+            sections: Sections::all(),
+            min_sev: None,
+            ..Default::default()
+        };
+        let t = text(&build(&snap, &full));
+        for v in values {
+            assert!(t.contains(v), "{fmt:?}: {v} missing without the option");
+        }
+        let masked = ReportOptions::from_ui(
+            &serde_json::json!({ "fmt": format!("{fmt:?}").to_lowercase(), "mask": true }),
+        );
+        let masked = ReportOptions {
+            sections: Sections::all(),
+            ..masked
+        };
+        let t = text(&build(&snap, &masked));
+        for v in values {
+            assert!(!t.contains(v), "{fmt:?}: {v} leaked with the option");
+        }
+    }
+}
+
 #[test]
 fn golden_md_csv_json() {
     let snap = &fixture().snap;

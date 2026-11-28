@@ -118,7 +118,8 @@
       "created": "2024-03-01T09:55:00",
       "ext": "pdf",
       "flags": [
-        "forensic"
+        "forensic",
+        "pii"
       ],
       "id": 8,
       "modified": null,
@@ -134,7 +135,8 @@
       "created": null,
       "ext": "docx",
       "flags": [
-        "forensic"
+        "forensic",
+        "pii"
       ],
       "id": 9,
       "modified": null,
@@ -150,7 +152,8 @@
       "created": null,
       "ext": "pdf",
       "flags": [
-        "forensic"
+        "forensic",
+        "pii"
       ],
       "id": 10,
       "modified": "2024-03-05T12:00:00",
@@ -1275,14 +1278,14 @@
       "category": "docs",
       "cve": [],
       "cvss": null,
-      "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
+      "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.",
       "documents": [
         {
           "id": 4,
           "name": "personal.docx"
         }
       ],
-      "evidence": "Google Drive: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing\nAzure Storage: https://contoso.blob.core.windows.net/backup/db.bak?sv=2022-11-02&sp=r&sig=Ab…3D",
+      "evidence": "Google Drive: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing\nAzure Storage: https://contoso.blob.core.windows.net/backup/db.bak?sv=2022-11-02&sp=r&sig=[скрыто]",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -1419,6 +1422,44 @@
       "time": "2026-11-20T12:00:00",
       "title": "Внутренние почтовые серверы и адреса в заголовках письма (budget.msg)",
       "url": "https://files.contoso.example/corpus/mail/budget.msg"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "В документе найдено значений: 3. Значения проверены по контрольным суммам, где это возможно.",
+      "documents": [
+        {
+          "id": 9,
+          "name": "signed_hidden.docx"
+        }
+      ],
+      "evidence": "1234567899\nSN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@exa",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 823798096323571,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "поле signatures"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
+      "severity": "high",
+      "severity_label": "Высокий",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "РНОКПП (ІПН) физлица в документе (signed_hidden.docx)",
+      "url": "https://files.contoso.example/corpus/forensics/signed_hidden.docx"
     },
     {
       "active": false,
@@ -1569,14 +1610,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "documents": [
         {
           "id": 4,
           "name": "personal.docx"
         }
       ],
-      "evidence": "Картка ••••••••••11\nVisa",
+      "evidence": "Картка 4111 1111 1111 1111\nVisa",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -1607,14 +1648,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "documents": [
         {
           "id": 4,
           "name": "personal.docx"
         }
       ],
-      "evidence": "Отримувач: Іван Петренко, РНОКПП ••••••••70",
+      "evidence": "Отримувач: Іван Петренко, РНОКПП 3012345670",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -1793,14 +1834,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "documents": [
         {
           "id": 4,
           "name": "personal.docx"
         }
       ],
-      "evidence": "IBAN ••••••••••01\nМФО 322313",
+      "evidence": "IBAN UA213223130000026007233566001\nМФО 322313",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -1838,7 +1879,7 @@
           "name": "signed_modified.pdf"
         }
       ],
-      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
+      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -2233,14 +2274,52 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
+      "documents": [
+        {
+          "id": 8,
+          "name": "signed.pdf"
+        }
+      ],
+      "evidence": "1234567899\nSN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@exa",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 8305515600150968,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "поле signatures"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
+      "severity": "high",
+      "severity_label": "Высокий",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "РНОКПП (ІПН) физлица в документе (signed.pdf)",
+      "url": "https://files.contoso.example/corpus/forensics/signed.pdf"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "documents": [
         {
           "id": 4,
           "name": "personal.docx"
         }
       ],
-      "evidence": "Паспорт серія ••••••56",
+      "evidence": "Паспорт серія АВ 123456",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -2271,14 +2350,52 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+      "description": "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
+      "documents": [
+        {
+          "id": 10,
+          "name": "signed_modified.pdf"
+        }
+      ],
+      "evidence": "1234567899\nSN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@exa",
+      "first_scan": "s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 8900732440795363,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "provenance": {
+        "fields": [
+          "поле signatures"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
+      "severity": "high",
+      "severity_label": "Высокий",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "РНОКПП (ІПН) физлица в документе (signed_modified.pdf)",
+      "url": "https://files.contoso.example/corpus/forensics/signed_modified.pdf"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
       "documents": [
         {
           "id": 8,
           "name": "signed.pdf"
         }
       ],
-      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
+      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -2309,14 +2426,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
       "documents": [
         {
           "id": 9,
           "name": "signed_hidden.docx"
         }
       ],
-      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z\nПодписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:57Z",
+      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z\nПодписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:57Z",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -2388,7 +2505,7 @@
       "cvss": 5.3,
       "description": "Рядом с именами в опубликованных документах указаны контакты: телефон: 1, e-mail: 1, личные идентификаторы: 1. Такие данные используют для фишинга и социальной инженерии; значения телефонов и идентификаторов хранятся только в виде масок.",
       "documents": [],
-      "evidence": "Іван Петренко: •••••••00; passport",
+      "evidence": "Іван Петренко: 440000000; card, iban, passport, rnokpp",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "contoso.example",
@@ -2772,14 +2889,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).",
+      "description": "Файл контактов содержит телефоны, адреса и даты рождения.",
       "documents": [
         {
           "id": 49,
           "name": "contacts.vcf"
         }
       ],
-      "evidence": "adr: ••••••••••на\nbday: ••••••••01\ntel: ••••••••••00; ••••••••••01",
+      "evidence": "adr: вул. Прикладна, 1, Київ, 01001, Україна\nbday: 1985-01-01\ntel: +380 67 000 00 00; +380 44 000 00 01",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -3250,14 +3367,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).",
+      "description": "Файл контактов содержит телефоны, адреса и даты рождения.",
       "documents": [
         {
           "id": 1,
           "name": "backup.zip"
         }
       ],
-      "evidence": "nested/inner.zip → contacts/i.petrenko.vcf: adr: ••••••••••на\nnested/inner.zip → contacts/i.petrenko.vcf: bday: ••••••••01\nnested/inner.zip → contacts/i.petrenko.vcf: tel: ••••••••••00; ••••••••••01",
+      "evidence": "nested/inner.zip → contacts/i.petrenko.vcf: adr: вул. Прикладна, 1, Київ, 01001, Україна\nnested/inner.zip → contacts/i.petrenko.vcf: bday: 1985-01-01\nnested/inner.zip → contacts/i.petrenko.vcf: tel: +380 67 000 00 00; +380 44 000 00 01",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -3620,14 +3737,14 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
       "documents": [
         {
           "id": 10,
           "name": "signed_modified.pdf"
         }
       ],
-      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
+      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -4934,7 +5051,7 @@
           "name": "signed_hidden.docx"
         }
       ],
-      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z",
+      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z",
       "first_scan": "s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -6965,7 +7082,7 @@
   "summary": {
     "counts": {
       "crit": 4,
-      "high": 24,
+      "high": 27,
       "info": 5,
       "low": 34,
       "warn": 40
@@ -6975,6 +7092,6 @@
     "project_risk": 88,
     "risk": 88,
     "risk_level": "high",
-    "total": 107
+    "total": 110
   }
 }

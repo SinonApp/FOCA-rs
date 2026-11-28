@@ -119,12 +119,12 @@ pub use foca_core::Lang;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SecretMode {
-    /// Replaced with a localized "hidden" placeholder (the safe default).
-    #[default]
+    /// Replaced with a localized "hidden" placeholder.
     Hide,
-    /// `Bu••••••23!`, as in the UI preview.
+    /// `Bu••••••23!` (the "mask personal data and secrets" option).
     Partial,
-    /// Clear text (only on explicit user choice).
+    /// Clear text (the default: the user sees the values the documents hold).
+    #[default]
     Full,
 }
 
@@ -292,7 +292,11 @@ pub struct ReportOptions {
     /// Only findings picked with "Add to report" (`picked`).
     pub picked_only: bool,
     pub picked: Vec<u64>,
+    /// How secrets are rendered: [`SecretMode::Full`], or [`SecretMode::Partial`] with `mask`.
     pub secrets: SecretMode,
+    /// "Mask personal data and secrets" (`opts.mask`, default off): personal values, names and
+    /// e-mail addresses are masked ([`crate::mask::mask_snapshot`]) and secrets shown partially.
+    pub mask: bool,
     /// Author's company (header, cover).
     pub company: String,
     pub logo: Logo,
@@ -320,7 +324,8 @@ impl Default for ReportOptions {
             min_sev: None,
             picked_only: false,
             picked: Vec::new(),
-            secrets: SecretMode::Hide,
+            secrets: SecretMode::Full,
+            mask: false,
             company: String::new(),
             logo: Logo::None,
             version: None,
@@ -390,6 +395,8 @@ impl ReportOptions {
             Some(Value::String(d)) => Logo::from_data(d),
             _ => Logo::None,
         };
+        // The legacy three-way `secrets` choice is ignored: values are full unless `mask` is on.
+        let mask = b("mask").unwrap_or(false);
         ReportOptions {
             tpl,
             fmt: ReportFormat::parse(s("fmt")).unwrap_or_default(),
@@ -402,7 +409,12 @@ impl ReportOptions {
                 .or_else(|| b("pickedOnly"))
                 .unwrap_or(false),
             picked,
-            secrets: SecretMode::parse(s("secrets")).unwrap_or_default(),
+            secrets: if mask {
+                SecretMode::Partial
+            } else {
+                SecretMode::Full
+            },
+            mask,
             company: s("company").to_string(),
             logo,
             version: v.get("version").and_then(Value::as_u64).map(|n| n as u32),
@@ -575,7 +587,7 @@ pub enum MdLayout {
 pub struct ExportOptions {
     /// Columns/fields (keys, see `export::columns(kind)`); `None` uses the defaults.
     pub columns: Option<Vec<String>>,
-    /// Export secrets in clear text. Defaults to `false`, which hides them.
+    /// Export secrets in clear text (default). `false` hides them (the mask option).
     pub include_secrets: bool,
     /// Names → initials, e-mail addresses and logins → masks.
     pub redact_pii: bool,
@@ -606,7 +618,7 @@ impl Default for ExportOptions {
     fn default() -> Self {
         ExportOptions {
             columns: None,
-            include_secrets: false,
+            include_secrets: true,
             redact_pii: false,
             dict: None,
             ad_domain: None,
@@ -634,6 +646,11 @@ impl ExportOptions {
             o.include_secrets = x;
         }
         if let Some(x) = b("pii").or_else(|| b("redact_pii")) {
+            o.redact_pii = x;
+        }
+        // "Mask personal data and secrets": one switch for both.
+        if let Some(x) = b("mask") {
+            o.include_secrets = !x;
             o.redact_pii = x;
         }
         if let Some(x) = b("bom") {
@@ -722,12 +739,18 @@ mod tests {
         assert_eq!(o.min_sev, Some(Severity::Medium));
         assert!(o.confirmed && o.picked_only && o.sections.log && !o.sections.people);
         assert_eq!(o.picked, vec![3, 5]);
-        assert_eq!(o.secrets, SecretMode::Partial);
+        // The legacy `secrets` choice no longer masks: only `mask` does.
+        assert_eq!(o.secrets, SecretMode::Full);
+        assert!(!o.mask);
         assert_eq!(o.logo, Logo::Initials);
-        // Defaults are safe.
+        // Full values by default; one switch masks personal data and secrets.
         let d = ReportOptions::from_ui(&json!({}));
-        assert_eq!(d.secrets, SecretMode::Hide);
-        assert!(!ExportOptions::default().include_secrets);
+        assert_eq!(d.secrets, SecretMode::Full);
+        assert!(ExportOptions::default().include_secrets);
+        let m = ReportOptions::from_ui(&json!({ "mask": true }));
+        assert!(m.mask && m.secrets == SecretMode::Partial);
+        let e = ExportOptions::from_ui(&json!({ "mask": true }));
+        assert!(!e.include_secrets && e.redact_pii);
     }
 
     #[test]
