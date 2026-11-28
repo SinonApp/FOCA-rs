@@ -95,7 +95,7 @@ jobs:
           name: signature-data
           path: ${{ runner.temp }}/signature-data.patch
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
 
   sign:
     name: Sign and publish bundles
@@ -172,7 +172,9 @@ jobs:
   pull-request:
     name: Pull request with the refreshed data
     needs: [refresh, sign]
-    if: always() && needs.refresh.result == 'success' && needs.refresh.outputs.changed == 'true' && needs.sign.result != 'failure'
+    # Opt-in (repository variable DATA_PR_ENABLED=true): needs "Allow GitHub Actions to create pull
+    # requests". Without it the refreshed data stays available as the signature-data artifact.
+    if: always() && vars.DATA_PR_ENABLED == 'true' && needs.refresh.result == 'success' && needs.refresh.outputs.changed == 'true' && needs.sign.result != 'failure'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

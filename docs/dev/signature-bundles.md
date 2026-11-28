@@ -293,8 +293,11 @@ One-time setup by a maintainer with admin rights:
    `gh secret set SIG_SEED --env signing < /path/to/sig-seed.hex`.
 3. The releases `signatures` and `signatures-v3` must exist (created once with
    `make_latest: false`).
-4. Settings → Actions → General → Workflow permissions: allow GitHub Actions to create pull
-   requests, or the last job fails.
+4. Optional: to get the refreshed data as a pull request, allow GitHub Actions to create pull
+   requests (Settings → Actions → General → Workflow permissions; an organization may have to allow
+   it first) and add the repository variable `DATA_PR_ENABLED` = `true`. Without it the data stays
+   in the `signature-data` artifact of the run (30 days): `gh run download <id> -n signature-data`,
+   then `git apply --binary signature-data.patch`.
 5. Settings → Secrets and variables → Actions → Variables: add `SIGNING_ENABLED` = `true`. Until it
    is set, the scheduled run only refreshes and tests the data and opens the pull request; the
    bundles are then signed and uploaded locally with `scripts/build-sig-bundle.sh` and
