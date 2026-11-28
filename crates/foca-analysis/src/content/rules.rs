@@ -36,7 +36,8 @@ pub struct UserRule {
     pub sev: Severity,
     pub enabled: bool,
     pub case_insensitive: bool,
-    /// Mask matched values like secrets (default). Off for non-sensitive markers.
+    /// Legacy flag kept so older project settings round-trip; matches are always shown in
+    /// full in the app (logs and the masked report option mask them).
     pub mask: bool,
 }
 
@@ -248,7 +249,6 @@ pub struct RuleHit {
     pub title: String,
     pub sev: Severity,
     pub value: SecretValue,
-    pub masked: bool,
     pub start: usize,
     pub end: usize,
     pub location: String,
@@ -259,7 +259,6 @@ struct Compiled {
     rule: String,
     title: String,
     sev: Severity,
-    mask: bool,
     re: Regex,
 }
 
@@ -323,7 +322,6 @@ impl RuleSet {
                                 rule: format!("preset:{}:{}", pre.id, r.id),
                                 title: r.title.to_string(),
                                 sev: r.sev,
-                                mask: r.mask,
                                 re,
                             }),
                             Err(m) => errs.push(RuleError {
@@ -364,7 +362,6 @@ impl RuleSet {
                     rule: format!("user:{}", r.id),
                     title: r.title.trim().to_string(),
                     sev: r.sev,
-                    mask: r.mask,
                     re,
                 }),
                 Ok(_) => {}
@@ -412,7 +409,6 @@ impl RuleSet {
                     title: c.title.clone(),
                     sev: c.sev,
                     value: SecretValue::new(m.as_str().trim()),
-                    masked: c.mask,
                     start: m.start(),
                     end: m.end(),
                     location,

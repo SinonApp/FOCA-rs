@@ -1880,6 +1880,12 @@
  {
   "lang": "en",
   "rule": "doc.signer_identity",
+  "text": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
+  "out": "The signing certificate reveals the signer's full name, position, organization and certification authority; for a Ukrainian qualified signature also the EDRPOU and RNOKPP codes."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.signer_identity",
   "text": "Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.",
   "out": "Keep in mind that signed documents reveal certificate data; use the organization seal or a separate public signature for publishing."
  },
@@ -2300,6 +2306,12 @@
  {
   "lang": "en",
   "rule": "pim.contact_pii",
+  "text": "Файл контактов содержит телефоны, адреса и даты рождения.",
+  "out": "The contacts file contains phone numbers, addresses and birth dates."
+ },
+ {
+  "lang": "en",
+  "rule": "pim.contact_pii",
   "text": "Не публиковать файлы контактов .vcf.",
   "out": "Do not publish .vcf contact files."
  },
@@ -2402,6 +2414,12 @@
  {
   "lang": "en",
   "rule": "pii",
+  "text": "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
+  "out": "Values found in the document: 2. Values were validated by check digits where possible."
+ },
+ {
+  "lang": "en",
+  "rule": "pii",
   "text": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
   "out": "Remove the document from public access and review the publishing procedure for marked documents."
  },
@@ -2440,6 +2458,12 @@
   "rule": "doc.links",
   "text": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
   "out": "The document links to cloud workspaces (Google Drive, SharePoint, Notion, Trello, Jira…) or contains URLs with embedded access tokens (tokens are masked)."
+ },
+ {
+  "lang": "en",
+  "rule": "doc.links",
+  "text": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.",
+  "out": "The document links to cloud workspaces (Google Drive, SharePoint, Notion, Trello, Jira…) or contains URLs with embedded access tokens."
  },
  {
   "lang": "en",
@@ -6050,6 +6074,12 @@
  {
   "lang": "uk",
   "rule": "doc.signer_identity",
+  "text": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
+  "out": "Сертифікат підпису розкриває ПІБ, посаду, організацію та центр сертифікації підписанта; для українського КЕП: коди ЄДРПОУ та РНОКПП."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.signer_identity",
   "text": "Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.",
   "out": "Враховувати, що підписані документи розкривають дані сертифіката; для публікації використовувати печатку організації або окремий публічний підпис."
  },
@@ -6470,6 +6500,12 @@
  {
   "lang": "uk",
   "rule": "pim.contact_pii",
+  "text": "Файл контактов содержит телефоны, адреса и даты рождения.",
+  "out": "Файл контактів містить телефони, адреси та дати народження."
+ },
+ {
+  "lang": "uk",
+  "rule": "pim.contact_pii",
   "text": "Не публиковать файлы контактов .vcf.",
   "out": "Не публікувати файли контактів .vcf."
  },
@@ -6572,6 +6608,12 @@
  {
   "lang": "uk",
   "rule": "pii",
+  "text": "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
+  "out": "У документі знайдено значень: 2. Значення перевірено за контрольними сумами, де це можливо."
+ },
+ {
+  "lang": "uk",
+  "rule": "pii",
   "text": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
   "out": "Видалити документ із відкритого доступу та перевірити процедуру публікації документів із грифом."
  },
@@ -6610,6 +6652,12 @@
   "rule": "doc.links",
   "text": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
   "out": "Документ посилається на хмарні робочі простори (Google Drive, SharePoint, Notion, Trello, Jira…) або містить URL із вбудованими токенами доступу (токени замасковано)."
+ },
+ {
+  "lang": "uk",
+  "rule": "doc.links",
+  "text": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.",
+  "out": "Документ посилається на хмарні робочі простори (Google Drive, SharePoint, Notion, Trello, Jira…) або містить URL із вбудованими токенами доступу."
  },
  {
   "lang": "uk",

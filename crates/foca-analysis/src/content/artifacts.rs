@@ -3,7 +3,8 @@
 //!
 //! Pure functions over bytes: no I/O, input clipped to [`MAX_ARTIFACT_BYTES`], every list
 //! capped. Secrets (credentials in remote URLs, `.env` values, inline VPN keys) go through the
-//! existing secret detector or are wrapped in [`SecretValue`]; display strings are masked.
+//! existing secret detector or are wrapped in [`SecretValue`]; display strings keep the full
+//! value and `Debug` masks it.
 
 use foca_core::{api::SecretValue, Severity};
 use serde::Serialize;
@@ -53,13 +54,43 @@ pub fn kind_of(path: &str) -> Option<ArtifactKind> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Clone, PartialEq, Serialize)]
 pub struct GitRemote {
     pub name: String,
-    /// URL with credentials masked.
+    /// URL as written (credentials included; masked in `Debug`).
     pub url: String,
     pub host: Option<String>,
     pub internal: bool,
+}
+
+impl std::fmt::Debug for GitRemote {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GitRemote")
+            .field("name", &self.name)
+            .field("url", &mask_userinfo(&self.url))
+            .field("host", &self.host)
+            .field("internal", &self.internal)
+            .finish()
+    }
+}
+
+/// The secret part of `scheme://user:pass@host` (the password, or a token used as the user
+/// name), if any.
+fn userinfo_secret(url: &str) -> Option<&str> {
+    let rest = &url[url.find("://")? + 3..];
+    let auth = rest.split(['/', '?', '#']).next().unwrap_or("");
+    let (ui, _) = auth.rsplit_once('@')?;
+    let secret = ui.split_once(':').map(|(_, p)| p).unwrap_or(ui);
+    // `git@host` style user names are not secrets; tokens as user names are.
+    (!secret.is_empty() && (ui.contains(':') || secret.len() >= 20)).then_some(secret)
+}
+
+/// `url` with the credential of [`userinfo_secret`] masked (for `Debug`).
+fn mask_userinfo(url: &str) -> String {
+    match userinfo_secret(url) {
+        Some(s) => url.replacen(s, &foca_core::api::mask(s), 1),
+        None => url.to_string(),
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -210,33 +241,22 @@ pub fn parse_path(path: &str, bytes: &[u8]) -> Option<ArtifactInfo> {
     parse(kind_of(path)?, bytes)
 }
 
-/// Masks the password of `scheme://user:pass@host` and returns it as a secret hit.
+/// Records the password of `scheme://user:pass@host` as a secret hit; returns the URL as is.
 fn remote_url(url: &str, place: &str, info: &mut ArtifactInfo) -> String {
-    let mut shown = url.to_string();
-    if let Some(i) = url.find("://") {
-        let rest = &url[i + 3..];
-        let auth = rest.split(['/', '?', '#']).next().unwrap_or("");
-        if let Some((ui, _)) = auth.rsplit_once('@') {
-            let secret = ui.split_once(':').map(|(_, p)| p).unwrap_or(ui);
-            // `git@host` style user names are not secrets; tokens as user names are.
-            let is_secret = ui.contains(':') || secret.len() >= 20;
-            if is_secret && !secret.is_empty() {
-                shown = url.replacen(secret, &foca_core::api::mask(secret), 1);
-                info.secrets.push(SecretHit {
-                    rule: "uri-credentials".into(),
-                    title: "Учётные данные в URI".into(),
-                    kind: "conn".into(),
-                    sev: Severity::Critical,
-                    value: SecretValue::new(secret),
-                    context: format!("url = {{{{s:{secret}}}}}"),
-                    location: place.to_string(),
-                    host: url_host(url),
-                    entropy: secrets::entropy(secret),
-                });
-            }
-        }
+    if let Some(secret) = userinfo_secret(url) {
+        info.secrets.push(SecretHit {
+            rule: "uri-credentials".into(),
+            title: "Учётные данные в URI".into(),
+            kind: "conn".into(),
+            sev: Severity::Critical,
+            value: SecretValue::new(secret),
+            context: format!("url = {{{{s:{secret}}}}}"),
+            location: place.to_string(),
+            host: url_host(url),
+            entropy: secrets::entropy(secret),
+        });
     }
-    shown
+    url.to_string()
 }
 
 /// Host of a Git remote: `https://h/…`, `ssh://git@h:22/…` or scp-like `git@h:group/repo`.
@@ -760,7 +780,7 @@ mod tests {
         assert_eq!(i.remotes.len(), 2);
         assert!(i.remotes[0].internal);
         assert_eq!(i.remotes[0].host.as_deref(), Some("gitlab.example.corp"));
-        assert!(!i.remotes[0].url.contains("glpat-AbCdEf0123456789xyz"));
+        assert!(i.remotes[0].url.contains("glpat-AbCdEf0123456789xyz"));
         assert_eq!(i.remotes[1].host.as_deref(), Some("github.com"));
         assert_eq!(i.branches, ["main", "release/2.1"]);
         assert_eq!(i.people[0].email, "dev@example.test");
@@ -864,7 +884,7 @@ mod tests {
             Some("examplecorp")
         );
         assert_eq!(i.registries.len(), 1);
-        assert!(!i.registries[0].contains("S3cretTok3n99"));
+        assert!(i.registries[0].contains("S3cretTok3n99"));
         assert_eq!(i.secrets.len(), 1);
         assert_eq!(i.sev, Severity::Critical);
     }

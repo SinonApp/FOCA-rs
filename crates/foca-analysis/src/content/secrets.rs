@@ -85,7 +85,7 @@ pub struct SecretHit {
     pub kind: String,
     pub sev: Severity,
     pub value: SecretValue,
-    /// Match context used as evidence: the line with the secret, the secret itself masked.
+    /// Match context used as evidence: the line with the secret wrapped as `{{s:…}}`.
     pub context: String,
     /// Where it was found, e.g. a text line number or a custom metadata field.
     pub location: String,
@@ -309,7 +309,7 @@ impl Rule {
     }
 }
 
-/// Returns the line around the match with the secret wrapped as `{{s:…}}` (the UI masks it).
+/// Returns the line around the match with the secret wrapped as `{{s:…}}` (the UI highlights it).
 fn context(text: &str, start: usize, end: usize) -> String {
     let ls = text[..start].rfind('\n').map(|i| i + 1).unwrap_or(0);
     let le = text[end..]

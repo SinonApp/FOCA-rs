@@ -3,9 +3,9 @@
 //! calendars, contacts, media, archives, personal data, links, user rules) and the findings
 //! built from them.
 //!
-//! Every value that reaches a finding is already safe to store: personal data comes masked from
-//! [`crate::pii::sanitize`] (`Metadata::pii`), link tokens are masked by [`crate::links`] and
-//! user rule values are masked unless the rule says otherwise.
+//! Values reach findings in full (personal data from [`crate::pii::annotate`], link tokens,
+//! user rule matches): the project is local and the user sees what the documents hold. Logs
+//! and the masked report option mask them downstream.
 
 use foca_core::{DocFormat, Metadata, PiiFound, Severity};
 
@@ -21,7 +21,7 @@ pub struct SignerFacts {
     pub name: String,
     pub org: Option<String>,
     pub edrpou: Option<String>,
-    pub rnokpp_masked: Option<String>,
+    pub rnokpp: Option<String>,
     pub title: Option<String>,
     pub email: Option<String>,
     pub issuer: Option<String>,
@@ -361,17 +361,14 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
     // Calendar and contacts.
     if let Some(v) = f.get("ics:meeting_links") {
         for x in split_list(v) {
-            // Links are shown through the link classifier so passwords in them are masked.
-            let shown = links::classify(&x).map(|h| h.url).unwrap_or(x);
-            push_uniq(&mut fx.meeting_links, shown);
+            push_uniq(&mut fx.meeting_links, x);
         }
     }
     if m.format == DocFormat::Vcf {
         for (k, v) in f {
             let field = k.rsplit('.').next().unwrap_or("");
             if matches!(field, "tel" | "adr" | "bday") {
-                // Values are personal: only masks reach findings and reports.
-                let shown: Vec<String> = v.split(';').map(|x| pii::pii_mask(x.trim())).collect();
+                let shown: Vec<&str> = v.split(';').map(str::trim).collect();
                 push_uniq(
                     &mut fx.contact_pii,
                     at(format!("{field}: {}", shown.join("; "))),
@@ -588,7 +585,7 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
             name,
             org: c.organization.clone(),
             edrpou: c.edrpou.clone(),
-            rnokpp_masked: c.rnokpp_masked.clone(),
+            rnokpp: c.rnokpp.clone(),
             title: c.title.clone(),
             email: c.email.clone(),
             issuer: c
@@ -622,7 +619,7 @@ fn collect(m: &Metadata, fx: &mut Fx, via: &str, depth: u8) {
     }
 }
 
-/// Builds the forensic facts of a document. `text` is the stored (PII-masked) text.
+/// Builds the forensic facts of a document. `text` is the stored document text.
 pub fn facts(m: &Metadata, name: &str, text: Option<&str>, rules: Option<&RuleSet>) -> Fx {
     let mut fx = Fx::default();
     collect(m, &mut fx, "", 0);
@@ -632,7 +629,7 @@ pub fn facts(m: &Metadata, name: &str, text: Option<&str>, rules: Option<&RuleSe
     // Personal data: the summary from storage, or (documents analysed straight from bytes,
     // e.g. the CLI) a scan of the text and metadata now.
     fx.pii = if m.pii.is_empty() {
-        pii::sanitize(m, text).0.pii
+        pii::annotate(m, text).pii
     } else {
         m.pii.clone()
     };
@@ -658,11 +655,7 @@ pub fn facts(m: &Metadata, name: &str, text: Option<&str>, rules: Option<&RuleSe
     // User rules.
     if let (Some(rs), Some(t)) = (rules.filter(|r| !r.is_empty()), text) {
         for h in rs.scan(t, "текст") {
-            let shown = if h.masked {
-                pii::pii_mask(h.value.expose())
-            } else {
-                clip(h.value.expose(), 80)
-            };
+            let shown = clip(h.value.expose(), 80);
             let i = match fx.rules.iter().position(|r| r.rule == h.rule) {
                 Some(i) => i,
                 None => {
@@ -708,7 +701,7 @@ fn sig_line(s: &SignerFacts) -> String {
     if let Some(e) = &s.email {
         parts.push(format!("E-mail: {e}"));
     }
-    if let Some(r) = &s.rnokpp_masked {
+    if let Some(r) = &s.rnokpp {
         parts.push(format!("РНОКПП: {r}"));
     }
     if let Some(i) = &s.issuer {
@@ -724,7 +717,8 @@ fn sig_line(s: &SignerFacts) -> String {
 }
 
 /// Severity of a bad redaction: high; critical only when the recovered text itself holds
-/// personal data (the stored text is already PII-masked, `********90`) or an e-mail address.
+/// personal data (a full value, or a mask left by an older analysis such as `********90`) or an
+/// e-mail address.
 fn redaction_severity(lines: &[String]) -> Severity {
     // An identity document or account label next to a long number counts even when the number
     // itself fails a checksum (`Passport AB123456`, `Account UA00 0000`).
@@ -841,7 +835,7 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
         if !named.is_empty() {
             let personal = named
                 .iter()
-                .any(|s| s.rnokpp_masked.is_some() || s.email.is_some() || s.title.is_some());
+                .any(|s| s.rnokpp.is_some() || s.email.is_some() || s.title.is_some());
             let mut f = base(
                 "doc.signer_identity",
                 d,
@@ -857,7 +851,7 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
             );
             f.category = "people";
             f.mitre = "T1589.001 · Gather Victim Identity Information: Credentials";
-            f.description = "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).".into();
+            f.description = "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.".into();
             f.recommendation = "Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.";
             f.evidence = named
                 .iter()
@@ -1247,7 +1241,7 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 Severity::Medium,
             );
             f.category = "people";
-            f.description = "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).".into();
+            f.description = "Файл контактов содержит телефоны, адреса и даты рождения.".into();
             f.recommendation = "Не публиковать файлы контактов .vcf.";
             f.evidence = x
                 .contact_pii
@@ -1314,7 +1308,7 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
                 "Документ с грифом ограничения доступа опубликован в открытом доступе.".into()
             } else {
                 format!(
-                    "В документе найдено значений: {}. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+                    "В документе найдено значений: {}. Значения проверены по контрольным суммам, где это возможно.",
                     p.count
                 )
             };
@@ -1397,7 +1391,7 @@ pub(crate) fn drafts(an: &[&DocFacts], out: &mut Vec<Draft>) {
             let mut f = base("doc.links", d, title, sev);
             f.mitre = "T1213.003 · Data from Information Repositories: Code Repositories";
             f.description = if creds {
-                "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).".into()
+                "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.".into()
             } else {
                 "Документ ссылается на файлы и пространства в облачных сервисах по публичным ссылкам без токенов доступа: это контекст, а не утечка учётных данных.".into()
             };

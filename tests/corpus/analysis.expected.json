@@ -451,7 +451,8 @@
       "ext": "pdf",
       "first_scan": "corpus-s1",
       "flags": [
-        "forensic"
+        "forensic",
+        "pii"
       ],
       "folder": null,
       "gps": null,
@@ -481,7 +482,8 @@
       "ext": "docx",
       "first_scan": "corpus-s1",
       "flags": [
-        "forensic"
+        "forensic",
+        "pii"
       ],
       "folder": null,
       "gps": null,
@@ -511,7 +513,8 @@
       "ext": "pdf",
       "first_scan": "corpus-s1",
       "flags": [
-        "forensic"
+        "forensic",
+        "pii"
       ],
       "folder": null,
       "gps": null,
@@ -3254,9 +3257,9 @@
       "category": "docs",
       "cve": [],
       "cvss": null,
-      "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
+      "description": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.",
       "doc": 4,
-      "evidence": "Google Drive: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing\nAzure Storage: https://contoso.blob.core.windows.net/backup/db.bak?sv=2022-11-02&sp=r&sig=Ab…3D",
+      "evidence": "Google Drive: https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz?usp=sharing\nAzure Storage: https://contoso.blob.core.windows.net/backup/db.bak?sv=2022-11-02&sp=r&sig=AbCdEf1234567890abcdef1234567890ABCDEFGHijk%3D",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -3755,7 +3758,7 @@
       "cvss": null,
       "description": "После байтов, покрытых подписью (/ByteRange), в файл дописаны изменения: видимое содержимое может отличаться от подписанного.",
       "doc": 10,
-      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
+      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -3798,9 +3801,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "doc": 4,
-      "evidence": "Картка ••••••••••11\nVisa",
+      "evidence": "Картка 4111 1111 1111 1111\nVisa",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -3842,9 +3845,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "doc": 4,
-      "evidence": "IBAN ••••••••••01\nМФО 322313",
+      "evidence": "IBAN UA213223130000026007233566001\nМФО 322313",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -4034,9 +4037,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "doc": 4,
-      "evidence": "Отримувач: Іван Петренко, РНОКПП ••••••••70",
+      "evidence": "Отримувач: Іван Петренко, РНОКПП 3012345670",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -4078,9 +4081,141 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно; в базе и отчёте хранятся только маски.",
+      "description": "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
+      "doc": 8,
+      "evidence": "1234567899\nSN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@exa",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 8851413807531985,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          8
+        ],
+        "fields": [
+          "поле signatures"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
+      "rel": {
+        "docs": [
+          8
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "high",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "РНОКПП (ІПН) физлица в документе (signed.pdf)",
+      "url": "https://files.contoso.example/corpus/forensics/signed.pdf"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "В документе найдено значений: 3. Значения проверены по контрольным суммам, где это возможно.",
+      "doc": 9,
+      "evidence": "1234567899\nSN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@exa",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 415920533568218,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          9
+        ],
+        "fields": [
+          "поле signatures"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
+      "rel": {
+        "docs": [
+          9
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "high",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "РНОКПП (ІПН) физлица в документе (signed_hidden.docx)",
+      "url": "https://files.contoso.example/corpus/forensics/signed_hidden.docx"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "В документе найдено значений: 2. Значения проверены по контрольным суммам, где это возможно.",
+      "doc": 10,
+      "evidence": "1234567899\nSN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@exa",
+      "first_scan": "corpus-s1",
+      "fixed_scan": null,
+      "host": "files.contoso.example",
+      "id": 694621436362943,
+      "mitre": "T1213 · Data from Information Repositories",
+      "module": "pii",
+      "notes": [],
+      "photos": [],
+      "provenance": {
+        "docs": [
+          10
+        ],
+        "fields": [
+          "поле signatures"
+        ],
+        "rule": "pii"
+      },
+      "recommendation": "Удалить персональные данные из публикуемого документа (обезличить) или убрать документ; оценить уведомление владельцев данных.",
+      "rel": {
+        "docs": [
+          10
+        ],
+        "pcs": [],
+        "people": []
+      },
+      "request": "",
+      "sev": "high",
+      "source": "Персональные данные",
+      "status": "new",
+      "tags": [
+        "pii"
+      ],
+      "time": "2026-11-20T12:00:00",
+      "title": "РНОКПП (ІПН) физлица в документе (signed_modified.pdf)",
+      "url": "https://files.contoso.example/corpus/forensics/signed_modified.pdf"
+    },
+    {
+      "active": false,
+      "category": "people",
+      "cve": [],
+      "cvss": null,
+      "description": "В документе найдено значений: 1. Значения проверены по контрольным суммам, где это возможно.",
       "doc": 4,
-      "evidence": "Паспорт серія ••••••56",
+      "evidence": "Паспорт серія АВ 123456",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -5145,9 +5280,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
       "doc": 8,
-      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
+      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -5191,9 +5326,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
       "doc": 9,
-      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z\nПодписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:57Z",
+      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z\nПодписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:57Z",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -5238,9 +5373,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП (РНОКПП хранится только маскированным).",
+      "description": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
       "doc": 10,
-      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
+      "evidence": "Подписант: Іван Петренко\nОрганизация: ТОВ Приклад\nЄДРПОУ: 12345678\nДолжность: Директор\nE-mail: ivan.petrenko@example.com\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2026-11-22T01:06:56Z\nМетка TSA: 2026-11-22T01:06:56Z",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -5560,7 +5695,7 @@
       "cvss": 5.3,
       "description": "Рядом с именами в опубликованных документах указаны контакты: телефон: 1, e-mail: 1, личные идентификаторы: 1. Такие данные используют для фишинга и социальной инженерии; значения телефонов и идентификаторов хранятся только в виде масок.",
       "doc": null,
-      "evidence": "Іван Петренко: •••••••00; card, iban, passport, rnokpp",
+      "evidence": "Іван Петренко: 440000000; card, iban, passport, rnokpp",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "-",
@@ -5600,9 +5735,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).",
+      "description": "Файл контактов содержит телефоны, адреса и даты рождения.",
       "doc": 1,
-      "evidence": "nested/inner.zip → contacts/i.petrenko.vcf: adr: ••••••••••на\nnested/inner.zip → contacts/i.petrenko.vcf: bday: ••••••••01\nnested/inner.zip → contacts/i.petrenko.vcf: tel: ••••••••••00; ••••••••••01",
+      "evidence": "nested/inner.zip → contacts/i.petrenko.vcf: adr: вул. Прикладна, 1, Київ, 01001, Україна\nnested/inner.zip → contacts/i.petrenko.vcf: bday: 1985-01-01\nnested/inner.zip → contacts/i.petrenko.vcf: tel: +380 67 000 00 00; +380 44 000 00 01",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -5644,9 +5779,9 @@
       "category": "people",
       "cve": [],
       "cvss": null,
-      "description": "Файл контактов содержит телефоны, адреса и даты рождения (значения в базе маскированы).",
+      "description": "Файл контактов содержит телефоны, адреса и даты рождения.",
       "doc": 49,
-      "evidence": "adr: ••••••••••на\nbday: ••••••••01\ntel: ••••••••••00; ••••••••••01",
+      "evidence": "adr: вул. Прикладна, 1, Київ, 01001, Україна\nbday: 1985-01-01\ntel: +380 67 000 00 00; +380 44 000 00 01",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -7119,7 +7254,7 @@
       "cvss": null,
       "description": "Заявленное время подписания заметно отличается от времени метки доверенного сервиса (TSA): часы подписанта неверны или дата подписи указана задним числом.",
       "doc": 9,
-      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: ********99\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z",
+      "evidence": "Подписант: John Doe\nОрганизация: Example LLC\nЄДРПОУ: 87654321\nДолжность: Accountant\nРНОКПП: 1234567899\nАЦСК: Example Test QTSP CA\nВремя подписи: 2024-03-01T08:00:01Z\nМетка TSA: 2026-11-22T01:06:57Z",
       "first_scan": "corpus-s1",
       "fixed_scan": null,
       "host": "files.contoso.example",
@@ -11106,7 +11241,7 @@
       "name": "Іван Петренко",
       "pc": null,
       "phones": [
-        "•••••••00"
+        "440000000"
       ],
       "role": "",
       "service": false,
@@ -11490,28 +11625,28 @@
       "docs": 2,
       "login": "i.petrenko",
       "src_doc": 5,
-      "value": "•••••••00"
+      "value": "440000000"
     },
     {
       "country": "",
       "docs": 1,
       "login": null,
       "src_doc": 49,
-      "value": "•••••••00"
+      "value": "440000001"
     },
     {
       "country": "",
       "docs": 1,
       "login": null,
       "src_doc": 49,
-      "value": "•••••••01"
+      "value": "670000000"
     },
     {
       "country": "",
       "docs": 1,
       "login": null,
       "src_doc": 4,
-      "value": "•••••••67"
+      "value": "671234567"
     }
   ],
   "printers": [

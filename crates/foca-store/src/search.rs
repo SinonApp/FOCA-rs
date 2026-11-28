@@ -11,10 +11,9 @@
 //!
 //! User input never reaches FTS5 syntax: [`fts_query`] rebuilds the query from quoted terms.
 //!
-//! Snippets are masked, not just flagged: they go to the UI directly (the snapshot masking
-//! of `{{s:…}}` does not apply), so every secret/PII value is replaced by its mask before the
-//! snippet leaves the store. Detection runs on a margin around the snippet window, so a value
-//! cut by the window edge is still recognised and masked in full.
+//! Snippets mark every secret/PII value as `{{s:…}}` with the full value and list the labels of
+//! the marked ranges. Detection runs on a margin around the snippet window, so a value cut by
+//! the window edge is still recognised and shown whole.
 
 use foca_analysis::pii;
 use rusqlite::params;
@@ -69,11 +68,12 @@ pub struct SearchHit {
     pub doc: u64,
     pub name: String,
     pub url: Option<String>,
-    /// Snippet: matched terms as `{{h:…}}`, secrets/PII as `{{s:<mask>}}`, `…` at cut ends.
+    /// Snippet: matched terms as `{{h:…}}`, secrets/PII as `{{s:<value>}}`, `…` at cut ends.
     pub snippet: String,
     /// The document name matched.
     pub in_name: bool,
-    /// Labels of masked ranges in the snippet (`secret:<rule>`, `pii:<kind>`).
+    /// Labels of the sensitive ranges in the snippet (`secret:<rule>`, `pii:<kind>`); the field
+    /// keeps its historical name.
     pub masked: Vec<String>,
     /// BM25 rank (lower is better).
     pub rank: f64,
@@ -261,7 +261,8 @@ fn plain(s: &str, out: &mut String) {
     }
 }
 
-/// Builds the masked snippet of `text` around the first highlighted range.
+/// Builds the snippet of `text` around the first highlighted range; secrets and personal
+/// values are marked as `{{s:<value>}}` (shown in full) and labelled.
 pub fn build_snippet(text: &str, hl: &[(usize, usize)]) -> (String, Vec<String>) {
     if text.is_empty() {
         return (String::new(), Vec::new());
@@ -314,7 +315,7 @@ pub fn build_snippet(text: &str, hl: &[(usize, usize)]) -> (String, Vec<String>)
         let st = s.start.max(at);
         emit_plain(at, st, &mut out);
         out.push_str("{{s:");
-        out.push_str(&foca_core::api::mask(&text[s.start..s.end]));
+        plain(&text[s.start.min(st)..s.end], &mut out);
         out.push_str("}}");
         labels.push(s.label.clone());
         at = s.end.max(at);
@@ -323,7 +324,7 @@ pub fn build_snippet(text: &str, hl: &[(usize, usize)]) -> (String, Vec<String>)
     if at < end {
         emit_plain(at, end, &mut out);
     }
-    // Personal values are masked before storage (`pii::sanitize`): flag their masks too.
+    // Projects analysed before full values were kept hold masks: flag them too.
     if text[ws..end].contains("••") && !labels.iter().any(|l| l.starts_with("pii")) {
         labels.push("pii".into());
     }
@@ -461,13 +462,12 @@ mod tests {
     }
 
     #[test]
-    fn snippet_masks_and_highlights() {
+    fn snippet_marks_and_highlights() {
         let text = "Вступ. Картка 4111 1111 1111 1111 видана для оплати відряджень.";
         let s = text.find("оплати").unwrap();
         let (sn, labels) = build_snippet(text, &[(s, s + "оплати".len())]);
         assert!(sn.contains("{{h:оплати}}"), "{sn}");
-        assert!(!sn.contains("4111 1111 1111 1111"), "{sn}");
-        assert!(sn.contains("{{s:41…11}}"), "{sn}");
+        assert!(sn.contains("{{s:4111 1111 1111 1111}}"), "{sn}");
         assert_eq!(labels, ["pii:card"]);
         // Literal markers in the document are defused.
         let (sn, _) = build_snippet("a {{s:fake}} b", &[]);
@@ -476,13 +476,14 @@ mod tests {
 
     #[test]
     fn snippet_never_cuts_a_value() {
-        // The window edge falls inside the card number: it must still be masked in full.
+        // The window edge falls inside the card number: it is still shown whole.
         let filler = format!(" {} ", "x".repeat(50));
         let text = format!("Картка 4111111111111111{filler}ключове слово тут");
         let s = text.find("ключове").unwrap();
         let (sn, _) = build_snippet(&text, &[(s, s + "ключове".len())]);
-        for frag in ["4111", "1111111", "111111"] {
-            assert!(!sn.contains(frag), "{frag} leaked in {sn}");
-        }
+        assert!(
+            !sn.contains("{{s:") || sn.contains("4111111111111111}}"),
+            "{sn}"
+        );
     }
 }

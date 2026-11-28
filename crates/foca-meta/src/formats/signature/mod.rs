@@ -264,8 +264,7 @@ fn short_name(oid: &str) -> Option<&'static str> {
     })
 }
 
-/// Formats a name as a DN string, routing values through the КЕП rules (masking personal tax
-/// numbers) and filling the identity fields of `info`.
+/// Formats a name as a DN string, routing values through the КЕП rules and filling the identity fields of `info`.
 fn name_fields(name: &X509Name, info: &mut CertInfo) -> String {
     let mut parts = Vec::new();
     for a in name.iter_attributes() {

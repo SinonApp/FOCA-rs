@@ -97,10 +97,11 @@ pub struct CertInfo {
     /// Ukrainian legal entity code (ЄДРПОУ), 8 digits.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub edrpou: Option<String>,
-    /// Ukrainian personal tax number (РНОКПП), always masked (`********78`).
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub rnokpp_masked: Option<String>,
-    /// Whether the (unstored) personal tax number has a valid check digit.
+    /// Ukrainian personal tax number (РНОКПП) as written in the certificate. Projects analysed
+    /// before full values were kept hold a mask (`********78`) under the old field name.
+    #[serde(skip_serializing_if = "Option::is_none", alias = "rnokpp_masked")]
+    pub rnokpp: Option<String>,
+    /// Whether the personal tax number has a valid check digit.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rnokpp_valid: Option<bool>,
     /// Issuer DN (the certification authority, АЦСК/КНЕДП).

@@ -4,8 +4,8 @@
 //! Trello, SharePoint/OneDrive, Figma, Jira/Confluence, GitHub/GitLab/Bitbucket, Dropbox, Miro,
 //! meeting links) and finds credentials embedded in URLs: generic `?token=`/`?key=`/`?sig=`
 //! parameters, Azure SAS, AWS/GCS presigned URLs, Slack/Discord/Teams webhooks and Telegram bot
-//! tokens. Token values are wrapped in [`SecretValue`] and replaced by their mask in
-//! [`LinkHit::url`]; the original URL is kept only in [`LinkHit::raw`].
+//! tokens. [`LinkHit::url`] is the full URL shown to the user; token values are also wrapped in
+//! [`SecretValue`] and `Debug` prints the URL with every token masked.
 
 use std::sync::OnceLock;
 
@@ -83,12 +83,12 @@ pub struct LinkToken {
     pub value: SecretValue,
 }
 
-/// A classified link.
-#[derive(Debug, Clone, PartialEq, Serialize)]
+/// A classified link. `url` and token values are masked in `Debug`.
+#[derive(Clone, PartialEq, Serialize)]
 pub struct LinkHit {
-    /// Display URL with every token value replaced by its mask.
+    /// Display URL (full, as written in the document).
     pub url: String,
-    /// Original URL (persistence and explicit reveal only; masked in `Debug`).
+    /// Original URL before display normalisation (masked in `Debug`).
     pub raw: SecretValue,
     pub host: String,
     pub service: Option<Service>,
@@ -109,7 +109,36 @@ pub struct LinkHit {
 /// rule, never as a credential.
 pub const MEETING_PASSCODE: &str = "meeting_passcode";
 
+impl std::fmt::Debug for LinkHit {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LinkHit")
+            .field("url", &self.masked_url())
+            .field("raw", &self.raw)
+            .field("host", &self.host)
+            .field("service", &self.service)
+            .field("resource", &self.resource)
+            .field("shared", &self.shared)
+            .field("internal", &self.internal)
+            .field("tokens", &self.tokens)
+            .field("expires", &self.expires)
+            .field("sev", &self.sev)
+            .finish()
+    }
+}
+
 impl LinkHit {
+    /// The URL with every token value replaced by its mask (logs and the masked report option).
+    pub fn masked_url(&self) -> String {
+        let mut shown = self.url.clone();
+        for t in &self.tokens {
+            let v = t.value.expose();
+            if !v.is_empty() {
+                shown = shown.replace(v, &foca_core::api::mask(v));
+            }
+        }
+        shown
+    }
+
     /// A meeting join link with the passcode in the URL.
     pub fn meeting_passcode(&self) -> bool {
         self.tokens.iter().any(|t| t.kind == MEETING_PASSCODE)
@@ -495,11 +524,6 @@ pub fn classify(url: &str) -> Option<LinkHit> {
         }
     };
 
-    // Display URL: token values replaced by masks.
-    let mut shown = full.clone();
-    for (_, _, v) in &tokens {
-        shown = shown.replace(v.as_str(), &foca_core::api::mask(v));
-    }
     let creds: Vec<&(String, String, String)> = tokens
         .iter()
         .filter(|(_, k, _)| k != MEETING_PASSCODE)
@@ -533,7 +557,7 @@ pub fn classify(url: &str) -> Option<LinkHit> {
         sev
     };
     Some(LinkHit {
-        url: shown,
+        url: full,
         raw: SecretValue::new(url),
         host,
         service,
@@ -659,7 +683,8 @@ mod tests {
         assert_eq!(z.service, Some(Service::Meeting));
         assert!(z.meeting_passcode() && !z.has_credential());
         assert_eq!(z.sev, Severity::Low);
-        assert!(!z.url.contains("QWxhZGRpbjpvcGVu"), "{}", z.url);
+        assert!(z.url.contains("QWxhZGRpbjpvcGVu"), "{}", z.url);
+        assert!(!z.masked_url().contains("QWxhZGRpbjpvcGVu"));
         // A share link without a token parameter carries no credential either.
         let g = one("https://drive.google.com/file/d/1AbCdEfGhIjKlMnOpQr/view?usp=sharing");
         assert!(!g.has_credential() && g.tokens.is_empty());
@@ -668,13 +693,13 @@ mod tests {
     }
 
     #[test]
-    fn tokens_are_masked() {
+    fn tokens_are_shown_and_masked_in_debug() {
         let sas = "https://acct.blob.core.windows.net/c/f.pdf?sv=2022-11-02&se=2030-01-01T00%3A00%3A00Z&sp=r&sig=AbCdEfGhIjKlMnOpQrStUvWxYz0123456789%2Babc%3D";
         let h = one(sas);
         assert_eq!(h.service, Some(Service::AzureStorage));
         assert_eq!(h.tokens[0].kind, "azure_sas");
         assert_eq!(h.expires.as_deref(), Some("2030-01-01T00:00:00Z"));
-        assert!(!h.url.contains("AbCdEfGhIjKlMnOp"), "{}", h.url);
+        assert!(h.url.contains("AbCdEfGhIjKlMnOp"), "{}", h.url);
         assert!(!format!("{h:?}").contains("AbCdEfGhIjKlMnOp"));
 
         let aws = "https://bucket.s3.eu-central-1.amazonaws.com/a.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAEXAMPLETESTKEY12%2F20260101%2Feu-central-1%2Fs3%2Faws4_request&X-Amz-Date=20260101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -682,13 +707,13 @@ mod tests {
         assert_eq!(h.service, Some(Service::AwsS3));
         assert!(h.tokens.iter().any(|t| t.name == "X-Amz-Signature"));
         assert_eq!(h.expires.as_deref(), Some("20260101T000000Z+3600s"));
-        assert!(!h.url.contains("0123456789abcdef0123"));
+        assert!(!h.masked_url().contains("0123456789abcdef0123"));
 
         let slack =
             one("https://hooks.slack.com/services/T00000000/B00000000/AbCdEfGhIjKlMnOpQrStUvWx");
         assert_eq!(slack.service, Some(Service::Slack));
         assert_eq!(slack.sev, Severity::Critical);
-        assert!(!slack.url.contains("AbCdEfGhIjKlMnOpQrStUvWx"));
+        assert!(!slack.masked_url().contains("AbCdEfGhIjKlMnOpQrStUvWx"));
         let disc = one("https://discord.com/api/webhooks/123456789012345678/AbCdEfGhIjKlMnOpQrStUvWxYz_-0123456789");
         assert_eq!(disc.tokens[0].kind, "webhook");
         let q = one("https://api.example.org/v1/data?format=json&api_key=Zx81kLm2Qp93Rt");

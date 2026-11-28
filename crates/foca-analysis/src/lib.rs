@@ -151,7 +151,7 @@ pub struct Analysis {
     pub docs: Vec<Doc>,
     pub people: Vec<Person>,
     pub emails: Vec<Email>,
-    /// Phone numbers from document text (masked).
+    /// Phone numbers from document text (full values).
     pub phones: Vec<api::Phone>,
     pub patterns: Vec<Pattern>,
     pub hosts: Vec<api::Host>,

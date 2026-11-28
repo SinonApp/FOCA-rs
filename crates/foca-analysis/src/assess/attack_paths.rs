@@ -5,7 +5,8 @@
 //! hosts or KEV vulnerabilities into ranked attack chains, and identifies high-impact
 //! remediation choke points whose fix breaks the greatest number of attack paths at once.
 //!
-//! Raw secrets and unmasked PII are never interpolated into any label or detail field.
+//! Secret values appear in detail fields in full (the user sees them); the masked report option
+//! masks them downstream.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -223,7 +224,7 @@ pub fn build_attack_paths_from_parts(
         .map(|d| (d.id, d))
         .collect();
 
-    // 1. Collect source leaks / credentials (findings, masked secrets, RDP/OVPN/ENV docs).
+    // 1. Collect source leaks / credentials (findings, secrets, RDP/OVPN/ENV docs).
     let mut leak_findings: Vec<&Finding> = findings
         .iter()
         .filter(|f| {
@@ -358,7 +359,7 @@ pub fn build_attack_paths_from_parts(
         let cred_detail = secrets
             .iter()
             .find(|s| s.finding == Some(lf.id))
-            .map(|s| format!("Тип: {} (значение: {})", s.kind, s.value.masked()))
+            .map(|s| format!("Тип: {} (значение: {})", s.kind, s.value.expose()))
             .unwrap_or_else(|| lf.title.clone());
         steps.push(AttackStep {
             kind: kind.into(),
@@ -629,7 +630,7 @@ mod tests {
     }
 
     #[test]
-    fn builds_ranked_paths_and_choke_points_without_leaking_secrets() {
+    fn builds_ranked_paths_and_choke_points_with_secret_details() {
         let docs = vec![Doc {
             id: 1,
             ext: "ovpn".into(),
@@ -691,7 +692,7 @@ mod tests {
         assert!(!report.choke_points.is_empty());
 
         let serialized = serde_json::to_string(&report).unwrap();
-        assert!(!serialized.contains(raw_secret));
+        assert!(serialized.contains(raw_secret));
     }
 
     fn host(name: &str) -> Host {

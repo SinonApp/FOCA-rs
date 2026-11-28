@@ -35,7 +35,7 @@ use std::collections::HashSet;
 
 pub use contacts::{ContactKind, PhoneHit};
 use lang::{fold, registry, Script};
-pub use merge::{attrs, doc_counts, identities, mask_phone, phones, Attrs};
+pub use merge::{attrs, doc_counts, identities, phones, Attrs};
 
 /// Text size scanned per document.
 pub const MAX_TEXT_BYTES: usize = 2 * 1024 * 1024;
@@ -72,7 +72,7 @@ pub struct Mention {
     pub signatory: bool,
     /// Name inside a bibliography entry or citation (a cited author, not a staff member).
     pub cited: bool,
-    /// Phone numbers on the same line or block (raw values; mask before storing).
+    /// Phone numbers on the same line or block (raw values).
     pub phones: Vec<String>,
     /// E-mail addresses on the same line or block.
     pub emails: Vec<String>,

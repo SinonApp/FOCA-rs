@@ -9,8 +9,8 @@
 //! * legacy profile: the `SubjectDirectoryAttributes` extension (2.5.29.9) with
 //!   1.2.804.2.1.1.1.11.1.4.1.1 (РНОКПП/ДРФО) and 1.2.804.2.1.1.1.11.1.4.2.1 (ЄДРПОУ).
 //!
-//! The personal tax number is personal data: it is validated and masked here and never kept
-//! in full anywhere in the result.
+//! The personal tax number is validated here and kept as written (the user sees the full
+//! value; logs and masked reports mask it downstream).
 
 use foca_core::CertInfo;
 
@@ -40,15 +40,6 @@ pub fn rnokpp_valid(s: &str) -> bool {
     sum.rem_euclid(11) % 10 == d[9]
 }
 
-/// Masks a personal tax number, keeping only the last two digits (`********78`).
-pub fn mask_rnokpp(s: &str) -> String {
-    let n = s.chars().count();
-    s.chars()
-        .enumerate()
-        .map(|(i, c)| if i + 2 >= n { c } else { '*' })
-        .collect()
-}
-
 fn digits(s: &str, n: usize) -> Option<&str> {
     let s = s.trim();
     (s.len() == n && s.bytes().all(|c| c.is_ascii_digit())).then_some(s)
@@ -66,29 +57,22 @@ fn strip_semantics<'a>(v: &'a str, prefix: &str) -> Option<&'a str> {
 }
 
 fn set_rnokpp(info: &mut CertInfo, raw: &str) {
-    if info.rnokpp_masked.is_none() {
-        info.rnokpp_masked = Some(mask_rnokpp(raw));
+    if info.rnokpp.is_none() {
+        info.rnokpp = Some(raw.to_string());
         info.rnokpp_valid = Some(rnokpp_valid(raw));
     }
 }
 
-/// Applies a subject attribute. Returns the value as it may be shown (masked if it carries a
-/// personal tax number).
+/// Applies a subject attribute. Returns the value as it is shown.
 pub fn subject_attr(info: &mut CertInfo, oid: &str, value: &str) -> String {
     match oid {
         OID_SERIAL_NUMBER => {
             if let Some(n) = strip_semantics(value, "TINUA").and_then(|r| digits(r, 10)) {
                 set_rnokpp(info, n);
-                return format!("TINUA-{}", mask_rnokpp(n));
+                return value.to_string();
             }
             if let Some(n) = strip_semantics(value, "NTRUA").and_then(|r| digits(r, 8)) {
                 info.edrpou.get_or_insert_with(|| n.to_string());
-            }
-            // Other personal identifiers (PNOUA-, IDCUA-, PASUA-) are masked as well.
-            for p in ["PNOUA", "IDCUA", "PASUA"] {
-                if let Some(r) = strip_semantics(value, p) {
-                    return format!("{p}-{}", mask_rnokpp(r));
-                }
             }
             value.to_string()
         }
@@ -124,21 +108,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn rnokpp_checksum_and_mask() {
+    fn rnokpp_checksum() {
         // synthetic numbers with a valid check digit
         assert!(rnokpp_valid("1234567899"));
         assert!(!rnokpp_valid("1234567890"));
         assert!(!rnokpp_valid("12345"));
-        assert_eq!(mask_rnokpp("1234567899"), "********99");
     }
 
     #[test]
     fn attributes() {
         let mut c = CertInfo::default();
         let shown = subject_attr(&mut c, OID_SERIAL_NUMBER, "TINUA-1234567899");
-        assert_eq!(shown, "TINUA-********99");
-        assert!(!shown.contains("12345678"));
-        assert_eq!(c.rnokpp_masked.as_deref(), Some("********99"));
+        assert_eq!(shown, "TINUA-1234567899");
+        assert_eq!(c.rnokpp.as_deref(), Some("1234567899"));
         assert_eq!(c.rnokpp_valid, Some(true));
         subject_attr(&mut c, OID_ORG_IDENTIFIER, "NTRUA-12345678");
         assert_eq!(c.edrpou.as_deref(), Some("12345678"));
@@ -147,7 +129,7 @@ mod tests {
         directory_attr(&mut l, OID_UA_DRFO, "1234567899");
         directory_attr(&mut l, OID_UA_EDRPOU, "87654321");
         directory_attr(&mut l, "2.5.4.3", "1111111111");
-        assert_eq!(l.rnokpp_masked.as_deref(), Some("********99"));
+        assert_eq!(l.rnokpp.as_deref(), Some("1234567899"));
         assert_eq!(l.edrpou.as_deref(), Some("87654321"));
     }
 }

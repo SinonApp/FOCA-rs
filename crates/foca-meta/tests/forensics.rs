@@ -44,7 +44,7 @@ fn pdf_signature_kep_and_tsa() {
     assert_eq!(c.locality.as_deref(), Some("Київ"));
     assert_eq!(c.email.as_deref(), Some("ivan.petrenko@example.com"));
     assert_eq!(c.edrpou.as_deref(), Some("12345678"));
-    assert_eq!(c.rnokpp_masked.as_deref(), Some("********99"));
+    assert_eq!(c.rnokpp.as_deref(), Some("1234567899"));
     assert_eq!(c.rnokpp_valid, Some(true));
     assert_eq!(c.issuer_cn.as_deref(), Some("Example Test QTSP CA"));
     assert!(c.not_before.is_some() && !c.serial.is_empty());
@@ -52,8 +52,8 @@ fn pdf_signature_kep_and_tsa() {
     assert!(ts.gen_time.is_some());
     assert_eq!(ts.policy.as_deref(), Some("1.2.3.4.1"));
     assert!(ts.tsa.as_deref().unwrap_or("").contains("Example Test TSA"));
-    // the personal tax number is never stored in full
-    assert!(!json(&m).contains("1234567899"));
+    // the personal tax number is kept as written (the app shows it in full)
+    assert!(json(&m).contains("1234567899"));
     assert!(m.person_names().contains(&"Іван Петренко"));
     assert!(m.emails.iter().any(|e| e == "ivan.petrenko@example.com"));
 }
@@ -214,7 +214,7 @@ fn docx_hidden_text_xmldsig_and_vba() {
     assert_eq!(c.common_name.as_deref(), Some("John Doe"));
     // legacy SubjectDirectoryAttributes profile
     assert_eq!(c.edrpou.as_deref(), Some("87654321"));
-    assert_eq!(c.rnokpp_masked.as_deref(), Some("********99"));
+    assert_eq!(c.rnokpp.as_deref(), Some("1234567899"));
     let v = m
         .signatures
         .iter()
@@ -224,7 +224,7 @@ fn docx_hidden_text_xmldsig_and_vba() {
         v.signer.as_ref().and_then(|c| c.common_name.as_deref()),
         Some("Іван Петренко")
     );
-    assert!(!json(&m).contains("1234567899"));
+    assert!(json(&m).contains("1234567899"));
 }
 
 #[test]
@@ -318,15 +318,11 @@ fn kep_cms_wrapper_yields_signer_and_inner_pdf() {
     assert_eq!(c.common_name.as_deref(), Some("Іван Петренко"));
     assert_eq!(c.edrpou.as_deref(), Some("12345678"));
     assert_eq!(c.title.as_deref(), Some("Директор"));
-    let masked = c.rnokpp_masked.as_deref().expect("masked RNOKPP");
-    assert!(!masked.contains("1234567899"), "{masked}");
+    assert_eq!(c.rnokpp.as_deref(), Some("1234567899"));
     assert!(c.issuer.contains("Example Test QTSP CA"), "{}", c.issuer);
     assert_eq!(c.surname.as_deref(), Some("Петренко"));
     assert_eq!(c.rnokpp_valid, Some(true));
-    assert!(
-        !json(&m).contains("1234567899"),
-        "RNOKPP never kept in full"
-    );
+    assert!(json(&m).contains("1234567899"), "RNOKPP is kept as written");
     // by content, not by name
     let p = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/forensics/kep_wrapped.pdf");
     let b = std::fs::read(p).unwrap();

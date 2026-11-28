@@ -103,10 +103,10 @@
         "not_before": "2026-11-22T01:06:56Z",
         "org_unit": "Відділ ІТ",
         "organization": "ТОВ Приклад",
-        "rnokpp_masked": "********99",
+        "rnokpp": "1234567899",
         "rnokpp_valid": true,
         "serial": "00B9DC7FAEEA7B0E5C",
-        "subject": "C=UA, L=Київ, O=ТОВ Приклад, OU=Відділ ІТ, T=Директор, SN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-********99, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@example.com",
+        "subject": "C=UA, L=Київ, O=ТОВ Приклад, OU=Відділ ІТ, T=Директор, SN=Петренко, GN=Іван, CN=Іван Петренко, serialNumber=TINUA-1234567899, organizationIdentifier=NTRUA-12345678, E=ivan.petrenko@example.com",
         "surname": "Петренко",
         "title": "Директор"
       },

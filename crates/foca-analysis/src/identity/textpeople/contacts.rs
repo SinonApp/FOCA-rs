@@ -17,8 +17,8 @@ pub type ContactKind = &'static str;
 /// A phone number found in the text.
 #[derive(Clone, PartialEq, Eq)]
 pub struct PhoneHit {
-    /// E.164 (`+380501234567`) when known, otherwise the national digits; for text that was
-    /// already masked at storage, the masked token.
+    /// E.164 when known, otherwise the national digits; for text masked by an older analysis,
+    /// the masked token.
     pub value: String,
     /// ISO country (`UA`, `US`, ...) or empty.
     pub country: &'static str,
@@ -29,7 +29,7 @@ pub struct PhoneHit {
 impl std::fmt::Debug for PhoneHit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("PhoneHit")
-            .field("value", &pii::pii_mask(&self.value))
+            .field("value", &foca_core::api::mask(&self.value))
             .field("country", &self.country)
             .field("line", &self.line)
             .finish()
@@ -138,9 +138,9 @@ pub fn scan(_text: &str, lines: &[&str], lang: &str) -> Contacts {
     let mut phone_spans: Vec<(usize, usize)> = Vec::new();
     if !text.is_empty() {
         for h in pii::scan(text, "") {
-            let kind: ContactKind = match h.kind {
+            let kind: ContactKind = match h.kind() {
                 PiiKind::Phone => {
-                    let v = h.value.expose().to_string();
+                    let v = h.value().to_string();
                     let country = if v.starts_with("+380") { "UA" } else { "" };
                     phone_spans.push((h.start, h.end));
                     phone(&mut c, h.start, v.clone(), country);
@@ -167,7 +167,7 @@ pub fn scan(_text: &str, lines: &[&str], lang: &str) -> Contacts {
         for h in natid::scan_ids(text) {
             push(&mut c, h.start, h.kind, None);
         }
-        // Values masked at storage (`••••••••67`) still mark a phone next to a phone word.
+        // Values masked by an older analysis (`••••••••67`) still mark a phone next to a phone word.
         for m in re_masked_phone().find_iter(text) {
             let (bi, col) = locate(&starts, m.start());
             let line = &text[starts[bi]..];

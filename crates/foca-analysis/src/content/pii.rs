@@ -16,9 +16,9 @@
 //!   [`crate::content::markings`]).
 //!
 //! Values are wrapped in [`SecretValue`]: `Debug`/`Display` print only the mask, the context
-//! carries the value as `{{s:…}}` exactly like secrets, so the snapshot layer masks it the same
-//! way. [`redact`] returns text with every secret and PII value already replaced by its mask
-//! (for search snippets and any other place that bypasses the snapshot masking).
+//! carries the value as `{{s:…}}` exactly like secrets. Stored text and [`annotate`] keep full
+//! values (the user sees what the document holds); [`redact`] returns text with every secret
+//! and PII value replaced by its mask, for logs, AI payloads and the masked report option.
 
 use std::sync::OnceLock;
 
@@ -124,7 +124,7 @@ impl std::fmt::Debug for PiiHit {
             .field("value", &self.value)
             .field("start", &self.start)
             .field("end", &self.end)
-            .field("context", &self.masked_context())
+            .field("context", &format_args!("<{} bytes>", self.context.len()))
             .field("location", &self.location)
             .field("confidence", &self.confidence)
             .field("detail", &self.detail)
@@ -133,9 +133,14 @@ impl std::fmt::Debug for PiiHit {
 }
 
 impl PiiHit {
-    /// The context with the value replaced by its mask (for logs and plain reports).
-    pub fn masked_context(&self) -> String {
-        mask_markers(&self.context)
+    /// Category of the value.
+    pub fn kind(&self) -> PiiKind {
+        self.kind
+    }
+
+    /// The normalised value (exposed: callers show it to the user or compare it).
+    pub fn value(&self) -> &str {
+        self.value.expose()
     }
 }
 
@@ -801,20 +806,10 @@ fn clip(t: &str, max: usize) -> &str {
 
 /// The line around the match with the value wrapped as `{{s:…}}`, 60 characters each side.
 fn secret_context(text: &str, s: usize, e: usize) -> String {
-    let line = line_of(text, s, e);
-    let ls = s - (line.as_ptr() as usize - text.as_ptr() as usize);
-    let le = ls + (e - s);
-    let before: String = {
-        let b = &line[..ls];
-        let n = b.chars().count();
-        b.chars().skip(n.saturating_sub(60)).collect()
-    };
-    let after: String = line[le..].chars().take(60).collect();
+    let (before, after) = around(text, s, e);
     format!(
-        "{}{{{{s:{}}}}}{}",
-        before.trim_start(),
-        foca_core::api::escape_secret_marker(&text[s..e]),
-        after.trim_end()
+        "{before}{{{{s:{}}}}}{after}",
+        foca_core::api::escape_secret_marker(&text[s..e])
     )
 }
 
@@ -852,6 +847,7 @@ pub fn sensitive_spans(text: &str) -> Vec<Span> {
             from = s + v.len();
         }
     }
+    spans.extend(ua_ident_spans(text));
     for h in scan_inner(text, "", false) {
         if h.kind != PiiKind::Marking {
             spans.push(Span {
@@ -891,149 +887,74 @@ pub fn redact(text: &str) -> (String, Vec<String>) {
     (out, labels)
 }
 
-// ---------------- Storage sanitizing ----------------
-
-/// Mask of a stored PII value: bullets with the last two characters (`••••••••90`).
-pub fn pii_mask(v: &str) -> String {
-    let chars: Vec<char> = v.chars().filter(|c| !c.is_whitespace()).collect();
-    if chars.len() <= 4 {
-        return "••••".into();
-    }
-    let tail: String = chars[chars.len() - 2..].iter().collect();
-    format!("{}{tail}", "•".repeat((chars.len() - 2).min(10)))
-}
-
-/// Kinds whose values are personal and are masked before storage (EDRPOU is a public
-/// register code, markings are not values).
-fn masked_kind(k: PiiKind) -> bool {
-    !matches!(k, PiiKind::Edrpou | PiiKind::Marking)
-}
-
-/// Replaces every `{{s:value}}` marker of a PII context with the storage mask.
-fn context_masked(s: &str) -> String {
-    let mut out = String::with_capacity(s.len());
-    let mut rest = s;
-    while let Some(i) = rest.find("{{s:") {
-        out.push_str(&rest[..i]);
-        let tail = &rest[i + 4..];
-        match foca_core::api::find_secret_marker_end(tail) {
-            Some(j) => {
-                let raw = foca_core::api::unescape_secret_marker(&tail[..j]);
-                out.push_str(&pii_mask(&raw));
-                rest = &tail[j + 2..];
-            }
-            None => {
-                out.push_str("••••");
-                rest = "";
-            }
-        }
-    }
-    out.push_str(rest);
-    out
-}
-
-/// The hit context safe for storage, reports and logs: personal values masked, markings and
-/// EDRPOU kept.
-pub fn safe_context(h: &PiiHit) -> String {
-    if masked_kind(h.kind) {
-        context_masked(&h.context)
-    } else {
-        h.context.replace("{{s:", "").replace("}}", "")
-    }
-}
+// ---------------- Storage summary ----------------
 
 lazy_re!(re_ua_ident, r"\b(?:TINUA|PNOUA|IDCUA|PASUA)-?(\d{6,})");
 
-/// Masks semantics identifiers of Ukrainian qualified certificates (`TINUA-<РНОКПП>`,
-/// `PNOUA-`, `IDCUA-`, `PASUA-`) wherever they appear (raw certificate bytes in a text layer,
-/// subject strings), regardless of check digits.
-fn mask_ua_idents(text: &str) -> std::borrow::Cow<'_, str> {
+/// Byte ranges of the digits of Ukrainian qualified certificate identifiers (`TINUA-<РНОКПП>`,
+/// `PNOUA-`, `IDCUA-`, `PASUA-`), regardless of check digits (for [`redact`]).
+fn ua_ident_spans(text: &str) -> Vec<Span> {
     if !text.contains("UA") {
-        return std::borrow::Cow::Borrowed(text);
+        return Vec::new();
     }
-    re_ua_ident().replace_all(text, |c: &regex::Captures| {
-        let all = c.get(0).map(|m| m.as_str()).unwrap_or("");
-        let d = c.get(1).map(|m| m.as_str()).unwrap_or("");
-        format!("{}{}", &all[..all.len() - d.len()], pii_mask(d))
-    })
+    re_ua_ident()
+        .captures_iter(text)
+        .filter_map(|c| c.get(1))
+        .map(|m| Span {
+            start: m.start(),
+            end: m.end(),
+            label: "pii:rnokpp".into(),
+        })
+        .collect()
 }
 
-/// `text` with every personal value (see [`PiiKind`], except EDRPOU and markings) replaced by
-/// [`pii_mask`], plus all hits (including markings and EDRPOU).
-pub fn mask_pii(text: &str, place: &str) -> (String, Vec<PiiHit>) {
-    let (out, hits) = mask_with_samples(text, place);
-    (out, hits.into_iter().map(|(h, _)| h).collect())
+/// The line around `text[s..e]`, 60 characters each side, as (before, after).
+fn around(text: &str, s: usize, e: usize) -> (String, String) {
+    let line = line_of(text, s, e);
+    let ls = s - (line.as_ptr() as usize - text.as_ptr() as usize);
+    let le = ls + (e - s);
+    let b = &line[..ls];
+    let n = b.chars().count();
+    let before: String = b.chars().skip(n.saturating_sub(60)).collect();
+    let after: String = line[le..].chars().take(60).collect();
+    (
+        before.trim_start().to_string(),
+        after.trim_end().to_string(),
+    )
 }
 
-/// Like [`mask_pii`], each hit paired with a sample line cut from the masked text (so other
-/// values on the same line are masked too).
-fn mask_with_samples(text: &str, place: &str) -> (String, Vec<(PiiHit, String)>) {
-    let pre = mask_ua_idents(text);
-    let text: &str = &pre;
-    let all_hits = scan_inner(text, place, false);
-    let mut out = String::with_capacity(text.len());
+/// All hits of `text` (overlaps dropped), the first of each value paired with its line.
+fn hits_with_samples(text: &str, place: &str) -> Vec<(PiiHit, String)> {
     let mut at = 0;
-    let mut unique: Vec<(PiiHit, (usize, usize))> = Vec::new();
-    let mut seen_keys: Vec<(PiiKind, String)> = Vec::new();
-    for h in all_hits {
+    let mut seen: Vec<(PiiKind, String)> = Vec::new();
+    let mut out = Vec::new();
+    for h in scan_inner(text, place, false) {
         if h.start < at || h.end > text.len() {
             continue;
         }
-        out.push_str(&text[at..h.start]);
-        let s = out.len();
-        if masked_kind(h.kind) {
-            out.push_str(&pii_mask(&text[h.start..h.end]));
-        } else {
-            out.push_str(&text[h.start..h.end]);
-        }
-        let e = out.len();
         at = h.end;
-        let is_first = h.kind == PiiKind::Marking || {
-            let key = (h.kind, h.value.expose().to_string());
-            if seen_keys.contains(&key) {
-                false
-            } else {
-                seen_keys.push(key);
-                true
+        if h.kind() != PiiKind::Marking {
+            let key = (h.kind(), h.value().to_string());
+            if seen.contains(&key) {
+                continue;
             }
-        };
-        if is_first {
-            unique.push((h, (s, e)));
+            seen.push(key);
         }
+        let (before, after) = around(text, h.start, h.end);
+        let sample = format!("{before}{}{after}", &text[h.start..h.end]);
+        out.push((h, sample));
     }
-    out.push_str(&text[at..]);
-    let samples = unique
-        .into_iter()
-        .map(|(h, (s, e))| {
-            let line = line_of(&out, s, e);
-            let ls = s - (line.as_ptr() as usize - out.as_ptr() as usize);
-            let le = ls + (e - s);
-            let before: String = {
-                let b = &line[..ls];
-                let n = b.chars().count();
-                b.chars().skip(n.saturating_sub(60)).collect()
-            };
-            let after: String = line[le..].chars().take(60).collect();
-            let sample = format!(
-                "{}{}{}",
-                before.trim_start(),
-                &line[ls..le],
-                after.trim_end()
-            );
-            (h, sample)
-        })
-        .collect();
-    (out, samples)
+    out
 }
 
 fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
-    // A lone card-like number without card context is not reported (still masked).
+    // A lone card-like number without card context is not reported.
     let cards: Vec<&PiiHit> = hits
         .iter()
         .map(|(h, _)| h)
-        .filter(|h| h.kind == PiiKind::Card)
+        .filter(|h| h.kind() == PiiKind::Card)
         .collect();
-    let mut card_values: Vec<&str> = cards.iter().map(|h| h.value.expose()).collect();
+    let mut card_values: Vec<&str> = cards.iter().map(|h| h.value()).collect();
     card_values.sort_unstable();
     card_values.dedup();
     let drop_cards =
@@ -1042,8 +963,8 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
     let several = |k: PiiKind| {
         let mut v: Vec<&str> = hits
             .iter()
-            .filter(|(h, _)| h.kind == k && h.sev != Severity::Low)
-            .map(|(h, _)| h.value.expose())
+            .filter(|(h, _)| h.kind() == k && h.sev != Severity::Low)
+            .map(|(h, _)| h.value())
             .collect();
         v.sort_unstable();
         v.dedup();
@@ -1052,14 +973,16 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
     let (many_iban, many_rnokpp) = (several(PiiKind::Iban), several(PiiKind::Rnokpp));
     // A state secret stamp becomes Critical only next to real personal values.
     let personal = hits.iter().any(|(h, _)| {
-        !matches!(h.kind, PiiKind::Marking | PiiKind::Edrpou | PiiKind::Phone)
-            && !(h.kind == PiiKind::Card && drop_cards)
+        !matches!(
+            h.kind(),
+            PiiKind::Marking | PiiKind::Edrpou | PiiKind::Phone
+        ) && !(h.kind() == PiiKind::Card && drop_cards)
     });
     for (h, sample) in hits {
-        if h.kind == PiiKind::Card && drop_cards {
+        if h.kind() == PiiKind::Card && drop_cards {
             continue;
         }
-        let kind = h.kind.id();
+        let kind = h.kind().id();
         let i = match into.iter().position(|p| p.kind == kind) {
             Some(i) => i,
             None => {
@@ -1074,7 +997,7 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
         };
         let p = &mut into[i];
         p.count += 1;
-        let sev = match h.kind {
+        let sev = match h.kind() {
             PiiKind::Iban if many_iban && h.sev != Severity::Low => Severity::High,
             PiiKind::Rnokpp if many_rnokpp => Severity::High,
             PiiKind::Marking if personal && h.sev == Severity::High => Severity::Critical,
@@ -1098,37 +1021,26 @@ fn summarize(hits: &[(PiiHit, String)], into: &mut Vec<foca_core::PiiFound>) {
 }
 
 fn walk_strings(
-    v: &mut serde_json::Value,
+    v: &serde_json::Value,
     place: &str,
     hits: &mut Vec<(PiiHit, String)>,
     budget: &mut usize,
-) -> bool {
+) {
     match v {
         serde_json::Value::String(s) => {
             if s.len() < 6 || *budget == 0 {
-                return false;
+                return;
             }
             *budget = budget.saturating_sub(s.len());
-            let (masked, h) = mask_with_samples(s, place);
-            let changed = masked != *s;
-            if !h.is_empty() || changed {
-                hits.extend(h);
-                *s = masked;
-                changed
-            } else {
-                false
-            }
+            hits.extend(hits_with_samples(s, place));
         }
         serde_json::Value::Array(a) => {
-            let mut changed = false;
             for x in a {
-                changed |= walk_strings(x, place, hits, budget);
+                walk_strings(x, place, hits, budget);
             }
-            changed
         }
         serde_json::Value::Object(o) => {
-            let mut changed = false;
-            for (k, x) in o.iter_mut() {
+            for (k, x) in o {
                 // Map entries (`fields`, `custom`, `xmp`) are named by their key.
                 let p = if place.is_empty()
                     || matches!(place, "поле fields" | "поле custom" | "поле xmp")
@@ -1137,28 +1049,22 @@ fn walk_strings(
                 } else {
                     place.to_string()
                 };
-                changed |= walk_strings(x, &p, hits, budget);
+                walk_strings(x, &p, hits, budget);
             }
-            changed
         }
-        _ => false,
+        _ => {}
     }
 }
 
-/// Prepares a parsed document for storage: scans the text and every metadata string for
-/// personal data, stores the masked summary in `Metadata::pii` and masks the personal values
-/// in both the text and the metadata. Full values never reach the project database, the
-/// search index, reports or logs.
-pub fn sanitize(
-    meta: &foca_core::Metadata,
-    text: Option<&str>,
-) -> (foca_core::Metadata, Option<String>) {
+/// Summarizes the personal data of a parsed document into `Metadata::pii`: scans the text and
+/// every metadata string. Values are kept in full (the project database is local and
+/// encrypted, the user sees what the document holds); `Debug` output, logs and the masked
+/// report option go through [`redact`] / [`foca_core::api::mask`] instead.
+pub fn annotate(meta: &foca_core::Metadata, text: Option<&str>) -> foca_core::Metadata {
     let mut found: Vec<foca_core::PiiFound> = Vec::new();
-    let text_out = text.map(|t| {
-        let (masked, hits) = mask_with_samples(t, "текст");
-        summarize(&hits, &mut found);
-        masked
-    });
+    if let Some(t) = text {
+        summarize(&hits_with_samples(t, "текст"), &mut found);
+    }
     let mut meta_out = meta.clone();
     meta_out.pii.clear();
     if let Ok(mut v) = serde_json::to_value(&meta_out) {
@@ -1168,24 +1074,11 @@ pub fn sanitize(
         }
         let mut hits = Vec::new();
         let mut budget = MAX_SCAN_BYTES;
-        let changed = walk_strings(&mut v, "", &mut hits, &mut budget);
-        if changed || !hits.is_empty() {
-            summarize(&hits, &mut found);
-            if let Some(o) = v.as_object_mut() {
-                if let Some(t) = serde_json::to_value(&meta.thumbnail)
-                    .ok()
-                    .filter(|t| !t.is_null())
-                {
-                    o.insert("thumbnail".into(), t);
-                }
-            }
-            if let Ok(m) = serde_json::from_value::<foca_core::Metadata>(v) {
-                meta_out = m;
-            }
-        }
+        walk_strings(&v, "", &mut hits, &mut budget);
+        summarize(&hits, &mut found);
     }
     meta_out.pii = found;
-    (meta_out, text_out)
+    meta_out
 }
 
 #[cfg(test)]
@@ -1222,8 +1115,7 @@ mod tests {
 
     fn found(t: &str) -> Vec<(String, Severity)> {
         let m = foca_core::Metadata::default();
-        sanitize(&m, Some(t))
-            .0
+        annotate(&m, Some(t))
             .pii
             .into_iter()
             .map(|p| (p.kind, p.sev))
@@ -1346,7 +1238,7 @@ mod tests {
         // Values never leak through Debug/Display.
         let dbg = format!("{hits:?}");
         assert!(!dbg.contains("4111111111111111") && !dbg.contains(&r));
-        assert!(!card.masked_context().contains("4111 1111 1111 1111"));
+        assert!(!format!("{card:?}").contains("4111 1111 1111 1111"));
         assert!(card.context.contains("{{s:4111 1111 1111 1111}}"));
     }
 
@@ -1390,13 +1282,13 @@ mod tests {
         // A state secret stamp alone is High; Critical needs personal data next to it.
         assert_eq!(scan("ЦІЛКОМ ТАЄМНО", "x")[0].sev, Severity::High);
         let r = mk_rnokpp("301234567");
-        let (m, _) = sanitize(
+        let m = annotate(
             &foca_core::Metadata::default(),
             Some(&format!("ЦІЛКОМ ТАЄМНО\nРНОКПП {r}")),
         );
         let mk = m.pii.iter().find(|p| p.kind == "marking").unwrap();
         assert_eq!(mk.sev, Severity::Critical);
-        let (m, _) = sanitize(
+        let m = annotate(
             &foca_core::Metadata::default(),
             Some("ДСК\nРНОКПП 3012345670"),
         );
@@ -1437,23 +1329,15 @@ mod tests {
     }
 
     #[test]
-    fn sanitize_masks_text_and_metadata() {
+    fn annotate_keeps_full_values_and_debug_masks_them() {
         let mut m = foca_core::Metadata::new(foca_core::DocFormat::Docx);
         m.description = Some("Картка 4111 1111 1111 1111 клієнта".into());
         m.fields
             .insert("vcf:01.tel".into(), "ІПН 3012345670".into());
         let text = "Договір\nРНОКПП 3012345670, IBAN UA213223130000026007233566001\n";
-        let (mm, t) = sanitize(&m, Some(text));
-        let t = t.unwrap();
-        assert!(
-            !t.contains("3012345670") && !t.contains("26007233566001"),
-            "{t}"
-        );
-        let js = serde_json::to_string(&mm).unwrap();
-        assert!(
-            !js.contains("4111 1111 1111 1111") && !js.contains("3012345670"),
-            "{js}"
-        );
+        let mm = annotate(&m, Some(text));
+        assert_eq!(mm.description, m.description);
+        assert_eq!(mm.fields, m.fields);
         let kinds: Vec<&str> = mm.pii.iter().map(|p| p.kind.as_str()).collect();
         assert!(
             kinds.contains(&"card") && kinds.contains(&"iban"),
@@ -1462,29 +1346,25 @@ mod tests {
         assert!(mm
             .pii
             .iter()
-            .all(|p| p.samples.iter().all(|s| !s.contains("3012345670"))));
+            .any(|p| p.samples.iter().any(|s| s.contains("3012345670"))));
+        let hits = scan(text, "текст");
+        let dbg = format!("{hits:?}");
+        assert!(
+            !dbg.contains("3012345670") && !dbg.contains("26007233566001"),
+            "{dbg}"
+        );
     }
 
     #[test]
-    fn duplicate_pii_and_ua_certs_and_ru_seria_all_masked() {
+    fn redact_masks_duplicates_and_ua_certs() {
         let r = mk_rnokpp("345678901");
         let text = format!(
-            "Перша карта 4111 1111 1111 1111; друга карта 4111 1111 1111 1111;\nИПН1 {r}, ИПН2 {r}"
+            "Перша карта 4111 1111 1111 1111; друга карта 4111 1111 1111 1111;\nИПН1 {r}, ИПН2 {r}\nTINUA-3012345679"
         );
-        let (masked_text, _) = mask_pii(&text, "текст");
-        assert!(!masked_text.contains("4111"), "{masked_text}");
-        assert!(!masked_text.contains(&r), "{masked_text}");
-
         let (redacted, _) = redact(&text);
         assert!(!redacted.contains("4111"), "{redacted}");
         assert!(!redacted.contains(&r), "{redacted}");
-
-        let mut m = foca_core::Metadata::new(foca_core::DocFormat::Pdf);
-        m.fields
-            .insert("signature:subject".into(), "TINUA-3012345679".into());
-        let (mm, _) = sanitize(&m, None);
-        let subj = mm.fields.get("signature:subject").unwrap();
-        assert!(!subj.contains("3012345679"), "{subj}");
+        assert!(!redacted.contains("3012345679"), "{redacted}");
 
         assert!(kinds("серия КМ 123456").contains(&PiiKind::Passport));
         assert!(kinds("ID-карта 001234567").contains(&PiiKind::IdCard));

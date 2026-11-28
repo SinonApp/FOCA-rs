@@ -704,11 +704,9 @@ impl ProjectDb {
 
     /// Stores the metadata and a text excerpt (up to 64 KiB) and sets the status to `analyzed`.
     pub fn set_analyzed(&self, id: u64, meta: &Metadata, text: Option<&str>) -> Result<()> {
-        // Personal data is summarized and masked before it touches the database (text, FTS
-        // index and metadata JSON alike).
-        let (meta, text) = foca_analysis::pii::sanitize(meta, text);
-        let meta = &meta;
-        let text = text.as_deref();
+        // Personal data is summarized into `Metadata::pii`; values stay in full (the project
+        // database is local and encrypted, logs and exports mask them).
+        let meta = &foca_analysis::pii::annotate(meta, text);
         let excerpt = text.map(|t| {
             let mut end = t.len().min(64 * 1024);
             while !t.is_char_boundary(end) {

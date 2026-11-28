@@ -24,7 +24,7 @@ fn load() -> Vec<(Document, Option<String>)> {
             let b = std::fs::read(dir.join(n)).unwrap();
             let m = foca_meta::extract(&b, Some(n), &lim).unwrap();
             let t = foca_meta::text(&b, &lim).ok();
-            let (m, t) = foca_analysis::pii::sanitize(&m, t.as_deref());
+            let m = foca_analysis::pii::annotate(&m, t.as_deref());
             let d = Document {
                 id: i as u64 + 1,
                 name: n.clone(),
@@ -51,14 +51,14 @@ fn forensic_findings_from_fixtures() {
             .iter()
             .find(|f| f.provenance.rule == rule && f.title.contains(doc))
     };
-    // the covered text holds a passport number (masked in storage): critical, CVSS in the band
+    // the covered text holds a passport number: critical, CVSS in the band
     let br = has("doc.bad_redaction", "redacted.pdf").expect("bad redaction");
     assert_eq!(br.sev, Severity::Critical);
     assert!(br.cvss.is_some_and(|c| c >= 9.0), "{:?}", br.cvss);
     assert!(has("doc.modified_after_signing", "signed_modified.pdf").is_some());
     let kep = has("doc.signer_identity", "signed.pdf").expect("signer");
     assert!(
-        kep.evidence.contains("РНОКПП: ********"),
+        kep.evidence.contains("РНОКПП: 1234567899"),
         "{}",
         kep.evidence
     );
@@ -66,7 +66,7 @@ fn forensic_findings_from_fixtures() {
     let cms = has("doc.signer_identity", "kep_wrapped.pdf").expect("cms signer");
     assert_eq!(cms.sev, Severity::Medium);
     assert!(
-        cms.evidence.contains("РНОКПП: ********"),
+        cms.evidence.contains("РНОКПП: 1234567899"),
         "{}",
         cms.evidence
     );
@@ -82,13 +82,9 @@ fn forensic_findings_from_fixtures() {
         "{:?}",
         a.people.iter().map(|p| &p.name).collect::<Vec<_>>()
     );
-    // Translations exist for every new finding text is checked in foca-report; here: no raw
-    // РНОКПП in any finding.
+    // Values reach findings in full; `Debug` of the detector hits stays masked.
     let js = serde_json::to_string(&a.findings).unwrap();
-    assert!(
-        !js.contains("TINUA-") && !js.contains("1234567899"),
-        "raw РНОКПП leaked"
-    );
+    assert!(js.contains("1234567899"), "РНОКПП shown in full");
 }
 
 /// `pdf-revisions` is a finding only when an older revision really differs: empty Word

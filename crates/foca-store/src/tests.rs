@@ -1253,7 +1253,7 @@ fn fts_follows_delete_restore_update_purge() {
 }
 
 #[test]
-fn fts_snippets_mask_secrets_and_pii() {
+fn fts_snippets_show_and_label_secrets_and_pii() {
     let tmp = tempfile::tempdir().unwrap();
     let s = store(tmp.path());
     let p = new_project(&s);
@@ -1266,9 +1266,13 @@ fn fts_snippets_mask_secrets_and_pii() {
     );
     let r = db.search_text("хостингу", &SearchOpts::default()).unwrap();
     let h = &r.hits[0];
-    assert!(!h.snippet.contains("Kont0so#2024!"), "{}", h.snippet);
-    assert!(!h.snippet.contains("4111 1111 1111 1111"), "{}", h.snippet);
-    // The card number is masked before storage; the snippet flags the mask.
+    assert!(h.snippet.contains("{{s:Kont0so#2024!}}"), "{}", h.snippet);
+    assert!(
+        h.snippet.contains("{{s:4111 1111 1111 1111}}"),
+        "{}",
+        h.snippet
+    );
+    // Full values are stored and searchable; the snippet labels them.
     assert!(
         h.masked.iter().any(|l| l.starts_with("pii")),
         "{:?}",

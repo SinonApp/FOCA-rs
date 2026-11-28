@@ -1,5 +1,5 @@
 //! Glue between text mentions and the identity resolver: identities to merge, attributes of the
-//! merged people (title, unit, masked phones, identifier kinds) and the phone table.
+//! merged people (title, unit, phones, identifier kinds) and the phone table.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -24,30 +24,6 @@ pub fn identities(ts: &TextScan, doc: u64, out: &mut Vec<Identity>) {
             out.push(Identity::new(e, doc, IdentSource::Text, "email").with_link(&m.name));
         }
     }
-}
-
-/// Masks a phone number: country code kept for E.164 values, last two digits kept
-/// (`+38••••••••67`); values already masked at storage stay as they are.
-pub fn mask_phone(v: &str) -> String {
-    if v.contains('•') {
-        return v.to_string();
-    }
-    let digits: Vec<char> = v.chars().filter(char::is_ascii_digit).collect();
-    if digits.len() < 6 {
-        return "••••".into();
-    }
-    let keep_head = if v.starts_with('+') {
-        2.min(digits.len() - 4)
-    } else {
-        0
-    };
-    let head: String = digits[..keep_head].iter().collect();
-    let tail: String = digits[digits.len() - 2..].iter().collect();
-    let plus = if v.starts_with('+') { "+" } else { "" };
-    format!(
-        "{plus}{head}{}{tail}",
-        "•".repeat(digits.len() - keep_head - 2)
-    )
 }
 
 /// Attributes of one merged person collected from text mentions.
@@ -105,7 +81,7 @@ pub fn attrs<'a>(
             if let Some(u) = &m.unit {
                 *a.units.entry(u.clone()).or_default() += 1;
             }
-            a.phones.extend(m.phones.iter().map(|p| mask_phone(p)));
+            a.phones.extend(m.phones.iter().cloned());
             a.ids.extend(m.ids.iter().map(|k| k.to_string()));
             a.signatory |= m.signatory;
             a.cited &= m.cited;
@@ -166,7 +142,7 @@ pub fn phones<'a>(
     let mut out: Vec<Phone> = rows
         .into_iter()
         .map(|(v, r)| Phone {
-            value: mask_phone(&v),
+            value: v,
             country: r.country.to_string(),
             docs: r.docs.len() as u32,
             src_doc: r.docs.iter().next().copied(),
@@ -193,17 +169,4 @@ pub fn doc_counts(ts: &TextScan) -> (u32, u32) {
         .map(|(_, n)| *n)
         .sum();
     (names.len() as u32, contacts)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn phone_masks_keep_country_and_tail() {
-        let v = format!("+38{}", "0501234567");
-        assert_eq!(mask_phone(&v), "+38••••••••67");
-        assert_eq!(mask_phone("••••••••67"), "••••••••67");
-        assert!(!mask_phone(&v).contains("12345"));
-    }
 }

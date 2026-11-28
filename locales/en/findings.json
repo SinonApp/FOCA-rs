@@ -1879,6 +1879,12 @@
       "text": "The signing certificate reveals the signer's full name, position, organization and certification authority; for a Ukrainian qualified signature also the EDRPOU and RNOKPP codes (RNOKPP is stored masked only)."
     },
     {
+      "id": "f692",
+      "rules": "doc.signer_identity",
+      "pattern": "Сертификат подписи раскрывает ФИО, должность, организацию и центр сертификации подписанта; для украинского КЕП: коды ЄДРПОУ и РНОКПП.",
+      "text": "The signing certificate reveals the signer's full name, position, organization and certification authority; for a Ukrainian qualified signature also the EDRPOU and RNOKPP codes."
+    },
+    {
       "id": "f306",
       "rules": "doc.signer_identity",
       "pattern": "Учитывать, что подписанные документы раскрывают данные сертификата; для публикации использовать печать организации или отдельную публичную подпись.",
@@ -2299,6 +2305,12 @@
       "text": "The contacts file contains phone numbers, addresses and birth dates (values are masked in the database)."
     },
     {
+      "id": "f693",
+      "rules": "pim.contact_pii",
+      "pattern": "Файл контактов содержит телефоны, адреса и даты рождения.",
+      "text": "The contacts file contains phone numbers, addresses and birth dates."
+    },
+    {
       "id": "f376",
       "rules": "pim.contact_pii",
       "pattern": "Не публиковать файлы контактов .vcf.",
@@ -2401,6 +2413,12 @@
       "text": "Values found in the document: {0}. Values were validated by check digits where possible; only masks are kept in the database and the report."
     },
     {
+      "id": "f691",
+      "rules": "pii",
+      "pattern": "В документе найдено значений: {n}. Значения проверены по контрольным суммам, где это возможно.",
+      "text": "Values found in the document: {0}. Values were validated by check digits where possible."
+    },
+    {
       "id": "f393",
       "rules": "pii",
       "pattern": "Удалить документ из открытого доступа и проверить процедуру публикации документов с грифом.",
@@ -2441,6 +2459,12 @@
       "rules": "doc.links",
       "pattern": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа (токены маскированы).",
       "text": "The document links to cloud workspaces (Google Drive, SharePoint, Notion, Trello, Jira…) or contains URLs with embedded access tokens (tokens are masked)."
+    },
+    {
+      "id": "f694",
+      "rules": "doc.links",
+      "pattern": "Документ ссылается на облачные рабочие пространства (Google Drive, SharePoint, Notion, Trello, Jira…) или содержит URL со встроенными токенами доступа.",
+      "text": "The document links to cloud workspaces (Google Drive, SharePoint, Notion, Trello, Jira…) or contains URLs with embedded access tokens."
     },
     {
       "id": "f397",
