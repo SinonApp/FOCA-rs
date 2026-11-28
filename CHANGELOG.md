@@ -26,6 +26,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 - PNG `eXIf` and `tIME` chunks; HEIF/AVIF ICC profiles.
 - MP4/MOV video compressor (encoder) and track handler names; MP3 copyright, user text and URL frames, private frame owners, picture descriptions, release dates, the encoder tag and untagged MP3 files; FLAC pictures parsed as embedded images.
 - SVG `data:image` pictures are parsed as embedded images; SVG comments are scanned for paths and e-mails.
+- In-app update from GitHub Releases in both builds (Settings → Updates, also under About): manual check and an optional daily check (Wi-Fi only by default, can be turned off), beta channel toggle, release notes, size and date, download with resume and a progress notification.
+- Updates install only after three checks: `SHA256SUMS.txt` carries a valid Ed25519 signature of the app's key (domain-separated from signature bundles), the APK matches its SHA-256, and Android confirms the same signing certificate, package name and a higher versionCode. A release that migrates the project database shows a warning to export projects first (`<!-- foca:schema N -->` in the release notes).
+- `scripts/sign-release.sh` writes and verifies `SHA256SUMS.txt` and `SHA256SUMS.txt.sig` for release APKs.
 
 ### Fixed
 - **Site technologies**: CVE badges on a technology no longer sit in a grey system button box; the EPSS badge matches the others.
