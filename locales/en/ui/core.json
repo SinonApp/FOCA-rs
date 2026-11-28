@@ -293,6 +293,7 @@
   "core.sig.bad_url": "The signature feed URL must use HTTPS and a public host",
   "core.sig.download": "Signature bundle download failed: {error}",
   "core.sig.bad_schema": "Unknown signature bundle schema: {schema}",
+  "core.sig.older": "Signature bundle {version} is not newer than the built-in database {builtin}",
   "core.sig.no_version": "The signature bundle has no version or release date",
   "core.sig.bad_sha": "The SHA-256 checksum of the signature bundle does not match its contents",
   "core.sig.bad_sig_hex": "The Ed25519 signature is not valid hex",

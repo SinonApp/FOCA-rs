@@ -253,6 +253,10 @@ pub struct SigStatus {
     /// Table ids of the active bundle this build does not know (skipped, newer bundle).
     #[serde(default)]
     pub skipped_tables: Vec<String>,
+    /// Version of an installed bundle that is ignored because the built-in database of this
+    /// build is newer (after an app update); `None` when nothing is shadowed.
+    #[serde(default)]
+    pub ignored_bundle: Option<String>,
     /// Feed checked by `signatures_update` without a `url`.
     pub feed_url: String,
     /// Result of the last `signatures_update`, `None` before the first check.
@@ -694,6 +698,7 @@ fn apply_tables(bundle: Option<&SigBundleV1>) {
 /// Applies the data tables of the active bundle (at engine start and after an install or
 /// rollback). KEV enrichment is applied per lookup by [`active_kev_catalog`].
 pub fn activate(data_dir: &Path) {
+    prune_shadowed(data_dir, &official_pubkey_bytes());
     apply_tables(active_bundle(data_dir).as_ref());
 }
 
@@ -966,6 +971,7 @@ fn make_status(
                     .collect()
             })
             .unwrap_or_default(),
+        ignored_bundle: None,
         feed_url: DEFAULT_FEED_URL.into(),
         last_check: read_last_check(data_dir),
     }
@@ -984,7 +990,14 @@ pub(crate) fn status_with_pubkey(
 ) -> SigStatus {
     let prev_exists = previous_path(data_dir).is_file();
     match verified_bundle_at(&current_path(data_dir), pubkey_bytes) {
-        Some(b) => make_status(data_dir, Some(&b), true, pubkey_bytes, Some(today)),
+        Some(b) if newer_than_builtin(&b) => {
+            make_status(data_dir, Some(&b), true, pubkey_bytes, Some(today))
+        }
+        Some(old) => {
+            let mut st = make_status(data_dir, None, prev_exists, pubkey_bytes, Some(today));
+            st.ignored_bundle = Some(old.version);
+            st
+        }
         None => make_status(data_dir, None, prev_exists, pubkey_bytes, Some(today)),
     }
 }
@@ -996,9 +1009,46 @@ fn verified_bundle_at(path: &Path, pubkey_bytes: &[u8; 32]) -> Option<SigBundleV
     Some(bundle)
 }
 
-/// Returns the active verified bundle if one is installed on disk.
+/// `(version, released)` of the built-in database: the KEV snapshot compiled into this build.
+fn builtin_version() -> (String, String) {
+    let kev = foca_analysis::kev::KevCatalog::builtin();
+    (kev.version.clone(), kev.released.clone())
+}
+
+/// Orders two databases by `(version, released)`: version parts first, the release date breaks a
+/// tie. `true` when `a` is strictly newer than `b`.
+fn is_newer(a: (&str, &str), b: (&str, &str)) -> bool {
+    (version_key(a.0), version_key(a.1)) > (version_key(b.0), version_key(b.1))
+}
+
+/// `true` when `b` is newer than the built-in database. An older installed bundle (left from
+/// before an app update that shipped newer data) is ignored, so it never shadows the newer
+/// embedded tables.
+pub(crate) fn newer_than_builtin(b: &SigBundleV1) -> bool {
+    let (v, r) = builtin_version();
+    is_newer((&b.version, &b.released_at), (&v, &r))
+}
+
+/// The installed verified bundle when it is newer than the built-in database.
+fn effective_bundle(data_dir: &Path, pubkey_bytes: &[u8; 32]) -> Option<SigBundleV1> {
+    verified_bundle_at(&current_path(data_dir), pubkey_bytes).filter(newer_than_builtin)
+}
+
+/// Deletes installed bundles (`current.json`, `previous.json`) that verify but are not newer
+/// than the built-in database: they can never become active again in this build.
+fn prune_shadowed(data_dir: &Path, pubkey_bytes: &[u8; 32]) {
+    for path in [current_path(data_dir), previous_path(data_dir)] {
+        if verified_bundle_at(&path, pubkey_bytes).is_some_and(|b| !newer_than_builtin(&b)) {
+            tracing::info!(target: "foca::sig", "удалён устаревший пакет сигнатур {}", path.display());
+            let _ = fs::remove_file(&path);
+        }
+    }
+}
+
+/// Returns the active verified bundle if one is installed on disk and newer than the built-in
+/// database.
 pub fn active_bundle(data_dir: &Path) -> Option<SigBundleV1> {
-    verified_bundle_at(&current_path(data_dir), &official_pubkey_bytes())
+    effective_bundle(data_dir, &official_pubkey_bytes())
 }
 
 /// Returns secret rules contributed by an active verified signature bundle (if any).
@@ -1095,6 +1145,16 @@ pub(crate) fn import_bundle_with_pubkey(
 ) -> Result<SigStatus, CmdError> {
     let bundle = parse_bundle(bundle_json)?;
     verify_bundle(&bundle, pubkey_bytes)?;
+    if !newer_than_builtin(&bundle) {
+        let (builtin, _) = builtin_version();
+        return Err(CmdError::new(
+            "sig_older",
+            format!(
+                "Пакет сигнатур {} не новее встроенной базы {builtin}",
+                bundle.version
+            ),
+        ));
+    }
     install(data_dir, &bundle)?;
     apply_tables(Some(&bundle));
     Ok(make_status(
@@ -1162,7 +1222,8 @@ pub fn apply_feed(
         verify_bundle(&bundle, pubkey_bytes)?;
         check.version = Some(bundle.version.clone());
         let active = status_with_pubkey(data_dir, pubkey_bytes, now.date());
-        if version_key(&bundle.version) <= version_key(&active.version) {
+        let found = (bundle.version.as_str(), bundle.released_at.as_str());
+        if !is_newer(found, (&active.version, &active.updated_at)) {
             return Ok("up_to_date");
         }
         install(data_dir, &bundle)?;
@@ -1199,7 +1260,7 @@ pub(crate) fn rollback_with_pubkey(
     let cur = current_path(data_dir);
     let prev = previous_path(data_dir);
     if prev.is_file() {
-        if let Some(bundle) = verified_bundle_at(&prev, pubkey_bytes) {
+        if let Some(bundle) = verified_bundle_at(&prev, pubkey_bytes).filter(newer_than_builtin) {
             fs::rename(&prev, &cur).map_err(|e| CmdError::new("io", e.to_string()))?;
             apply_tables(Some(&bundle));
             return Ok(make_status(
@@ -1308,11 +1369,11 @@ mod tests {
         assert_eq!(st0.source, "builtin");
         assert!(!st0.can_rollback);
 
-        let b1 = build_signed_test_bundle("2026.11.22", "2026-11-22", &TEST_SEED);
+        let b1 = build_signed_test_bundle("2099.11.22", "2099-11-22", &TEST_SEED);
         let json1 = serde_json::to_string(&b1).unwrap();
         let st1 = import_bundle_with_pubkey(dir.path(), &json1, &pk, TODAY).unwrap();
         assert_eq!(st1.source, "bundle");
-        assert_eq!(st1.version, "2026.11.22");
+        assert_eq!(st1.version, "2099.11.22");
         assert!(st1.signature_valid);
         assert!(st1.can_rollback);
         assert_eq!(st1.added_kev, 2);
@@ -1329,16 +1390,16 @@ mod tests {
         assert!(import_bundle(dir.path(), &json1, TODAY).is_err());
 
         // Second bundle rotates first to previous.json.
-        let b2 = build_signed_test_bundle("2026.11.23", "2026-11-23", &TEST_SEED);
+        let b2 = build_signed_test_bundle("2099.11.23", "2099-11-23", &TEST_SEED);
         let st2 =
             import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b2).unwrap(), &pk, TODAY)
                 .unwrap();
-        assert_eq!(st2.version, "2026.11.23");
+        assert_eq!(st2.version, "2099.11.23");
 
-        // Rollback 1 -> 2026.11.22.
+        // Rollback 1 -> 2099.11.22.
         let rb1 = rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
         assert_eq!(rb1.source, "bundle");
-        assert_eq!(rb1.version, "2026.11.22");
+        assert_eq!(rb1.version, "2099.11.22");
 
         // Rollback 2 -> builtin.
         let rb2 = rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
@@ -1347,7 +1408,7 @@ mod tests {
     }
 
     fn v2_bundle(version: &str) -> SigBundleV1 {
-        let mut b = bundle_from_builtin(version, "2026-11-27");
+        let mut b = bundle_from_builtin(version, "2099-11-27");
         b.kev_additions.clear();
         sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
         b
@@ -1359,7 +1420,7 @@ mod tests {
         assert_eq!(b64_encode(b"ab"), "YWI=");
         let dir = tempfile::tempdir().unwrap();
         let pk = test_pubkey();
-        let b = v2_bundle("2026.11.28");
+        let b = v2_bundle("2099.11.28");
         assert_eq!(b.schema, BUNDLE_SCHEMA);
         assert_eq!(b.tables.len(), TABLES.len());
         let json = serde_json::to_string(&b).unwrap();
@@ -1384,7 +1445,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let pk = test_pubkey();
         // A table whose bytes do not match its SHA-256 (re-signed, so only the table check fails).
-        let mut b = v2_bundle("2026.11.28");
+        let mut b = v2_bundle("2099.11.28");
         let t = b.tables.get_mut("takeover").unwrap();
         t.data = b64_encode(br#"{"services":[]}"#);
         sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
@@ -1393,7 +1454,7 @@ mod tests {
                 .unwrap_err();
         assert!(err.message.contains("takeover"), "{}", err.message);
         // A matching SHA-256 over data the parser rejects.
-        let mut b = v2_bundle("2026.11.28");
+        let mut b = v2_bundle("2099.11.28");
         let junk = b"not gzip".to_vec();
         b.tables.insert(
             "retire".into(),
@@ -1412,7 +1473,7 @@ mod tests {
         )
         .is_err());
         // Tables in a v1 bundle.
-        let mut b = v2_bundle("2026.11.28");
+        let mut b = v2_bundle("2099.11.28");
         b.schema = BUNDLE_SCHEMA_V1.into();
         sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
         assert!(verify_bundle(&b, &pk).is_err());
@@ -1423,7 +1484,7 @@ mod tests {
     fn unknown_table_ids_of_a_newer_build_are_skipped() {
         let dir = tempfile::tempdir().unwrap();
         let pk = test_pubkey();
-        let mut b = v2_bundle("2026.11.28");
+        let mut b = v2_bundle("2099.11.28");
         let first = b.tables.values().next().unwrap().clone();
         b.tables.insert("future_table".into(), first);
         sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
@@ -1500,17 +1561,17 @@ mod tests {
     fn nvd_table_roundtrips_through_a_bundle() {
         let dir = tempfile::tempdir().unwrap();
         let pk = test_pubkey();
-        let b = v2_bundle("2026.11.28");
+        let b = v2_bundle("2099.11.28");
         let t = &b.tables["nvd_cve"];
         assert_eq!(b64_decode(&t.data).unwrap(), foca_analysis::cve::NVD_GZ);
-        assert_eq!(t.version, "2026-11-27");
+        assert_eq!(t.version, lock_pin("nvd"));
         let st =
             import_bundle_with_pubkey(dir.path(), &serde_json::to_string(&b).unwrap(), &pk, TODAY)
                 .unwrap();
         let info = st.tables.iter().find(|t| t.id == "nvd_cve").unwrap();
         assert_eq!(info.source, "bundle");
         assert!(info.records > 10_000);
-        assert_eq!(st.nvd.snapshot, "2026-11-27");
+        assert_eq!(st.nvd.snapshot, lock_pin("nvd"));
         assert_eq!(st.nvd.cves as u32, info.records);
         rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
     }
@@ -1518,7 +1579,7 @@ mod tests {
     #[test]
     fn v1_bundles_stay_readable() {
         // A v1 bundle (no tables) keeps its canonical payload: no `tables` key is signed.
-        let mut b = build_signed_test_bundle("2026.11.22", "2026-11-22", &TEST_SEED);
+        let mut b = build_signed_test_bundle("2099.11.22", "2099-11-22", &TEST_SEED);
         b.schema = BUNDLE_SCHEMA_V1.into();
         sign_bundle_with_seed(&mut b, &TEST_SEED).unwrap();
         let payload = String::from_utf8(canonical_payload(&b)).unwrap();
@@ -1532,7 +1593,7 @@ mod tests {
     fn tampered_payload_or_foreign_signature_is_rejected() {
         let dir = tempfile::tempdir().unwrap();
         let pk = test_pubkey();
-        let mut b = build_signed_test_bundle("2026.11.22", "2026-11-22", &TEST_SEED);
+        let mut b = build_signed_test_bundle("2099.11.22", "2099-11-22", &TEST_SEED);
         b.counts.cve += 1;
         // Recompute SHA-256 without valid Ed25519 private key -> Ed25519 verify must fail.
         b.sha256 = sha256_hex(&canonical_payload(&b));
@@ -1544,7 +1605,7 @@ mod tests {
         assert_eq!(status_with_pubkey(dir.path(), &pk, TODAY).source, "builtin");
 
         // Signed with a foreign Ed25519 seed -> rejected.
-        let foreign = build_signed_test_bundle("2026.11.22", "2026-11-22", &[0x99u8; 32]);
+        let foreign = build_signed_test_bundle("2099.11.22", "2099-11-22", &[0x99u8; 32]);
         let err2 = import_bundle_with_pubkey(
             dir.path(),
             &serde_json::to_string(&foreign).unwrap(),
@@ -1745,5 +1806,104 @@ mod tests {
             .unwrap()
             .contains("kev_catalog"));
         assert!(verify_bundle(&legacy, &pk).is_ok());
+    }
+
+    /// Writes a signed bundle straight to `current.json`, as an older app build left it.
+    fn leave_installed(dir: &Path, b: &SigBundleV1) {
+        fs::create_dir_all(sig_dir(dir)).unwrap();
+        fs::write(current_path(dir), serde_json::to_vec(b).unwrap()).unwrap();
+    }
+
+    #[test]
+    fn app_update_with_newer_builtin_wins_over_an_older_installed_bundle() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        // A bundle installed by the previous app version, older than this build's data.
+        let old = build_signed_test_bundle("2020.1.1", "2020-01-01", &TEST_SEED);
+        leave_installed(dir.path(), &old);
+        let st = status_with_pubkey(dir.path(), &pk, TODAY);
+        assert_eq!(st.source, "builtin");
+        assert_eq!(st.version, builtin_version().0);
+        assert_eq!(st.ignored_bundle.as_deref(), Some("2020.1.1"));
+        assert!(st.tables.iter().all(|t| t.source == "builtin"));
+        // Its KEV entries and secret rules do not leak into the analysis either.
+        assert_eq!(st.added_kev, 0);
+        assert!(effective_bundle(dir.path(), &pk).is_none());
+        // A feed check compares with the built-in database, not with the shadowed bundle.
+        let same = serde_json::to_string(&old).unwrap();
+        let now = datetime!(2026-11-27 10:15:00 UTC);
+        let st = apply_feed(dir.path(), "u", Ok(same), &pk, now).unwrap();
+        assert_eq!(st.last_check.unwrap().outcome, "up_to_date");
+        // Pruning removes the bundle that can never win again in this build.
+        prune_shadowed(dir.path(), &pk);
+        assert!(!current_path(dir.path()).exists());
+        let st = status_with_pubkey(dir.path(), &pk, TODAY);
+        assert!(st.ignored_bundle.is_none());
+        assert!(!st.can_rollback);
+    }
+
+    #[test]
+    fn newer_bundle_still_wins_over_builtin() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let b = build_signed_test_bundle("2099.1.1", "2099-01-01", &TEST_SEED);
+        leave_installed(dir.path(), &b);
+        let st = status_with_pubkey(dir.path(), &pk, TODAY);
+        assert_eq!(st.source, "bundle");
+        assert_eq!(st.version, "2099.1.1");
+        assert!(st.ignored_bundle.is_none());
+        assert_eq!(st.added_kev, 2);
+        prune_shadowed(dir.path(), &pk);
+        assert!(current_path(dir.path()).exists(), "a newer bundle is kept");
+    }
+
+    #[test]
+    fn builtin_and_bundle_order_by_version_then_release_date() {
+        let (v, r) = builtin_version();
+        assert!(!is_newer((&v, &r), (&v, &r)), "equal is not newer");
+        assert!(
+            is_newer((&v, "2999-01-01"), (&v, &r)),
+            "same version, later release"
+        );
+        assert!(!is_newer((&v, "2000-01-01"), (&v, &r)));
+        assert!(is_newer(
+            ("2026.11.27", "2026-11-27"),
+            ("2026.11.20", "2026-11-28")
+        ));
+        assert!(is_newer(
+            ("2026.12.1", "2026-12-01"),
+            ("2026.11.30", "2026-11-30")
+        ));
+    }
+
+    #[test]
+    fn importing_a_bundle_older_than_builtin_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let old = build_signed_test_bundle("2020.1.1", "2020-01-01", &TEST_SEED);
+        let err = import_bundle_with_pubkey(
+            dir.path(),
+            &serde_json::to_string(&old).unwrap(),
+            &pk,
+            TODAY,
+        )
+        .unwrap_err();
+        assert_eq!(err.code, "sig_older");
+        assert!(err.message.contains("2020.1.1"), "{}", err.message);
+        assert!(!current_path(dir.path()).exists());
+    }
+
+    #[test]
+    fn rollback_skips_a_previous_bundle_older_than_builtin() {
+        let dir = tempfile::tempdir().unwrap();
+        let pk = test_pubkey();
+        let new = build_signed_test_bundle("2099.1.1", "2099-01-01", &TEST_SEED);
+        leave_installed(dir.path(), &new);
+        let old = build_signed_test_bundle("2020.1.1", "2020-01-01", &TEST_SEED);
+        fs::write(previous_path(dir.path()), serde_json::to_vec(&old).unwrap()).unwrap();
+        let st = rollback_with_pubkey(dir.path(), &pk, TODAY).unwrap();
+        assert_eq!(st.source, "builtin");
+        assert!(!current_path(dir.path()).exists());
+        assert!(!previous_path(dir.path()).exists());
     }
 }
