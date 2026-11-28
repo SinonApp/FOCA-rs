@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and thi
 
 ---
 
+## 2.0.0-beta.4.1.1: 2026-11-28
+
+### Fixed
+
+- Re-analyse documents: findings the current parsers no longer produce (for example a bad redaction on white table cells, a signature "modified" only by an LTV increment, a meeting link passcode reported as a password) leave the findings list, the overview counts and reports instead of staying as New with their old host. Their triage is kept and comes back if the same finding appears again; a later scan does not list them as fixed.
+
 ## 2.0.0-beta.4.1: 2026-11-27
 
 Patch release after phone testing of 2.0.0-beta.4.
