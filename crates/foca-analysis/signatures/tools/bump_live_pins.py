@@ -22,6 +22,7 @@ import urllib.error
 import urllib.request
 
 TOOLS = pathlib.Path(__file__).resolve().parent
+REPO = TOOLS.parents[3]
 EPSS_URL = "https://epss.empiricalsecurity.com/epss_scores-{date}.csv.gz"
 UA = "foca-rs-signature-ingest (+https://github.com/SinonApp/FOCA-rs)"
 
@@ -72,14 +73,36 @@ def main() -> None:
             ("LAST_YEAR", snapshot[:4], False),
         ],
     }
+    olds = {}
     for file, consts in edits.items():
         path = TOOLS / file
         text = path.read_text("utf-8")
         for name, value, quoted in consts:
             text, old = set_const(text, name, value, quoted)
+            olds[(file, name)] = old
             print(f"{file}: {name} {old} -> {value}")
         if "--dry-run" not in args:
             path.write_text(text, "utf-8")
+    # The attribution lines name the snapshot (qa/gen-licenses.py checks them against the lock).
+    notices = {
+        "NOTICE": [("EPSS scores from FIRST.org", olds[("update_kev_enrich.py", "EPSS_DATE")], epss)],
+        "THIRD_PARTY.md": [
+            ("[FIRST EPSS]", olds[("update_kev_enrich.py", "EPSS_DATE")], epss),
+            ("[NIST NVD]", olds[("update_nvd.py", "SNAPSHOT")], snapshot),
+        ],
+    }
+    for file, rules in notices.items():
+        path = REPO / file
+        lines = path.read_text("utf-8").split("\n")
+        for marker, old, new in rules:
+            hits = [i for i, l in enumerate(lines) if marker in l]
+            if not hits:
+                sys.exit(f"bump_live_pins: {marker} not found in {file}")
+            for i in hits:
+                lines[i] = lines[i].replace(old, new)
+            print(f"{file}: {marker} {old} -> {new}")
+        if "--dry-run" not in args:
+            path.write_text("\n".join(lines), "utf-8")
 
 
 if __name__ == "__main__":
