@@ -11,9 +11,12 @@ export default async (page, o) => {
     await ev(() => FOCA.actions['scan-start']({ profile: 'passive' }));
     await ev(() => FOCA.go('/p/scan'));
     ok('scan running', await until(() => FOCA.scan.running && FOCA.scan.stageIdx === 1, null, 40000));
-    await wait(2500);
-    const cnt = await ev(() => document.querySelector('.page').innerText.match(/(\d+)\/(\d+) файлов/));
-    ok('"Загрузка N/M файлов" from core counter (M > 0)', cnt && +cnt[2] > 0, cnt);
+    // The download row shows the core's queue pair ("очередь N/M") once the first progress event with a
+    // total arrives: wait for that event instead of a fixed delay.
+    const pair = await until(() => { const p = FOCA.scan.stageN; return p && p.stage === 'download' && p.total > 0; }, null, 20000);
+    await wait(300);
+    const cnt = await ev(() => ({ pair: FOCA.scan.stageN, txt: (document.querySelector('.page').innerText.match(/очередь (\d+)\/(\d+)/) || [])[0] || null }));
+    ok('"очередь N/M" on the download row from the core counter (M > 0)', pair && cnt.txt && +cnt.txt.split('/')[1] > 0, cnt);
     // Outside the scan screen (overview, mini panel) the downloaded file counter grows live (snapshot on progress).
     await ev(() => FOCA.go('/p/overview')); await wait(500);
     const c0 = await ev(() => ({ n: FOCA.sel.counts().docs.downloaded, mini: (document.querySelector('#mi-s') || {}).textContent || '' }));

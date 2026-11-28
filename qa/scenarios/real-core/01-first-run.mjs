@@ -52,7 +52,13 @@ export default async (page, o) => {
     ok('project created in core', (await api('project_list')).some(p => p.id === pid), pid);
     const st = await api('scan_status');
     ok('core: passive scan running', st.running && st.profile_id === 'passive' && st.active === false, st);
-    ok('scan mini-panel visible', await ev(() => document.querySelector('#mini').classList.contains('show') || FOCA.current() === '/p/scan'));
+    // Exactly one scan indicator on the overview: the scan card at the top, or the floating bar once
+    // the card scrolls away (route miniUntil); the scan screen shows the progress itself.
+    const mini = await ev(() => {
+      const card = document.querySelector('.page #ov-scan'), r = card && card.getBoundingClientRect(), pr = document.querySelector('.page').getBoundingClientRect();
+      return { mini: document.querySelector('#mini').classList.contains('show'), route: FOCA.current(), card: !!(r && r.height > 0 && r.bottom > pr.top && r.top < pr.bottom) };
+    });
+    ok('one scan indicator: overview scan card or floating bar (never none, never both)', mini.route === '/p/scan' || mini.mini !== mini.card, mini);
     await step('e01_overview_running');
     await ev(() => FOCA.go('/p/scan')); await wait(2500);
     const sc = await ev(() => ({ stages: document.querySelectorAll('#scn-stages .stg, .scn-stage, [data-stage]').length, src: FOCA.scan.sources.map(s => s.id + ':' + s.status), prog: FOCA.scan.progress, label: FOCA.coreScan.stageLabel }));
@@ -75,7 +81,10 @@ export default async (page, o) => {
     ok('Overview: open findings match core', ov.c.findings.open === open, { ui: ov.c.findings.open, core: open });
     ok('Overview: people match core', ov.c.people.total === snap.people.length, { ui: ov.c.people.total, core: snap.people.length });
     const plist = (await api('project_list')).find(p => p.id === pid);
-    ok('Overview risk = project_list risk', ov.risk && ov.risk.score === plist.risk, { ui: ov.risk, core: plist.risk });
+    const dbg = await ev(s => ({ snapScore: FOCA_RULES.riskScore(s.findings), uiN: FOCA.db.findings.length, snapN: s.findings.length,
+      uiCrit: FOCA.db.findings.filter(f => f.sev === 'crit').map(f => [f.id, f.status, f.category, f.tags]),
+      snapCrit: s.findings.filter(f => f.sev === 'crit').map(f => [f.id, f.status, f.category, f.tags]) }), snap);
+    ok('Overview risk = project_list risk', ov.risk && ov.risk.score === plist.risk, { ui: ov.risk, core: plist.risk, dbg });
     ok('Overview shows "Скан завершён"', /Скан завершён/.test(ov.txt), ov.txt.slice(0, 200));
     await step('e01_overview_done');
     await ev(() => FOCA.go('/projects')); await wait(500);
